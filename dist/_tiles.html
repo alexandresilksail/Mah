@@ -51,56 +51,56 @@
   }
 
   // src/game/tiles.js
-  var WAN_CHARS = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
-  var HONORS = ["東", "南", "西", "北", "中", "發", "白"];
-  var TYPE_LIST = (() => {
-    const list = [];
-    for (let i = 1; i <= 9; i++) list.push({ id: `wan-${i}`, kind: "wan", num: i });
-    for (let i = 1; i <= 9; i++) list.push({ id: `tiao-${i}`, kind: "tiao", num: i });
-    for (let i = 1; i <= 9; i++) list.push({ id: `tong-${i}`, kind: "tong", num: i });
-    HONORS.forEach((ch, i) => list.push({ id: `zi-${i + 1}`, kind: "zi", num: i + 1, ch }));
-    return list;
-  })();
-  var TYPE_MAP = Object.fromEntries(TYPE_LIST.map((t) => [t.id, t]));
+  var TYPE_LIST = [
+    { id: "yaoji", kind: "yaoji", label: "幺鸡" },
+    { id: "zi-zhong", kind: "zi", ch: "中" },
+    { id: "zi-fa", kind: "zi", ch: "發" },
+    { id: "zi-bai", kind: "zi", ch: "白" },
+    { id: "zi-dong", kind: "zi", ch: "東" },
+    { id: "zi-nan", kind: "zi", ch: "南" },
+    { id: "tong-1", kind: "tong", num: 1 },
+    { id: "tong-2", kind: "tong", num: 2 },
+    { id: "tong-3", kind: "tong", num: 3 },
+    { id: "tong-5", kind: "tong", num: 5 },
+    { id: "tong-8", kind: "tong", num: 8 },
+    { id: "tiao-2", kind: "tiao", num: 2 },
+    { id: "tiao-3", kind: "tiao", num: 3 },
+    { id: "tiao-5", kind: "tiao", num: 5 },
+    { id: "tiao-9", kind: "tiao", num: 9 }
+  ];
+  var TYPE_MAP = {};
+  for (let i = 0; i < TYPE_LIST.length; i++) TYPE_MAP[TYPE_LIST[i].id] = TYPE_LIST[i];
   var FACE = "#FFFDF5";
-  var FACE_DIM = "#EFE9DA";
   var RIM = "#2A6B2E";
-  var RIM_DIM = "#255C29";
   var BORDER = "#2E7D32";
-  var BORDER_DIM = "#3A7A40";
   var RED = "#C0392B";
+  var RED_LIGHT = "#D95746";
   var GREEN = "#2E7D32";
-  var GREEN_LIGHT = "#7BB661";
   var GREEN_DEEP = "#1E5A22";
   var BLUE_DARK = "#173F6B";
   var BLUE_LIGHT = "#5B8DBE";
+  var BLACK = "#20261F";
   var ROUND_FONT = '"Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif';
   var TONG_POS = {
     1: [[0, 0]],
     2: [[0, -0.46], [0, 0.46]],
     3: [[-0.5, -0.5], [0, 0], [0.5, 0.5]],
-    4: [[-0.44, -0.44], [0.44, -0.44], [-0.44, 0.44], [0.44, 0.44]],
     5: [[-0.48, -0.48], [0.48, -0.48], [0, 0], [-0.48, 0.48], [0.48, 0.48]],
-    6: [[-0.42, -0.5], [0.42, -0.5], [-0.42, 0], [0.42, 0], [-0.42, 0.5], [0.42, 0.5]],
-    7: [[-0.44, -0.56], [0, -0.4], [0.44, -0.56], [-0.42, 0.16], [0.42, 0.16], [-0.42, 0.62], [0.42, 0.62]],
-    8: [[-0.4, -0.62], [0.4, -0.62], [-0.4, -0.2], [0.4, -0.2], [-0.4, 0.2], [0.4, 0.2], [-0.4, 0.62], [0.4, 0.62]],
-    9: [[-0.52, -0.52], [0, -0.52], [0.52, -0.52], [-0.52, 0], [0, 0], [0.52, 0], [-0.52, 0.52], [0, 0.52], [0.52, 0.52]]
+    8: [[-0.4, -0.62], [0.4, -0.62], [-0.4, -0.2], [0.4, -0.2], [-0.4, 0.2], [0.4, 0.2], [-0.4, 0.62], [0.4, 0.62]]
   };
   var TIAO_POS = {
-    1: [[0, 0]],
     2: [[0, -0.44], [0, 0.44]],
     3: [[0, -0.52], [-0.46, 0.4], [0.46, 0.4]],
-    4: [[-0.44, -0.44], [0.44, -0.44], [-0.44, 0.44], [0.44, 0.44]],
     5: [[-0.5, -0.5], [0.5, -0.5], [0, 0], [-0.5, 0.5], [0.5, 0.5]],
-    6: [[-0.6, -0.42], [0, -0.42], [0.6, -0.42], [-0.6, 0.42], [0, 0.42], [0.6, 0.42]],
-    7: [[0, -0.62], [-0.6, -0.05], [0, -0.05], [0.6, -0.05], [-0.6, 0.52], [0, 0.52], [0.6, 0.52]],
-    8: [[-0.66, -0.42], [-0.22, -0.42], [0.22, -0.42], [0.66, -0.42], [-0.66, 0.42], [-0.22, 0.42], [0.22, 0.42], [0.66, 0.42]],
     9: [[-0.55, -0.52], [0, -0.52], [0.55, -0.52], [-0.55, 0], [0, 0], [0.55, 0], [-0.55, 0.52], [0, 0.52], [0.55, 0.52]]
   };
   function drawTile(ctx2, x, y, w, h, typeId, opt = {}) {
-    const { covered = false, alpha = 1, scale = 1, lift = 0, glow = 0 } = opt;
+    const { alpha = 1, scale = 1, lift = 0, glow = 0 } = opt;
     const type = TYPE_MAP[typeId];
     if (!type) return;
+    const dimLevel = opt.dimLevel === void 0 ? opt.covered ? 1 : 0 : opt.dimLevel;
+    const playable = !!opt.playable && dimLevel === 0;
+    const dimAlpha = dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
     ctx2.save();
     ctx2.globalAlpha = alpha;
     if (scale !== 1 || lift !== 0) {
@@ -110,9 +110,15 @@
       ctx2.scale(scale, scale);
       ctx2.translate(-mx, -my);
     }
-    const sprite = spriteFor(ctx2, typeId, w, h, covered);
+    ctx2.save();
+    ctx2.shadowColor = "rgba(0,0,0,0.5)";
+    ctx2.shadowBlur = SHADOW_BLUR;
+    ctx2.shadowOffsetX = SHADOW_DX;
+    ctx2.shadowOffsetY = SHADOW_DY;
+    const sprite = spriteFor(ctx2, typeId, w, h, dimLevel, playable);
     if (sprite) ctx2.drawImage(sprite, x, y, w, h);
-    else paintTile(ctx2, x, y, w, h, type, covered);
+    else paintTile(ctx2, x, y, w, h, type, dimAlpha, playable);
+    ctx2.restore();
     if (glow > 0) {
       ctx2.save();
       ctx2.globalAlpha *= Math.min(1, glow + 0.2);
@@ -136,14 +142,18 @@
   var SPRITE_DPR = 2;
   var spriteCache = /* @__PURE__ */ new Map();
   var spriteDisabled = false;
-  function spriteFor(ctx2, typeId, w, h, covered) {
+  var SHADOW_BLUR = 8;
+  var SHADOW_DX = 0;
+  var SHADOW_DY = 5;
+  function spriteFor(ctx2, typeId, w, h, dimLevel, playable) {
     if (spriteDisabled) return null;
-    const key = `${typeId}|${w.toFixed(1)}|${h.toFixed(1)}|${covered ? 1 : 0}`;
+    const dimAlpha = dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
+    const key = `${typeId}|${w.toFixed(1)}|${h.toFixed(1)}|d${dimAlpha.toFixed(2)}|p${playable ? 1 : 0}`;
     const hit = spriteCache.get(key);
     if (hit) return hit;
     const c22 = offscreen(ctx2, w, h);
     if (!c22) return null;
-    paintTile(c22, 0, 0, w, h, TYPE_MAP[typeId], covered);
+    paintTile(c22, 0, 0, w, h, TYPE_MAP[typeId], dimAlpha, playable);
     if (spriteCache.size > 300) spriteCache.clear();
     spriteCache.set(key, c22.canvas);
     return c22.canvas;
@@ -165,61 +175,63 @@
     c22.scale(SPRITE_DPR, SPRITE_DPR);
     return c22;
   }
-  function paintTile(ctx2, x, y, w, h, type, covered) {
+  function paintTile(ctx2, x, y, w, h, type, dimAlpha, playable) {
     const rad = w * 0.14;
-    const thick = Math.max(2, w * 0.026);
+    const thick = Math.max(4, Math.round(h * 0.06));
     const fh = h - thick;
     ctx2.save();
-    ctx2.fillStyle = covered ? RIM_DIM : RIM;
+    ctx2.fillStyle = RIM;
     rr(ctx2, x, y + thick, w, fh, rad);
     ctx2.fill();
-    ctx2.fillStyle = covered ? FACE_DIM : FACE;
+    ctx2.fillStyle = FACE;
     rr(ctx2, x, y, w, fh, rad);
     ctx2.fill();
-    ctx2.strokeStyle = covered ? "rgba(120,116,104,0.45)" : "rgba(150,146,132,0.6)";
+    ctx2.strokeStyle = "rgba(150,146,132,0.6)";
     ctx2.lineWidth = 1;
     rr(ctx2, x + 0.5, y + 0.5, w - 1, fh - 1, rad);
     ctx2.stroke();
     const bw = Math.max(2, w * 0.022);
     const inset = bw / 2 + 1.2;
-    ctx2.strokeStyle = covered ? BORDER_DIM : BORDER;
+    ctx2.strokeStyle = BORDER;
     ctx2.lineWidth = bw;
     rr(ctx2, x + inset, y + inset, w - inset * 2, fh - inset * 2, Math.max(2, rad - inset * 0.6));
     ctx2.stroke();
-    ctx2.strokeStyle = covered ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.95)";
+    ctx2.strokeStyle = "rgba(255,255,255,0.95)";
     ctx2.lineWidth = 1.1;
     const in2 = inset + bw / 2 + 1.1;
     rr(ctx2, x + in2, y + in2, w - in2 * 2, fh - in2 * 2, Math.max(1.5, rad - in2 * 0.6));
     ctx2.stroke();
     const pad = in2 + 2.5;
-    drawFace(ctx2, type, x + pad, y + pad, w - pad * 2, fh - pad * 2, covered);
-    if (covered) {
-      const p2 = inset + bw * 0.5;
-      ctx2.fillStyle = "rgba(24, 20, 12, 0.28)";
-      rr(ctx2, x + p2, y + p2, w - p2 * 2, fh - p2 * 2, Math.max(2, rad - p2 * 0.6));
+    drawFace(ctx2, type, x + pad, y + pad, w - pad * 2, fh - pad * 2);
+    if (dimAlpha > 0) {
+      ctx2.fillStyle = `rgba(0, 0, 0, ${dimAlpha})`;
+      rr(ctx2, x + bw * 0.5, y + bw * 0.5, w - bw, h - bw, rad);
       ctx2.fill();
+    }
+    if (playable) {
+      ctx2.strokeStyle = "rgba(255, 246, 214, 0.92)";
+      ctx2.lineWidth = 1.7;
+      rr(ctx2, x + 2.2, y + 2.2, w - 4.4, h - 4.4, rad - 1);
+      ctx2.stroke();
     }
     ctx2.restore();
   }
   function faceBox(x, y, w, fh) {
-    const bw = w * 0.65;
-    const bh = fh * 0.7;
-    return {
-      cx: x + w / 2,
-      cy: y + fh / 2,
-      w: bw,
-      h: bh,
-      left: x + (w - bw) / 2,
-      top: y + (fh - bh) / 2
-    };
+    const side = Math.min(w * 0.78, fh * 0.82);
+    return { cx: x + w / 2, cy: y + fh / 2, w: side, h: side, left: x + w / 2 - side / 2, top: y + fh / 2 - side / 2 };
   }
-  function drawFace(ctx2, type, x, y, w, fh, covered) {
+  function drawFace(ctx2, type, x, y, w, fh) {
     const box = faceBox(x, y, w, fh);
-    const faceColor = covered ? FACE_DIM : FACE;
-    if (type.kind === "wan") return drawWan(ctx2, type, box);
-    if (type.kind === "tiao") return drawTiao(ctx2, type, box);
-    if (type.kind === "tong") return drawTong(ctx2, type, box, faceColor);
-    return drawHonor(ctx2, type, box, faceColor);
+    const local = { cx: 0, cy: 0, w: box.w, h: box.h, left: -box.w / 2, top: -box.h / 2 };
+    ctx2.save();
+    ctx2.translate(box.cx, box.cy);
+    if (type.kind === "yaoji") {
+      const side = Math.min(box.w * 0.92, 42.9, 61.6);
+      drawYaoji(ctx2, { cx: 0, cy: 0, w: side, h: side });
+    } else if (type.kind === "tiao") drawTiao(ctx2, type, local);
+    else if (type.kind === "tong") drawTong(ctx2, type, local);
+    else drawHonor(ctx2, type, local);
+    ctx2.restore();
   }
   function layout(box, pos) {
     const pts = pos.map(([u, v]) => [box.cx + u * box.w / 2, box.cy + v * box.h / 2]);
@@ -233,65 +245,141 @@
     if (!Number.isFinite(dmin)) dmin = Math.min(box.w, box.h) * 0.9;
     return { pts, dmin };
   }
-  function drawWan(ctx2, type, box) {
-    const numSize = Math.round(box.h * 0.4);
-    const wanSize = Math.round(box.h * 0.255);
-    const strokeW = Math.max(1, numSize * 0.055);
-    text(ctx2, WAN_CHARS[type.num - 1], box.cx, box.cy - box.h * 0.22, {
-      size: numSize,
-      weight: "700",
-      family: ROUND_FONT,
-      fill: RED,
-      stroke: "#FFFFFF",
-      strokeWidth: strokeW
-    });
-    text(ctx2, "萬", box.cx, box.cy + box.h * 0.21, {
-      size: wanSize,
-      weight: "700",
-      family: ROUND_FONT,
-      fill: RED,
-      stroke: "#FFFFFF",
-      strokeWidth: Math.max(1, wanSize * 0.055)
-    });
+  function drawYaoji(ctx2, box) {
+    const X = (u) => box.cx + u * box.w / 2;
+    const Y = (v) => box.cy + v * box.h / 2;
+    const S = Math.min(box.w, box.h) / 2;
+    ctx2.save();
+    ctx2.fillStyle = "#8A6A3A";
+    rr(ctx2, X(-0.92), Y(0.66), box.w * 0.92, S * 0.15, S * 0.07);
+    ctx2.fill();
+    ctx2.strokeStyle = GREEN_DEEP;
+    ctx2.lineWidth = Math.max(1, S * 0.045);
+    for (const u of [-0.5, 0.06, 0.58]) {
+      ctx2.beginPath();
+      ctx2.moveTo(X(u), Y(0.63));
+      ctx2.lineTo(X(u), Y(0.78));
+      ctx2.stroke();
+    }
+    ctx2.strokeStyle = RED;
+    ctx2.lineWidth = Math.max(1.4, S * 0.09);
+    ctx2.lineCap = "round";
+    for (const u of [-0.12, 0.2]) {
+      ctx2.beginPath();
+      ctx2.moveTo(X(u), Y(0.28));
+      ctx2.lineTo(X(u + 0.02), Y(0.68));
+      ctx2.stroke();
+      ctx2.beginPath();
+      ctx2.moveTo(X(u + 0.02), Y(0.68));
+      ctx2.lineTo(X(u - 0.1), Y(0.68));
+      ctx2.moveTo(X(u + 0.02), Y(0.68));
+      ctx2.lineTo(X(u + 0.13), Y(0.68));
+      ctx2.stroke();
+    }
+    const tails = [
+      [-0.02, -0.72, 0.42, -0.98],
+      [0.12, -0.68, 0.58, -0.86],
+      [0.24, -0.62, 0.68, -0.68],
+      [0.34, -0.5, 0.76, -0.44]
+    ];
+    for (let i = 0; i < tails.length; i++) {
+      const [x0, y0, x1, y1] = tails[i];
+      ctx2.strokeStyle = i % 2 ? GREEN_DEEP : GREEN;
+      ctx2.lineWidth = Math.max(1.4, S * 0.11);
+      ctx2.beginPath();
+      ctx2.moveTo(X(0.22), Y(0.16));
+      ctx2.quadraticCurveTo(X(x0 + 0.2), Y(y0 - 0.12), X(x1), Y(y1));
+      ctx2.stroke();
+      ctx2.fillStyle = RED;
+      ctx2.beginPath();
+      ctx2.arc(X(x1), Y(y1), Math.max(1.2, S * 0.075), 0, Math.PI * 2);
+      ctx2.fill();
+    }
+    const grad = ctx2.createLinearGradient(X(-0.5), Y(-0.3), X(0.45), Y(0.45));
+    grad.addColorStop(0, "#1E5A22");
+    grad.addColorStop(0.55, "#2E7D32");
+    grad.addColorStop(1, "#4E9E52");
+    ctx2.save();
+    ctx2.translate(X(0.04), Y(0.02));
+    ctx2.rotate(-0.32);
+    ctx2.fillStyle = grad;
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, S * 0.46, S * 0.55, 0, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.restore();
+    ctx2.save();
+    ctx2.translate(X(0.16), Y(0.02));
+    ctx2.rotate(-0.42);
+    ctx2.fillStyle = "#2E8B8B";
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, S * 0.28, S * 0.36, 0, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.strokeStyle = "#8FD3D0";
+    ctx2.lineWidth = Math.max(0.8, S * 0.045);
+    for (let k = 0; k < 3; k++) {
+      ctx2.beginPath();
+      ctx2.arc(-S * 0.06, S * (0.02 + k * 0.11), S * 0.22, 0.15, 1.55);
+      ctx2.stroke();
+    }
+    ctx2.restore();
+    ctx2.fillStyle = GREEN_DEEP;
+    ctx2.beginPath();
+    ctx2.arc(X(-0.3), Y(-0.44), S * 0.24, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = RED;
+    for (let k = 0; k < 3; k++) {
+      ctx2.beginPath();
+      ctx2.arc(X(-0.44 + k * 0.13), Y(-0.68 - (k === 1 ? 0.07 : 0)), S * 0.085, 0, Math.PI * 2);
+      ctx2.fill();
+    }
+    ctx2.fillStyle = "#F2C14E";
+    ctx2.beginPath();
+    ctx2.moveTo(X(-0.5), Y(-0.42));
+    ctx2.lineTo(X(-0.78), Y(-0.34));
+    ctx2.lineTo(X(-0.5), Y(-0.28));
+    ctx2.closePath();
+    ctx2.fill();
+    ctx2.fillStyle = "#FFFFFF";
+    ctx2.beginPath();
+    ctx2.arc(X(-0.36), Y(-0.48), S * 0.105, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "#101510";
+    ctx2.beginPath();
+    ctx2.arc(X(-0.38), Y(-0.48), S * 0.058, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.restore();
   }
-  function drawTong(ctx2, type, box, faceColor) {
+  function drawTong(ctx2, type, box) {
     const pos = TONG_POS[type.num] || TONG_POS[1];
     const { pts, dmin } = layout(box, pos);
     const r = Math.min(dmin * 0.46, Math.min(box.w, box.h) * 0.42);
-    for (const [px, py] of pts) ring(ctx2, px, py, r, faceColor);
+    for (let i = 0; i < pts.length; i++) ring(ctx2, pts[i][0], pts[i][1], r);
   }
-  function ring(ctx2, cx, cy, r, faceColor) {
-    ctx2.fillStyle = BLUE_DARK;
+  function ring(ctx2, cx, cy, r) {
+    ctx2.fillStyle = RED;
     circle(ctx2, cx, cy, r);
     ctx2.fill();
+    ctx2.fillStyle = GREEN;
+    circle(ctx2, cx, cy, r * 0.72);
+    ctx2.fill();
+    ctx2.fillStyle = BLUE_DARK;
+    circle(ctx2, cx, cy, r * 0.46);
+    ctx2.fill();
     ctx2.fillStyle = BLUE_LIGHT;
-    circle(ctx2, cx, cy, r * 0.66);
+    circle(ctx2, cx, cy, r * 0.26);
     ctx2.fill();
-    ctx2.fillStyle = faceColor;
-    circle(ctx2, cx, cy, r * 0.36);
-    ctx2.fill();
-    ctx2.strokeStyle = BLUE_DARK;
-    ctx2.lineWidth = Math.max(0.8, r * 0.11);
-    circle(ctx2, cx, cy, r * 0.66);
+    ctx2.strokeStyle = RED_LIGHT;
+    ctx2.lineWidth = Math.max(0.8, r * 0.1);
+    circle(ctx2, cx, cy, r * 0.86);
     ctx2.stroke();
-    if (r > 5) {
-      ctx2.save();
-      ctx2.strokeStyle = "rgba(255,255,255,0.75)";
-      ctx2.lineWidth = Math.max(1, r * 0.2);
-      ctx2.lineCap = "round";
-      ctx2.beginPath();
-      ctx2.arc(cx, cy, r * 0.84, -2.6, -1.95);
-      ctx2.stroke();
-      ctx2.restore();
-    }
   }
   function drawTiao(ctx2, type, box) {
-    const pos = TIAO_POS[type.num] || TIAO_POS[1];
+    const pos = TIAO_POS[type.num] || TIAO_POS[2];
     const { pts, dmin } = layout(box, pos);
-    const swCap = type.num === 1 ? box.w * 0.23 : box.w * 0.32;
-    const sw = Math.min(dmin * 0.48, swCap, box.w * 0.3);
-    const sh = Math.min(sw * (type.num === 1 ? 2 : 2.4), box.h * 0.86);
-    for (const [px, py] of pts) bamboo(ctx2, px, py, sw, sh);
+    const swCap = box.w * 0.3;
+    const sw = Math.min(dmin * 0.46, swCap, box.w * 0.28);
+    const sh = Math.min(sw * 2.35, box.h * 0.86);
+    for (let i = 0; i < pts.length; i++) bamboo(ctx2, pts[i][0], pts[i][1], sw, sh);
   }
   function bamboo(ctx2, cx, cy, w, h) {
     const bw = Math.max(3, w);
@@ -301,46 +389,42 @@
     ctx2.fillStyle = GREEN;
     rr(ctx2, cx - bw / 2, top, bw, bh, r);
     ctx2.fill();
-    ctx2.fillStyle = "rgba(255,255,255,0.28)";
-    rr(ctx2, cx - bw * 0.26, top + bh * 0.24, bw * 0.15, bh * 0.42, bw * 0.075);
+    ctx2.fillStyle = "rgba(255,255,255,0.24)";
+    rr(ctx2, cx - bw * 0.26, top + bh * 0.22, bw * 0.15, bh * 0.4, bw * 0.075);
     ctx2.fill();
     const dotR = Math.max(1.2, bw * 0.42);
-    const dy = top + dotR * 0.92;
-    ctx2.fillStyle = GREEN_LIGHT;
-    circle(ctx2, cx, dy, dotR);
+    ctx2.fillStyle = RED;
+    circle(ctx2, cx, top + dotR, dotR);
     ctx2.fill();
     ctx2.strokeStyle = GREEN_DEEP;
     ctx2.lineWidth = Math.max(0.5, bw * 0.1);
-    circle(ctx2, cx, dy, dotR);
+    circle(ctx2, cx, top + dotR, dotR);
     ctx2.stroke();
-    ctx2.strokeStyle = GREEN_DEEP;
-    ctx2.lineWidth = Math.max(0.5, bw * 0.12);
     ctx2.beginPath();
-    ctx2.moveTo(cx - bw * 0.4, dy + dotR * 1.25);
-    ctx2.lineTo(cx + bw * 0.4, dy + dotR * 1.25);
+    ctx2.moveTo(cx - bw * 0.4, top + dotR * 2.2);
+    ctx2.lineTo(cx + bw * 0.4, top + dotR * 2.2);
     ctx2.stroke();
     ctx2.strokeStyle = GREEN_DEEP;
     ctx2.lineWidth = Math.max(0.8, bw * 0.11);
     rr(ctx2, cx - bw / 2, top, bw, bh, r);
     ctx2.stroke();
   }
-  function drawHonor(ctx2, type, box, faceColor) {
+  function drawHonor(ctx2, type, box) {
     if (type.ch === "白") {
       const bw = box.w * 0.8;
       const bh = box.h * 0.82;
       ctx2.lineWidth = Math.max(2.2, box.w * 0.075);
-      ctx2.strokeStyle = GREEN;
+      ctx2.strokeStyle = BLUE_DARK;
       rr(ctx2, box.cx - bw / 2, box.cy - bh / 2, bw, bh, Math.min(bw, bh) * 0.18);
       ctx2.stroke();
       ctx2.lineWidth = Math.max(1.1, box.w * 0.03);
-      ctx2.strokeStyle = "rgba(46,125,50,0.55)";
+      ctx2.strokeStyle = BLUE_LIGHT;
       rr(ctx2, box.cx - bw * 0.32, box.cy - bh * 0.32, bw * 0.64, bh * 0.64, Math.min(bw, bh) * 0.14);
       ctx2.stroke();
-      void faceColor;
       return;
     }
-    const size = Math.round(box.h * 0.6);
-    const color = type.ch === "發" ? GREEN : RED;
+    const size = Math.round(box.h * 0.62);
+    const color = type.ch === "發" ? GREEN : type.ch === "中" ? RED : BLACK;
     text(ctx2, type.ch, box.cx, box.cy, {
       size,
       weight: "700",
@@ -351,8 +435,98 @@
     });
   }
 
+  // src/game/config.js
+  var TILE_W = 66;
+  var TILE_H = 88;
+  var TILE_AREA = TILE_W * TILE_H;
+  var LATTICE_X = TILE_W / 2;
+  var LATTICE_Y = TILE_H / 2;
+  var SLOT_CAPACITY = 7;
+  var BOARD_BAND = { top: 196, bottom: 918, left: 20, right: 700 };
+  var BOARD_CX = (BOARD_BAND.left + BOARD_BAND.right) / 2;
+  var BOARD_CY = (BOARD_BAND.top + BOARD_BAND.bottom) / 2;
+  var LEVEL_SPEC = {
+    1: {
+      level: 1,
+      cardCount: 24,
+      // 8 组三消
+      groups: 8,
+      layers: 3,
+      types: 8,
+      // 每种恰好 3 张
+      plan: [12, 8, 4],
+      // 底层 → 顶层，总和 24，上窄下宽
+      props: { shuffle: 3, undo: 3, remove: 3 },
+      reviveMax: 1
+    },
+    2: {
+      level: 2,
+      cardCount: 222,
+      // 74 组三消
+      groups: 74,
+      layers: 7,
+      types: 15,
+      // 只作为「基准」保留给文档 / 兼容字段；运行时一律用 LAYER_SHAPE.planBase
+      // 按 seed 做 ±2 浮动并归一化到 222，绝不所有 seed 共用一张写死的表。
+      plan: [54, 48, 44, 36, 22, 12, 6],
+      props: { shuffle: 3, undo: 3, remove: 3 },
+      reviveMax: 1
+    }
+  };
+  var LAYER_SHAPE = {
+    /** 层张数基准（底→顶），总和 222；运行时每层按 seed 在 ±2 内浮动后归一化 */
+    planBase: [54, 48, 44, 36, 22, 12, 6],
+    /** 参考列数（整张牌为单位）：9/9/10/10/7/5/3，可按安全区调整 */
+    colsBase: [9, 9, 10, 10, 7, 5, 3],
+    /** 第 2、3 层包围盒宽度 ≥ 第 0 层宽度 + 这个值 */
+    bellyExtraPx: TILE_W / 2,
+    // 33
+    /** 每层张数相对基准的浮动上限 */
+    planJitter: 2,
+    /** 第 0–3 层填充率区间（牌数 / 包围盒格点数） */
+    fillMin: 0.8,
+    fillMax: 0.9,
+    /** 第 4 层最低填充率 */
+    topFillMin: 0.85,
+    /** 第 0–3 层每层至少留几处边缘缺口 */
+    minEdgeGaps: 2
+  };
+  var SLOT_PITCH = 78;
+  var SLOT_PANEL = { x: 73, y: 1024, w: 574, h: 124, x0Pad: 14, y0Pad: 18 };
+  var SLOT_CARD_W = TILE_W;
+  var SLOT_CARD_H = TILE_H;
+  var SLOT_X0 = SLOT_PANEL.x + SLOT_PANEL.x0Pad;
+  var SLOT_Y = SLOT_PANEL.y + SLOT_PANEL.y0Pad;
+  function makeLayout(level) {
+    const spec = LEVEL_SPEC[level];
+    return {
+      tileW: TILE_W,
+      tileH: TILE_H,
+      pitchX: TILE_W,
+      pitchY: TILE_H,
+      jitter: 0,
+      plan: spec.plan.map((n, li) => ({ li, n })),
+      // ES5 降级视图画槽位面板时用的绝对坐标（不能 import，只能从 game.layout 读）
+      slot: {
+        x: SLOT_PANEL.x,
+        y: SLOT_PANEL.y,
+        w: SLOT_PANEL.w,
+        h: SLOT_PANEL.h,
+        x0: SLOT_X0,
+        y0: SLOT_Y,
+        pitch: SLOT_PITCH,
+        padX: SLOT_PANEL.x0Pad,
+        padY: SLOT_PANEL.y0Pad,
+        cardW: SLOT_CARD_W,
+        cardH: SLOT_CARD_H,
+        capacity: SLOT_CAPACITY
+      }
+    };
+  }
+  var LAYOUTS = { 1: makeLayout(1), 2: makeLayout(2) };
+
   // <stdin>
-  var COLS = 7;
+  var COLS = 5;
   var TW = 150;
   var TH = 172;
   var GAP = 14;
@@ -377,17 +551,22 @@
     ctx.fillText(t.id, x + TW / 2, y + TH + 14);
   });
   var small = document.createElement("canvas");
+  var ROW_H = TILE_H + 12;
   small.width = 720;
-  small.height = 110;
+  small.height = ROW_H * 3 + 10;
   small.style.display = "block";
   small.style.marginTop = "8px";
   document.body.appendChild(small);
   var c2 = small.getContext("2d");
   c2.fillStyle = "#3A2A1E";
-  c2.fillRect(0, 0, 720, 110);
-  ["wan-3", "tiao-5", "tong-7", "zi-5", "wan-9", "tong-2", "tiao-1"].forEach((id, i) => {
-    drawTile(c2, 10 + i * 74, 8, 68, 76, id, {});
-    drawTile(c2, 10 + i * 74, 8 + 0, 68, 76, id, { covered: false });
+  c2.fillRect(0, 0, 720, small.height);
+  var states = [
+    { name: "可点", opt: { playable: true } },
+    { name: "压 1 层", opt: { dimLevel: 1 } },
+    { name: "压 4 层", opt: { dimLevel: 4 } }
+  ];
+  ["yaoji", "zi-zhong", "tong-5", "tiao-9", "zi-dong", "tong-1"].forEach((id, i) => {
+    states.forEach((st, r) => drawTile(c2, 10 + i * 116, 8 + r * ROW_H, TILE_W, TILE_H, id, st.opt));
   });
   document.title = "tile sheet";
 })();

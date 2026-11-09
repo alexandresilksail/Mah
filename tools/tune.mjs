@@ -1,5 +1,5 @@
 /**
- * 难度调参 / 现场体检（当前规格：单堆半格晶格 + 漏斗三带）。
+ * 难度调参 / 现场体检（第 3 轮规格：葫芦轮廓单堆 + 三带漏斗）。
  *
  * 用法：node tools/tune.mjs [每关局数] [起始 seed]
  *   node tools/tune.mjs 40 7000
@@ -10,29 +10,36 @@
  */
 import { generateLevel, simulateRobot, verify } from '../src/game/generator.js';
 import { makeRng } from '../src/game/rng.js';
-import { TILE_W, TILE_H, FUNNEL, LEVEL_SPEC } from '../src/game/config.js';
+import { SEED_POOL as POOL } from '../src/game/seed_pool.js';
+import { TILE_W, TILE_H, FUNNEL, LEVEL_SPEC, BAND_RATIOS, LAYER_SHAPE } from '../src/game/config.js';
 
 const N = parseInt(process.argv[2] || '40', 10);
 const SEED0 = parseInt(process.argv[3] || '7000', 10);
-const MODES = ['random', 'greedy'];
+const MODES = [
+  { name: 'random', opt: { mode: 'random' } },
+  { name: 'greedy', opt: { mode: 'greedy' } },
+  { name: 'noise', opt: { mode: 'greedy', noise: 0.1 } },
+  { name: 'shallow', opt: { mode: 'shallow' } },
+];
 
-console.log(`TILE ${TILE_W}x${TILE_H} · FUNNEL TOP_SUITS=${FUNNEL.TOP_SUITS} MID_SPAN=${FUNNEL.MID_SPAN} CROSS_GROUPS=${FUNNEL.CROSS_GROUPS}`);
+console.log(`TILE ${TILE_W}x${TILE_H} · 层基准 ${LAYER_SHAPE.planBase.join('/')} · 三带 ${BAND_RATIOS.map((r) => (r * 100).toFixed(0) + '%').join('/')}`);
+console.log(`漏斗 TOP_SUIT_MIN=${FUNNEL.TOP_SUIT_MIN} MID_SPAN=${FUNNEL.MID_SPAN} LONG_TAIL_GROUPS=${FUNNEL.LONG_TAIL_GROUPS}`);
 console.log(`局数 ${N} × ${MODES.length} 种机器人 × 2 关（均不使用道具）\n`);
 
 for (const lv of [1, 2]) {
   const spec = LEVEL_SPEC[lv];
   console.log(`第 ${lv} 关：${spec.cardCount} 张 / ${spec.layers} 层 / ${spec.types} 种花色 / plan=${spec.plan.join('/')}`);
-  for (const mode of MODES) {
+  for (const { name, opt } of MODES) {
     let wins = 0;
     const pcts = [];
     const visibles = [];
     let certOK = 0;
     for (let i = 0; i < N; i++) {
       const seed = (SEED0 + i * 2654435761) >>> 0;
-      const d = generateLevel(lv, seed);
+      const d = lv === 2 ? generateLevel(2, POOL[i % POOL.length]) : generateLevel(1, seed);
       if (verify(d) && d.certificate.ok) certOK++;
       visibles.push(d.visible);
-      const r = simulateRobot(d, makeRng((seed ^ 0xabcdef) >>> 0), { mode });
+      const r = simulateRobot(d, makeRng((seed ^ 0xabcdef) >>> 0), opt);
       if (r.win) wins++;
       else pcts.push(r.pct);
     }
@@ -42,7 +49,7 @@ for (const lv of [1, 2]) {
       ? pcts.reduce((a, b) => a + b, 0) / pcts.length
       : 1;
     console.log(
-      `  ${mode.padEnd(6)} 通关 ${String(wins).padStart(3)}/${N} (${((wins / N) * 100).toFixed(1)}%)` +
+      `  ${name.padEnd(6)} 通关 ${String(wins).padStart(3)}/${N} (${((wins / N) * 100).toFixed(1)}%)` +
       ` · 死局 ${pcts.length}` +
       ` · 平均进度 ${(avgPct * 100).toFixed(1)}%` +
       ` · 失败进度中位 ${(med * 100).toFixed(1)}%` +

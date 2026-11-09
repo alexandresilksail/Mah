@@ -18,15 +18,24 @@
   'use strict';
 
   var CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  var HONORS = ['東', '南', '西', '北', '中', '發', '白'];
+  /* 第 3 轮：万子已删除，字牌 id 改为名字（zi-zhong / zi-fa / ...），
+     一条是幺鸡（yaoji）。这里只用汉字，不出现阿拉伯数字。 */
+  var HONOR_LABEL = {
+    'zi-zhong': { text: '中', color: '#B5342B' },
+    'zi-fa': { text: '發', color: '#2E7D32' },
+    'zi-bai': { text: '白', color: '#26558F' },
+    'zi-dong': { text: '東', color: '#20261F' },
+    'zi-nan': { text: '南', color: '#20261F' }
+  };
 
   function tileLabel(id) {
-    var p = String(id || '').split('-');
+    var key = String(id || '');
+    if (key === 'yaoji') return { text: '幺鸡', color: '#2E7D32' };
+    if (Object.prototype.hasOwnProperty.call(HONOR_LABEL, key)) return HONOR_LABEL[key];
+    var p = key.split('-');
     var n = parseInt(p[1], 10) || 0;
-    if (p[0] === 'wan') return { text: CN[n] + '萬', color: '#B5342B' };
-    if (p[0] === 'tiao') return { text: String(n) + '条', color: '#2E7D32' };
-    if (p[0] === 'tong') return { text: String(n) + '筒', color: '#26558F' };
-    if (p[0] === 'zi') return { text: HONORS[n - 1] || '字', color: '#B5342B' };
+    if (p[0] === 'tiao') return { text: CN[n] + '条', color: '#2E7D32' };
+    if (p[0] === 'tong') return { text: CN[n] + '筒', color: '#26558F' };
     return { text: '?', color: '#333333' };
   }
 

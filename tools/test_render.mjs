@@ -2,13 +2,21 @@
  * 渲染层冒烟测试：用 mock 2D context 跑一遍所有绘制函数，
  * 确认没有拼写错误 / 未定义函数 / 参数错误。
  *   node tools/test_render.mjs
+ *
+ * 可选实机截图（需要已启动的无头 Edge/Chrome CDP，默认 9333 端口）：
+ *   node tools/test_render.mjs --shots
+ * 会打开 dist/index.html，用 3 个池内 seed 各截一张第二关开局 PNG 到 .shots/。
  */
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import * as R from '../src/game/render.js';
 import { drawMascot, drawTitle } from '../src/game/logo.js';
 import { drawTile } from '../src/game/tiles.js';
 import { Game } from '../src/game/engine.js';
 import { TYPE_LIST } from '../src/game/tiles.js';
 import { TILE_W, TILE_H } from '../src/game/config.js';
+import { SEED_POOL } from '../src/game/seed_pool.js';
 
 function makeCtx() {
   const grad = { addColorStop() {} };
@@ -73,7 +81,7 @@ const uiTitle = R.getUI(g);
 R.drawTitleScreen(ctx, g, uiTitle, 1.2);
 count++;
 
-// 34 种牌全部绘制一遍：统一只用 config.js 的 TILE_W × TILE_H，不再有「按关卡分大小牌」
+// 15 种传统麻将牌全部绘制一遍：统一只用 config.js 的 TILE_W × TILE_H，不再有「按关卡分大小牌」
 for (const t of TYPE_LIST) {
   drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: false, glow: 0.5, lift: 2 });
   drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: true });
@@ -172,4 +180,65 @@ console.log(`render smoke OK：${count} 个场景全部绘制通过（无异常�
 if (uiFail) {
   console.error(`卸载 UI 检查失败 ${uiFail} 项`);
   process.exit(1);
+}
+
+/* ------------------------------------------------------------------ *
+ * 可选：实机 PNG 截图（第二关 3 个池内 seed 的开局画面）
+ * ------------------------------------------------------------------ */
+if (process.argv.includes('--shots')) {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const port = parseInt(process.env.CDP_PORT || '9333', 10);
+  const pageUrl = 'file:///' + path.join(root, 'dist', 'index.html').replace(/\\/g, '/');
+  const seeds = [SEED_POOL[0], SEED_POOL[Math.floor(SEED_POOL.length / 2)], SEED_POOL[SEED_POOL.length - 1]];
+
+  let list;
+  try {
+    list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+  } catch (e) {
+    console.error(`无法连接 CDP 127.0.0.1:${port}：${e.message}`);
+    process.exit(1);
+  }
+  const target = list.find((t) => t.type === 'page');
+  if (!target) { console.error('CDP 中没有 page 目标'); process.exit(1); }
+
+  const ws = new WebSocket(target.webSocketDebuggerUrl);
+  let msgId = 0;
+  const pending = new Map();
+  ws.addEventListener('message', (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); }
+  });
+  await new Promise((r) => ws.addEventListener('open', r));
+  const send = (method, params) => new Promise((res) => {
+    const id = ++msgId;
+    pending.set(id, res);
+    ws.send(JSON.stringify({ id, method, params }));
+  });
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  await send('Page.enable');
+  await send('Runtime.enable');
+  await send('Emulation.setDeviceMetricsOverride', {
+    width: 720, height: 1280, deviceScaleFactor: 1, mobile: false,
+  });
+  await send('Page.navigate', { url: `${pageUrl}?lv=2` });
+  await wait(2600);
+  mkdirSync(path.join(root, '.shots'), { recursive: true });
+
+  for (const seed of seeds) {
+    const evalRes = await send('Runtime.evaluate', {
+      expression: `window.__mah.game.startLevel(2, ${seed}); JSON.stringify({seed:${seed},cards:window.__mah.game.cards.length,free:window.__mah.game.cards.filter(c=>c.state==='board'&&!c.blocked).length})`,
+      returnByValue: true,
+    });
+    await wait(700);
+    const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+    if (!shot.result || !shot.result.data) {
+      console.log(`  [FAIL] seed ${seed} 截图失败`);
+      continue;
+    }
+    const out = path.join(root, '.shots', `l2_gourd_${seed}.png`);
+    writeFileSync(out, Buffer.from(shot.result.data, 'base64'));
+    console.log(`  saved ${path.relative(root, out)} · ${evalRes.result?.result?.value || ''}`);
+  }
+  ws.close();
 }

@@ -2,23 +2,20 @@
  * 漏斗发牌 + 难度验收（纯 JS，零 DOM）。
  *
  * ── 本轮重做 ──────────────────────────────────────────────────────
- * 1. 单堆几何由 layout.js 给出；先用 peelOrder() 算出一条合法的全消除顺序
- *    order[0..N-1]，同一波可点牌之间随机打散（不按 z 排）。
- * 2. 按 order 位置把牌分三带，用「同花色三张在 order 里的间距」控制难度：
- *      上带（前 ~30%，宽而易）：花色种类少（L2 3 种，L1 3 种），三张紧邻，
- *                              开局就同时可点，槽位基本不超过 5。
- *      中带（~40%，乱）：花色放开，每 MID_SPAN 个组轮转一次，组内三张间距
- *                        = MID_SPAN，槽位经常停在 5~6 格。
- *      底带（后 ~30%，烂）：CROSS_GROUPS 个跨带组，第一张放在中带尾部，
- *                        第二、三张埋在 order 最深处且被不同方向的牌压着；
- *                        其余底带组用低并发推进，给半成品留足槽位。
- * 3. 可解性证书：沿 order 重放（真实槽位规则），槽位始终未满 7 且最终清空。
- *    构造期与爬山期都用 replayTypes() 实时校验，verify() 用带几何的重放复核。
- *    证书只证明「不是靠少牌造假死局」，不代表好走。
- * 4. 难度调优方案 a（生成期爬山）：固定几何与 order，反复交换两张牌的花色；
- *    每次交换先用重放证书确认仍可解，再用贪心机器人跑若干局估计通关率，
- *    通关率下降才保留。HILL_STEPS / HILL_PROBES 控制成本（默认关闭）。
- * 5. 每种花色的张数必然是 3 的倍数（每个组恰好 3 张同花色，交换只换位置不改总数）。
+ * 1. 单堆几何由 layout.js 给出（第 2 关葫芦轮廓）；先用 peelOrder() 算出
+ *    一条合法的全消除顺序 order[0..N-1]，同一波可点牌之间随机打散。
+ * 2. 按 order **位置**分三带（BAND_RATIOS = 25% / 30% / 45%，段长对齐 3）：
+ *      上带（容易消、花色多）：≥12 种花色，同花色三张紧邻 → 同时可点；
+ *                              开局可点牌里花色 ≥10 种、≥6 种各有 ≥3 张。
+ *      中带（乱、开始耗道具）：每组三张间距拉开到 span=3 的批次轮转，
+ *                              部分组的成员自然落进下带边界之后。
+ *      下带（牌多、暗藏死局）：同花色三张在批次内被拉远，末批三张的
+ *                              「最后一张」正好落在 order 最深处。
+ * 3. 可解性证书：沿 order 重放（真实槽位规则），槽位始终未满 7 且最终清空；
+ *    同时挂起的花色 ≤6（span=3 时峰值 3）。verify() 用带几何的重放复核。
+ * 4. 难度调优仍是方案 b：tools/tune_pool.mjs 离线筛 seed 池；
+ *    生成期爬山（方案 a）保留为可选项，HILL_STEPS 默认 0。
+ * 5. 每种花色的张数必然是 3 的倍数（每个组恰好 3 张同花色）。
  */
 import {
   TILE_W,
@@ -28,9 +25,10 @@ import {
   SLOT_CAPACITY,
   LEVEL_SPEC,
   FUNNEL,
+  BAND_RATIOS,
   levelParams,
 } from './config.js';
-import { TYPE_LIST } from './tiles.js';
+import { suitsFor } from './tiles.js';
 import { makeRng, randomSeed } from './rng.js';
 import { pickPoolSeed } from './seed_pool.js';
 import {
@@ -122,72 +120,43 @@ function fillBatches(types, start, end, span, pick) {
 }
 
 /**
- * 第 2 关漏斗：返回长度 n 的花色序列 + 三带边界 + 组结构说明。
+ * 第 2 关漏斗：按 order **位置**分三带（BAND_RATIOS 25 / 30 / 45）。
  *
- * 三带边界**对齐到几何剥离波次的边界**（peelOrder 的 waves），这样同一个波
- * 不会同时混进两个带的花色池，波末不会莫名其妙挂单 —— 前期才能真正顺。
+ * · 上带 [0,topEnd)：19 个紧邻三消组，花色从 ≥12 种的池里轮转。
+ *   开局可点的牌就是 order 的第一波，它们几乎全在上带里，
+ *   于是「不同花色 ≥10 种、≥6 种各有 ≥3 张」自然成立。
+ * · 中带 [topEnd,midEnd)：span=3 的批次轮转，组内三张间距 3；
+ *   中带尾部那一批会跨过 midEnd，于是同一组的成员落进下带。
+ * · 下带 [midEnd,n)：同样 span=3 轮转，但花色全放开（15 种），
+ *   末批三组的第 3 张正好落在 order 最深处 ——「最后一张埋在最深处」。
+ *   批内同时挂起的花色只有 3 种（≤6），证书稳定通过。
  *
- * · 上带 [0,aEnd)：TOP_SUITS 种花色、三张紧邻。只有 3 种花色时鸽巢原理保证
- *   任意点法槽位都 ≤ 6，开局随便点也不会死。
- * · 中带 [aEnd,bEnd-K)：MID_SPAN 个组一批轮转，组内三张间距 = MID_SPAN，
- *   槽位经常停在 5~6 格；批末全部凑齐消除。
- * · 跨带陷阱：K 个花色的第 1 张放在中带尾部 [bEnd-K,bEnd)，
- *   第 2、3 张成对埋在 order 最末 [n-2K,n)；这几张牌在几何上被不同方向压着。
- * · 底带 [bEnd,n-2K)：K 张孤张全程占位，因此这里用低并发（span=1）推进。
- *
- * 所有段长都是 3 的倍数，每个组恰好 3 张同花色 → 每种花色张数必然 %3==0。
+ * 段长全部是 3 的倍数，每个组恰好 3 张同花色 → 每种花色张数必然 %3==0。
  * 构造完用 replayTypes() 复核证书；不通过则降级为全紧邻三消的安全序列。
  */
 export function buildFunnelSequence(n, waves, suits, cfg, rng) {
   const c = cfg || FUNNEL;
-  const W = waves.length;
-  let topWaves = Math.max(1, Math.round(W * c.TOP_RATIO));
-  let bottomWaves = Math.max(1, Math.round(W * (1 - c.TOP_RATIO - c.MID_RATIO)));
-  if (topWaves + bottomWaves > W - 1) {
-    bottomWaves = Math.max(1, W - 1 - topWaves);
-  }
-  if (topWaves + bottomWaves > W - 1) topWaves = Math.max(1, W - 1 - bottomWaves);
-  const midWaveEnd = W - bottomWaves;
-
-  // 波次起点就是前 i 个波的累计张数；再对齐到 3 的倍数
-  const aEnd = Math.max(3, Math.min(n - 9, align3(waves[topWaves][0])));
-  const bEnd = Math.max(aEnd + 9, Math.min(n - 9, align3(waves[midWaveEnd][0])));
-  // K 必须是 3 的倍数，才能保证每一段长度都是 3 的倍数、每种花色张数 %3==0
-  const K = Math.floor(Math.max(0, Math.min(c.CROSS_GROUPS, 3, Math.floor((n - bEnd) / 3), Math.floor((bEnd - aEnd) / 3))) / 3) * 3;
-  const tailStart = n - 2 * K;
-
-  const span = Math.max(1, Math.min(c.MID_SPAN, 3));
+  void waves;
+  const topEnd = Math.max(3, Math.min(n - 6, align3(Math.round(n * BAND_RATIOS[0]))));
+  const midEnd = Math.min(n - 3, topEnd + Math.max(3, align3(Math.round(n * BAND_RATIOS[1]))));
+  const span = Math.max(1, Math.min(3, c.MID_SPAN));
   const sh = rng.shuffle(suits.slice());
-  // 三带各自隔离的花色池：上带 3 种（鸽巢保证任意点法都不死）、
-  // 中带另 3 种（放开一点，批次轮转把槽位顶到 5~6）、
-  // 底带把剩下的 9 种全放开 —— 难度集中在这里。
-  const topN = Math.max(1, Math.min(c.TOP_SUITS, suits.length));
-  const topSuits = sh.slice(0, topN);
-  const midSuits = sh.slice(topN, Math.min(sh.length, topN + span));
-  const bottomSuits = sh.slice(topN + span);
-  const poolMid = midSuits.length ? midSuits : topSuits.slice();
-  const poolBottom = bottomSuits.length ? bottomSuits : sh.slice();
+  const topN = Math.max(12, Math.min(c.TOP_SUIT_MIN, suits.length));
+  const topSuits = sh.slice(0, Math.min(topN, sh.length));
 
   const types = new Array(n);
-  const pickTop = suitPicker(topSuits, rng);
-  const pickMid = suitPicker(poolMid, rng);
-
-  // 上带：三张紧邻（span=1）
-  fillBatches(types, 0, aEnd, 1, pickTop);
-  // 中带：批次轮转（span 个组一批，组内三张间距 = span）
-  fillBatches(types, aEnd, bEnd - K, span, pickMid);
-
-  // 跨带组：第 1 张在中带尾部，第 2、3 张在 order 最深处
-  const crossSuits = rng.shuffle(poolBottom.slice()).slice(0, K);
-  for (let j = 0; j < K; j++) types[bEnd - K + j] = crossSuits[j];
-  for (let j = 0; j < K; j++) {
-    types[tailStart + 2 * j] = crossSuits[j];
-    types[tailStart + 2 * j + 1] = crossSuits[j];
+  // 上带：三张紧邻，花色在 12 种里轮转（19 组 → 12 种各 1~2 组）
+  for (let p = 0; p < topEnd; p += 3) {
+    const t = topSuits[Math.floor(p / 3) % topSuits.length];
+    types[p] = t;
+    if (p + 1 < n) types[p + 1] = t;
+    if (p + 2 < n) types[p + 2] = t;
   }
-
-  // 底带主体：K 张孤张全程占位，这里花色全放开、用低并发紧邻组推进
-  const pickBottom = suitPicker(poolBottom, rng);
-  fillBatches(types, bEnd, tailStart, 1, pickBottom);
+  // 中带 / 下带：批次轮转，组内三张间距 = span；花色池放开到全部 15 种
+  const pickMid = suitPicker(suits, rng);
+  fillBatches(types, topEnd, midEnd, span, pickMid);
+  const pickBottom = suitPicker(sh, rng);
+  fillBatches(types, midEnd, n, span, pickBottom);
 
   for (let i = 0; i < n; i++) {
     if (types[i] === undefined) types[i] = suits[i % suits.length];
@@ -201,18 +170,18 @@ export function buildFunnelSequence(n, waves, suits, cfg, rng) {
     cert = replayTypes(safe);
     return {
       types: safe,
-      bands: { top: [0, aEnd], mid: [aEnd, bEnd], bottom: [bEnd, n] },
+      bands: { top: [0, topEnd], mid: [topEnd, midEnd], bottom: [midEnd, n] },
       cert,
       degraded: true,
-      params: { topN, span, K, aEnd, bEnd, tailStart, topWaves, bottomWaves, midWaveEnd },
+      params: { topN: topSuits.length, span, topEnd, midEnd, ratios: BAND_RATIOS.slice() },
     };
   }
   return {
     types,
-    bands: { top: [0, aEnd], mid: [aEnd, bEnd], bottom: [bEnd, n] },
+    bands: { top: [0, topEnd], mid: [topEnd, midEnd], bottom: [midEnd, n] },
     cert,
     degraded: false,
-    params: { topN, span, K, aEnd, bEnd, tailStart, topWaves, bottomWaves, midWaveEnd },
+    params: { topN: topSuits.length, span, topEnd, midEnd, ratios: BAND_RATIOS.slice() },
   };
 }
 
@@ -292,8 +261,11 @@ function buildEasySequence(n, suits, rng) {
 
 /**
  * 机器人模拟（纯逻辑，无 DOM，不使用任何道具）。
- *   mode='random'：随机点一张可点牌。
- *   mode='greedy'：优先点能立刻消除 / 凑成对的牌，其次点能解锁最多牌的牌。
+ *   mode='random' ：随机点一张可点牌。
+ *   mode='greedy' ：优先点能立刻消除 / 凑成对的牌，其次点能解锁最多牌的牌。
+ *                   o.noise=0.1 即 greedy + 10% 失误（10% 步改成随机点）。
+ *   mode='shallow'：浅层优先 —— 只在当前可点牌里「最靠近表面的一层」
+ *                   （layer 最大）中选择，再用贪心评分。
  * 返回 { win, deadlock, steps, cleared, total, pct }。
  */
 export function simulateRobot(levelData, rng, opt = {}) {
@@ -311,6 +283,11 @@ export function simulateRobot(levelData, rng, opt = {}) {
   const slot = [];
   let steps = 0;
   const maxSteps = o.maxSteps || 20000;
+  // 只用于验收报告的「朴素点法槽位 / 挂起花色」统计，不改任何槽位规则
+  const slotHist = [0, 0, 0, 0, 0, 0, 0, 0];
+  let hangPeak = 0;
+  const track = !!o.track;
+  const result = (r) => (track ? { ...r, slotHist, hangPeak } : r);
   // 增量维护「当前可点牌」：初始为所有入度为 0 的牌，拿走一张后只把新解锁的牌补进来。
   // 爬山会调用上万次机器人模拟，这里省掉每步 O(n) 的全表扫描。
   const free = [];
@@ -320,25 +297,33 @@ export function simulateRobot(levelData, rng, opt = {}) {
 
   while (steps < maxSteps) {
     if (alive === 0 && slot.length === 0) {
-      return { win: true, deadlock: false, steps, cleared: total, total, pct: 1 };
+      return result({ win: true, deadlock: false, steps, cleared: total, total, pct: 1 });
     }
     if (slot.length >= SLOT_CAPACITY) {
-      return { win: false, deadlock: true, steps, cleared: total - alive - slot.length, total, pct: pctOf() };
+      return result({ win: false, deadlock: true, steps, cleared: total - alive - slot.length, total, pct: pctOf() });
     }
     if (!free.length) {
-      return { win: false, deadlock: true, stuck: true, steps, cleared: total - alive - slot.length, total, pct: pctOf() };
+      return result({ win: false, deadlock: true, stuck: true, steps, cleared: total - alive - slot.length, total, pct: pctOf() });
     }
 
     let pick;
     if (mode === 'random' || (o.noise && rng.next() < o.noise)) {
       pick = free[rng.int(0, free.length - 1)];
     } else {
+      // 浅层优先：候选只取「最靠近表面」的那一层（layer 最大）
+      let pool = free;
+      if (mode === 'shallow') {
+        let topLayer = -1;
+        for (let i = 0; i < free.length; i++) if (free[i].layer > topLayer) topLayer = free[i].layer;
+        pool = free.filter((c) => c.layer === topLayer);
+        if (!pool.length) pool = free;
+      }
       const cnt = {};
       for (let i = 0; i < slot.length; i++) cnt[slot[i].type] = (cnt[slot[i].type] || 0) + 1;
       let best = null;
       let bestScore = -Infinity;
-      for (let i = 0; i < free.length; i++) {
-        const c = free[i];
+      for (let i = 0; i < pool.length; i++) {
+        const c = pool[i];
         const n = cnt[c.type] || 0;
         let unlock = 0;
         const dep = graph.dependents[c.id];
@@ -365,6 +350,14 @@ export function simulateRobot(levelData, rng, opt = {}) {
     }
     slot.push(pick);
     steps++;
+    if (track) {
+      slotHist[Math.min(7, slot.length)]++;
+      const kinds = {};
+      for (let i = 0; i < slot.length; i++) kinds[slot[i].type] = 1;
+      let hang = 0;
+      for (const k in kinds) if (Object.prototype.hasOwnProperty.call(kinds, k)) hang++;
+      if (hang > hangPeak) hangPeak = hang;
+    }
 
     const cnt = {};
     for (let i = 0; i < slot.length; i++) cnt[slot[i].type] = (cnt[slot[i].type] || 0) + 1;
@@ -384,7 +377,7 @@ export function simulateRobot(levelData, rng, opt = {}) {
       }
     }
   }
-  return { win: false, deadlock: false, timeout: true, steps, cleared: 0, total, pct: 0 };
+  return result({ win: false, deadlock: false, timeout: true, steps, cleared: 0, total, pct: 0 });
 }
 
 /** 旧接口：模拟「正常玩家」，等价于 greedy + 少量噪声 */
@@ -471,7 +464,7 @@ function baseCard(src, z) {
     h: TILE_H,
     layer: src.layer,
     z,
-    type: TYPE_LIST[0].id,
+    type: 'yaoji',
     state: 'board',
     blocked: false,
     vx: null,
@@ -526,8 +519,8 @@ export function generateLevel(level, seed, opt = {}) {
   if (opt.funnel) cfg = { ...cfg, ...opt.funnel };
   if (opt.tune !== undefined) cfg.HILL_STEPS = opt.tune;
   p.funnel = cfg;
-  const types = opt.types || p.types;
-  const suits = TYPE_LIST.slice(0, types).map((t) => t.id);
+  // 花色集合由 tiles.js 的两张显式清单给出，不再 TYPE_LIST.slice(0, types)
+  const suits = opt.suits || suitsFor(p.level);
   if (opt.log === true && typeof console !== 'undefined' && console.info) {
     console.info(`[level] level=${p.level} seed=${s} cards=${p.cardCount} mode=${p.mode}`);
   }

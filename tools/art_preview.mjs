@@ -1,5 +1,5 @@
 /**
- * 牌面样张：把 34 种牌放大画在一张图上，方便肉眼检查 Q 版绘制效果。
+ * 牌面样张：把 15 种传统麻将牌放大画在一张图上，方便肉眼检查绘制效果。
  *   node tools/art_preview.mjs
  *   → dist/_tiles.html（直接用浏览器打开）
  */
@@ -13,8 +13,9 @@ const p = (...s) => path.join(root, ...s);
 
 const entry = `
 import { drawTile, TYPE_LIST } from './src/game/tiles.js';
+import { TILE_W, TILE_H } from './src/game/config.js';
 
-const COLS = 7;
+const COLS = 5;
 const TW = 150, TH = 172, GAP = 14;
 const rows = Math.ceil(TYPE_LIST.length / COLS);
 const W = COLS * (TW + GAP) + GAP;
@@ -38,18 +39,23 @@ TYPE_LIST.forEach((t, i) => {
   ctx.fillText(t.id, x + TW / 2, y + TH + 14);
 });
 
-// 小尺寸对照：第 2 关实际牌宽 68 / 槽位牌 80
+// 实际尺寸对照：可点（亮 + 浅色描边） / 被压 1 层 / 被压 4 层
 const small = document.createElement('canvas');
-small.width = 720; small.height = 110;
+const ROW_H = TILE_H + 12;
+small.width = 720; small.height = ROW_H * 3 + 10;
 small.style.display = 'block';
 small.style.marginTop = '8px';
 document.body.appendChild(small);
 const c2 = small.getContext('2d');
 c2.fillStyle = '#3A2A1E';
-c2.fillRect(0, 0, 720, 110);
-['wan-3', 'tiao-5', 'tong-7', 'zi-5', 'wan-9', 'tong-2', 'tiao-1'].forEach((id, i) => {
-  drawTile(c2, 10 + i * 74, 8, 68, 76, id, {});
-  drawTile(c2, 10 + i * 74, 8 + 0, 68, 76, id, { covered: false });
+c2.fillRect(0, 0, 720, small.height);
+const states = [
+  { name: '可点', opt: { playable: true } },
+  { name: '压 1 层', opt: { dimLevel: 1 } },
+  { name: '压 4 层', opt: { dimLevel: 4 } },
+];
+['yaoji', 'zi-zhong', 'tong-5', 'tiao-9', 'zi-dong', 'tong-1'].forEach((id, i) => {
+  states.forEach((st, r) => drawTile(c2, 10 + i * 116, 8 + r * ROW_H, TILE_W, TILE_H, id, st.opt));
 });
 document.title = 'tile sheet';
 `;

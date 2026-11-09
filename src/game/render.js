@@ -386,7 +386,10 @@ export function drawBoard(ctx, game) {
     return;
   }
 
-  const key = `${game.boardRev}|${k.toFixed(3)}|${tileW}|${tileH}`;
+  // 压暗等级由「当前谁被压住」决定，缓存键必须跟着可点牌数一起变
+  let freeCount = 0;
+  for (const c of alive) if (!c.blocked) freeCount++;
+  const key = `${game.boardRev}|${k.toFixed(3)}|${tileW}|${tileH}|${alive.length}|${freeCount}`;
   if (!boardCache || boardCache.key !== key) {
     const c2 = ensureBoardCanvas(ctx, k);
     if (!c2) {
@@ -406,7 +409,8 @@ export function drawBoard(ctx, game) {
     if (game.hoverId !== c.id || c.blocked) continue;
     // hover：轻微上浮 2px（第 6 步规范），不再用大幅放大
     drawTile(ctx, c.x, c.y, tileW, tileH, c.type, {
-      covered: false,
+      dimLevel: 0,
+      playable: true,
       lift: 2,
       glow: 0.85,
     });
@@ -471,6 +475,8 @@ function paintBoard(ctx, game, alive, now) {
   // 单堆绘制顺序：layer 升序 → 同层 y 升序 → x 升序。没有侧堆 / 簇分支。
   // z 由 generator.assignZ 按同一套顺序编号，所以「画在后面的」正好就是「压住别人的」。
   alive.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
+  let maxLayer = 0;
+  for (const c of alive) if (c.layer > maxLayer) maxLayer = c.layer;
 
   // 牌桌绒布垫：把"这些牌是摞在一张桌子上"说清楚，牌堆才有立足的地方
   drawTableMat(ctx);
@@ -512,10 +518,13 @@ function paintBoard(ctx, game, alive, now) {
       }
     }
 
-    // 投影由 drawTile 内部按规范设置（0.5 / blur 8 / offsetY 5），
-    // 绘制后立即重置，不会污染下一张牌。被遮挡牌在牌面绘制里整体压暗 0.35。
+    // 投影由 drawTile 内部按规范设置（0.5 / blur 8 / offsetY 5），绘制后立即重置。
+    // 被压牌按「上方还压了几层」分级压暗 0.45→0.62；可点牌加浅色描边。
+    // 只是着色，不缩放，牌尺寸与强投影规则不变。
+    const dimLevel = c.blocked ? Math.max(1, maxLayer - c.layer) : 0;
     drawTile(ctx, c.x, c.y, tileW, tileH, c.type, {
-      covered: !!c.blocked,
+      dimLevel,
+      playable: !c.blocked,
       scale,
       alpha,
     });
