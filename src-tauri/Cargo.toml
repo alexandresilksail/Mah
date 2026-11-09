@@ -1,0 +1,37 @@
+[package]
+name = "mah-le-mah"
+version = "1.0.0"
+description = "Mah Le Mah - stacked tile triple match"
+authors = ["Mah Le Mah"]
+publisher = "MahLeMah"
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+# 显式声明可执行文件名，与 tauri.conf.json 的 mainBinaryName 保持一致，
+# 避免 bundle 阶段找不到 MahLeMah.exe。
+[[bin]]
+name = "MahLeMah"
+path = "src/main.rs"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# 前端「一键卸载」优先用它删 MahLeMah_Data；Rust 侧 uninstall_app 兜底
+tauri-plugin-fs = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
+incremental = false

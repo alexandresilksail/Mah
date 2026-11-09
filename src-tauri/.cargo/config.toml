@@ -1,0 +1,6 @@
+# 本机没有 MSVC Build Tools（无法提权安装），改用 GNU 工具链交叉编译验证。
+# 正式发布建议在装有 VS2022 Build Tools 的机器上直接用默认 msvc 目标构建，
+# 此时本文件不起作用（只影响 x86_64-pc-windows-gnu 目标）。
+[target.x86_64-pc-windows-gnu]
+linker = "D:/tools/mingw/mingw64/bin/gcc.exe"
+ar = "D:/tools/mingw/mingw64/bin/ar.exe"

@@ -1,0 +1,27 @@
+{
+  "name": "mah-le-mah",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mah Le Mah - an original stacked-tile triple-match casual game",
+  "type": "module",
+  "scripts": {
+    "icons": "python tools/gen_icon.py",
+    "build:web": "node tools/build_web.mjs",
+    "build:legacy": "node tools/build_legacy.mjs",
+    "build:all": "npm run build:web && npm run build:legacy",
+    "release": "python tools/make_release.py",
+    "test": "node test.js && node tools/test_render.mjs",
+    "test:sim": "node test.js",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri",
+    "build:desktop": "tauri build"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.1.0",
+    "@babel/preset-env": "^8.0.7",
+    "@tauri-apps/cli": "^2.1.0",
+    "acorn": "^8.19.0",
+    "esbuild": "^0.28.2"
+  }
+}

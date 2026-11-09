@@ -1,0 +1,14 @@
+# 忽略构建产物与本地临时文件
+node_modules/
+.DS_Store
+Thumbs.db
+# 注意：dist/ 是网页版交付物（单文件游戏），不忽略
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# 本地截图 / 调试
+.shots/
+.build/
+*.log

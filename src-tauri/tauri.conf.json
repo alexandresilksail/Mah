@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Mah了个Mah",
+  "mainBinaryName": "MahLeMah",
+  "version": "1.0.0",
+  "identifier": "com.mahlemah.app",
+  "build": {
+    "frontendDist": "../src",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Mah了个Mah",
+        "width": 480,
+        "height": 854,
+        "minWidth": 380,
+        "minHeight": 676,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "focus": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; media-src 'none'; object-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "publisher": "MahLeMah",
+    "copyright": "Copyright © 2026 Mah Le Mah",
+    "category": "PuzzleGame",
+    "shortDescription": "堆叠卡牌三消休闲小游戏",
+    "longDescription": "Mah 了个 Mah：点击未被遮挡的麻将牌收入底部槽位，三张相同自动消除。槽位 7 格，放满且无法消除即失败，全部消除即通关。",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": []
+  }
+}

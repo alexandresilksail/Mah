@@ -1,0 +1,394 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>Q版牌面样张</title>
+<style>body{margin:0;background:#3A2A1E;display:flex;flex-direction:column;align-items:center;padding:12px}</style>
+</head><body><script>(() => {
+  // src/game/draw.js
+  function rr(ctx2, x, y, w, h, r) {
+    const rad = Math.min(r, w / 2, h / 2);
+    ctx2.beginPath();
+    ctx2.moveTo(x + rad, y);
+    ctx2.lineTo(x + w - rad, y);
+    ctx2.arcTo(x + w, y, x + w, y + rad, rad);
+    ctx2.lineTo(x + w, y + h - rad);
+    ctx2.arcTo(x + w, y + h, x + w - rad, y + h, rad);
+    ctx2.lineTo(x + rad, y + h);
+    ctx2.arcTo(x, y + h, x, y + h - rad, rad);
+    ctx2.lineTo(x, y + rad);
+    ctx2.arcTo(x, y, x + rad, y, rad);
+    ctx2.closePath();
+  }
+  function circle(ctx2, cx, cy, r) {
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, r, 0, Math.PI * 2);
+  }
+  function text(ctx2, str, x, y, o = {}) {
+    const {
+      size = 24,
+      weight = "400",
+      family = '"Segoe UI", "Microsoft YaHei", system-ui, sans-serif',
+      fill = "#fff",
+      align = "center",
+      baseline = "middle",
+      alpha = 1,
+      stroke = null,
+      strokeWidth = 0,
+      lineJoin = "round"
+    } = o;
+    ctx2.save();
+    ctx2.globalAlpha *= alpha;
+    ctx2.font = `${weight} ${size}px ${family}`;
+    ctx2.textAlign = align;
+    ctx2.textBaseline = baseline;
+    ctx2.lineJoin = lineJoin;
+    ctx2.miterLimit = 2;
+    if (stroke && strokeWidth > 0) {
+      ctx2.strokeStyle = stroke;
+      ctx2.lineWidth = strokeWidth;
+      ctx2.strokeText(str, x, y);
+    }
+    ctx2.fillStyle = fill;
+    ctx2.fillText(str, x, y);
+    ctx2.restore();
+  }
+
+  // src/game/tiles.js
+  var WAN_CHARS = ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  var HONORS = ["東", "南", "西", "北", "中", "發", "白"];
+  var TYPE_LIST = (() => {
+    const list = [];
+    for (let i = 1; i <= 9; i++) list.push({ id: `wan-${i}`, kind: "wan", num: i });
+    for (let i = 1; i <= 9; i++) list.push({ id: `tiao-${i}`, kind: "tiao", num: i });
+    for (let i = 1; i <= 9; i++) list.push({ id: `tong-${i}`, kind: "tong", num: i });
+    HONORS.forEach((ch, i) => list.push({ id: `zi-${i + 1}`, kind: "zi", num: i + 1, ch }));
+    return list;
+  })();
+  var TYPE_MAP = Object.fromEntries(TYPE_LIST.map((t) => [t.id, t]));
+  var FACE = "#FFFDF5";
+  var FACE_DIM = "#EFE9DA";
+  var RIM = "#2A6B2E";
+  var RIM_DIM = "#255C29";
+  var BORDER = "#2E7D32";
+  var BORDER_DIM = "#3A7A40";
+  var RED = "#C0392B";
+  var GREEN = "#2E7D32";
+  var GREEN_LIGHT = "#7BB661";
+  var GREEN_DEEP = "#1E5A22";
+  var BLUE_DARK = "#173F6B";
+  var BLUE_LIGHT = "#5B8DBE";
+  var ROUND_FONT = '"Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif';
+  var TONG_POS = {
+    1: [[0, 0]],
+    2: [[0, -0.46], [0, 0.46]],
+    3: [[-0.5, -0.5], [0, 0], [0.5, 0.5]],
+    4: [[-0.44, -0.44], [0.44, -0.44], [-0.44, 0.44], [0.44, 0.44]],
+    5: [[-0.48, -0.48], [0.48, -0.48], [0, 0], [-0.48, 0.48], [0.48, 0.48]],
+    6: [[-0.42, -0.5], [0.42, -0.5], [-0.42, 0], [0.42, 0], [-0.42, 0.5], [0.42, 0.5]],
+    7: [[-0.44, -0.56], [0, -0.4], [0.44, -0.56], [-0.42, 0.16], [0.42, 0.16], [-0.42, 0.62], [0.42, 0.62]],
+    8: [[-0.4, -0.62], [0.4, -0.62], [-0.4, -0.2], [0.4, -0.2], [-0.4, 0.2], [0.4, 0.2], [-0.4, 0.62], [0.4, 0.62]],
+    9: [[-0.52, -0.52], [0, -0.52], [0.52, -0.52], [-0.52, 0], [0, 0], [0.52, 0], [-0.52, 0.52], [0, 0.52], [0.52, 0.52]]
+  };
+  var TIAO_POS = {
+    1: [[0, 0]],
+    2: [[0, -0.44], [0, 0.44]],
+    3: [[0, -0.52], [-0.46, 0.4], [0.46, 0.4]],
+    4: [[-0.44, -0.44], [0.44, -0.44], [-0.44, 0.44], [0.44, 0.44]],
+    5: [[-0.5, -0.5], [0.5, -0.5], [0, 0], [-0.5, 0.5], [0.5, 0.5]],
+    6: [[-0.6, -0.42], [0, -0.42], [0.6, -0.42], [-0.6, 0.42], [0, 0.42], [0.6, 0.42]],
+    7: [[0, -0.62], [-0.6, -0.05], [0, -0.05], [0.6, -0.05], [-0.6, 0.52], [0, 0.52], [0.6, 0.52]],
+    8: [[-0.66, -0.42], [-0.22, -0.42], [0.22, -0.42], [0.66, -0.42], [-0.66, 0.42], [-0.22, 0.42], [0.22, 0.42], [0.66, 0.42]],
+    9: [[-0.55, -0.52], [0, -0.52], [0.55, -0.52], [-0.55, 0], [0, 0], [0.55, 0], [-0.55, 0.52], [0, 0.52], [0.55, 0.52]]
+  };
+  function drawTile(ctx2, x, y, w, h, typeId, opt = {}) {
+    const { covered = false, alpha = 1, scale = 1, lift = 0, glow = 0 } = opt;
+    const type = TYPE_MAP[typeId];
+    if (!type) return;
+    ctx2.save();
+    ctx2.globalAlpha = alpha;
+    if (scale !== 1 || lift !== 0) {
+      const mx = x + w / 2;
+      const my = y + h / 2;
+      ctx2.translate(mx, my - lift);
+      ctx2.scale(scale, scale);
+      ctx2.translate(-mx, -my);
+    }
+    const sprite = spriteFor(ctx2, typeId, w, h, covered);
+    if (sprite) ctx2.drawImage(sprite, x, y, w, h);
+    else paintTile(ctx2, x, y, w, h, type, covered);
+    if (glow > 0) {
+      ctx2.save();
+      ctx2.globalAlpha *= Math.min(1, glow + 0.2);
+      const rad = w * 0.14;
+      ctx2.save();
+      ctx2.shadowColor = "rgba(255, 208, 120, 0.95)";
+      ctx2.shadowBlur = 20;
+      ctx2.strokeStyle = "#FFE6A6";
+      ctx2.lineWidth = 3;
+      rr(ctx2, x - 1, y - 1, w + 2, h - 1, rad + 2);
+      ctx2.stroke();
+      ctx2.restore();
+      ctx2.strokeStyle = "rgba(255, 234, 172, 0.45)";
+      ctx2.lineWidth = 2;
+      rr(ctx2, x - 5, y - 5, w + 10, h + 8, rad + 6);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+    ctx2.restore();
+  }
+  var SPRITE_DPR = 2;
+  var spriteCache = /* @__PURE__ */ new Map();
+  var spriteDisabled = false;
+  function spriteFor(ctx2, typeId, w, h, covered) {
+    if (spriteDisabled) return null;
+    const key = `${typeId}|${w.toFixed(1)}|${h.toFixed(1)}|${covered ? 1 : 0}`;
+    const hit = spriteCache.get(key);
+    if (hit) return hit;
+    const c22 = offscreen(ctx2, w, h);
+    if (!c22) return null;
+    paintTile(c22, 0, 0, w, h, TYPE_MAP[typeId], covered);
+    if (spriteCache.size > 300) spriteCache.clear();
+    spriteCache.set(key, c22.canvas);
+    return c22.canvas;
+  }
+  function offscreen(ctx2, w, h) {
+    const doc = ctx2.canvas && ctx2.canvas.ownerDocument;
+    if (!doc || typeof doc.createElement !== "function") {
+      spriteDisabled = true;
+      return null;
+    }
+    const cv2 = doc.createElement("canvas");
+    cv2.width = Math.max(1, Math.round(w * SPRITE_DPR));
+    cv2.height = Math.max(1, Math.round(h * SPRITE_DPR));
+    const c22 = cv2.getContext("2d");
+    if (!c22) {
+      spriteDisabled = true;
+      return null;
+    }
+    c22.scale(SPRITE_DPR, SPRITE_DPR);
+    return c22;
+  }
+  function paintTile(ctx2, x, y, w, h, type, covered) {
+    const rad = w * 0.14;
+    const thick = Math.max(2, w * 0.026);
+    const fh = h - thick;
+    ctx2.save();
+    ctx2.fillStyle = covered ? RIM_DIM : RIM;
+    rr(ctx2, x, y + thick, w, fh, rad);
+    ctx2.fill();
+    ctx2.fillStyle = covered ? FACE_DIM : FACE;
+    rr(ctx2, x, y, w, fh, rad);
+    ctx2.fill();
+    ctx2.strokeStyle = covered ? "rgba(120,116,104,0.45)" : "rgba(150,146,132,0.6)";
+    ctx2.lineWidth = 1;
+    rr(ctx2, x + 0.5, y + 0.5, w - 1, fh - 1, rad);
+    ctx2.stroke();
+    const bw = Math.max(2, w * 0.022);
+    const inset = bw / 2 + 1.2;
+    ctx2.strokeStyle = covered ? BORDER_DIM : BORDER;
+    ctx2.lineWidth = bw;
+    rr(ctx2, x + inset, y + inset, w - inset * 2, fh - inset * 2, Math.max(2, rad - inset * 0.6));
+    ctx2.stroke();
+    ctx2.strokeStyle = covered ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.95)";
+    ctx2.lineWidth = 1.1;
+    const in2 = inset + bw / 2 + 1.1;
+    rr(ctx2, x + in2, y + in2, w - in2 * 2, fh - in2 * 2, Math.max(1.5, rad - in2 * 0.6));
+    ctx2.stroke();
+    const pad = in2 + 2.5;
+    drawFace(ctx2, type, x + pad, y + pad, w - pad * 2, fh - pad * 2, covered);
+    if (covered) {
+      const p2 = inset + bw * 0.5;
+      ctx2.fillStyle = "rgba(24, 20, 12, 0.28)";
+      rr(ctx2, x + p2, y + p2, w - p2 * 2, fh - p2 * 2, Math.max(2, rad - p2 * 0.6));
+      ctx2.fill();
+    }
+    ctx2.restore();
+  }
+  function faceBox(x, y, w, fh) {
+    const bw = w * 0.65;
+    const bh = fh * 0.7;
+    return {
+      cx: x + w / 2,
+      cy: y + fh / 2,
+      w: bw,
+      h: bh,
+      left: x + (w - bw) / 2,
+      top: y + (fh - bh) / 2
+    };
+  }
+  function drawFace(ctx2, type, x, y, w, fh, covered) {
+    const box = faceBox(x, y, w, fh);
+    const faceColor = covered ? FACE_DIM : FACE;
+    if (type.kind === "wan") return drawWan(ctx2, type, box);
+    if (type.kind === "tiao") return drawTiao(ctx2, type, box);
+    if (type.kind === "tong") return drawTong(ctx2, type, box, faceColor);
+    return drawHonor(ctx2, type, box, faceColor);
+  }
+  function layout(box, pos) {
+    const pts = pos.map(([u, v]) => [box.cx + u * box.w / 2, box.cy + v * box.h / 2]);
+    let dmin = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
+        if (d < dmin) dmin = d;
+      }
+    }
+    if (!Number.isFinite(dmin)) dmin = Math.min(box.w, box.h) * 0.9;
+    return { pts, dmin };
+  }
+  function drawWan(ctx2, type, box) {
+    const numSize = Math.round(box.h * 0.4);
+    const wanSize = Math.round(box.h * 0.255);
+    const strokeW = Math.max(1, numSize * 0.055);
+    text(ctx2, WAN_CHARS[type.num - 1], box.cx, box.cy - box.h * 0.22, {
+      size: numSize,
+      weight: "700",
+      family: ROUND_FONT,
+      fill: RED,
+      stroke: "#FFFFFF",
+      strokeWidth: strokeW
+    });
+    text(ctx2, "萬", box.cx, box.cy + box.h * 0.21, {
+      size: wanSize,
+      weight: "700",
+      family: ROUND_FONT,
+      fill: RED,
+      stroke: "#FFFFFF",
+      strokeWidth: Math.max(1, wanSize * 0.055)
+    });
+  }
+  function drawTong(ctx2, type, box, faceColor) {
+    const pos = TONG_POS[type.num] || TONG_POS[1];
+    const { pts, dmin } = layout(box, pos);
+    const r = Math.min(dmin * 0.46, Math.min(box.w, box.h) * 0.42);
+    for (const [px, py] of pts) ring(ctx2, px, py, r, faceColor);
+  }
+  function ring(ctx2, cx, cy, r, faceColor) {
+    ctx2.fillStyle = BLUE_DARK;
+    circle(ctx2, cx, cy, r);
+    ctx2.fill();
+    ctx2.fillStyle = BLUE_LIGHT;
+    circle(ctx2, cx, cy, r * 0.66);
+    ctx2.fill();
+    ctx2.fillStyle = faceColor;
+    circle(ctx2, cx, cy, r * 0.36);
+    ctx2.fill();
+    ctx2.strokeStyle = BLUE_DARK;
+    ctx2.lineWidth = Math.max(0.8, r * 0.11);
+    circle(ctx2, cx, cy, r * 0.66);
+    ctx2.stroke();
+    if (r > 5) {
+      ctx2.save();
+      ctx2.strokeStyle = "rgba(255,255,255,0.75)";
+      ctx2.lineWidth = Math.max(1, r * 0.2);
+      ctx2.lineCap = "round";
+      ctx2.beginPath();
+      ctx2.arc(cx, cy, r * 0.84, -2.6, -1.95);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+  }
+  function drawTiao(ctx2, type, box) {
+    const pos = TIAO_POS[type.num] || TIAO_POS[1];
+    const { pts, dmin } = layout(box, pos);
+    const swCap = type.num === 1 ? box.w * 0.23 : box.w * 0.32;
+    const sw = Math.min(dmin * 0.48, swCap, box.w * 0.3);
+    const sh = Math.min(sw * (type.num === 1 ? 2 : 2.4), box.h * 0.86);
+    for (const [px, py] of pts) bamboo(ctx2, px, py, sw, sh);
+  }
+  function bamboo(ctx2, cx, cy, w, h) {
+    const bw = Math.max(3, w);
+    const bh = Math.max(8, h);
+    const r = Math.min(bw, bh) * 0.34;
+    const top = cy - bh / 2;
+    ctx2.fillStyle = GREEN;
+    rr(ctx2, cx - bw / 2, top, bw, bh, r);
+    ctx2.fill();
+    ctx2.fillStyle = "rgba(255,255,255,0.28)";
+    rr(ctx2, cx - bw * 0.26, top + bh * 0.24, bw * 0.15, bh * 0.42, bw * 0.075);
+    ctx2.fill();
+    const dotR = Math.max(1.2, bw * 0.42);
+    const dy = top + dotR * 0.92;
+    ctx2.fillStyle = GREEN_LIGHT;
+    circle(ctx2, cx, dy, dotR);
+    ctx2.fill();
+    ctx2.strokeStyle = GREEN_DEEP;
+    ctx2.lineWidth = Math.max(0.5, bw * 0.1);
+    circle(ctx2, cx, dy, dotR);
+    ctx2.stroke();
+    ctx2.strokeStyle = GREEN_DEEP;
+    ctx2.lineWidth = Math.max(0.5, bw * 0.12);
+    ctx2.beginPath();
+    ctx2.moveTo(cx - bw * 0.4, dy + dotR * 1.25);
+    ctx2.lineTo(cx + bw * 0.4, dy + dotR * 1.25);
+    ctx2.stroke();
+    ctx2.strokeStyle = GREEN_DEEP;
+    ctx2.lineWidth = Math.max(0.8, bw * 0.11);
+    rr(ctx2, cx - bw / 2, top, bw, bh, r);
+    ctx2.stroke();
+  }
+  function drawHonor(ctx2, type, box, faceColor) {
+    if (type.ch === "白") {
+      const bw = box.w * 0.8;
+      const bh = box.h * 0.82;
+      ctx2.lineWidth = Math.max(2.2, box.w * 0.075);
+      ctx2.strokeStyle = GREEN;
+      rr(ctx2, box.cx - bw / 2, box.cy - bh / 2, bw, bh, Math.min(bw, bh) * 0.18);
+      ctx2.stroke();
+      ctx2.lineWidth = Math.max(1.1, box.w * 0.03);
+      ctx2.strokeStyle = "rgba(46,125,50,0.55)";
+      rr(ctx2, box.cx - bw * 0.32, box.cy - bh * 0.32, bw * 0.64, bh * 0.64, Math.min(bw, bh) * 0.14);
+      ctx2.stroke();
+      void faceColor;
+      return;
+    }
+    const size = Math.round(box.h * 0.6);
+    const color = type.ch === "發" ? GREEN : RED;
+    text(ctx2, type.ch, box.cx, box.cy, {
+      size,
+      weight: "700",
+      family: ROUND_FONT,
+      fill: color,
+      stroke: "#FFFFFF",
+      strokeWidth: Math.max(1, size * 0.045)
+    });
+  }
+
+  // <stdin>
+  var COLS = 7;
+  var TW = 150;
+  var TH = 172;
+  var GAP = 14;
+  var rows = Math.ceil(TYPE_LIST.length / COLS);
+  var W = COLS * (TW + GAP) + GAP;
+  var H = rows * (TH + GAP) + GAP + 40;
+  var cv = document.createElement("canvas");
+  cv.width = W;
+  cv.height = H;
+  document.body.appendChild(cv);
+  var ctx = cv.getContext("2d");
+  ctx.fillStyle = "#3A2A1E";
+  ctx.fillRect(0, 0, W, H);
+  TYPE_LIST.forEach((t, i) => {
+    const c = i % COLS, r = Math.floor(i / COLS);
+    const x = GAP + c * (TW + GAP);
+    const y = GAP + r * (TH + GAP);
+    drawTile(ctx, x, y, TW, TH, t.id, {});
+    ctx.fillStyle = "rgba(255,240,210,0.55)";
+    ctx.font = "600 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(t.id, x + TW / 2, y + TH + 14);
+  });
+  var small = document.createElement("canvas");
+  small.width = 720;
+  small.height = 110;
+  small.style.display = "block";
+  small.style.marginTop = "8px";
+  document.body.appendChild(small);
+  var c2 = small.getContext("2d");
+  c2.fillStyle = "#3A2A1E";
+  c2.fillRect(0, 0, 720, 110);
+  ["wan-3", "tiao-5", "tong-7", "zi-5", "wan-9", "tong-2", "tiao-1"].forEach((id, i) => {
+    drawTile(c2, 10 + i * 74, 8, 68, 76, id, {});
+    drawTile(c2, 10 + i * 74, 8 + 0, 68, 76, id, { covered: false });
+  });
+  document.title = "tile sheet";
+})();
+</script></body></html>
