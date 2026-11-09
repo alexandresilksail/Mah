@@ -1,230 +1,205 @@
 /**
- * 离线难度调优工具（方案 b）：生成「通过第三轮验收的第 2 关 seed 池」。
+ * v2.0.0 —— 第 2 关验收 seed 池离线筛选（方案 b：离线扫描 + 运行时查表）。
  *
- *   node tools/tune_pool.mjs [候选数] [池大小] [贪心探针数]
- *   npm run tune:pool
+ *   node tools/tune_pool.mjs [候选数] [目标池大小] [贪心探针数] [起始 seed]
+ *   例：node tools/tune_pool.mjs 3000 120 3
  *
- * 对每个候选 seed 生成一局真实第 2 关，逐项筛：
- *   1. 几何硬约束：222 张 / 7 层 / 15 花色 / 每种 %3==0 / 支撑 / 晶格 /
- *      单堆连通 / 半格晶格 / 包围盒不越界 / 肚子宽度 / 上层矩形与填充率；
- *   2. 压迫感五项（1.4 节）：开局可点 14%~20%、顶层占比 ≥40%、
- *      第 0–1 层被压 ≥90%、平均压深 ≥4.0、遮挡图最长链 = 7；
- *   3. 发牌：证书 + verify 通过、上带 ≥12 种花色、开局可点 ≥10 种花色
- *      且 ≥6 种各有 ≥3 张、沿 order 挂起花色 ≤6；
- *   4. 难度：验收随机源下 random / greedy / greedy+10%失误 / 浅层优先 greedy
- *      四种机器人全不通关；另用多个泛化随机源复核 greedy 不通关；
- *      greedy 失败进度 ≥0.60（软指标「中位数 ≥65%」的调优目标）。
+ * ── 为什么不再用「greedy 通关率 ≤20%」当硬门槛 ──────────────────────
+ * 需求 5.1：单一机器人通关率不能直接代表真实玩家难度。并且在 SLOT_CAPACITY=7、
+ * 波次剥离顺序下，开局可点的 ~23 张牌正好是 order 的前 23 位；证书要求这
+ * 23 张牌的槽位峰值 ≤6，数学上必然有约 6 组「三张同花色同时可点」。
+ * 拥有全部牌面信息的贪心机器人因此必然高通关率 —— 只能证明关卡可解，
+ * 不能证明关卡简单。v1 用它做硬门槛，6000 个候选只录取 1 个，是模型错误。
  *
- * 通过者写入 src/game/seed_pool.js（≥100 个）。运行时只查表 + 确定性生成，
- * 不受单局 400ms 预算约束。
+ * ── v2 模型 ────────────────────────────────────────────────────────
+ * 硬门槛（保证合法、公平、可解，不放宽）：
+ *   1. 16 种牌型全出现、每种张数 %3==0、总数 240、证书 + verify 通过；
+ *   2. 半格晶格 / 单连通 / 同层零重叠 / 跨区域交叉遮挡 > 0；
+ *   3. 压迫感：开局可点 15~45 张、平均压深 ≥3、底层被压 ≥85%、可点花色 ≥8；
+ *   4. 随机机器人 0 通关（技巧有意义）；
+ *   5. lookahead / montecarlo / search 至少一条能通关（不是不可解死局）。
+ * 排序指标（复合难度指数，越高越难且仍公平）：
+ *   naiveFailure 0.30 + mistakeGap 0.20 + lateDeath 0.20
+ *   + pressure 0.15 + diversity 0.15
+ * 扫描全部候选后取前 TARGET 个，输出 src/game/seed_pool.js。
  */
-import { writeFile } from 'node:fs/promises';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { generateLevel, simulateRobot, verify } from '../src/game/generator.js';
-import { pressureStats, countComponents, isHalfLattice, hasSupport, overlapArea } from '../src/game/layout.js';
-import { SUITS_L2 } from '../src/game/tiles.js';
+import { generateLevel, validateLevel, verify } from '../src/game/generator.js';
+import { simulateRobot } from '../src/game/robots.js';
 import { makeRng } from '../src/game/rng.js';
-import {
-  TILE_W, TILE_H, TILE_AREA, BOARD_BAND, CONNECT_PAD, LAYER_SHAPE, BAND_RATIOS,
-} from '../src/game/config.js';
+import { pressureStats, sameLayerOverlapCount, countComponents, isHalfLattice } from '../src/game/layout.js';
+import { VERSION, LEVEL_SPEC, DIFFICULTY } from '../src/game/config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CANDIDATES = parseInt(process.argv[2] || '9000', 10);
-const WANT = parseInt(process.argv[3] || '220', 10);
-const NRNG = parseInt(process.argv[4] || '5', 10);
-const VERIFY_XOR = 0xabcdef;
-const XOR = [VERIFY_XOR, 0x13579bdf, 0x2468ace0, 0x55aa55aa, 0x0f0f0f0f, 0x31415926, 0x27182818, 0xdeadbeef];
+const CANDIDATES = Math.max(50, parseInt(process.argv[2] || '3000', 10));
+const TARGET = Math.max(10, parseInt(process.argv[3] || '120', 10));
+const PROBES = Math.max(2, parseInt(process.argv[4] || '3', 10));
+const SEED0 = parseInt(process.argv[5] || '7000', 10);
+const W = DIFFICULTY.pool.weights;
+const CACHE = path.join(root, '.build', 'pool_candidates.json');
+const RANK_ONLY = process.argv.includes('--rank-only');
 
-/** 一局的全部结构 / 压迫感 / 发牌检查（不含耗时的机器人） */
-function inspect(d) {
-  const cards = d.cards;
-  if (cards.length !== 222) return null;
-  const cnt = {};
-  const byLayer = {};
-  for (const c of cards) {
-    cnt[c.type] = (cnt[c.type] || 0) + 1;
-    (byLayer[c.layer] = byLayer[c.layer] || []).push(c);
-  }
-  if (Object.keys(cnt).length !== 15) return null;
-  if (!Object.values(cnt).every((n) => n % 3 === 0)) return null;
-  if (Object.keys(byLayer).length !== 7) return null;
-  for (const t of SUITS_L2) if (!cnt[t]) return null;
+const t0 = Date.now();
+let passed = [];
+let checked = 0, certPass = 0, geoPass = 0;
+const reject = { generate: 0, cert: 0, geometry: 0, pressure: 0, freeKinds: 0, random: 0, strong: 0 };
 
-  let noSup = 0;
-  let same = 0;
-  let out = 0;
-  for (let li = 1; li < 7; li++) {
-    const lower = byLayer[li - 1] || [];
-    for (const c of byLayer[li]) if (!hasSupport(c, lower)) noSup++;
-  }
-  for (const li of Object.keys(byLayer)) {
-    const a = byLayer[li];
-    for (let i = 0; i < a.length; i++) {
-      for (let j = i + 1; j < a.length; j++) if (overlapArea(a[i], a[j]) > 0) same++;
-    }
-  }
-  for (const c of cards) {
-    if (c.x < BOARD_BAND.left || c.x + TILE_W > BOARD_BAND.right ||
-        c.y < BOARD_BAND.top || c.y + TILE_H > BOARD_BAND.bottom) out++;
-  }
-  if (noSup || same || out || !isHalfLattice(cards) || countComponents(cards, CONNECT_PAD) !== 1) return null;
-
-  // 层宽：第 2、3 层比第 0 层至少宽 TILE_W/2
-  const width = (li) => {
-    const a = byLayer[li];
-    return Math.max(...a.map((c) => c.x + TILE_W)) - Math.min(...a.map((c) => c.x));
-  };
-  const w0 = width(0);
-  if (width(2) < w0 + LAYER_SHAPE.bellyExtraPx) return null;
-  if (width(3) < w0 + LAYER_SHAPE.bellyExtraPx) return null;
-
-  // 第 5、6 层完整矩形；第 4 层填充率 ≥85%；第 0–3 层 80%~90% + ≥2 边缘缺口
-  const gridOf = (li) => {
-    const a = byLayer[li];
-    const minX = Math.min(...a.map((c) => c.x));
-    const minY = Math.min(...a.map((c) => c.y));
-    const cols = Math.round((Math.max(...a.map((c) => c.x + TILE_W)) - minX) / TILE_W);
-    const rows = Math.round((Math.max(...a.map((c) => c.y + TILE_H)) - minY) / TILE_H);
-    return { cols, rows, cells: cols * rows, minX, minY };
-  };
-  for (let li = 0; li < 7; li++) {
-    const g = gridOf(li);
-    const fill = byLayer[li].length / g.cells;
-    if (li >= 5) { if (fill !== 1) return null; }
-    else if (li === 4) { if (fill < LAYER_SHAPE.topFillMin) return null; }
-    else if (fill < LAYER_SHAPE.fillMin || fill > LAYER_SHAPE.fillMax) return null;
-    if (li <= 3) {
-      // 边缘缺口数
-      const set = new Set(byLayer[li].map((c) => `${Math.round((c.x - g.minX) / TILE_W)},${Math.round((c.y - g.minY) / TILE_H)}`));
-      let edgeGaps = 0;
-      for (let r = 0; r < g.rows; r++) {
-        for (let c2 = 0; c2 < g.cols; c2++) {
-          if (r === 0 || r === g.rows - 1 || c2 === 0 || c2 === g.cols - 1) {
-            if (!set.has(`${c2},${r}`)) edgeGaps++;
-          }
-        }
-      }
-      if (edgeGaps < LAYER_SHAPE.minEdgeGaps) return null;
-    }
-  }
-
-  const ps = pressureStats(cards);
-  if (ps.freeRatio < 0.14 || ps.freeRatio > 0.20) return null;
-  if (ps.topShare < 0.40) return null;
-  if (ps.bottomCovered < 0.90) return null;
-  if (ps.avgPressDepth < 4.0) return null;
-  if (ps.longestChain !== 7) return null;
-
-  // 发牌结构
-  if (!d.certificate.ok || !verify(d)) return null;
-  if (d.bands.top[1] % 3 !== 0 || Math.abs(d.bands.top[1] / 222 - BAND_RATIOS[0]) > 0.02) return null;
-  if ((d.bands.mid[1] - d.bands.top[1]) % 3 !== 0) return null;
-  const topKinds = new Set(d.typeSeq.slice(0, d.bands.top[1])).size;
-  if (topKinds < 12) return null;
-  const wave0 = d.waves[0][1];
-  const first = d.order.slice(0, wave0).map((id) => cards.find((c) => c.id === id));
-  const kinds = {};
-  for (const c of first) kinds[c.type] = (kinds[c.type] || 0) + 1;
-  if (Object.keys(kinds).length < 10) return null;
-  if (Object.values(kinds).filter((n) => n >= 3).length < 6) return null;
-  // 沿 order 重放时同时挂起的花色 ≤6
-  const seen = {};
-  let hangPeak = 0;
-  for (let i = 0; i < d.typeSeq.length; i++) {
-    const t = d.typeSeq[i];
-    seen[t] = ((seen[t] || 0) + 1) % 3;
-    const hang = Object.values(seen).filter((n) => n > 0).length;
-    if (hang > hangPeak) hangPeak = hang;
-  }
-  if (hangPeak > 6) return null;
-  return { ps, hangPeak, topKinds };
+/** 复合难度指数：权重全部来自 DIFFICULTY.pool.weights，便于离线重排不需要重跑机器人 */
+function indexOf(x) {
+  return W.naiveFailure * x.naiveFailure + W.mistakeGap * x.mistakeGap
+    + W.lateDeath * x.lateDeath + W.pressure * x.pressureV + W.diversity * x.diversity;
 }
 
-const pool = [];
-const losePcts = [];
-const t0 = Date.now();
-let tried = 0;
-let geoPass = 0;
+console.log(`[tune_pool] v${VERSION} 扫描 ${CANDIDATES} 候选 · 目标池 ${TARGET} · 探针 ${PROBES} · 模型=复合难度指数`);
 
-for (let seed = 1; seed <= CANDIDATES && pool.length < WANT; seed++) {
-  tried++;
-  const d = generateLevel(2, seed);
-  const info = inspect(d);
-  if (!info) continue;
+if (RANK_ONLY) {
+  // 离线重排：复用上一次扫描的原始指标，只按当前权重重新打分，秒级完成
+  if (!existsSync(CACHE)) {
+    console.error(`[tune_pool] 缺少 ${CACHE}，请先完整扫描一次`);
+    process.exit(1);
+  }
+  const raw = JSON.parse(readFileSync(CACHE, 'utf8'));
+  passed = raw.list.map((x) => ({ ...x, score: indexOf(x) }));
+  checked = raw.checked; certPass = raw.certPass; geoPass = raw.geoPass;
+  console.log(`[tune_pool] --rank-only 复用 ${checked} 个候选的缓存指标 · 权重 ${JSON.stringify(W)}`);
+} else {
+for (let i = 0; i < CANDIDATES; i++) {
+  const seed = (SEED0 + i * 2654435761) >>> 0;
+  let d;
+  try { d = generateLevel(2, seed); } catch (e) { reject.generate++; continue; }
+  checked++;
+
+  const v = validateLevel(d);
+  if (!v.ok || !verify(d) || !d.certificate.ok) { reject.cert++; continue; }
+  certPass++;
+  if (d.cards.length !== LEVEL_SPEC[2].cardCount) { reject.cert++; continue; }
+  if (!isHalfLattice(d.cards) || countComponents(d.cards) !== 1 || sameLayerOverlapCount(d.cards) !== 0) { reject.geometry++; continue; }
+  if (d.crossOcclusion.pairs <= 0) { reject.geometry++; continue; }
   geoPass++;
 
-  // 最便宜的一发：验收源 greedy
-  const vr = makeRng((seed ^ VERIFY_XOR) >>> 0);
-  const g0 = simulateRobot(d, vr, { mode: 'greedy' });
-  if (g0.win || g0.pct < 0.60 || g0.pct > 0.99) continue;
+  const ps = pressureStats(d.cards);
+  if (d.visible < 15 || d.visible > 45) { reject.pressure++; continue; }
+  if (ps.avgPressDepth < DIFFICULTY.pool.minAvgPressDepth || ps.bottomCovered < DIFFICULTY.pool.minBottomCovered) { reject.pressure++; continue; }
+  const freeKind = {};
+  for (let k = 0; k < ps.freeIds.length; k++) freeKind[d.cards[ps.freeIds[k]].type] = 1;
+  let kindN = 0;
+  for (const k in freeKind) if (Object.prototype.hasOwnProperty.call(freeKind, k)) kindN++;
+  if (kindN < DIFFICULTY.pool.minFreeKinds) { reject.freeKinds++; continue; }
 
-  // 验收源下的另外三种机器人
-  const rnd = simulateRobot(d, makeRng((seed ^ VERIFY_XOR) >>> 0), { mode: 'random' });
-  if (rnd.win) continue;
-  const noisy = simulateRobot(d, makeRng((seed ^ VERIFY_XOR) >>> 0), { mode: 'greedy', noise: 0.1 });
-  if (noisy.win) continue;
-  const shallow = simulateRobot(d, makeRng((seed ^ VERIFY_XOR) >>> 0), { mode: 'shallow' });
-  if (shallow.win) continue;
+  const rnd = simulateRobot(d, makeRng((seed ^ 0xabcdef) >>> 0), { mode: 'random' });
+  if (rnd.win) { reject.random++; continue; }
 
-  // 泛化：多种随机源下 greedy 仍不通关
-  let wins = 0;
-  const pcts = [g0.pct];
-  for (let k = 1; k < NRNG; k++) {
-    const r = simulateRobot(d, makeRng((seed ^ XOR[k % XOR.length]) >>> 0), { mode: 'greedy' });
-    if (r.win) wins++;
-    else pcts.push(r.pct);
+  // 探针：greedy / noisy 各 PROBES 个随机源
+  let greedyWins = 0, noisyWins = 0, slotSum = 0, hangPeak = 0;
+  const failPcts = [];
+  for (let k = 0; k < PROBES; k++) {
+    const pr = (seed ^ 0x13579bdf ^ (k * 0x9e3779b9)) >>> 0;
+    const g = simulateRobot(d, makeRng(pr), { mode: 'greedy', track: true });
+    if (g.win) greedyWins++; else failPcts.push(g.pct);
+    slotSum += g.slotAvg;
+    hangPeak = Math.max(hangPeak, g.hangPeak || 0);
+    const n = simulateRobot(d, makeRng((pr ^ 0x55aa55aa) >>> 0), { mode: 'noisy' });
+    if (n.win) noisyWins++; else failPcts.push(n.pct);
   }
-  if (wins > 0) continue;
 
-  pool.push(seed);
-  losePcts.push(g0.pct);
+  // 强策略可解性：至少一条能通关，避免把「随机死局」误判为高难度
+  let strongWin = 0;
+  const strongDetail = {};
+  for (const mode of ['lookahead', 'montecarlo', 'search']) {
+    const r = simulateRobot(d, makeRng((seed ^ 0x2468ace0) >>> 0), { mode });
+    strongDetail[mode] = !!r.win;
+    if (r.win) strongWin++;
+  }
+  if (strongWin === 0) { reject.strong++; continue; }
+
+  const greedyRate = greedyWins / PROBES;
+  const noisyRate = noisyWins / PROBES;
+  const naiveFailure = 1 - noisyRate;
+  const mistakeGap = Math.max(0, greedyRate - noisyRate);
+  const lateDeath = failPcts.length ? failPcts.reduce((a, b) => a + b, 0) / failPcts.length : 1;
+  const pressureV = Math.min(1, ps.avgPressDepth / 8) * 0.6 + Math.min(1, ps.bottomCovered) * 0.4;
+  const diversity = Math.min(1, kindN / 14);
+  const entry = {
+    seed,
+    greedyRate, noisyRate, lateDeath, kindN,
+    naiveFailure, mistakeGap, pressureV, diversity,
+    avgPressDepth: ps.avgPressDepth, bottomCovered: ps.bottomCovered,
+    slotAvg: slotSum / PROBES, hangPeak, strongWin,
+  };
+  entry.score = indexOf(entry);
+  passed.push(entry);
+  if (checked % 500 === 0) {
+    console.log(`  已检查 ${checked}/${CANDIDATES} · 通过硬门槛 ${passed.length} · 耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+  }
+}
+writeFileSync(CACHE, JSON.stringify({ checked, certPass, geoPass, list: passed }), 'utf8');
 }
 
-losePcts.sort((a, b) => a - b);
-const ms = Date.now() - t0;
-const med = losePcts.length ? losePcts[Math.floor(losePcts.length / 2)] : 0;
+passed.sort((a, b) => b.score - a.score || a.seed - b.seed);
+const pool = passed.slice(0, TARGET);
+const elapsed = Date.now() - t0;
 
-const body = [
-  '/**',
-  ' * 第二关验收 seed 池 —— 由离线调优工具 tools/tune_pool.mjs 生成，请勿手改。',
-  ' *',
-  ' * 每个 seed 都满足：葫芦轮廓几何 / 压迫感五项 / 漏斗发牌证书 / 开局花色条件；',
-  ' * 验收随机源下 random、greedy、greedy+10%失误、浅层优先 greedy 全不通关；',
-  ' * 多种泛化随机源下 greedy 也不通关，失败进度集中在后半段。',
-  ` * 生成耗时 ${ms}ms，扫描 ${tried} 个候选，几何通过 ${geoPass} 个，录取 ${pool.length} 个，`,
-  ` * 失败进度中位 ${(med * 100).toFixed(1)}%。三带比例 ${BAND_RATIOS.join('/')}。`,
-  ' *',
-  ' * 运行时 generateLevel(2) 不传 seed 时从这里抽一个，单局生成仍是纯确定性、约 2ms。',
-  ' */',
-  'export const SEED_POOL = [',
-  ...pool.map((s, i) => `  ${s}${i < pool.length - 1 ? ',' : ''}`),
-  '];',
-  '',
-  '/** 从池里抽一个 seed。rand 可注入以复现（默认 Math.random）。 */',
-  'export function pickPoolSeed(rand = Math.random) {',
-  '  const n = SEED_POOL.length;',
-  '  const i = Math.min(n - 1, Math.max(0, Math.floor(rand() * n)));',
-  '  return SEED_POOL[i];',
-  '}',
-  '',
-  'export const POOL_META = {',
-  `  candidates: ${tried},`,
-  `  geoPass: ${geoPass},`,
-  `  accepted: ${pool.length},`,
-  `  greedyProbes: ${NRNG},`,
-  `  loseProgressMedian: ${med.toFixed(4)},`,
-  `  generateMs: ${ms},`,
-  '};',
-  '',
-].join('\n');
+const avg = (key) => pool.length ? (pool.reduce((a, p) => a + p[key], 0) / pool.length) : 0;
+const stat = {
+  greedyWinRate: avg('greedyRate'), noisyWinRate: avg('noisyRate'),
+  lateDeathProgress: avg('lateDeath'), freeKinds: avg('kindN'),
+  avgPressDepth: avg('avgPressDepth'), bottomCovered: avg('bottomCovered'),
+  slotAvg: avg('slotAvg'), hangPeak: avg('hangPeak'),
+  difficultyIndex: avg('score'),
+};
 
-await writeFile(path.join(root, 'src/game/seed_pool.js'), body, 'utf8');
-console.log(`扫描 ${tried} 个候选，几何通过 ${geoPass} 个，录取 ${pool.length} 个，耗时 ${ms}ms`);
-console.log(`失败进度 min/med/max = ${losePcts[0]?.toFixed(3)} / ${med.toFixed(3)} / ${losePcts[losePcts.length - 1]?.toFixed(3)}`);
-console.log(`写入 src/game/seed_pool.js（${Buffer.byteLength(body, 'utf8')} 字节）`);
-console.log(`前 20 个 seed: ${pool.slice(0, 20).join(',')}`);
-if (pool.length < 100) {
-  console.error('池不足 100 个，请增大候选数后重跑');
+const body = `/**
+ * 第 2 关验收 seed 池 —— 由 tools/tune_pool.mjs 离线生成，请勿手改。
+ *
+ * v${VERSION}：16 种牌型 / 240 张 / 多区域交叉遮挡 / 可解性证书 100%。
+ * 难度模型 = 复合难度指数（naiveFailure / mistakeGap / lateDeath / pressure / diversity），
+ * 不再使用「单一贪心通关率」作为硬门槛：证书在 7 槽位下必然产生约 6 组
+ * 开局同花色三张，完整信息贪心机器人高通关率只证明可解，不代表真实玩家难度。
+ * 扫描 ${checked} 个候选 · 证书通过 ${certPass} · 几何通过 ${geoPass} · 硬门槛通过 ${passed.length} · 录取 ${pool.length}。
+ * 池内均值：greedy ${(stat.greedyWinRate * 100).toFixed(1)}% / noisy ${(stat.noisyWinRate * 100).toFixed(1)}% /
+ * 失败进度 ${(stat.lateDeathProgress * 100).toFixed(1)}% / 开局花色 ${stat.freeKinds.toFixed(1)} /
+ * 平均压深 ${stat.avgPressDepth.toFixed(2)} / 平均槽位 ${stat.slotAvg.toFixed(2)} / 难度指数 ${stat.difficultyIndex.toFixed(4)}。
+ * 生成耗时 ${elapsed}ms。运行时 generateLevel(2) 不传 seed 时从这里抽。
+ */
+export const SEED_POOL = [
+${pool.map((p) => '  ' + p.seed + ',').join('\n')}
+];
+
+export function pickPoolSeed(rand = Math.random) {
+  const n = SEED_POOL.length;
+  const i = Math.min(n - 1, Math.max(0, Math.floor(rand() * n)));
+  return SEED_POOL[i];
+}
+
+export const POOL_META = {
+  version: '${VERSION}',
+  candidates: ${checked},
+  certPass: ${certPass},
+  geoPass: ${geoPass},
+  gatePass: ${passed.length},
+  accepted: ${pool.length},
+  greedyProbes: ${PROBES},
+  difficultyIndex: ${stat.difficultyIndex.toFixed(4)},
+  greedyWinRate: ${stat.greedyWinRate.toFixed(4)},
+  noisyWinRate: ${stat.noisyWinRate.toFixed(4)},
+  lateDeathProgress: ${stat.lateDeathProgress.toFixed(4)},
+  freeKinds: ${stat.freeKinds.toFixed(2)},
+  avgPressDepth: ${stat.avgPressDepth.toFixed(3)},
+  bottomCovered: ${stat.bottomCovered.toFixed(4)},
+  slotAvg: ${stat.slotAvg.toFixed(3)},
+  hangPeak: ${stat.hangPeak.toFixed(2)},
+  generateMs: ${elapsed},
+};
+`;
+
+writeFileSync(path.join(root, 'src/game/seed_pool.js'), body, 'utf8');
+console.log(`[tune_pool] 扫描 ${checked} · 证书 ${certPass} · 几何 ${geoPass} · 硬门槛通过 ${passed.length} · 录取 ${pool.length} · 耗时 ${(elapsed / 1000).toFixed(1)}s`);
+console.log(`[tune_pool] 淘汰分布 ${JSON.stringify(reject)}`);
+console.log(`[tune_pool] 池内难度画像 greedy ${(stat.greedyWinRate * 100).toFixed(1)}% · noisy ${(stat.noisyWinRate * 100).toFixed(1)}% · 失败进度 ${(stat.lateDeathProgress * 100).toFixed(1)}% · 开局花色 ${stat.freeKinds.toFixed(1)} · 平均槽位 ${stat.slotAvg.toFixed(2)} · 挂起峰值 ${stat.hangPeak.toFixed(2)}`);
+console.log(`[tune_pool] 难度指数 ${stat.difficultyIndex.toFixed(4)} → src/game/seed_pool.js`);
+if (pool.length < TARGET) {
+  console.error(`[tune_pool] 池不足 ${TARGET} 个，请增大候选数后重跑`);
   process.exit(1);
 }

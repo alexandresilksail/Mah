@@ -1,60 +1,45 @@
 /**
- * 单堆几何（纯 JS，零 DOM 依赖）。
+ * v2.0.0 —— 两关布局生成（纯 JS，零 DOM 依赖）。
  *
- * ── 第 3 轮：第 2 关改成「葫芦轮廓」 ────────────────────────────────
- * · 层张数基准 54/48/44/36/22/12/6（总和 222），每层按 seed 在 ±2 内浮动，
- *   最后归一化回 222；不再所有 seed 共用一张写死的 plan 表。
- * · 参考列数 9/9/10/10/7/5/3；第 2、3 层是「肚子」，
- *   包围盒宽度 ≥ 第 0 层宽度 + TILE_W/2，且不超出 BOARD_BAND。
- * · 第 5、6 层是完整无缺口矩形、水平居中；第 4 层填充率 ≥85%；
- *   第 0–3 层填充率 80%~90%，每层边缘至少 2 处缺口，不是长方形。
- * · 同层坐标 = 层原点 + (u·TILE_W, v·TILE_H)，同层相交面积恒为 0。
- * · 层原点只取 0 / 半格（x: 0 或 LATTICE_X，y: 0 或 LATTICE_Y），
- *   逐层固定交替，**没有任何随机抖动**；所有坐标落在半格晶格上。
- * · 每张非底层牌必须与下一层至少一张牌相交面积 > 10%（有支撑）。
- * · 缺口用「删除法」挑：优先删掉对下层覆盖没有贡献的格点，
- *   于是底层几乎全被压住，亮牌集中在顶部（压迫感指标由构造保证）。
+ * 相对 v1 的根本变化：删除葫芦单堆，改为 layout_templates.js 的独立模板：
+ *  · 第 1 关 L1_TUTORIAL：3 层紧凑金字塔，教学但不无脑；
+ *  · 第 2 关 L2_MULTI_ZONE：主堆 7 层 + 左右各 3 层盲盒 + 底部 2 层保留区，
+ *    共 15 个互不相同的全局堆叠层（layer），每个区域在坐标上互相咬合，
+ *    因此不同区域之间存在真实的交叉遮挡，而不是各自独立的牌堆。
  *
- * 对外函数：
- *   generateLayout(seed, opt)      → [{ id, x, y, layer, z }]
- *   generateEasyLayout(seed, opt)  → 第 1 关薄壳（保持上一版几何，不动）
- *   planForSeed(seed)              → 第 2 关按 seed 浮动的层计划 + 网格
- *   peelOrder(cards, rand)         → 合法全消除顺序，波内随机打散，附 .waves
- *   pressureStats(cards)           → 压迫感五项指标 + 遮挡图最长链
- *   countComponents / overlapArea / isBlocked / buildBlockerGraph /
- *   hasSupport / isHalfLattice
+ * 不变的几何硬契约：
+ *  · 坐标全落在 (LATTICE_X, LATTICE_Y) = (33,44) 半格晶格上，零随机抖动；
+ *  · 同层相交面积恒为 0（每个全局层号只属于一个区域的一层）；
+ *  · 非底层牌必须被「更低层」的至少一张牌以 >10% 面积支撑；
+ *  · 遮挡 = 存在 z 更高的牌与本牌相交面积 > 阈值；
+ *  · z 全序：layer 升序 → y 升序 → x 升序，与 generator.assignZ 完全一致。
+ *
+ * 对外函数（保持旧导出名 + 新增 v2 统计）：
+ *   generateLayout(seed, opt) / generateEasyLayout / planForSeed
+ *   overlapArea / isBlocked / hasSupport / isHalfLattice / buildBlockerGraph
+ *   countComponents / pressureStats / peelOrder
+ *   regionStats / crossOcclusionStats / sameLayerOverlapCount / layoutReport
  */
 import {
-  TILE_W,
-  TILE_H,
-  TILE_AREA,
-  LATTICE_X,
-  LATTICE_Y,
-  OVERLAP_THRESHOLD,
-  BOARD_BAND,
-  BOARD_CX,
-  BOARD_CY,
-  CONNECT_PAD,
-  LEVEL_SPEC,
-  LAYER_SHAPE,
-  LAYER_OFFSETS,
+  TILE_W, TILE_H, TILE_AREA, LATTICE_X, LATTICE_Y,
+  OVERLAP_THRESHOLD, BOARD_BAND, CONNECT_PAD,
+  LAYER_SHAPE, LEVEL_SPEC,
 } from './config.js';
 import { makeRng, randomSeed } from './rng.js';
+import { templateFor, validateTemplate } from './layout_templates.js';
 
-export { LAYER_OFFSETS };
+export const LAYER_OFFSETS = [[1, 1], [0, 1], [1, 0]];
 
 const THRESH_AREA = OVERLAP_THRESHOLD * TILE_AREA;
 
 /* ==================== 几何工具 ==================== */
 
-/** 两张牌矩形的相交面积（a/b 只需 x、y） */
 export function overlapArea(a, b) {
   const ix = Math.min(a.x + TILE_W, b.x + TILE_W) - Math.max(a.x, b.x);
   const iy = Math.min(a.y + TILE_H, b.y + TILE_H) - Math.max(a.y, b.y);
   return ix > 0 && iy > 0 ? ix * iy : 0;
 }
 
-/** 遮挡判定（几何定义）：存在 z 更高的牌与本牌相交面积 > 阈值 */
 export function isBlocked(card, alive) {
   for (let i = 0; i < alive.length; i++) {
     const o = alive[i];
@@ -64,7 +49,7 @@ export function isBlocked(card, alive) {
   return false;
 }
 
-/** 非底层牌的支撑：下一层至少有一张牌与它相交面积 > 阈值 */
+/** 支撑：任意更低层的一张牌与它相交面积 > 阈值即可（允许跨区域支撑） */
 export function hasSupport(card, lower) {
   for (let i = 0; i < lower.length; i++) {
     if (overlapArea(card, lower[i]) > THRESH_AREA) return true;
@@ -72,7 +57,6 @@ export function hasSupport(card, lower) {
   return false;
 }
 
-/** 所有坐标是否都落在半格晶格上 */
 export function isHalfLattice(cards) {
   for (let i = 0; i < cards.length; i++) {
     const c = cards[i];
@@ -82,7 +66,7 @@ export function isHalfLattice(cards) {
   return true;
 }
 
-/** 「谁压住谁」的图。blockers[lo] = 压住 lo 的更高 z 的牌；dependents[hi] = 被 hi 压住的牌 */
+/** 谁压住谁：blockers[lo] = 压住它的更高 z 牌；dependents[hi] = 被它压住的牌 */
 export function buildBlockerGraph(cards) {
   const blockers = {};
   const dependents = {};
@@ -104,22 +88,18 @@ export function buildBlockerGraph(cards) {
   return { blockers, dependents };
 }
 
-/** 矩形各外扩 pad 像素后的连通分量数（相交即连边，并查集） */
+/** 矩形外扩 pad 后的连通分量数 */
 export function countComponents(cards, pad = CONNECT_PAD) {
   const n = cards.length;
   if (n === 0) return 0;
   const parent = new Array(n);
   for (let i = 0; i < n; i++) parent[i] = i;
   const find = (x) => {
-    while (parent[x] !== x) {
-      parent[x] = parent[parent[x]];
-      x = parent[x];
-    }
+    while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; }
     return x;
   };
   const union = (a, b) => {
-    const ra = find(a);
-    const rb = find(b);
+    const ra = find(a), rb = find(b);
     if (ra !== rb) parent[rb] = ra;
   };
   const W2 = TILE_W + pad * 2;
@@ -136,14 +116,60 @@ export function countComponents(cards, pad = CONNECT_PAD) {
   return roots;
 }
 
+/** 同层重叠对数（必须为 0） */
+export function sameLayerOverlapCount(cards) {
+  let n = 0;
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (cards[i].layer !== cards[j].layer) continue;
+      if (overlapArea(cards[i], cards[j]) > 0) n++;
+    }
+  }
+  return n;
+}
+
+/** 跨区域遮挡对数：不同 region 的两张牌，一张压住另一张 */
+export function crossOcclusionStats(cards) {
+  const byId = {};
+  for (let i = 0; i < cards.length; i++) byId[cards[i].id] = cards[i];
+  const g = buildBlockerGraph(cards);
+  let pairs = 0;
+  const regions = {};
+  for (const id in g.blockers) {
+    if (!Object.prototype.hasOwnProperty.call(g.blockers, id)) continue;
+    const lo = byId[id];
+    for (let k = 0; k < g.blockers[id].length; k++) {
+      const hi = byId[g.blockers[id][k]];
+      if (lo && hi && lo.region !== hi.region) {
+        pairs++;
+        const key = lo.region + '<' + hi.region;
+        regions[key] = (regions[key] || 0) + 1;
+      }
+    }
+  }
+  return { pairs, regions };
+}
+
+/** 区域统计：张数、开局可点数、层数 */
+export function regionStats(cards) {
+  const g = buildBlockerGraph(cards);
+  const out = {};
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    if (!out[c.region]) out[c.region] = { cards: 0, free: 0, layers: {}, minLayer: 99, maxLayer: -1 };
+    const r = out[c.region];
+    r.cards++;
+    if (g.blockers[c.id].length === 0) r.free++;
+    r.layers[c.layer] = (r.layers[c.layer] || 0) + 1;
+    if (c.layer < r.minLayer) r.minLayer = c.layer;
+    if (c.layer > r.maxLayer) r.maxLayer = c.layer;
+  }
+  return out;
+}
+
 /**
  * 压迫感统计（test.js / tune_pool.mjs 共用）。
- *  · freeRatio        ：开局可点牌 / 总数
- *  · topShare         ：可点牌里第 4–6 层的占比
- *  · bottomCovered    ：第 0–1 层被压住的比例
- *  · avgPressDepth    ：平均「压住该牌的牌数」= blockers[id].length 的均值
- *  · longestChain     ：遮挡图（DAG，低 z → 高 z）最长链的节点数 = 7 层叠满
- *  · free / byLayer   ：明细，供发牌用
+ *  freeRatio / topShare / bottomCovered / avgPressDepth / longestChain
  */
 export function pressureStats(cards) {
   const g = buildBlockerGraph(cards);
@@ -162,6 +188,8 @@ export function pressureStats(cards) {
   }
   let pressSum = 0;
   const free = [];
+  let maxLayer = 0;
+  for (let i = 0; i < cards.length; i++) if (cards[i].layer > maxLayer) maxLayer = cards[i].layer;
   for (let i = 0; i < cards.length; i++) {
     const c = cards[i];
     pressSum += g.blockers[c.id].length;
@@ -169,7 +197,7 @@ export function pressureStats(cards) {
   }
   const bottom = cards.filter((c) => c.layer <= 1);
   const bottomCovered = bottom.filter((c) => g.blockers[c.id].length > 0).length;
-  const topFree = free.filter((c) => c.layer >= 4).length;
+  const topFree = free.filter((c) => c.layer >= maxLayer - 2).length;
   return {
     total: cards.length,
     free: free.length,
@@ -178,15 +206,13 @@ export function pressureStats(cards) {
     bottomCovered: bottom.length ? bottomCovered / bottom.length : 1,
     avgPressDepth: cards.length ? pressSum / cards.length : 0,
     longestChain,
+    maxLayer,
     freeIds: free.map((c) => c.id),
     graph: g,
   };
 }
 
-/**
- * 模拟剥离顺序：反复取出当前「未被遮挡」的牌，得到一条合法的全消除顺序。
- * 同一波可点牌之间用随机 key 打散，不按 z、不按坐标。
- */
+/** 剥离顺序：反复取当前未遮挡牌，得到合法全消除顺序；波内随机打散 */
 export function peelOrder(cards, rand) {
   const g = buildBlockerGraph(cards);
   const indeg = {};
@@ -229,64 +255,17 @@ export function peelOrder(cards, rand) {
   return order;
 }
 
-/* ==================== 第 2 关：葫芦轮廓 ==================== */
-
-/** 层原点相位（单位 px）：x 只取 0 或半格，y 逐层 0 / 半格交替 —— 零抖动 */
-const PHASE_X = [0, 0, LATTICE_X, LATTICE_X, LATTICE_X, LATTICE_X, 0];
-const PHASE_Y = [0, LATTICE_Y, 0, LATTICE_Y, 0, LATTICE_Y, 0];
+/* ==================== 按 seed 浮动的层计划 ==================== */
 
 /**
- * 为某一层挑 (cols, rows)：
- *  · 第 0–3 层：填充率 80%~90%，且至少能留 2 个边缘缺口；
- *  · 第 4 层：填充率 ≥85%；
- *  · 第 5、6 层：完整矩形（cols*rows === n），水平居中；
- *  · 第 2、3 层（肚子）：宽度 ≥ 第 0 层宽度 + bellyExtraPx；
- *  · 第 0、1 层列数 ≤9，否则肚子不可能更宽；
- *  · 所有层都放得进 BOARD_BAND 的宽度。
- */
-function chooseGrid(n, li) {
-  const base = LAYER_SHAPE.colsBase[li];
-  const out = [];
-  for (let cols = Math.max(2, base - 3); cols <= 10; cols++) {
-    if (cols * TILE_W > BOARD_BAND.right - BOARD_BAND.left) continue;
-    // 第 0/1 层固定 9 列、第 2/3 层固定 10 列：
-    // 上层只比下层多出半格（33px）才有支撑，多出一整列就会悬空。
-    if (li <= 1 && cols !== 9) continue;
-    if ((li === 2 || li === 3) && cols !== 10) continue;
-    // 半格错位下 n 行上层最多能支撑 n+1 行下层：第 5、6 层行数必须收住，
-    // 否则顶层外沿会出现「悬空牌」（没有下一层支撑）。
-    const maxRows = li === 6 ? 2 : li === 5 ? 3 : 7;
-    for (let rows = li >= 5 ? 2 : 1; rows <= maxRows; rows++) {
-      const cells = cols * rows;
-      if (n > cells) continue;
-      const fill = n / cells;
-      let ok;
-      if (li >= 5) ok = cells === n;
-      else if (li === 4) ok = fill >= LAYER_SHAPE.topFillMin && fill <= 1;
-      else ok = fill >= LAYER_SHAPE.fillMin && fill <= LAYER_SHAPE.fillMax &&
-        cells - n >= LAYER_SHAPE.minEdgeGaps;
-      if (!ok) continue;
-      // 第 0–4 层倾向宽（压住下层、减少底层亮牌）；
-      // 第 5、6 层倾向窄而矮（顶层简单，让第 4 层露出足够亮牌）。
-      const score = li >= 5
-        ? Math.abs(cols - base) * 4 + cols * 3 + Math.abs(rows - 2) * 3
-        : Math.abs(cols - base) * 6 - cols * 1.5 + Math.abs(rows - Math.round(n / cols / 0.85)) * 0.4;
-      out.push({ cols, rows, cells, fill, score });
-    }
-  }
-  out.sort((a, b) => a.score - b.score);
-  return out[0] || null;
-}
-
-/**
- * 按 seed 生成层计划：每层在基准 ±2 内浮动，总和严格 222；
- * 只有每层都能找到合规网格、且肚子宽度达标才接受，否则重新采样。
+ * 第 2 关主堆层计划：基准 ±2 浮动后归一化回主堆总张数。
+ * 模板的 grids 是容量上限，缺口数量随 seed 变化 —— 不是固定答案。
  */
 export function planForSeed(seed) {
-  const base = LAYER_SHAPE.planBase;
+  const base = LAYER_SHAPE.planBase.slice();
   const total = base.reduce((a, b) => a + b, 0);
-  const rng = makeRng((((seed >>> 0) ^ 0x5eedc0de) >>> 0));
-  for (let attempt = 0; attempt < 500; attempt++) {
+  const rng = makeRng(((seed >>> 0) ^ 0x5eedc0de) >>> 0);
+  for (let attempt = 0; attempt < 200; attempt++) {
     const delta = [];
     for (let i = 0; i < base.length; i++) delta.push(rng.int(-LAYER_SHAPE.planJitter, LAYER_SHAPE.planJitter));
     let err = delta.reduce((a, b) => a + b, 0);
@@ -294,329 +273,273 @@ export function planForSeed(seed) {
     while (err !== 0 && guard++ < 300) {
       const i = rng.int(0, base.length - 1);
       const step = err > 0 ? -1 : 1;
-      if (Math.abs(delta[i] + step) <= LAYER_SHAPE.planJitter) {
-        delta[i] += step;
-        err += step;
-      }
+      if (Math.abs(delta[i] + step) <= LAYER_SHAPE.planJitter) { delta[i] += step; err += step; }
     }
     if (err !== 0) continue;
     const plan = base.map((b, i) => b + delta[i]);
-    if (plan.reduce((a, b) => a + b, 0) !== total) continue;
-    const grids = [];
+    const grids = LAYER_SHAPE.colsBase.map((cols, i) => ({ cols, rows: Math.ceil(plan[i] / cols) }));
     let ok = true;
-    for (let li = 0; li < plan.length; li++) {
-      const g = chooseGrid(plan[li], li);
-      if (!g) { ok = false; break; }
-      grids.push(g);
+    for (let i = 0; i < plan.length; i++) {
+      if (plan[i] > grids[i].cols * grids[i].rows || plan[i] < 1) ok = false;
     }
     if (!ok) continue;
-    const w0 = grids[0].cols * TILE_W;
-    if (grids[2].cols * TILE_W < w0 + LAYER_SHAPE.bellyExtraPx) continue;
-    if (grids[3].cols * TILE_W < w0 + LAYER_SHAPE.bellyExtraPx) continue;
-    return { plan, grids, delta };
+    return { plan, grids, delta, total };
   }
-  // 兜底（理论上到不了）：基准表 + 固定网格
-  const plan = base.slice();
-  const grids = plan.map((n, li) => chooseGrid(n, li) || { cols: 9, rows: Math.ceil(n / 9), cells: 9 * Math.ceil(n / 9), fill: n / (9 * Math.ceil(n / 9)) });
-  return { plan, grids, delta: plan.map(() => 0) };
+  return { plan: base.slice(), grids: LAYER_SHAPE.colsBase.map((cols, i) => ({ cols, rows: Math.ceil(base[i] / cols) })), delta: base.map(() => 0), total };
 }
+
+/* ==================== 模板展开 ==================== */
 
 function inBand(x, y) {
   return x >= BOARD_BAND.left && x + TILE_W <= BOARD_BAND.right &&
     y >= BOARD_BAND.top && y + TILE_H <= BOARD_BAND.bottom;
 }
 
-/**
- * 构造一层：先列出所有「有支撑、在安全区内」的格点，
- * 再用删除法挑缺口 —— 优先删掉对下层覆盖贡献为 0 的格点，
- * 并强制至少 2 个缺口落在边界（不能是完整长方形）。
- */
-function buildLayer(li, n, grid, lower, upperRects, rng) {
-  const { cols, rows } = grid;
-  const px = PHASE_X[li];
-  const py = PHASE_Y[li];
-  const wantLeft = BOARD_CX - (cols * TILE_W) / 2;
-  const wantTop = BOARD_CY - (rows * TILE_H) / 2;
-  const u0 = Math.round((wantLeft - px) / TILE_W);
-  const v0 = Math.round((wantTop - py) / TILE_H);
-  const rectOf = (u, v) => ({ x: px + u * TILE_W, y: py + v * TILE_H });
-
-  const all = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const u = u0 + c;
-      const v = v0 + r;
-      const rect = rectOf(u, v);
-      if (!inBand(rect.x, rect.y)) continue;
-      if (lower.length && !hasSupport(rect, lower)) continue;
-      all.push({ u, v, c, r, rect, edge: r === 0 || r === rows - 1 || c === 0 || c === cols - 1 });
-    }
+/** 把模板展开成「层规格」列表，按全局层号从小到大排序 */
+function specsOf(tpl, seed) {
+  const seedPlan = planForSeed(seed);
+  // 按 seed 给主堆每层做 ±2 浮动，但必须同时满足「总和不变」与「不超过网格容量」。
+  // 直接 clamp 会把向上的浮动截掉、导致总张数变少，所以先按容量收窄上界，
+  // 再把残余误差在有余量的层之间抵消。
+  const core = tpl.zones[0];
+  const base = core.plan.slice();
+  const caps = [];
+  for (let i = 0; i < core.grids.length; i++) caps.push(core.grids[i].cols * core.grids[i].rows);
+  const delta = seedPlan.delta.slice();
+  let err = 0;
+  for (let i = 0; i < delta.length; i++) {
+    const maxUp = Math.min(LAYER_SHAPE.planJitter, caps[i] - base[i]);
+    if (delta[i] > maxUp) delta[i] = maxUp;
+    if (delta[i] < -LAYER_SHAPE.planJitter) delta[i] = -LAYER_SHAPE.planJitter;
+    err += delta[i];
   }
-  if (all.length < n) {
-    if (globalThis.__LAYOUT_DEBUG) console.log(`[buildLayer] li=${li} all=${all.length} < n=${n} (grid ${cols}x${rows})`);
-    return null;
-  }
-  // 四边都必须有牌，否则包围盒会缩水、填充率说法就不成立
-  const hasLeft = all.some((g) => g.c === 0);
-  const hasRight = all.some((g) => g.c === cols - 1);
-  const hasTop = all.some((g) => g.r === 0);
-  const hasBottom = all.some((g) => g.r === rows - 1);
-  if (!hasLeft || !hasRight || !hasTop || !hasBottom) {
-    if (globalThis.__LAYOUT_DEBUG) console.log(`[buildLayer] li=${li} 缺边 ${hasLeft}/${hasRight}/${hasTop}/${hasBottom}`);
-    return null;
-  }
-
-  // 下层每张牌被「本层」压住的次数（只统计本层格点）
-  const cover = new Map();
-  for (let k = 0; k < lower.length; k++) cover.set(lower[k].id, 0);
-  for (let i = 0; i < all.length; i++) {
-    for (let k = 0; k < lower.length; k++) {
-      if (overlapArea(all[i].rect, lower[k]) > THRESH_AREA) {
-        cover.set(lower[k].id, cover.get(lower[k].id) + 1);
-      }
-    }
-  }
-  // 本层同时要为「上一层」提供支撑：上层每个格点至少需要一个本层格点相交 >10%
-  const coverUp = upperRects.map(() => 0);
-  for (let i = 0; i < all.length; i++) {
-    for (let k = 0; k < upperRects.length; k++) {
-      if (overlapArea(all[i].rect, upperRects[k]) > THRESH_AREA) coverUp[k]++;
-    }
-  }
-  // 删除代价 = 会让多少下层牌失去遮挡 + 会让多少上层格点失去支撑（后者权重更高）
-  for (let i = 0; i < all.length; i++) {
-    let cost = 0;
-    for (let k = 0; k < lower.length; k++) {
-      if (overlapArea(all[i].rect, lower[k]) > THRESH_AREA && cover.get(lower[k].id) <= 1) cost++;
-    }
-    for (let k = 0; k < upperRects.length; k++) {
-      if (overlapArea(all[i].rect, upperRects[k]) > THRESH_AREA && coverUp[k] <= 1) cost += 3;
-    }
-    all[i].cost = cost;
-    all[i].jitter = rng.next();
-  }
-
-  const gaps = all.length - n;
-  const remove = new Set();
-  if (li >= 5) {
-    // 第 5、6 层必须完整无缺口
-    if (gaps !== 0) return null;
-  } else {
-    const byCost = all.slice().sort((a, b) => a.cost - b.cost || a.jitter - b.jitter);
-    // 先保证至少 2 个边缘缺口（在代价最低的边缘格点里挑）
-    const edgeFirst = byCost.filter((g) => g.edge).slice(0, Math.min(LAYER_SHAPE.minEdgeGaps, gaps));
-    for (const g of edgeFirst) remove.add(g.u + ',' + g.v);
-    for (let i = 0; i < byCost.length && remove.size < gaps; i++) {
-      const g = byCost[i];
-      // 不允许把四条边整条删空
-      if (g.c === 0 && all.filter((a) => a.c === 0 && !remove.has(a.u + ',' + a.v)).length <= 1) continue;
-      if (g.c === cols - 1 && all.filter((a) => a.c === cols - 1 && !remove.has(a.u + ',' + a.v)).length <= 1) continue;
-      if (g.r === 0 && all.filter((a) => a.r === 0 && !remove.has(a.u + ',' + a.v)).length <= 1) continue;
-      if (g.r === rows - 1 && all.filter((a) => a.r === rows - 1 && !remove.has(a.u + ',' + a.v)).length <= 1) continue;
-      remove.add(g.u + ',' + g.v);
-    }
-    // 极端情况下四边保护让缺口不够，就按代价顺序强制补齐
-    for (let i = 0; i < byCost.length && remove.size < gaps; i++) remove.add(byCost[i].u + ',' + byCost[i].v);
-  }
-  const chosen = all.filter((g) => !remove.has(g.u + ',' + g.v));
-  if (chosen.length !== n) return null;
-  return chosen.map((g) => ({ x: g.rect.x, y: g.rect.y, layer: li, u: g.u, v: g.v }));
-}
-
-/**
- * 第 2 关主布局。返回的 cards 带 id / z（z 与 generator.assignZ 同一套顺序）。
- * 构造后检查压迫感，不合格就换一组缺口随机顺序重来；最多 14 次，取最接近目标的一次。
- */
-function gourdLayout(seed, opt) {
-  const { plan, grids } = planForSeed(seed >>> 0);
-  const startId = opt.startId === undefined ? 0 : opt.startId;
-  const baseRng = makeRng((((seed >>> 0) ^ 0x0b0a0d) >>> 0));
-  const targets = { free: [0.14, 0.20], top: 0.40, bottom: 0.90, depth: 4.0, chain: 7 };
-  // 预计算每一层的全部格点矩形，供下层挑缺口时保护「上层的支撑」
-  const layerRects = grids.map((g, li) => {
-    const px = PHASE_X[li];
-    const py = PHASE_Y[li];
-    const u0 = Math.round((BOARD_CX - (g.cols * TILE_W) / 2 - px) / TILE_W);
-    const v0 = Math.round((BOARD_CY - (g.rows * TILE_H) / 2 - py) / TILE_H);
-    const rects = [];
-    for (let r = 0; r < g.rows; r++) {
-      for (let c = 0; c < g.cols; c++) rects.push({ x: px + (u0 + c) * TILE_W, y: py + (v0 + r) * TILE_H });
-    }
-    return rects;
-  });
-  let best = null;
-  let bestScore = Infinity;
-
-  for (let attempt = 0; attempt < 14; attempt++) {
-    const rng = makeRng((baseRng.int(1, 0x7ffffffe) ^ (attempt * 2654435761)) >>> 0);
-    const byLayer = [];
-    let bad = false;
-    for (let li = 0; li < plan.length; li++) {
-      const lower = li > 0 ? byLayer[li - 1] : [];
-      const upper = li + 1 < plan.length ? layerRects[li + 1] : [];
-      const cells = buildLayer(li, plan[li], grids[li], lower, upper, rng);
-      if (!cells) { bad = true; break; }
-      byLayer.push(cells);
-    }
-    if (bad) continue;
-
-    const cards = [];
-    for (let li = 0; li < byLayer.length; li++) {
-      for (let i = 0; i < byLayer[li].length; i++) cards.push({ ...byLayer[li][i] });
-    }
-    // 整体居中（平移量必须是半格整数倍），并 clamp 到不越界
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const c of cards) {
-      minX = Math.min(minX, c.x); maxX = Math.max(maxX, c.x + TILE_W);
-      minY = Math.min(minY, c.y); maxY = Math.max(maxY, c.y + TILE_H);
-    }
-    const kxMin = Math.ceil((BOARD_BAND.left - minX) / LATTICE_X);
-    const kxMax = Math.floor((BOARD_BAND.right - maxX) / LATTICE_X);
-    const kyMin = Math.ceil((BOARD_BAND.top - minY) / LATTICE_Y);
-    const kyMax = Math.floor((BOARD_BAND.bottom - maxY) / LATTICE_Y);
-    let kx = Math.round((BOARD_CX - (minX + maxX) / 2) / LATTICE_X);
-    let ky = Math.round((BOARD_CY - (minY + maxY) / 2) / LATTICE_Y);
-    kx = Math.max(kxMin, Math.min(kxMax, kx));
-    ky = Math.max(kyMin, Math.min(kyMax, ky));
-    const dx = kx * LATTICE_X;
-    const dy = ky * LATTICE_Y;
-    for (const c of cards) { c.x += dx; c.y += dy; }
-
-    cards.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
-    for (let i = 0; i < cards.length; i++) { cards[i].id = startId + i; cards[i].z = i; }
-    const ps = pressureStats(cards);
-    const score =
-      Math.max(0, targets.free[0] - ps.freeRatio) * 100 +
-      Math.max(0, ps.freeRatio - targets.free[1]) * 100 +
-      Math.max(0, targets.top - ps.topShare) * 30 +
-      Math.max(0, targets.bottom - ps.bottomCovered) * 40 +
-      Math.max(0, targets.depth - ps.avgPressDepth) * 4 +
-      Math.abs(targets.chain - ps.longestChain) * 20 +
-      (countComponents(cards, CONNECT_PAD) !== 1 ? 1000 : 0) +
-      (isHalfLattice(cards) ? 0 : 1000);
-    if (score < bestScore) { bestScore = score; best = cards; }
-    if (score === 0) break;
-  }
-  return best || [];
-}
-
-/* ==================== 第 1 关：保持上一版几何 ==================== */
-
-/** 在晶格上随机生长一个 4-邻接连通团块（第 1 关专用，本轮不动） */
-function growCluster(target, u0, v0, lower, ox, oy, rng) {
-  const key = (u, v) => u + ',' + v;
-  const chosen = new Map();
-  const inFrontier = {};
-  const frontier = [];
-  const rectOf = (u, v) => ({ x: ox + u * TILE_W, y: oy + v * TILE_H });
-  const inBounds = (u, v) => {
-    const r = rectOf(u, v);
-    return r.x >= BOARD_BAND.left && r.x + TILE_W <= BOARD_BAND.right &&
-      r.y >= BOARD_BAND.top && r.y + TILE_H <= BOARD_BAND.bottom;
-  };
-  const supported = (u, v) => lower.length === 0 || hasSupport(rectOf(u, v), lower);
-  const valid = (u, v) => !chosen.has(key(u, v)) && inBounds(u, v) && supported(u, v);
-  const pushFrontier = (u, v) => {
-    const nb = [[u + 1, v], [u - 1, v], [u, v + 1], [u, v - 1]];
-    for (let i = 0; i < nb.length; i++) {
-      const a = nb[i][0], b = nb[i][1], k = key(a, b);
-      if (inFrontier[k] || chosen.has(k)) continue;
-      if (inBounds(a, b) && supported(a, b)) { inFrontier[k] = 1; frontier.push({ u: a, v: b }); }
-    }
-  };
-  const add = (u, v) => { chosen.set(key(u, v), { u, v }); pushFrontier(u, v); };
-  let seedCell = null;
-  for (let ring = 0; ring <= 4 && !seedCell; ring++) {
-    for (let du = -ring; du <= ring && !seedCell; du++) {
-      for (let dv = -ring; dv <= ring; dv++) {
-        if (Math.max(Math.abs(du), Math.abs(dv)) !== ring) continue;
-        if (valid(u0 + du, v0 + dv)) { seedCell = { u: u0 + du, v: v0 + dv }; break; }
-      }
-    }
-  }
-  if (!seedCell) seedCell = { u: u0, v: v0 };
-  add(seedCell.u, seedCell.v);
   let guard = 0;
-  while (chosen.size < target && frontier.length && guard++ < target * 60) {
-    const idx = rng.int(0, frontier.length - 1);
-    const cand = frontier[idx];
-    frontier[idx] = frontier[frontier.length - 1];
-    frontier.pop();
-    delete inFrontier[key(cand.u, cand.v)];
-    if (!valid(cand.u, cand.v)) continue;
-    add(cand.u, cand.v);
+  while (err !== 0 && guard++ < 400) {
+    const i = guard % delta.length;
+    const maxUp = Math.min(LAYER_SHAPE.planJitter, caps[i] - base[i]);
+    if (err > 0 && delta[i] > -LAYER_SHAPE.planJitter) { delta[i]--; err--; }
+    else if (err < 0 && delta[i] < maxUp) { delta[i]++; err++; }
   }
-  if (chosen.size < target) {
-    for (let ring = 1; chosen.size < target && ring <= 12; ring++) {
-      const candidates = [];
-      for (let du = -ring; du <= ring; du++) {
-        for (let dv = -ring; dv <= ring; dv++) {
-          if (Math.max(Math.abs(du), Math.abs(dv)) !== ring) continue;
-          const u = seedCell.u + du, v = seedCell.v + dv;
-          if (valid(u, v)) candidates.push({ u, v });
+  const specs = [];
+  for (let zi = 0; zi < tpl.zones.length; zi++) {
+    const z = tpl.zones[zi];
+    for (let li = 0; li < z.plan.length; li++) {
+      const grid = z.grids[li];
+      const o = z.origin[li];
+      const need = z.name === 'core' && tpl.level === 2
+        ? Math.min(base[li] + delta[li], grid.cols * grid.rows)
+        : z.plan[li];
+      const cells = [];
+      for (let r = 0; r < grid.rows; r++) {
+        for (let c = 0; c < grid.cols; c++) {
+          const x = o[0] + c * TILE_W;
+          const y = o[1] + r * TILE_H;
+          if (!inBand(x, y)) continue;
+          cells.push({
+            x, y, c, r,
+            edge: r === 0 || r === grid.rows - 1 || c === 0 || c === grid.cols - 1,
+            layer: z.stack[li],
+            region: z.name,
+            zoneLayer: li,
+          });
         }
       }
-      for (let i = candidates.length - 1; i > 0; i--) {
-        const j = rng.int(0, i);
-        const t = candidates[i]; candidates[i] = candidates[j]; candidates[j] = t;
-      }
-      for (let i = 0; i < candidates.length && chosen.size < target; i++) add(candidates[i].u, candidates[i].v);
+      specs.push({
+        zone: z, li, cells, need,
+        layer: z.stack[li],
+        gapsMode: z.gaps,
+        cols: grid.cols,
+        rows: grid.rows,
+      });
     }
   }
+  specs.sort((a, b) => a.layer - b.layer || a.zone.name.localeCompare(b.zone.name));
+  return { specs, seedPlan };
+}
+
+/** 挑缺口：优先删「对上层支撑贡献最低」的边缘格点，同时保留四边都有牌 */
+function chooseGaps(spec, supported, upperCells, lowerCards, rng) {
+  const gaps = supported.length - spec.need;
+  if (gaps <= 0) return [];
+  const coverUp = [];
+  for (let i = 0; i < upperCells.length; i++) coverUp.push(0);
+  for (let i = 0; i < supported.length; i++) {
+    for (let k = 0; k < upperCells.length; k++) {
+      if (overlapArea(supported[i], upperCells[k]) > THRESH_AREA) coverUp[k]++;
+    }
+  }
+  const scored = supported.map((cell, idx) => {
+    let cost = 0;
+    for (let k = 0; k < upperCells.length; k++) {
+      if (coverUp[k] <= 1 && overlapArea(cell, upperCells[k]) > THRESH_AREA) cost += 8;
+    }
+    for (let k = 0; k < lowerCards.length; k++) {
+      if (overlapArea(cell, lowerCards[k]) > THRESH_AREA) cost += 0.2;
+    }
+    if (!cell.edge && spec.gapsMode === 'edge') cost += 2.5;
+    return { idx, cell, cost, jitter: rng.next() };
+  });
+  scored.sort((a, b) => a.cost - b.cost || a.jitter - b.jitter);
+  const removed = {};
+  const keys = (cell) => cell.x + ',' + cell.y + ',' + cell.layer;
+  const remainingBySide = () => {
+    const left = [], right = [], top = [], bottom = [];
+    for (let i = 0; i < supported.length; i++) {
+      if (removed[keys(supported[i])]) continue;
+      const c = supported[i];
+      if (c.c === 0) left.push(c);
+      if (c.c === spec.cols - 1) right.push(c);
+      if (c.r === 0) top.push(c);
+      if (c.r === spec.rows - 1) bottom.push(c);
+    }
+    return { left: left.length, right: right.length, top: top.length, bottom: bottom.length };
+  };
   const out = [];
-  chosen.forEach((c) => out.push(c));
+  for (let i = 0; i < scored.length && out.length < gaps; i++) {
+    const cell = scored[i].cell;
+    const k = keys(cell);
+    if (removed[k]) continue;
+    const sides = remainingBySide();
+    // 不要把某一条边整条删空
+    if ((cell.c === 0 && sides.left <= 1) || (cell.c === spec.cols - 1 && sides.right <= 1) ||
+        (cell.r === 0 && sides.top <= 1) || (cell.r === spec.rows - 1 && sides.bottom <= 1)) continue;
+    removed[k] = 1;
+    out.push(k);
+  }
+  for (let i = 0; i < scored.length && out.length < gaps; i++) {
+    const k = keys(scored[i].cell);
+    if (removed[k]) continue;
+    removed[k] = 1;
+    out.push(k);
+  }
+  if (globalThis.__LAYOUT_DEBUG && spec.zone.name === 'core' && spec.li === 1) {
+    const c748 = scored.filter((s) => s.cell.r === spec.rows - 1).map((s) => `${s.cell.x}:${s.cost.toFixed(1)}${removed[keys(s.cell)] ? '(删)' : ''}`);
+    layoutTrace(`core#1 gaps=${gaps} upper=${upperCells.length} bottom=${c748.join(' ')}`);
+  }
   return out;
 }
 
-function easyLayout(seed, opt) {
-  const spec = LEVEL_SPEC[1];
-  const plan = opt.plan || spec.plan;
-  const startId = opt.startId === undefined ? 0 : opt.startId;
-  const rng = makeRng((((seed === undefined ? randomSeed() : seed) >>> 0) ^ 0x1f2e3d4c) >>> 0);
-  const origins = [{ kx: 0, ky: 0 }];
-  for (let li = 1; li < plan.length; li++) {
-    const d = LAYER_OFFSETS[rng.int(0, LAYER_OFFSETS.length - 1)];
-    origins.push({ kx: origins[li - 1].kx + d[0], ky: origins[li - 1].ky + d[1] });
-  }
-  const byLayer = [];
-  for (let li = 0; li < plan.length; li++) {
-    const ox = origins[li].kx * LATTICE_X;
-    const oy = origins[li].ky * LATTICE_Y;
-    const u0 = Math.round((BOARD_CX - TILE_W / 2 - ox) / TILE_W);
-    const v0 = Math.round((BOARD_CY - TILE_H / 2 - oy) / TILE_H);
-    const lower = li > 0 ? byLayer[li - 1] : [];
-    byLayer.push(growCluster(plan[li], u0, v0, lower, ox, oy, rng).map((cell) => ({
-      x: ox + cell.u * TILE_W, y: oy + cell.v * TILE_H, u: cell.u, v: cell.v,
-    })));
-  }
-  const cards = [];
-  for (let li = 0; li < plan.length; li++) {
-    for (const c of byLayer[li]) cards.push({ x: c.x, y: c.y, layer: li });
-  }
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const c of cards) {
-    minX = Math.min(minX, c.x); maxX = Math.max(maxX, c.x + TILE_W);
-    minY = Math.min(minY, c.y); maxY = Math.max(maxY, c.y + TILE_H);
-  }
-  const kx = Math.max(Math.ceil((BOARD_BAND.left - minX) / LATTICE_X),
-    Math.min(Math.floor((BOARD_BAND.right - maxX) / LATTICE_X), Math.round((BOARD_CX - (minX + maxX) / 2) / LATTICE_X)));
-  const ky = Math.max(Math.ceil((BOARD_BAND.top - minY) / LATTICE_Y),
-    Math.min(Math.floor((BOARD_BAND.bottom - maxY) / LATTICE_Y), Math.round((BOARD_CY - (minY + maxY) / 2) / LATTICE_Y)));
-  for (const c of cards) { c.x += kx * LATTICE_X; c.y += ky * LATTICE_Y; }
-  cards.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
-  for (let i = 0; i < cards.length; i++) { cards[i].id = startId + i; cards[i].z = i; }
-  return cards;
+/** 展开一次模板；返回带 id/z 的牌数组，失败返回 null */
+function layoutTrace(msg) {
+  if (globalThis.__LAYOUT_DEBUG) console.log('[layout] ' + msg);
 }
 
-/** 单堆布局主函数。第 1 关走原有几何，第 2 关走葫芦轮廓。 */
+function expandOnce(tpl, seed, rng) {
+  const built = specsOf(tpl, seed);
+  const specs = built.specs;
+  const chosenAll = [];
+  for (let si = 0; si < specs.length; si++) {
+    const spec = specs[si];
+    const lowerCards = chosenAll.filter((c) => c.layer < spec.layer);
+    // 只保护「紧邻的后续 2 层」：更远的层还有别的中间层可提供支撑，
+    // 把它们也算进 coverUp 会让本该保留的关键支撑点看起来「可删」。
+    const upperCells = [];
+    for (let sj = si + 1; sj < specs.length; sj++) {
+      if (specs[sj].layer <= spec.layer || specs[sj].layer > spec.layer + 2) continue;
+      for (let k = 0; k < specs[sj].cells.length; k++) upperCells.push(specs[sj].cells[k]);
+    }
+    const supported = spec.layer === 0
+      ? spec.cells.slice()
+      : spec.cells.filter((cell) => hasSupport(cell, lowerCards));
+    if (supported.length < spec.need) {
+      if (globalThis.__LAYOUT_DEBUG) {
+        const bad = [];
+        for (let k = 0; k < spec.cells.length; k++) {
+          if (!hasSupport(spec.cells[k], lowerCards)) bad.push(spec.cells[k].x + ',' + spec.cells[k].y);
+        }
+        layoutTrace(`spec ${spec.zone.name}#${spec.li} layer=${spec.layer} 支撑不足 ${supported.length} < ${spec.need}；无支撑格点 ${bad.join(' | ')}；lower=${lowerCards.length}`);
+      } else {
+        layoutTrace(`spec ${spec.zone.name}#${spec.li} layer=${spec.layer} 支撑不足 ${supported.length} < ${spec.need}`);
+      }
+      return null;
+    }
+    const removed = chooseGaps(spec, supported, upperCells, lowerCards, rng);
+    const keyOf = (c) => c.x + ',' + c.y + ',' + c.layer;
+    const kept = supported.filter((c) => removed.indexOf(keyOf(c)) < 0);
+    if (kept.length !== spec.need) {
+      layoutTrace(`spec ${spec.zone.name}#${spec.li} 缺口选择后 ${kept.length} ≠ ${spec.need}`);
+      return null;
+    }
+    for (let k = 0; k < kept.length; k++) {
+      chosenAll.push({
+        x: kept[k].x, y: kept[k].y, layer: kept[k].layer,
+        region: kept[k].region, zoneLayer: kept[k].zoneLayer,
+      });
+    }
+  }
+  // 支撑复核：每张非底层牌必须被更低层的牌压住
+  for (let i = 0; i < chosenAll.length; i++) {
+    const c = chosenAll[i];
+    if (c.layer === 0) continue;
+    const lower = chosenAll.filter((o) => o.layer < c.layer);
+    if (!hasSupport(c, lower)) {
+      layoutTrace(`最终复核：${c.region} layer=${c.layer} @${c.x},${c.y} 无支撑`);
+      return null;
+    }
+  }
+  chosenAll.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
+  for (let i = 0; i < chosenAll.length; i++) { chosenAll[i].id = i; chosenAll[i].z = i; }
+  if (sameLayerOverlapCount(chosenAll) !== 0) return null;
+  return chosenAll;
+}
+
+function generateFromTemplate(level, seed, opt) {
+  const tpl = templateFor(level);
+  const check = validateTemplate(tpl);
+  if (!check.ok) throw new Error('布局模板非法：' + check.issues.join('；'));
+  const s = (seed === undefined ? randomSeed() : seed) >>> 0;
+  const baseRng = makeRng((s ^ 0x0b0a0d) >>> 0);
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const rng = makeRng((baseRng.int(1, 0x7ffffffe) ^ (attempt * 2654435761)) >>> 0);
+    const cards = expandOnce(tpl, s, rng);
+    if (!cards) continue;
+    if (cards.length !== tpl.cardCount) { layoutTrace(`张数 ${cards.length} ≠ ${tpl.cardCount}`); continue; }
+    if (!isHalfLattice(cards)) { layoutTrace('非半格晶格'); continue; }
+    const comp = countComponents(cards, CONNECT_PAD);
+    if (comp !== 1) { layoutTrace(`连通分量 ${comp}`); continue; }
+    const cross = crossOcclusionStats(cards);
+    if (tpl.level === 2 && cross.pairs === 0) { layoutTrace('无交叉遮挡'); continue; }
+    if (opt.startId !== undefined) {
+      const d = opt.startId;
+      for (let i = 0; i < cards.length; i++) { cards[i].id += d; cards[i].z += d; }
+    }
+    return cards;
+  }
+  throw new Error('布局模板展开失败：60 次尝试内无法满足支撑 / 连通 / 无同层重叠');
+}
+
 export function generateLayout(seed, opt) {
   const o = opt || {};
-  const s = seed === undefined ? randomSeed() : seed;
-  if (o.level === 1) return easyLayout(s, o);
-  return gourdLayout(s, o);
+  return generateFromTemplate(o.level === 1 ? 1 : 2, seed, o);
 }
 
-/** 第 1 关薄壳：保留旧导出名 */
 export function generateEasyLayout(seed, opt) {
   return generateLayout(seed, { ...(opt || {}), level: 1 });
+}
+
+/** 文档 / 测试用的完整布局报告 */
+export function layoutReport(cards) {
+  const ps = pressureStats(cards);
+  const rs = regionStats(cards);
+  const cross = crossOcclusionStats(cards);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    if (c.x < minX) minX = c.x;
+    if (c.x + TILE_W > maxX) maxX = c.x + TILE_W;
+    if (c.y < minY) minY = c.y;
+    if (c.y + TILE_H > maxY) maxY = c.y + TILE_H;
+  }
+  return {
+    total: cards.length,
+    bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+    regions: rs,
+    crossOcclusion: cross,
+    sameLayerOverlap: sameLayerOverlapCount(cards),
+    components: countComponents(cards, CONNECT_PAD),
+    halfLattice: isHalfLattice(cards),
+    ...ps,
+    graph: undefined,
+    freeIds: undefined,
+  };
 }

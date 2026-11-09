@@ -2,15 +2,16 @@
 
 //! Mah Le Mah —— Tauri 2 绿色单文件外壳
 //!
-//! 三条硬规则（本轮重构的验收核心）：
+//! v2.0.0 三条硬规则（安全验收核心）：
 //!   1. **零注册表**：不读不写 HKLM / HKCU。连「WebView2 是否安装」都不再查注册表，
 //!      改为直接启动 + 失败时弹原生提示。
 //!   2. **零 AppData**：存档与 WebView2 缓存全部落在 `<exe 同级>/MahLeMah_Data`。
-//!   3. **可一键自毁**：`uninstall_app` 删除数据目录、退出进程，并让一个分离的
-//!      cmd 进程在本进程退出后删掉 exe 自身。
+//!   3. **最小权限 / 不自毁**：不再注册 fs 插件，不再给前端任何文件删除 capability，
+//!      删除 `uninstall_app` 与 `schedule_self_delete()`。前端只能通过 4 个白名单命令
+//!      （load_state / save_state / reset_state / data_dir_path）读写
+//!      `MahLeMah_Data/save.json`；卸载完全交给 NSIS 安装器生成的卸载程序。
 //!
-//! 产物：`cargo build --release`（或 `npm run tauri build`，bundle.targets=["app"]）
-//! 得到的单个 `MahLeMah.exe`，双击即运行，无需安装、无需管理员权限。
+//! 产物：`cargo build --release`（或 `npm run tauri build`，bundle.targets=["nsis"]）。
 
 use std::fs;
 use std::io::Write;
@@ -88,46 +89,8 @@ fn reset_state() -> Result<(), String> {
     Ok(())
 }
 
-/// 一键彻底卸载：删数据 → 排自删除脚本 → 退出进程。
-/// 前端在此之前已经清空了内存态与 localStorage。
-#[tauri::command]
-fn uninstall_app(app: tauri::AppHandle) -> Result<(), String> {
-    let dir = data_dir()?;
-    let exe = exe_path()?;
-
-    // 先删明确的数据文件；WebView2 的缓存子目录可能还握着句柄，
-    // 留给下面「进程退出后再删」的脚本处理。
-    for name in ["save.json", "save.json.tmp"] {
-        let _ = fs::remove_file(dir.join(name));
-    }
-
-    schedule_self_delete(&dir, &exe);
-
-    app.exit(0);
-    Ok(())
-}
-
-/// 起一个脱离父进程的 cmd：等游戏退出 → 删数据目录 → 删 exe 自身。
-/// 只写文件系统，不碰注册表。
-#[cfg(windows)]
-fn schedule_self_delete(dir: &Path, exe: &Path) {
-    use std::os::windows::process::CommandExt;
-
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    const DETACHED_PROCESS: u32 = 0x0000_0008;
-
-    let d = dir.display();
-    let e = exe.display();
-    let script = format!(
-        "ping -n 3 127.0.0.1 >nul & rmdir /s /q \"{d}\" & ping -n 2 127.0.0.1 >nul & \
-         rmdir /s /q \"{d}\" & del /f /q \"{e}\""
-    );
-
-    let _ = std::process::Command::new("cmd")
-        .args(["/C", &script])
-        .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
-        .spawn();
-}
+/* v2.0.0：删除 uninstall_app / schedule_self_delete。
+   前端不允许触发自删除、启动 cmd 或删除任意路径；卸载由 NSIS 卸载程序负责。 */
 
 /* ------------------------------------------------------------------ */
 /* 原生提示（WebView2 缺失时用，不读注册表）                            */
@@ -186,13 +149,12 @@ fn main() {
     configure_webview_data_dir();
 
     let result = tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
+        // 不再注册 tauri_plugin_fs：前端没有任何文件系统 capability。
         .invoke_handler(tauri::generate_handler![
             load_state,
             save_state,
             reset_state,
-            data_dir_path,
-            uninstall_app
+            data_dir_path
         ])
         .run(tauri::generate_context!());
 

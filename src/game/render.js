@@ -32,19 +32,18 @@ export function getUI(game) {
   const push = (id, x, y, w, h, label, extra = {}) =>
     buttons.push({ id, x, y, w, h, label, enabled: true, ...extra });
 
-  // 二次确认：只保留这两个按钮，避免误触后面任何控件
+  // v2.0.0：卸载说明是纯信息面板，只有一个「知道了」，不执行任何删除
   if (game.uninstallAsk) {
-    push('uninstall-no', W / 2 - 210, 690, 200, 76, '取消', { kind: 'ghost', size: 26 });
-    push('uninstall-yes', W / 2 + 10, 690, 200, 76, '彻底删除', { kind: 'danger', size: 24 });
+    push('uninstall-no', W / 2 - 150, 690, 300, 76, '知道了', { kind: 'primary', size: 28 });
     return { buttons };
   }
 
   if (game.screen === 'title') {
     push('start', W / 2 - 150, 880, 300, 86, '开始游戏', { kind: 'primary', size: 32 });
     push('sound', SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.w, SOUND_BTN.h, '', { kind: 'icon' });
-    // 绿色版专属：删数据 + 删自身，无需去「应用和功能」
-    push('uninstall', W / 2 - 120, 1000, 240, 56, '卸载并删除数据', {
-      kind: 'danger-ghost',
+    // v2.0.0：只展示「如何用正规卸载程序卸载」，前端不再自删除
+    push('uninstall', W / 2 - 120, 1000, 240, 56, '如何卸载', {
+      kind: 'ghost',
       size: 18,
     });
     // 不提供"回到第 1 关"的入口：一局只有两关，通关第 2 关即毕业
@@ -94,8 +93,8 @@ export function getUI(game) {
     push('resume', W / 2 - 150, 548, 300, 74, '继续游戏', { kind: 'primary', size: 26 });
     push('restart', W / 2 - 150, 632, 300, 62, '重新开始本关', { kind: 'ghost', size: 22 });
     push('home', W / 2 - 150, 704, 300, 62, '回到标题', { kind: 'ghost', size: 22 });
-    push('uninstall', W / 2 - 150, 780, 300, 52, '卸载并删除数据', {
-      kind: 'danger-ghost',
+    push('uninstall', W / 2 - 150, 780, 300, 52, '如何卸载', {
+      kind: 'ghost',
       size: 18,
     });
   }
@@ -163,8 +162,8 @@ export function drawBackground(ctx, t) {
 
   // 顶部一抹极淡的暖光，作为唯一动态元素
   const glow = ctx.createRadialGradient(W / 2, 90, 30, W / 2, 90, 520);
-  glow.addColorStop(0, `rgba(255, 206, 140, ${0.07 + Math.sin(t * 0.6) * 0.012})`);
-  glow.addColorStop(1, 'rgba(255, 206, 140, 0)');
+  glow.addColorStop(0, `rgba(255, 176, 92, ${0.06 + Math.sin(t * 0.6) * 0.012})`);
+  glow.addColorStop(1, 'rgba(255, 176, 92, 0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, 520);
 }
@@ -179,7 +178,7 @@ function bakeBackground(ctx, dpr) {
   if (!c) return null;
   c.scale(dpr, dpr);
 
-  // 1) 深色底
+  // 1) 暖白 / 奶油底
   const g = c.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, C.bgTop);
   g.addColorStop(0.48, C.bgMid);
@@ -192,7 +191,7 @@ function bakeBackground(ctx, dpr) {
   c.lineWidth = 1.4;
   for (let i = 0; i < 58; i++) {
     const y0 = i * 22 + 6;
-    c.strokeStyle = i % 2 ? 'rgba(146, 104, 62, 0.050)' : 'rgba(0, 0, 0, 0.10)';
+    c.strokeStyle = i % 2 ? 'rgba(196, 158, 108, 0.10)' : 'rgba(255, 255, 255, 0.42)';
     c.beginPath();
     for (let x = -10; x <= W + 10; x += 24) {
       const y =
@@ -207,18 +206,18 @@ function bakeBackground(ctx, dpr) {
   }
   c.restore();
 
-  // 3) 中央承托暗区：让白色牌堆"坐"在光里
+  // 3) 中央柔光：让多色牌堆"坐"在浅色桌面上
   const spot = c.createRadialGradient(W / 2, 560, 60, W / 2, 560, 460);
-  spot.addColorStop(0, 'rgba(255, 232, 190, 0.055)');
-  spot.addColorStop(0.6, 'rgba(255, 232, 190, 0.018)');
-  spot.addColorStop(1, 'rgba(255, 232, 190, 0)');
+  spot.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+  spot.addColorStop(0.6, 'rgba(255, 255, 255, 0.20)');
+  spot.addColorStop(1, 'rgba(255, 255, 255, 0)');
   c.fillStyle = spot;
   c.fillRect(0, 60, W, 1000);
 
-  // 4) 四角压暗
+  // 4) 四角极淡暖棕压边（不再是深色沉浸）
   const vig = c.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 820);
   vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,0.62)');
+  vig.addColorStop(1, 'rgba(150, 110, 70, 0.16)');
   c.fillStyle = vig;
   c.fillRect(0, 0, W, H);
 
@@ -228,7 +227,7 @@ function bakeBackground(ctx, dpr) {
 /* ==================== 顶部 HUD ==================== */
 
 function iconMenu(ctx, cx, cy) {
-  ctx.strokeStyle = C.gold;
+  ctx.strokeStyle = C.text;
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   for (let i = -1; i <= 1; i++) {
@@ -240,8 +239,8 @@ function iconMenu(ctx, cx, cy) {
 }
 
 function iconSound(ctx, cx, cy, on) {
-  ctx.strokeStyle = C.gold;
-  ctx.fillStyle = C.gold;
+  ctx.strokeStyle = C.text;
+  ctx.fillStyle = C.text;
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   ctx.beginPath();
@@ -275,10 +274,10 @@ function roundIconButton(ctx, b, draw, dim = false) {
   const r = b.w / 2;
   ctx.save();
   ctx.globalAlpha = dim ? 0.4 : 1;
-  ctx.fillStyle = 'rgba(16, 13, 11, 0.62)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
   circle(ctx, cx, cy, r);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(235, 203, 134, 0.35)';
+  ctx.strokeStyle = 'rgba(150, 112, 70, 0.38)';
   ctx.lineWidth = 1.5;
   circle(ctx, cx, cy, r - 0.75);
   ctx.stroke();
@@ -289,11 +288,11 @@ function roundIconButton(ctx, b, draw, dim = false) {
 export function drawHUD(ctx, game, ui) {
   // ---- 标题（金色渐变粗体，居中）----
   const tg = ctx.createLinearGradient(0, 30, 0, 74);
-  tg.addColorStop(0, '#FFF0C8');
-  tg.addColorStop(0.55, C.gold);
-  tg.addColorStop(1, '#B98B41');
+  tg.addColorStop(0, '#F5B44E');
+  tg.addColorStop(0.55, C.orange);
+  tg.addColorStop(1, C.coral);
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+  ctx.shadowColor = 'rgba(120, 80, 40, 0.22)';
   ctx.shadowBlur = 10;
   ctx.shadowOffsetY = 2;
   text(ctx, 'Mah了个Mah', W / 2, 50, {
@@ -316,14 +315,14 @@ export function drawHUD(ctx, game, ui) {
   const bx = (W - bw) / 2;
   const by = 114;
   ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillStyle = 'rgba(120, 90, 60, 0.18)';
   rr(ctx, bx, by, bw, 6, 3);
   ctx.fill();
   const p = clamp(game.progress(), 0, 1);
   if (p > 0.005) {
     const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-    grad.addColorStop(0, '#8A6A31');
-    grad.addColorStop(1, C.gold);
+    grad.addColorStop(0, C.yellow);
+    grad.addColorStop(1, C.orange);
     ctx.fillStyle = grad;
     rr(ctx, bx, by, Math.max(6, bw * p), 6, 3);
     ctx.fill();
@@ -333,7 +332,7 @@ export function drawHUD(ctx, game, ui) {
   text(ctx, `剩 ${game.remaining()} 张`, W / 2, 140, {
     size: 15,
     weight: '600',
-    fill: 'rgba(228, 213, 190, 0.42)',
+    fill: C.textFaint,
   });
 
   for (const b of ui.buttons) {
@@ -445,9 +444,9 @@ function drawTableMat(ctx) {
 
   ctx.save();
   const g = ctx.createLinearGradient(0, y, 0, y + h);
-  g.addColorStop(0, 'rgba(48, 64, 51, 0.52)');
-  g.addColorStop(0.55, 'rgba(33, 46, 38, 0.40)');
-  g.addColorStop(1, 'rgba(18, 26, 22, 0.26)');
+  g.addColorStop(0, 'rgba(214, 240, 226, 0.90)');
+  g.addColorStop(0.55, 'rgba(226, 240, 250, 0.86)');
+  g.addColorStop(1, 'rgba(255, 246, 224, 0.90)');
   ctx.fillStyle = g;
   rr(ctx, x, y, w, h, rad);
   ctx.fill();
@@ -456,13 +455,13 @@ function drawTableMat(ctx) {
   const cx = x + w / 2;
   const cy = y + h / 2;
   const rg = ctx.createRadialGradient(cx, cy, 50, cx, cy, w * 0.74);
-  rg.addColorStop(0, 'rgba(255, 240, 210, 0.055)');
-  rg.addColorStop(1, 'rgba(0, 0, 0, 0.34)');
+  rg.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+  rg.addColorStop(1, 'rgba(120, 90, 60, 0.12)');
   ctx.fillStyle = rg;
   rr(ctx, x, y, w, h, rad);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(235, 203, 134, 0.10)';
+  ctx.strokeStyle = 'rgba(150, 112, 70, 0.30)';
   ctx.lineWidth = 1.5;
   rr(ctx, x + 0.75, y + 0.75, w - 1.5, h - 1.5, rad);
   ctx.stroke();
@@ -495,8 +494,8 @@ function paintBoard(ctx, game, alive, now) {
     const cy = maxY - 14;
     const rx = (maxX - minX) * 0.56;
     const sh = ctx.createRadialGradient(cx, cy, 10, cx, cy, rx);
-    sh.addColorStop(0, 'rgba(0,0,0,0.55)');
-    sh.addColorStop(0.65, 'rgba(0,0,0,0.22)');
+    sh.addColorStop(0, 'rgba(96, 66, 38, 0.32)');
+    sh.addColorStop(0.65, 'rgba(96, 66, 38, 0.12)');
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.save();
     ctx.translate(cx, cy);
@@ -593,7 +592,7 @@ export function drawSlot(ctx, game, ui) {
     const w = TEMP_ZONE.max * TEMP_ZONE.pitch + 14;
     const x0 = TEMP_ZONE.x - 7;
     ctx.save();
-    ctx.fillStyle = 'rgba(22, 19, 17, 0.82)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
     rr(ctx, x0, TEMP_ZONE.y - 8, w, TILE_H + 16, 12);
     ctx.fill();
     ctx.strokeStyle = C.goldGhost;
@@ -689,20 +688,20 @@ export function drawTools(ctx, game, ui) {
     const cx = b.x + b.w / 2;
     const cy = b.y + b.h / 2;
     const on = b.enabled;
-    const color = on ? C.gold : 'rgba(170, 150, 120, 0.35)';
+    const color = on ? (b.id === 'shuffle' ? C.purple : b.id === 'undo' ? C.blue : C.orange) : 'rgba(150, 112, 70, 0.35)';
 
     // 半透明圆形底框
     ctx.save();
     ctx.globalAlpha = on ? 1 : 0.55;
-    ctx.fillStyle = on ? 'rgba(52, 44, 36, 0.85)' : 'rgba(28, 24, 21, 0.7)';
+    ctx.fillStyle = on ? 'rgba(255, 255, 255, 0.96)' : 'rgba(240, 230, 214, 0.75)';
     circle(ctx, cx, cy, b.w / 2);
     ctx.fill();
-    ctx.strokeStyle = on ? 'rgba(235, 203, 134, 0.5)' : 'rgba(150, 128, 96, 0.22)';
+    ctx.strokeStyle = on ? 'rgba(150, 112, 70, 0.42)' : 'rgba(150, 128, 96, 0.22)';
     ctx.lineWidth = 1.8;
     circle(ctx, cx, cy, b.w / 2 - 1);
     ctx.stroke();
     // 顶部一道细高光，增强"玻璃片"质感
-    ctx.strokeStyle = on ? 'rgba(255, 240, 205, 0.28)' : 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = on ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255,255,255,0.4)';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.arc(cx, cy, b.w / 2 - 4, Math.PI * 1.15, Math.PI * 1.85);
@@ -716,10 +715,10 @@ export function drawTools(ctx, game, ui) {
     const bx = cx + b.w / 2 - 6;
     const by = cy - b.h / 2 + 6;
     ctx.save();
-    ctx.fillStyle = n > 0 ? C.red : 'rgba(70, 58, 46, 0.95)';
+    ctx.fillStyle = n > 0 ? C.coral : 'rgba(160, 140, 116, 0.85)';
     circle(ctx, bx, by, 11);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(12, 9, 7, 0.85)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.restore();
@@ -750,25 +749,25 @@ export function drawButtons(ctx, ui, game) {
 
     if (solid) {
       const g = ctx.createLinearGradient(0, b.y, 0, b.y + b.h);
-      g.addColorStop(0, b.enabled ? '#D2543C' : '#5C4438');
-      g.addColorStop(1, b.enabled ? '#96291A' : '#3E2E26');
+      g.addColorStop(0, b.enabled ? '#F5A24A' : '#D9CBB4');
+      g.addColorStop(1, b.enabled ? '#DD5B3E' : '#B9A88E');
       ctx.fillStyle = g;
       rr(ctx, b.x, b.y, b.w, b.h, b.h / 2);
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowColor = 'rgba(120, 80, 40, 0.28)';
       ctx.shadowBlur = 14;
       ctx.shadowOffsetY = 5;
       ctx.fill();
       ctx.shadowColor = 'rgba(0,0,0,0)';
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255, 220, 160, 0.6)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
       ctx.lineWidth = 1.8;
       rr(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, b.h / 2);
       ctx.stroke();
     } else {
-      ctx.fillStyle = danger ? 'rgba(200, 69, 47, 0.10)' : 'rgba(255,255,255,0.05)';
+      ctx.fillStyle = danger ? 'rgba(221, 91, 62, 0.10)' : 'rgba(255,255,255,0.82)';
       rr(ctx, b.x, b.y, b.w, b.h, b.h / 2);
       ctx.fill();
-      ctx.strokeStyle = danger ? 'rgba(224, 112, 92, 0.72)' : 'rgba(235, 203, 134, 0.4)';
+      ctx.strokeStyle = danger ? 'rgba(221, 91, 62, 0.72)' : 'rgba(150, 112, 70, 0.42)';
       ctx.lineWidth = 1.6;
       rr(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, b.h / 2);
       ctx.stroke();
@@ -777,7 +776,7 @@ export function drawButtons(ctx, ui, game) {
     text(ctx, b.label, cx, cy + 1, {
       size: b.size || 26,
       weight: '700',
-      fill: solid ? '#FFF6E2' : danger ? C.redSoft : C.text,
+      fill: solid ? '#FFFFFF' : danger ? C.coral : C.text,
     });
   }
 }
@@ -806,7 +805,7 @@ export function drawTitleScreen(ctx, game, ui, t) {
   });
   text(ctx, '槽位 7 格，放满且无法消除即失败', W / 2, 1122, {
     size: 17,
-    fill: 'rgba(228, 213, 190, 0.22)',
+    fill: C.textFaint,
   });
 }
 
@@ -814,19 +813,19 @@ export function drawTitleScreen(ctx, game, ui, t) {
 
 function panel(ctx, x, y, w, h) {
   ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.66)';
+  ctx.fillStyle = 'rgba(74, 53, 36, 0.38)';
   ctx.fillRect(0, 0, W, H);
   const g = ctx.createLinearGradient(0, y, 0, y + h);
-  g.addColorStop(0, '#2B2521');
-  g.addColorStop(1, '#141110');
+  g.addColorStop(0, '#FFFBF0');
+  g.addColorStop(1, '#F3E3C6');
   ctx.fillStyle = g;
   rr(ctx, x, y, w, h, 28);
-  ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.shadowColor = 'rgba(96, 66, 38, 0.28)';
   ctx.shadowBlur = 40;
   ctx.fill();
   ctx.shadowColor = 'rgba(0,0,0,0)';
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = 'rgba(235, 203, 134, 0.45)';
+  ctx.strokeStyle = 'rgba(150, 112, 70, 0.48)';
   ctx.lineWidth = 2;
   rr(ctx, x + 1, y + 1, w - 2, h - 2, 27);
   ctx.stroke();
@@ -853,13 +852,13 @@ export function drawOverlay(ctx, game, ui) {
         size: 22,
         fill: C.textDim,
       });
-      text(ctx, '下一关：222 张 · 7 层单堆 · 深渊在后头', W / 2, 610, { size: 19, fill: '#E8A66F' });
+      text(ctx, '下一关：240 张 · 多区域 15 层 · 真正的坎', W / 2, 610, { size: 19, fill: C.orange });
       text(ctx, '开局管够，越往下越不讲道理', W / 2, 642, { size: 18, fill: C.textDim });
     }
     drawButtons(ctx, ui, game);
   } else if (game.status === 'lose') {
     panel(ctx, 90, 380, W - 180, 460);
-    text(ctx, '槽位满了', W / 2, 460, { size: 40, weight: '800', fill: '#E8836F' });
+    text(ctx, '槽位满了', W / 2, 460, { size: 40, weight: '800', fill: C.coral });
     text(ctx, '7 个格子都被占住，没能凑出三张相同', W / 2, 516, { size: 20, fill: C.text });
     text(
       ctx,
@@ -883,18 +882,17 @@ export function drawOverlay(ctx, game, ui) {
   }
 }
 
-/* ==================== 卸载确认（绿色版专属） ==================== */
+/* ==================== 卸载说明（纯信息，不做任何删除） ==================== */
 
 export function drawUninstallConfirm(ctx, game, ui) {
   if (!game.uninstallAsk) return;
   panel(ctx, 80, 400, W - 160, 420);
-  text(ctx, '卸载并删除数据', W / 2, 470, { size: 34, weight: '800', fill: '#E8836F' });
-  text(ctx, '确定要彻底删除本游戏及所有存档吗？', W / 2, 540, { size: 21, fill: C.text });
-  text(ctx, '将删除 exe 同级的 MahLeMah_Data 文件夹、全部存档', W / 2, 584, {
-    size: 17,
-    fill: C.textDim,
-  });
-  text(ctx, '以及游戏程序本身，此操作不可撤销', W / 2, 614, { size: 17, fill: C.textDim });
+  text(ctx, '如何卸载 MahLeMah', W / 2, 470, { size: 32, weight: '800', fill: C.orange });
+  text(ctx, 'v2.0.0 起卸载由正规卸载程序负责', W / 2, 536, { size: 21, fill: C.text });
+  text(ctx, '安装版：开始菜单 →「卸载 MahLeMah」', W / 2, 582, { size: 18, fill: C.textDim });
+  text(ctx, '或 Windows 设置 → 应用 → 安装的应用', W / 2, 616, { size: 18, fill: C.textDim });
+  text(ctx, '便携版：直接删除整个解压目录即可', W / 2, 650, { size: 18, fill: C.textDim });
+  text(ctx, '游戏内不会删除文件或调用系统命令', W / 2, 700, { size: 16, fill: C.textFaint });
   drawButtons(ctx, ui, game);
 }
 

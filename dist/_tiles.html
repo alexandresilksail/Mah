@@ -1,5 +1,5 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>Q版牌面样张</title>
-<style>body{margin:0;background:#3A2A1E;display:flex;flex-direction:column;align-items:center;padding:12px}</style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>v2 牌面样张 · 16 种</title>
+<style>body{margin:0;background:#F7EEDC;display:flex;flex-direction:column;align-items:center;padding:12px}</style>
 </head><body><script>(() => {
   // src/game/draw.js
   function rr(ctx2, x, y, w, h, r) {
@@ -20,143 +20,59 @@
     ctx2.beginPath();
     ctx2.arc(cx, cy, r, 0, Math.PI * 2);
   }
-  function text(ctx2, str, x, y, o = {}) {
-    const {
-      size = 24,
-      weight = "400",
-      family = '"Segoe UI", "Microsoft YaHei", system-ui, sans-serif',
-      fill = "#fff",
-      align = "center",
-      baseline = "middle",
-      alpha = 1,
-      stroke = null,
-      strokeWidth = 0,
-      lineJoin = "round"
-    } = o;
-    ctx2.save();
-    ctx2.globalAlpha *= alpha;
-    ctx2.font = `${weight} ${size}px ${family}`;
-    ctx2.textAlign = align;
-    ctx2.textBaseline = baseline;
-    ctx2.lineJoin = lineJoin;
-    ctx2.miterLimit = 2;
-    if (stroke && strokeWidth > 0) {
-      ctx2.strokeStyle = stroke;
-      ctx2.lineWidth = strokeWidth;
-      ctx2.strokeText(str, x, y);
-    }
-    ctx2.fillStyle = fill;
-    ctx2.fillText(str, x, y);
-    ctx2.restore();
+
+  // src/game/tile_types.js
+  var TILE_TYPES = [
+    { id: "sparrow", name: "幺鸡", short: "雀", family: "bird", icon: "bird", face: "#E6F6EC", rim: "#2E8B62", ink: "#176B4A", accent: "#F2A03D" },
+    { id: "red-centre", name: "红中", short: "中", family: "honor", icon: "diamond", face: "#FDE9E4", rim: "#D64B36", ink: "#A82C1C", accent: "#FFCE5C" },
+    { id: "green-fa", name: "青發", short: "發", family: "honor", icon: "leaf", face: "#E8F4D9", rim: "#4F9A3C", ink: "#27621F", accent: "#F0C64C" },
+    { id: "blue-frame", name: "蓝框", short: "框", family: "honor", icon: "frame", face: "#E4F0FD", rim: "#3B7BC8", ink: "#1E4E8C", accent: "#FF9E5E" },
+    { id: "coin-1", name: "金筒", short: "金", family: "coin", icon: "coin1", face: "#FFF3D6", rim: "#D9A227", ink: "#8A5E12", accent: "#D9533B" },
+    { id: "coin-3", name: "三筒", short: "三", family: "coin", icon: "coin3", face: "#F1E8FB", rim: "#8A5FC0", ink: "#593389", accent: "#4FC0A8" },
+    { id: "bamboo-2", name: "双竹", short: "竹", family: "bamboo", icon: "bamboo2", face: "#E9F6E2", rim: "#62A83F", ink: "#2F6B21", accent: "#E4573D" },
+    { id: "bamboo-5", name: "五竹", short: "五", family: "bamboo", icon: "bamboo5", face: "#DEF2EE", rim: "#2E9C8C", ink: "#12645A", accent: "#F4B63C" },
+    { id: "flower-plum", name: "梅花", short: "梅", family: "flower", icon: "blossom", face: "#FDE8F0", rim: "#D65A8C", ink: "#9B2F5C", accent: "#FFD25E" },
+    { id: "flower-orchid", name: "兰花", short: "兰", family: "flower", icon: "orchid", face: "#F0E9FC", rim: "#7A5FC8", ink: "#49308A", accent: "#5FC0A8" },
+    { id: "flower-chrys", name: "金菊", short: "菊", family: "flower", icon: "chrys", face: "#FFF0DA", rim: "#E08A2C", ink: "#945413", accent: "#D9533B" },
+    { id: "fish", name: "锦鲤", short: "鲤", family: "animal", icon: "fish", face: "#FFE9DF", rim: "#E4634A", ink: "#A83A24", accent: "#4E9ED6" },
+    { id: "moon", name: "弯月", short: "月", family: "sky", icon: "moon", face: "#E7EAFB", rim: "#4A5BAE", ink: "#2A357A", accent: "#F2C14E" },
+    { id: "sun", name: "朝阳", short: "日", family: "sky", icon: "sun", face: "#FFF4CF", rim: "#E6B12F", ink: "#9A6B12", accent: "#E4573D" },
+    { id: "cloud", name: "祥云", short: "云", family: "sky", icon: "cloud", face: "#E3F4FB", rim: "#3E97C1", ink: "#1D6389", accent: "#F0A04B" },
+    { id: "star", name: "星芒", short: "星", family: "sky", icon: "star", face: "#F6EBFF", rim: "#9B5BC4", ink: "#5F3086", accent: "#F5C33B" }
+  ];
+  var TYPE_IDS = [];
+  var TYPE_BY_ID = {};
+  for (let i = 0; i < TILE_TYPES.length; i++) {
+    const t = TILE_TYPES[i];
+    t.index = i;
+    TYPE_IDS.push(t.id);
+    TYPE_BY_ID[t.id] = t;
+  }
+  var TYPE_COUNT = TILE_TYPES.length;
+  var ES5_LABELS = {};
+  for (let i = 0; i < TILE_TYPES.length; i++) {
+    ES5_LABELS[TILE_TYPES[i].id] = { text: TILE_TYPES[i].short, color: TILE_TYPES[i].rim, face: TILE_TYPES[i].face };
   }
 
   // src/game/tiles.js
-  var TYPE_LIST = [
-    { id: "yaoji", kind: "yaoji", label: "幺鸡" },
-    { id: "zi-zhong", kind: "zi", ch: "中" },
-    { id: "zi-fa", kind: "zi", ch: "發" },
-    { id: "zi-bai", kind: "zi", ch: "白" },
-    { id: "zi-dong", kind: "zi", ch: "東" },
-    { id: "zi-nan", kind: "zi", ch: "南" },
-    { id: "tong-1", kind: "tong", num: 1 },
-    { id: "tong-2", kind: "tong", num: 2 },
-    { id: "tong-3", kind: "tong", num: 3 },
-    { id: "tong-5", kind: "tong", num: 5 },
-    { id: "tong-8", kind: "tong", num: 8 },
-    { id: "tiao-2", kind: "tiao", num: 2 },
-    { id: "tiao-3", kind: "tiao", num: 3 },
-    { id: "tiao-5", kind: "tiao", num: 5 },
-    { id: "tiao-9", kind: "tiao", num: 9 }
-  ];
+  var TYPE_LIST = [];
+  for (let i = 0; i < TILE_TYPES.length; i++) {
+    const t = TILE_TYPES[i];
+    TYPE_LIST.push({ id: t.id, kind: t.icon, label: t.name, index: i });
+  }
   var TYPE_MAP = {};
   for (let i = 0; i < TYPE_LIST.length; i++) TYPE_MAP[TYPE_LIST[i].id] = TYPE_LIST[i];
-  var FACE = "#FFFDF5";
-  var RIM = "#2A6B2E";
-  var BORDER = "#2E7D32";
-  var RED = "#C0392B";
-  var RED_LIGHT = "#D95746";
-  var GREEN = "#2E7D32";
-  var GREEN_DEEP = "#1E5A22";
-  var BLUE_DARK = "#173F6B";
-  var BLUE_LIGHT = "#5B8DBE";
-  var BLACK = "#20261F";
-  var ROUND_FONT = '"Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif';
-  var TONG_POS = {
-    1: [[0, 0]],
-    2: [[0, -0.46], [0, 0.46]],
-    3: [[-0.5, -0.5], [0, 0], [0.5, 0.5]],
-    5: [[-0.48, -0.48], [0.48, -0.48], [0, 0], [-0.48, 0.48], [0.48, 0.48]],
-    8: [[-0.4, -0.62], [0.4, -0.62], [-0.4, -0.2], [0.4, -0.2], [-0.4, 0.2], [0.4, 0.2], [-0.4, 0.62], [0.4, 0.62]]
-  };
-  var TIAO_POS = {
-    2: [[0, -0.44], [0, 0.44]],
-    3: [[0, -0.52], [-0.46, 0.4], [0.46, 0.4]],
-    5: [[-0.5, -0.5], [0.5, -0.5], [0, 0], [-0.5, 0.5], [0.5, 0.5]],
-    9: [[-0.55, -0.52], [0, -0.52], [0.55, -0.52], [-0.55, 0], [0, 0], [0.55, 0], [-0.55, 0.52], [0, 0.52], [0.55, 0.52]]
-  };
-  function drawTile(ctx2, x, y, w, h, typeId, opt = {}) {
-    const { alpha = 1, scale = 1, lift = 0, glow = 0 } = opt;
-    const type = TYPE_MAP[typeId];
-    if (!type) return;
-    const dimLevel = opt.dimLevel === void 0 ? opt.covered ? 1 : 0 : opt.dimLevel;
-    const playable = !!opt.playable && dimLevel === 0;
-    const dimAlpha = dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
-    ctx2.save();
-    ctx2.globalAlpha = alpha;
-    if (scale !== 1 || lift !== 0) {
-      const mx = x + w / 2;
-      const my = y + h / 2;
-      ctx2.translate(mx, my - lift);
-      ctx2.scale(scale, scale);
-      ctx2.translate(-mx, -my);
-    }
-    ctx2.save();
-    ctx2.shadowColor = "rgba(0,0,0,0.5)";
-    ctx2.shadowBlur = SHADOW_BLUR;
-    ctx2.shadowOffsetX = SHADOW_DX;
-    ctx2.shadowOffsetY = SHADOW_DY;
-    const sprite = spriteFor(ctx2, typeId, w, h, dimLevel, playable);
-    if (sprite) ctx2.drawImage(sprite, x, y, w, h);
-    else paintTile(ctx2, x, y, w, h, type, dimAlpha, playable);
-    ctx2.restore();
-    if (glow > 0) {
-      ctx2.save();
-      ctx2.globalAlpha *= Math.min(1, glow + 0.2);
-      const rad = w * 0.14;
-      ctx2.save();
-      ctx2.shadowColor = "rgba(255, 208, 120, 0.95)";
-      ctx2.shadowBlur = 20;
-      ctx2.strokeStyle = "#FFE6A6";
-      ctx2.lineWidth = 3;
-      rr(ctx2, x - 1, y - 1, w + 2, h - 1, rad + 2);
-      ctx2.stroke();
-      ctx2.restore();
-      ctx2.strokeStyle = "rgba(255, 234, 172, 0.45)";
-      ctx2.lineWidth = 2;
-      rr(ctx2, x - 5, y - 5, w + 10, h + 8, rad + 6);
-      ctx2.stroke();
-      ctx2.restore();
-    }
-    ctx2.restore();
-  }
-  var SPRITE_DPR = 2;
-  var spriteCache = /* @__PURE__ */ new Map();
-  var spriteDisabled = false;
+  var SUITS_L2 = TYPE_IDS.slice();
+  var SUITS_L1 = TYPE_IDS.slice();
   var SHADOW_BLUR = 8;
   var SHADOW_DX = 0;
   var SHADOW_DY = 5;
-  function spriteFor(ctx2, typeId, w, h, dimLevel, playable) {
-    if (spriteDisabled) return null;
-    const dimAlpha = dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
-    const key = `${typeId}|${w.toFixed(1)}|${h.toFixed(1)}|d${dimAlpha.toFixed(2)}|p${playable ? 1 : 0}`;
-    const hit = spriteCache.get(key);
-    if (hit) return hit;
-    const c22 = offscreen(ctx2, w, h);
-    if (!c22) return null;
-    paintTile(c22, 0, 0, w, h, TYPE_MAP[typeId], dimAlpha, playable);
-    if (spriteCache.size > 300) spriteCache.clear();
-    spriteCache.set(key, c22.canvas);
-    return c22.canvas;
+  var SPRITE_DPR = 2;
+  var spriteCache = {};
+  var spriteCount = 0;
+  var spriteDisabled = false;
+  function dimAlphaOf(dimLevel) {
+    return dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
   }
   function offscreen(ctx2, w, h) {
     const doc = ctx2.canvas && ctx2.canvas.ownerDocument;
@@ -175,263 +91,455 @@
     c22.scale(SPRITE_DPR, SPRITE_DPR);
     return c22;
   }
-  function paintTile(ctx2, x, y, w, h, type, dimAlpha, playable) {
+  function spriteFor(ctx2, typeId, w, h, dimLevel, playable, selected) {
+    if (spriteDisabled) return null;
+    const dimAlpha = dimAlphaOf(dimLevel);
+    const key = typeId + "|" + w.toFixed(1) + "|" + h.toFixed(1) + "|d" + dimAlpha.toFixed(2) + "|p" + (playable ? 1 : 0) + "|s" + (selected ? 1 : 0);
+    if (spriteCache[key]) return spriteCache[key];
+    const c22 = offscreen(ctx2, w, h);
+    if (!c22) return null;
+    paintTile(c22, 0, 0, w, h, TYPE_BY_ID[typeId] || TILE_TYPES[0], dimAlpha, playable, selected);
+    if (spriteCount > 400) {
+      for (const k in spriteCache) if (Object.prototype.hasOwnProperty.call(spriteCache, k)) delete spriteCache[k];
+      spriteCount = 0;
+    }
+    spriteCache[key] = c22.canvas;
+    spriteCount++;
+    return c22.canvas;
+  }
+  function drawTile(ctx2, x, y, w, h, typeId, opt = {}) {
+    const alpha = opt.alpha === void 0 ? 1 : opt.alpha;
+    const scale = opt.scale === void 0 ? 1 : opt.scale;
+    const lift = opt.lift === void 0 ? 0 : opt.lift;
+    const glow = opt.glow === void 0 ? 0 : opt.glow;
+    const type = TYPE_BY_ID[typeId];
+    if (!type) return;
+    const dimLevel = opt.dimLevel === void 0 ? opt.covered ? 1 : 0 : opt.dimLevel;
+    const playable = !!opt.playable && dimLevel === 0;
+    const selected = !!opt.selected;
+    ctx2.save();
+    ctx2.globalAlpha = alpha;
+    if (scale !== 1 || lift !== 0) {
+      const mx = x + w / 2;
+      const my = y + h / 2;
+      ctx2.translate(mx, my - lift);
+      ctx2.scale(scale, scale);
+      ctx2.translate(-mx, -my);
+    }
+    ctx2.save();
+    ctx2.shadowColor = "rgba(96, 66, 38, 0.42)";
+    ctx2.shadowBlur = SHADOW_BLUR;
+    ctx2.shadowOffsetX = SHADOW_DX;
+    ctx2.shadowOffsetY = SHADOW_DY;
+    const sprite = spriteFor(ctx2, typeId, w, h, dimLevel, playable, selected);
+    if (sprite) ctx2.drawImage(sprite, x, y, w, h);
+    else paintTile(ctx2, x, y, w, h, type, dimAlphaOf(dimLevel), playable, selected);
+    ctx2.restore();
+    if (glow > 0) {
+      ctx2.save();
+      ctx2.globalAlpha *= Math.min(1, glow + 0.2);
+      ctx2.strokeStyle = "rgba(255, 236, 178, 0.95)";
+      ctx2.lineWidth = 2.5;
+      rr(ctx2, x - 2, y - 2, w + 4, h + 2, w * 0.14 + 2);
+      ctx2.stroke();
+      ctx2.restore();
+    }
+    ctx2.restore();
+  }
+  function paintTile(ctx2, x, y, w, h, type, dimAlpha, playable, selected) {
     const rad = w * 0.14;
     const thick = Math.max(4, Math.round(h * 0.06));
     const fh = h - thick;
     ctx2.save();
-    ctx2.fillStyle = RIM;
+    ctx2.fillStyle = type.rim;
     rr(ctx2, x, y + thick, w, fh, rad);
     ctx2.fill();
-    ctx2.fillStyle = FACE;
+    ctx2.fillStyle = "rgba(255,255,255,0.28)";
+    rr(ctx2, x + 2, y + thick - 1, w - 4, 3, 2);
+    ctx2.fill();
+    const g = ctx2.createLinearGradient(x, y, x, y + fh);
+    g.addColorStop(0, "#FFFFFF");
+    g.addColorStop(0.4, type.face);
+    g.addColorStop(1, type.face);
+    ctx2.fillStyle = g;
     rr(ctx2, x, y, w, fh, rad);
     ctx2.fill();
-    ctx2.strokeStyle = "rgba(150,146,132,0.6)";
-    ctx2.lineWidth = 1;
-    rr(ctx2, x + 0.5, y + 0.5, w - 1, fh - 1, rad);
-    ctx2.stroke();
-    const bw = Math.max(2, w * 0.022);
+    const bw = Math.max(2.4, w * 0.035);
     const inset = bw / 2 + 1.2;
-    ctx2.strokeStyle = BORDER;
+    ctx2.strokeStyle = type.rim;
     ctx2.lineWidth = bw;
     rr(ctx2, x + inset, y + inset, w - inset * 2, fh - inset * 2, Math.max(2, rad - inset * 0.6));
     ctx2.stroke();
-    ctx2.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx2.save();
+    rr(ctx2, x + inset, y + inset, w - inset * 2, fh - inset * 2, Math.max(2, rad - inset * 0.6));
+    ctx2.clip();
+    ctx2.fillStyle = type.accent;
+    ctx2.globalAlpha = 0.9;
+    ctx2.fillRect(x + inset, y + inset, w - inset * 2, Math.max(5, h * 0.075));
+    ctx2.globalAlpha = 0.3;
+    ctx2.fillRect(x + inset, y + fh - inset - Math.max(4, h * 0.05), w - inset * 2, Math.max(4, h * 0.05));
+    ctx2.restore();
+    ctx2.strokeStyle = "rgba(255,255,255,0.85)";
     ctx2.lineWidth = 1.1;
-    const in2 = inset + bw / 2 + 1.1;
-    rr(ctx2, x + in2, y + in2, w - in2 * 2, fh - in2 * 2, Math.max(1.5, rad - in2 * 0.6));
+    rr(ctx2, x + inset + bw, y + inset + bw, w - (inset + bw) * 2, fh - (inset + bw) * 2, rad * 0.6);
     ctx2.stroke();
-    const pad = in2 + 2.5;
-    drawFace(ctx2, type, x + pad, y + pad, w - pad * 2, fh - pad * 2);
+    const boxW = w * 0.62;
+    const boxH = fh * 0.66;
+    drawIcon(ctx2, type, x + w / 2, y + fh / 2 + h * 0.02, boxW, boxH);
+    ctx2.fillStyle = type.ink;
+    circle(ctx2, x + w - inset - 7, y + fh - inset - 7, 2.6);
+    ctx2.fill();
     if (dimAlpha > 0) {
-      ctx2.fillStyle = `rgba(0, 0, 0, ${dimAlpha})`;
-      rr(ctx2, x + bw * 0.5, y + bw * 0.5, w - bw, h - bw, rad);
+      ctx2.fillStyle = "rgba(28, 22, 16, " + dimAlpha.toFixed(2) + ")";
+      rr(ctx2, x, y + thick, w, fh, rad);
       ctx2.fill();
     }
     if (playable) {
-      ctx2.strokeStyle = "rgba(255, 246, 214, 0.92)";
-      ctx2.lineWidth = 1.7;
-      rr(ctx2, x + 2.2, y + 2.2, w - 4.4, h - 4.4, rad - 1);
+      ctx2.strokeStyle = "rgba(255, 248, 220, 0.95)";
+      ctx2.lineWidth = 2.4;
+      rr(ctx2, x + 1, y + 1, w - 2, fh + thick - 2, rad);
+      ctx2.stroke();
+    }
+    if (selected) {
+      ctx2.strokeStyle = "#FFD35C";
+      ctx2.lineWidth = 3;
+      rr(ctx2, x - 1, y - 1, w + 2, fh + thick + 2, rad + 2);
       ctx2.stroke();
     }
     ctx2.restore();
   }
-  function faceBox(x, y, w, fh) {
-    const side = Math.min(w * 0.78, fh * 0.82);
-    return { cx: x + w / 2, cy: y + fh / 2, w: side, h: side, left: x + w / 2 - side / 2, top: y + fh / 2 - side / 2 };
-  }
-  function drawFace(ctx2, type, x, y, w, fh) {
-    const box = faceBox(x, y, w, fh);
-    const local = { cx: 0, cy: 0, w: box.w, h: box.h, left: -box.w / 2, top: -box.h / 2 };
+  function withBox(ctx2, t, cx, cy, boxW, boxH, fn) {
     ctx2.save();
-    ctx2.translate(box.cx, box.cy);
-    if (type.kind === "yaoji") {
-      const side = Math.min(box.w * 0.92, 42.9, 61.6);
-      drawYaoji(ctx2, { cx: 0, cy: 0, w: side, h: side });
-    } else if (type.kind === "tiao") drawTiao(ctx2, type, local);
-    else if (type.kind === "tong") drawTong(ctx2, type, local);
-    else drawHonor(ctx2, type, local);
-    ctx2.restore();
-  }
-  function layout(box, pos) {
-    const pts = pos.map(([u, v]) => [box.cx + u * box.w / 2, box.cy + v * box.h / 2]);
-    let dmin = Infinity;
-    for (let i = 0; i < pts.length; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
-        if (d < dmin) dmin = d;
-      }
-    }
-    if (!Number.isFinite(dmin)) dmin = Math.min(box.w, box.h) * 0.9;
-    return { pts, dmin };
-  }
-  function drawYaoji(ctx2, box) {
-    const X = (u) => box.cx + u * box.w / 2;
-    const Y = (v) => box.cy + v * box.h / 2;
-    const S = Math.min(box.w, box.h) / 2;
-    ctx2.save();
-    ctx2.fillStyle = "#8A6A3A";
-    rr(ctx2, X(-0.92), Y(0.66), box.w * 0.92, S * 0.15, S * 0.07);
-    ctx2.fill();
-    ctx2.strokeStyle = GREEN_DEEP;
-    ctx2.lineWidth = Math.max(1, S * 0.045);
-    for (const u of [-0.5, 0.06, 0.58]) {
-      ctx2.beginPath();
-      ctx2.moveTo(X(u), Y(0.63));
-      ctx2.lineTo(X(u), Y(0.78));
-      ctx2.stroke();
-    }
-    ctx2.strokeStyle = RED;
-    ctx2.lineWidth = Math.max(1.4, S * 0.09);
+    ctx2.translate(cx, cy);
+    ctx2.scale(boxW / 2, boxH / 2);
+    ctx2.lineWidth = 0.1;
     ctx2.lineCap = "round";
-    for (const u of [-0.12, 0.2]) {
-      ctx2.beginPath();
-      ctx2.moveTo(X(u), Y(0.28));
-      ctx2.lineTo(X(u + 0.02), Y(0.68));
-      ctx2.stroke();
-      ctx2.beginPath();
-      ctx2.moveTo(X(u + 0.02), Y(0.68));
-      ctx2.lineTo(X(u - 0.1), Y(0.68));
-      ctx2.moveTo(X(u + 0.02), Y(0.68));
-      ctx2.lineTo(X(u + 0.13), Y(0.68));
-      ctx2.stroke();
-    }
-    const tails = [
-      [-0.02, -0.72, 0.42, -0.98],
-      [0.12, -0.68, 0.58, -0.86],
-      [0.24, -0.62, 0.68, -0.68],
-      [0.34, -0.5, 0.76, -0.44]
-    ];
-    for (let i = 0; i < tails.length; i++) {
-      const [x0, y0, x1, y1] = tails[i];
-      ctx2.strokeStyle = i % 2 ? GREEN_DEEP : GREEN;
-      ctx2.lineWidth = Math.max(1.4, S * 0.11);
-      ctx2.beginPath();
-      ctx2.moveTo(X(0.22), Y(0.16));
-      ctx2.quadraticCurveTo(X(x0 + 0.2), Y(y0 - 0.12), X(x1), Y(y1));
-      ctx2.stroke();
-      ctx2.fillStyle = RED;
-      ctx2.beginPath();
-      ctx2.arc(X(x1), Y(y1), Math.max(1.2, S * 0.075), 0, Math.PI * 2);
-      ctx2.fill();
-    }
-    const grad = ctx2.createLinearGradient(X(-0.5), Y(-0.3), X(0.45), Y(0.45));
-    grad.addColorStop(0, "#1E5A22");
-    grad.addColorStop(0.55, "#2E7D32");
-    grad.addColorStop(1, "#4E9E52");
-    ctx2.save();
-    ctx2.translate(X(0.04), Y(0.02));
-    ctx2.rotate(-0.32);
-    ctx2.fillStyle = grad;
-    ctx2.beginPath();
-    ctx2.ellipse(0, 0, S * 0.46, S * 0.55, 0, 0, Math.PI * 2);
-    ctx2.fill();
+    ctx2.lineJoin = "round";
+    fn(ctx2, t);
     ctx2.restore();
-    ctx2.save();
-    ctx2.translate(X(0.16), Y(0.02));
-    ctx2.rotate(-0.42);
-    ctx2.fillStyle = "#2E8B8B";
+  }
+  function filledCircle(ctx2, x, y, r, color) {
+    ctx2.fillStyle = color;
     ctx2.beginPath();
-    ctx2.ellipse(0, 0, S * 0.28, S * 0.36, 0, 0, Math.PI * 2);
+    ctx2.arc(x, y, r, 0, Math.PI * 2);
     ctx2.fill();
-    ctx2.strokeStyle = "#8FD3D0";
-    ctx2.lineWidth = Math.max(0.8, S * 0.045);
-    for (let k = 0; k < 3; k++) {
-      ctx2.beginPath();
-      ctx2.arc(-S * 0.06, S * (0.02 + k * 0.11), S * 0.22, 0.15, 1.55);
-      ctx2.stroke();
-    }
-    ctx2.restore();
-    ctx2.fillStyle = GREEN_DEEP;
+  }
+  function strokedCircle(ctx2, x, y, r, color, lw) {
+    ctx2.strokeStyle = color;
+    ctx2.lineWidth = lw || 0.09;
     ctx2.beginPath();
-    ctx2.arc(X(-0.3), Y(-0.44), S * 0.24, 0, Math.PI * 2);
-    ctx2.fill();
-    ctx2.fillStyle = RED;
-    for (let k = 0; k < 3; k++) {
-      ctx2.beginPath();
-      ctx2.arc(X(-0.44 + k * 0.13), Y(-0.68 - (k === 1 ? 0.07 : 0)), S * 0.085, 0, Math.PI * 2);
-      ctx2.fill();
-    }
-    ctx2.fillStyle = "#F2C14E";
+    ctx2.arc(x, y, r, 0, Math.PI * 2);
+    ctx2.stroke();
+  }
+  function petal(ctx2, x, y, r, color) {
+    filledCircle(ctx2, x, y, r, color);
+  }
+  function starPath(ctx2, cx, cy, rOuter, rInner, points) {
     ctx2.beginPath();
-    ctx2.moveTo(X(-0.5), Y(-0.42));
-    ctx2.lineTo(X(-0.78), Y(-0.34));
-    ctx2.lineTo(X(-0.5), Y(-0.28));
+    for (let i = 0; i < points * 2; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / points;
+      const r = i % 2 === 0 ? rOuter : rInner;
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      if (i === 0) ctx2.moveTo(px, py);
+      else ctx2.lineTo(px, py);
+    }
+    ctx2.closePath();
+  }
+  function bambooStick(ctx2, x, y, h, t) {
+    ctx2.fillStyle = t.ink;
+    ctx2.beginPath();
+    ctx2.moveTo(x - 0.1, y - h / 2);
+    ctx2.lineTo(x + 0.1, y - h / 2);
+    ctx2.lineTo(x + 0.1, y + h / 2);
+    ctx2.lineTo(x - 0.1, y + h / 2);
     ctx2.closePath();
     ctx2.fill();
-    ctx2.fillStyle = "#FFFFFF";
+    ctx2.strokeStyle = t.accent;
+    ctx2.lineWidth = 0.055;
     ctx2.beginPath();
-    ctx2.arc(X(-0.36), Y(-0.48), S * 0.105, 0, Math.PI * 2);
-    ctx2.fill();
-    ctx2.fillStyle = "#101510";
-    ctx2.beginPath();
-    ctx2.arc(X(-0.38), Y(-0.48), S * 0.058, 0, Math.PI * 2);
-    ctx2.fill();
-    ctx2.restore();
-  }
-  function drawTong(ctx2, type, box) {
-    const pos = TONG_POS[type.num] || TONG_POS[1];
-    const { pts, dmin } = layout(box, pos);
-    const r = Math.min(dmin * 0.46, Math.min(box.w, box.h) * 0.42);
-    for (let i = 0; i < pts.length; i++) ring(ctx2, pts[i][0], pts[i][1], r);
-  }
-  function ring(ctx2, cx, cy, r) {
-    ctx2.fillStyle = RED;
-    circle(ctx2, cx, cy, r);
-    ctx2.fill();
-    ctx2.fillStyle = GREEN;
-    circle(ctx2, cx, cy, r * 0.72);
-    ctx2.fill();
-    ctx2.fillStyle = BLUE_DARK;
-    circle(ctx2, cx, cy, r * 0.46);
-    ctx2.fill();
-    ctx2.fillStyle = BLUE_LIGHT;
-    circle(ctx2, cx, cy, r * 0.26);
-    ctx2.fill();
-    ctx2.strokeStyle = RED_LIGHT;
-    ctx2.lineWidth = Math.max(0.8, r * 0.1);
-    circle(ctx2, cx, cy, r * 0.86);
+    ctx2.moveTo(x - 0.13, y);
+    ctx2.lineTo(x + 0.13, y);
     ctx2.stroke();
+    filledCircle(ctx2, x, y - h / 2, 0.075, t.accent);
+    filledCircle(ctx2, x, y + h / 2, 0.075, t.accent);
   }
-  function drawTiao(ctx2, type, box) {
-    const pos = TIAO_POS[type.num] || TIAO_POS[2];
-    const { pts, dmin } = layout(box, pos);
-    const swCap = box.w * 0.3;
-    const sw = Math.min(dmin * 0.46, swCap, box.w * 0.28);
-    const sh = Math.min(sw * 2.35, box.h * 0.86);
-    for (let i = 0; i < pts.length; i++) bamboo(ctx2, pts[i][0], pts[i][1], sw, sh);
-  }
-  function bamboo(ctx2, cx, cy, w, h) {
-    const bw = Math.max(3, w);
-    const bh = Math.max(8, h);
-    const r = Math.min(bw, bh) * 0.34;
-    const top = cy - bh / 2;
-    ctx2.fillStyle = GREEN;
-    rr(ctx2, cx - bw / 2, top, bw, bh, r);
-    ctx2.fill();
-    ctx2.fillStyle = "rgba(255,255,255,0.24)";
-    rr(ctx2, cx - bw * 0.26, top + bh * 0.22, bw * 0.15, bh * 0.4, bw * 0.075);
-    ctx2.fill();
-    const dotR = Math.max(1.2, bw * 0.42);
-    ctx2.fillStyle = RED;
-    circle(ctx2, cx, top + dotR, dotR);
-    ctx2.fill();
-    ctx2.strokeStyle = GREEN_DEEP;
-    ctx2.lineWidth = Math.max(0.5, bw * 0.1);
-    circle(ctx2, cx, top + dotR, dotR);
-    ctx2.stroke();
-    ctx2.beginPath();
-    ctx2.moveTo(cx - bw * 0.4, top + dotR * 2.2);
-    ctx2.lineTo(cx + bw * 0.4, top + dotR * 2.2);
-    ctx2.stroke();
-    ctx2.strokeStyle = GREEN_DEEP;
-    ctx2.lineWidth = Math.max(0.8, bw * 0.11);
-    rr(ctx2, cx - bw / 2, top, bw, bh, r);
-    ctx2.stroke();
-  }
-  function drawHonor(ctx2, type, box) {
-    if (type.ch === "白") {
-      const bw = box.w * 0.8;
-      const bh = box.h * 0.82;
-      ctx2.lineWidth = Math.max(2.2, box.w * 0.075);
-      ctx2.strokeStyle = BLUE_DARK;
-      rr(ctx2, box.cx - bw / 2, box.cy - bh / 2, bw, bh, Math.min(bw, bh) * 0.18);
+  var ICONS = {
+    bird(ctx2, t) {
+      ctx2.strokeStyle = t.ink;
+      ctx2.lineWidth = 0.13;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.85, 0.68);
+      ctx2.lineTo(0.85, 0.68);
       ctx2.stroke();
-      ctx2.lineWidth = Math.max(1.1, box.w * 0.03);
-      ctx2.strokeStyle = BLUE_LIGHT;
-      rr(ctx2, box.cx - bw * 0.32, box.cy - bh * 0.32, bw * 0.64, bh * 0.64, Math.min(bw, bh) * 0.14);
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.07;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.45, 0.62);
+      ctx2.lineTo(-0.45, 0.74);
+      ctx2.moveTo(0.35, 0.62);
+      ctx2.lineTo(0.35, 0.74);
       ctx2.stroke();
-      return;
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.ellipse(0.15, 0.02, 0.52, 0.4, -0.22, 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.fillStyle = t.accent;
+      ctx2.beginPath();
+      ctx2.ellipse(0.28, 0.02, 0.32, 0.2, -0.35, 0, Math.PI * 2);
+      ctx2.fill();
+      filledCircle(ctx2, -0.38, -0.32, 0.26, t.ink);
+      ctx2.fillStyle = "#F6C33C";
+      ctx2.beginPath();
+      ctx2.moveTo(-0.6, -0.28);
+      ctx2.lineTo(-0.92, -0.18);
+      ctx2.lineTo(-0.58, -0.12);
+      ctx2.closePath();
+      ctx2.fill();
+      filledCircle(ctx2, -0.34, -0.58, 0.1, "#DD4A3A");
+      filledCircle(ctx2, -0.42, -0.36, 0.085, "#FFFFFF");
+      filledCircle(ctx2, -0.44, -0.36, 0.045, "#20261F");
+      ctx2.strokeStyle = t.ink;
+      ctx2.lineWidth = 0.085;
+      ctx2.beginPath();
+      ctx2.moveTo(0.55, 0.12);
+      ctx2.quadraticCurveTo(0.95, -0.15, 0.82, -0.62);
+      ctx2.moveTo(0.58, 0.18);
+      ctx2.quadraticCurveTo(1.02, 0, 0.98, -0.4);
+      ctx2.stroke();
+      ctx2.strokeStyle = "#D84536";
+      ctx2.lineWidth = 0.075;
+      ctx2.beginPath();
+      ctx2.moveTo(0.02, 0.38);
+      ctx2.lineTo(-0.02, 0.68);
+      ctx2.moveTo(0.28, 0.38);
+      ctx2.lineTo(0.32, 0.68);
+      ctx2.stroke();
+    },
+    diamond(ctx2, t) {
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.moveTo(0, -0.82);
+      ctx2.lineTo(0.66, 0);
+      ctx2.lineTo(0, 0.82);
+      ctx2.lineTo(-0.66, 0);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.1;
+      ctx2.beginPath();
+      ctx2.moveTo(0, -0.48);
+      ctx2.lineTo(0.38, 0);
+      ctx2.lineTo(0, 0.48);
+      ctx2.lineTo(-0.38, 0);
+      ctx2.closePath();
+      ctx2.stroke();
+      filledCircle(ctx2, 0, 0, 0.12, t.accent);
+    },
+    leaf(ctx2, t) {
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.72, 0.62);
+      ctx2.quadraticCurveTo(-0.55, -0.72, 0.72, -0.62);
+      ctx2.quadraticCurveTo(0.62, 0.62, -0.72, 0.62);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.08;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.62, 0.56);
+      ctx2.lineTo(0.6, -0.52);
+      ctx2.stroke();
+      ctx2.lineWidth = 0.05;
+      for (let i = -2; i <= 2; i++) {
+        ctx2.beginPath();
+        ctx2.moveTo(-0.25 + i * 0.2, 0.2 + i * 0.12);
+        ctx2.lineTo(0.05 + i * 0.18, -0.05 + i * 0.12);
+        ctx2.stroke();
+      }
+    },
+    frame(ctx2, t) {
+      ctx2.strokeStyle = t.ink;
+      ctx2.lineWidth = 0.16;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.72, -0.72);
+      ctx2.lineTo(0.72, -0.72);
+      ctx2.lineTo(0.72, 0.72);
+      ctx2.lineTo(-0.72, 0.72);
+      ctx2.closePath();
+      ctx2.stroke();
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.09;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.44, -0.44);
+      ctx2.lineTo(0.44, -0.44);
+      ctx2.lineTo(0.44, 0.44);
+      ctx2.lineTo(-0.44, 0.44);
+      ctx2.closePath();
+      ctx2.stroke();
+      filledCircle(ctx2, -0.72, -0.72, 0.12, t.accent);
+      filledCircle(ctx2, 0.72, 0.72, 0.12, t.accent);
+    },
+    coin1(ctx2, t) {
+      strokedCircle(ctx2, 0, 0, 0.74, t.ink, 0.16);
+      strokedCircle(ctx2, 0, 0, 0.48, t.accent, 0.13);
+      filledCircle(ctx2, 0, 0, 0.22, t.ink);
+      filledCircle(ctx2, 0, 0, 0.1, t.accent);
+    },
+    coin3(ctx2, t) {
+      const pts = [[0, -0.52], [-0.52, 0.42], [0.52, 0.42]];
+      for (let i = 0; i < pts.length; i++) {
+        strokedCircle(ctx2, pts[i][0], pts[i][1], 0.34, t.ink, 0.11);
+        strokedCircle(ctx2, pts[i][0], pts[i][1], 0.19, t.accent, 0.08);
+        filledCircle(ctx2, pts[i][0], pts[i][1], 0.07, t.ink);
+      }
+    },
+    bamboo2(ctx2, t) {
+      bambooStick(ctx2, -0.35, 0, 1.3, t);
+      bambooStick(ctx2, 0.35, 0, 1.3, t);
+    },
+    bamboo5(ctx2, t) {
+      bambooStick(ctx2, 0, -0.42, 0.72, t);
+      bambooStick(ctx2, -0.48, 0.32, 0.72, t);
+      bambooStick(ctx2, 0.48, 0.32, 0.72, t);
+      bambooStick(ctx2, -0.26, -0.05, 0.6, t);
+      bambooStick(ctx2, 0.26, -0.05, 0.6, t);
+      filledCircle(ctx2, 0, 0.1, 0.13, t.accent);
+    },
+    blossom(ctx2, t) {
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        petal(ctx2, Math.cos(a) * 0.44, Math.sin(a) * 0.44, 0.32, t.ink);
+      }
+      filledCircle(ctx2, 0, 0, 0.26, t.accent);
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        filledCircle(ctx2, Math.cos(a) * 0.17, Math.sin(a) * 0.17, 0.045, t.ink);
+      }
+    },
+    orchid(ctx2, t) {
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.moveTo(0, 0.62);
+      ctx2.quadraticCurveTo(-0.92, 0.1, -0.55, -0.68);
+      ctx2.quadraticCurveTo(-0.1, -0.35, 0, 0.62);
+      ctx2.fill();
+      ctx2.beginPath();
+      ctx2.moveTo(0, 0.62);
+      ctx2.quadraticCurveTo(0.92, 0.1, 0.55, -0.68);
+      ctx2.quadraticCurveTo(0.1, -0.35, 0, 0.62);
+      ctx2.fill();
+      ctx2.beginPath();
+      ctx2.moveTo(0, 0.55);
+      ctx2.quadraticCurveTo(-0.3, -0.35, 0, -0.86);
+      ctx2.quadraticCurveTo(0.3, -0.35, 0, 0.55);
+      ctx2.fill();
+      filledCircle(ctx2, 0, 0.2, 0.17, t.accent);
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.07;
+      ctx2.beginPath();
+      ctx2.moveTo(0, 0.6);
+      ctx2.lineTo(0, 0.88);
+      ctx2.stroke();
+    },
+    chrys(ctx2, t) {
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI * 2 / 12;
+        const x = Math.cos(a), y = Math.sin(a);
+        ctx2.strokeStyle = i % 2 ? t.accent : t.ink;
+        ctx2.lineWidth = 0.11;
+        ctx2.beginPath();
+        ctx2.moveTo(x * 0.22, y * 0.22);
+        ctx2.lineTo(x * 0.84, y * 0.84);
+        ctx2.stroke();
+        filledCircle(ctx2, x * 0.86, y * 0.86, 0.07, t.ink);
+      }
+      filledCircle(ctx2, 0, 0, 0.24, t.accent);
+    },
+    fish(ctx2, t) {
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.ellipse(0.05, 0, 0.58, 0.36, 0, 0, Math.PI * 2);
+      ctx2.fill();
+      ctx2.beginPath();
+      ctx2.moveTo(0.52, 0);
+      ctx2.lineTo(0.94, -0.46);
+      ctx2.lineTo(0.94, 0.46);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.fillStyle = t.accent;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.12, -0.3);
+      ctx2.lineTo(0.2, -0.62);
+      ctx2.lineTo(0.32, -0.28);
+      ctx2.closePath();
+      ctx2.fill();
+      filledCircle(ctx2, -0.38, -0.1, 0.09, "#FFFFFF");
+      filledCircle(ctx2, -0.4, -0.1, 0.045, "#20261F");
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.07;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.1, 0.18);
+      ctx2.lineTo(0.38, 0.18);
+      ctx2.stroke();
+    },
+    moon(ctx2, t) {
+      filledCircle(ctx2, 0.05, 0, 0.76, t.ink);
+      filledCircle(ctx2, 0.42, -0.16, 0.64, t.face);
+      filledCircle(ctx2, -0.48, -0.52, 0.1, t.accent);
+      filledCircle(ctx2, -0.22, 0.56, 0.07, t.accent);
+    },
+    sun(ctx2, t) {
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI * 2 / 8;
+        ctx2.strokeStyle = t.accent;
+        ctx2.lineWidth = 0.12;
+        ctx2.beginPath();
+        ctx2.moveTo(Math.cos(a) * 0.52, Math.sin(a) * 0.52);
+        ctx2.lineTo(Math.cos(a) * 0.9, Math.sin(a) * 0.9);
+        ctx2.stroke();
+      }
+      filledCircle(ctx2, 0, 0, 0.48, t.ink);
+      filledCircle(ctx2, 0, 0, 0.3, t.accent);
+    },
+    cloud(ctx2, t) {
+      filledCircle(ctx2, -0.45, 0.1, 0.36, t.ink);
+      filledCircle(ctx2, 0, -0.2, 0.48, t.ink);
+      filledCircle(ctx2, 0.48, 0.1, 0.34, t.ink);
+      ctx2.fillStyle = t.ink;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.78, 0.14);
+      ctx2.lineTo(0.78, 0.14);
+      ctx2.lineTo(0.78, 0.5);
+      ctx2.lineTo(-0.78, 0.5);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.strokeStyle = t.accent;
+      ctx2.lineWidth = 0.09;
+      ctx2.beginPath();
+      ctx2.moveTo(-0.58, 0.34);
+      ctx2.lineTo(0.58, 0.34);
+      ctx2.stroke();
+    },
+    star(ctx2, t) {
+      ctx2.fillStyle = t.ink;
+      starPath(ctx2, 0, 0, 0.88, 0.38, 5);
+      ctx2.fill();
+      ctx2.fillStyle = t.accent;
+      starPath(ctx2, 0, 0, 0.52, 0.22, 5);
+      ctx2.fill();
+      filledCircle(ctx2, 0, 0, 0.13, t.ink);
     }
-    const size = Math.round(box.h * 0.62);
-    const color = type.ch === "發" ? GREEN : type.ch === "中" ? RED : BLACK;
-    text(ctx2, type.ch, box.cx, box.cy, {
-      size,
-      weight: "700",
-      family: ROUND_FONT,
-      fill: color,
-      stroke: "#FFFFFF",
-      strokeWidth: Math.max(1, size * 0.045)
+  };
+  function drawIcon(ctx2, type, cx, cy, boxW, boxH) {
+    const fn = ICONS[type.icon];
+    if (!fn) return;
+    withBox(ctx2, type, cx, cy, boxW, boxH, (c, t) => {
+      c.fillStyle = "rgba(255,255,255,0.72)";
+      c.beginPath();
+      c.ellipse(0, 0, 0.98, 0.98, 0, 0, Math.PI * 2);
+      c.fill();
+      fn(c, t);
     });
   }
 
@@ -448,48 +556,56 @@
   var LEVEL_SPEC = {
     1: {
       level: 1,
-      cardCount: 24,
-      // 8 组三消
-      groups: 8,
+      cardCount: 48,
+      groups: 16,
       layers: 3,
-      types: 8,
-      // 每种恰好 3 张
-      plan: [12, 8, 4],
-      // 底层 → 顶层，总和 24，上窄下宽
+      types: 16,
+      plan: [21, 15, 12],
       props: { shuffle: 3, undo: 3, remove: 3 },
-      reviveMax: 1
+      reviveMax: 1,
+      template: "L1_TUTORIAL"
     },
     2: {
       level: 2,
-      cardCount: 222,
-      // 74 组三消
-      groups: 74,
-      layers: 7,
-      types: 15,
-      // 只作为「基准」保留给文档 / 兼容字段；运行时一律用 LAYER_SHAPE.planBase
-      // 按 seed 做 ±2 浮动并归一化到 222，绝不所有 seed 共用一张写死的表。
-      plan: [54, 48, 44, 36, 22, 12, 6],
+      cardCount: 240,
+      groups: 80,
+      layers: 15,
+      // 15 个互不重复的全局堆叠层：主堆 7 + 左右各 3 + 保留区 2
+      types: 16,
+      plan: [45, 39, 33, 27, 21, 9, 6],
       props: { shuffle: 3, undo: 3, remove: 3 },
-      reviveMax: 1
+      reviveMax: 1,
+      template: "L2_MULTI_ZONE"
     }
   };
-  var LAYER_SHAPE = {
-    /** 层张数基准（底→顶），总和 222；运行时每层按 seed 在 ±2 内浮动后归一化 */
-    planBase: [54, 48, 44, 36, 22, 12, 6],
-    /** 参考列数（整张牌为单位）：9/9/10/10/7/5/3，可按安全区调整 */
-    colsBase: [9, 9, 10, 10, 7, 5, 3],
-    /** 第 2、3 层包围盒宽度 ≥ 第 0 层宽度 + 这个值 */
-    bellyExtraPx: TILE_W / 2,
-    // 33
-    /** 每层张数相对基准的浮动上限 */
+  var LAYOUT_SHAPE = {
+    /** 主堆每层张数基准，总和 = 主堆张数 */
+    corePlanBase: [45, 39, 33, 27, 21, 9, 6],
+    /** 每层相对基准的浮动上限（按 seed 变化，总和归一化回主堆张数） */
     planJitter: 2,
-    /** 第 0–3 层填充率区间（牌数 / 包围盒格点数） */
+    /** 两侧盲盒长条：每侧张数（3 层 × 4 张） */
+    sideCount: 12,
+    /** 底部保留区：张数（2 层 × 18 张） */
+    reserveCount: 36,
+    /** 主堆第 2、3 层包围盒宽度至少比第 0 层宽出的像素（「中间厚」） */
+    bellyExtraPx: TILE_W / 2,
+    /** 主堆底层 / 中层填充率区间 */
     fillMin: 0.8,
-    fillMax: 0.9,
-    /** 第 4 层最低填充率 */
+    fillMax: 0.92,
+    /** 主堆第 4 层最低填充率 */
     topFillMin: 0.85,
     /** 第 0–3 层每层至少留几处边缘缺口 */
     minEdgeGaps: 2
+  };
+  var LAYER_SHAPE = {
+    planBase: LAYOUT_SHAPE.corePlanBase,
+    colsBase: [9, 9, 10, 10, 7, 5, 3],
+    bellyExtraPx: LAYOUT_SHAPE.bellyExtraPx,
+    planJitter: LAYOUT_SHAPE.planJitter,
+    fillMin: LAYOUT_SHAPE.fillMin,
+    fillMax: LAYOUT_SHAPE.fillMax,
+    topFillMin: LAYOUT_SHAPE.topFillMin,
+    minEdgeGaps: LAYOUT_SHAPE.minEdgeGaps
   };
   var SLOT_PITCH = 78;
   var SLOT_PANEL = { x: 73, y: 1024, w: 574, h: 124, x0Pad: 14, y0Pad: 18 };
@@ -506,7 +622,6 @@
       pitchY: TILE_H,
       jitter: 0,
       plan: spec.plan.map((n, li) => ({ li, n })),
-      // ES5 降级视图画槽位面板时用的绝对坐标（不能 import，只能从 game.layout 读）
       slot: {
         x: SLOT_PANEL.x,
         y: SLOT_PANEL.y,
@@ -526,29 +641,33 @@
   var LAYOUTS = { 1: makeLayout(1), 2: makeLayout(2) };
 
   // <stdin>
-  var COLS = 5;
+  var COLS = 4;
   var TW = 150;
   var TH = 172;
   var GAP = 14;
   var rows = Math.ceil(TYPE_LIST.length / COLS);
   var W = COLS * (TW + GAP) + GAP;
-  var H = rows * (TH + GAP) + GAP + 40;
+  var H = rows * (TH + GAP) + GAP + 46;
   var cv = document.createElement("canvas");
   cv.width = W;
   cv.height = H;
   document.body.appendChild(cv);
   var ctx = cv.getContext("2d");
-  ctx.fillStyle = "#3A2A1E";
+  ctx.fillStyle = "#F7EEDC";
   ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#4A3524";
+  ctx.font = "700 18px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("MahLeMah v2.0.0 · 16 种原创多色牌型", GAP, H - 14);
   TYPE_LIST.forEach((t, i) => {
     const c = i % COLS, r = Math.floor(i / COLS);
     const x = GAP + c * (TW + GAP);
     const y = GAP + r * (TH + GAP);
-    drawTile(ctx, x, y, TW, TH, t.id, {});
-    ctx.fillStyle = "rgba(255,240,210,0.55)";
+    drawTile(ctx, x, y, TW, TH, t.id, { playable: true });
+    ctx.fillStyle = "rgba(74,53,36,0.86)";
     ctx.font = "600 13px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(t.id, x + TW / 2, y + TH + 14);
+    ctx.fillText(t.label + " / " + t.id, x + TW / 2, y + TH + 14);
   });
   var small = document.createElement("canvas");
   var ROW_H = TILE_H + 12;
@@ -558,16 +677,17 @@
   small.style.marginTop = "8px";
   document.body.appendChild(small);
   var c2 = small.getContext("2d");
-  c2.fillStyle = "#3A2A1E";
+  c2.fillStyle = "#F7EEDC";
   c2.fillRect(0, 0, 720, small.height);
   var states = [
     { name: "可点", opt: { playable: true } },
     { name: "压 1 层", opt: { dimLevel: 1 } },
     { name: "压 4 层", opt: { dimLevel: 4 } }
   ];
-  ["yaoji", "zi-zhong", "tong-5", "tiao-9", "zi-dong", "tong-1"].forEach((id, i) => {
+  var sample = TYPE_LIST.slice(0, 6).map((t) => t.id);
+  sample.forEach((id, i) => {
     states.forEach((st, r) => drawTile(c2, 10 + i * 116, 8 + r * ROW_H, TILE_W, TILE_H, id, st.opt));
   });
-  document.title = "tile sheet";
+  document.title = "tile sheet v2";
 })();
 </script></body></html>

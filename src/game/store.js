@@ -92,7 +92,7 @@ export function resetDesktopSave() {
   }
 }
 
-/* ---------- 绿色版：数据目录 & 一键卸载 ---------- */
+/* ---------- 桌面版：数据目录（只读展示） ---------- */
 
 /** 桌面版的数据目录（<exe 同级>/MahLeMah_Data），浏览器版返回空串 */
 export function fetchDataDir(apply) {
@@ -113,32 +113,15 @@ export function fetchDataDir(apply) {
 }
 
 /**
- * 一键卸载：
- *   1. 清掉 localStorage 里的存档；
- *   2. 优先用 Tauri fs 插件删除 MahLeMah_Data（插件受 capability scope 保护）；
- *   3. 无论插件是否成功，都调用 Rust 的 uninstall_app —— 它会再删一次数据目录、
- *      排一个"进程退出后删除 exe 自身"的脚本，然后退出进程。
- * 返回 true 表示已交给桌面端执行；浏览器里返回 false（不做事）。
+ * v2.0.0 安全边界：前端不再执行任何文件删除、不再调用 uninstall_app、
+ * 不再启动任何系统命令。FS 插件已从 Tauri 侧整体移除，capability 只剩
+ * core:default。卸载完全由 NSIS 安装器生成的卸载程序（开始菜单 /
+ * Windows「应用和功能」）负责，游戏内只展示操作指引。
+ *
+ * 保留一个纯内存/本地存档的清理入口，供「重置进度」使用；它不会碰
+ * MahLeMah_Data 里的任何文件，也不触发任何卸载类 IPC。
  */
-export function uninstallGame(dataDir) {
+export function clearLocalProgress() {
   clearSave();
-
-  if (!invoke) return false;
-
-  const fsApi = typeof window !== 'undefined' && window.__TAURI__ && window.__TAURI__.fs;
-  if (fsApi && dataDir && typeof fsApi.remove === 'function') {
-    try {
-      const p = fsApi.remove(dataDir, { recursive: true });
-      if (p && typeof p.catch === 'function') p.catch(() => {});
-    } catch (e) {
-      /* Rust 侧会兜底 */
-    }
-  }
-
-  try {
-    invoke('uninstall_app');
-  } catch (e) {
-    return false;
-  }
-  return true;
+  resetDesktopSave();
 }

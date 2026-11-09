@@ -81,11 +81,16 @@ const uiTitle = R.getUI(g);
 R.drawTitleScreen(ctx, g, uiTitle, 1.2);
 count++;
 
-// 15 种传统麻将牌全部绘制一遍：统一只用 config.js 的 TILE_W × TILE_H，不再有「按关卡分大小牌」
+// v2：16 种原创多色牌型全部绘制一遍（可点 / 被压 / 默认 / 选中四种状态）
+if (TYPE_LIST.length !== 16) {
+  console.error('  [FAIL] 牌型数量应为 16，实测 ' + TYPE_LIST.length);
+  process.exit(1);
+}
 for (const t of TYPE_LIST) {
-  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: false, glow: 0.5, lift: 2 });
-  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: true });
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: false, glow: 0.5, lift: 2, playable: true });
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: true, dimLevel: 3 });
   drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, {});
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { selected: true });
   count++;
 }
 
@@ -135,40 +140,40 @@ drawMascot(ctx, 360, 470, 1.35, 2.4);
 drawTitle(ctx, 360, 720, 62);
 count++;
 
-/* ---------- 卸载 UI（绿色版） ---------- */
+/* ---------- v2 卸载说明 UI（纯信息，不执行删除） ---------- */
 let uiFail = 0;
 {
   const ug = new Game(null); // 默认停在标题页
   const home = R.getUI(ug);
-  if (home.buttons.some((b) => b.id === 'uninstall')) {
-    console.log('  [PASS] 标题页存在「卸载并删除数据」按钮');
+  if (home.buttons.some((b) => b.id === 'uninstall' && b.label === '如何卸载')) {
+    console.log('  [PASS] 标题页存在「如何卸载」按钮');
   } else {
     uiFail++;
-    console.log('  [FAIL] 标题页缺少卸载按钮');
+    console.log('  [FAIL] 标题页缺少卸载说明按钮');
   }
 
   ug.uninstallAsk = true;
   const ask = R.getUI(ug);
   const ids = ask.buttons.map((b) => b.id).sort().join(',');
-  if (ids === 'uninstall-no,uninstall-yes') {
-    console.log('  [PASS] 二次确认只有「取消 / 彻底删除」两个按钮');
+  if (ids === 'uninstall-no') {
+    console.log('  [PASS] 卸载说明只有一个「知道了」，不存在任何删除确认按钮');
   } else {
     uiFail++;
-    console.log('  [FAIL] 确认框按钮异常: ' + ids);
+    console.log('  [FAIL] 卸载说明按钮异常: ' + ids);
   }
 
   R.drawUninstallConfirm(ctx, ug, ask);
-  console.log('  [PASS] 卸载确认面板绘制无异常');
+  console.log('  [PASS] 卸载说明面板绘制无异常');
 
   ug.uninstallAsk = false;
   ug.startLevel(2, 7);
   ug.paused = true;
   const pm = R.getUI(ug);
-  if (pm.buttons.some((b) => b.id === 'uninstall')) {
-    console.log('  [PASS] 暂停面板存在卸载按钮');
+  if (pm.buttons.some((b) => b.id === 'uninstall' && b.label === '如何卸载')) {
+    console.log('  [PASS] 暂停面板存在卸载说明按钮');
   } else {
     uiFail++;
-    console.log('  [FAIL] 暂停面板缺少卸载按钮');
+    console.log('  [FAIL] 暂停面板缺少卸载说明按钮');
   }
   count++;
 }
@@ -236,7 +241,7 @@ if (process.argv.includes('--shots')) {
       console.log(`  [FAIL] seed ${seed} 截图失败`);
       continue;
     }
-    const out = path.join(root, '.shots', `l2_gourd_${seed}.png`);
+    const out = path.join(root, '.shots', `l2_multizone_${seed}.png`);
     writeFileSync(out, Buffer.from(shot.result.data, 'base64'));
     console.log(`  saved ${path.relative(root, out)} · ${evalRes.result?.result?.value || ''}`);
   }

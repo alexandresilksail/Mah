@@ -1,14 +1,15 @@
-/* Mah Le Mah - 全部样式内联，无外部字体 / 图片 */
+/* MahLeMah v2.0.0 —— 全部样式内联，无外部字体 / 图片
+   视觉体系：暖白 / 奶油底 + 多色卡牌，绿色只作辅助色；文字深棕。 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #191009;
+  background: #F7EEDC;
   /* 纯 CSS 渐变背景，无位图资源 */
   background-image:
-    radial-gradient(120% 80% at 50% 0%, #4a3323 0%, #2a1c13 45%, #150e09 100%);
+    radial-gradient(120% 80% at 50% 0%, #FFFDF6 0%, #F7EEDC 45%, #EFDFC2 100%);
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -34,7 +35,7 @@ html, body {
   aspect-ratio: 720 / 1280;
   max-width: 100vw;
   max-height: 100vh;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 0 60px rgba(150, 112, 70, 0.28);
   border-radius: 4px;
 }
 
@@ -44,6 +45,6 @@ noscript {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f0d9a8;
+  color: #4A3524;
   font-size: 18px;
 }

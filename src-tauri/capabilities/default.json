@@ -1,14 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Mah 了个 Mah 主窗口能力：核心 IPC + 卸载时删除 exe 同级的 MahLeMah_Data",
+  "description": "MahLeMah v2.0.0 最小权限：只启用 core:default。前端不加载 fs 插件，不持有任何文件删除/写入 capability；存档读写全部经由 Rust 侧 4 个白名单命令，且被限定在 exe 同级 MahLeMah_Data/save.json。卸载由 NSIS 卸载程序负责，前端不能触发任何系统命令或删除任意路径。",
   "windows": ["main"],
   "permissions": [
-    "core:default",
-    "fs:default",
-    {
-      "identifier": "fs:allow-remove",
-      "allow": [{ "path": "**" }]
-    }
+    "core:default"
   ]
 }

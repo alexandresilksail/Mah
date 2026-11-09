@@ -9,7 +9,6 @@ import {
   syncDesktopSave,
   writeDesktopSave,
   isDesktop,
-  uninstallGame,
   fetchDataDir,
 } from './game/store.js';
 import { generateLevel, verify } from './game/generator.js';
@@ -107,7 +106,7 @@ function on(node, type, fn) {
   else if (node && node.addEventListener) node.addEventListener(type, fn, false);
 }
 
-let dataDir = ''; // <exe 同级>/MahLeMah_Data（仅桌面绿色版）
+let dataDir = ''; // <exe 同级>/MahLeMah_Data（只读展示；v2 前端不再据此删除任何文件）
 
 let lastSave = 0;
 function persist(force = false) {
@@ -164,44 +163,24 @@ function handleButton(id) {
       game.useRemove();
       break;
     case 'uninstall':
+      // v2.0.0：游戏内不再自删除，改为展示「如何用正规卸载程序卸载」的说明
       game.paused = true;
       game.uninstallAsk = true;
       break;
     case 'uninstall-no':
       game.uninstallAsk = false;
-      break;
-    case 'uninstall-yes':
-      doUninstall();
+      game.paused = false;
       break;
     default:
       break;
   }
 }
 
-/** 一键彻底卸载：清内存 → 清存档 → 删数据目录 → 退出并自删 exe */
-function doUninstall() {
-  game.uninstallAsk = false;
-
-  // 1. 清运行时的内存与缓存
-  game.cards = [];
-  game.slot = [];
-  game.history = [];
-  game.fx.length = 0;
-  game._topPool = null;
-  game.boardRev++;
-
-  // 2. 清存档 + 删磁盘数据 + 退出（桌面端由 Rust 完成最后一步）
-  const handled = uninstallGame(dataDir);
-  if (!handled) {
-    // 浏览器预览没有卸载能力：明确告知，而不是让按钮看起来"没反应"
-    game.screen = 'title';
-    game.paused = false;
-    game.status = 'play';
-    if (typeof window.alert === 'function') {
-      window.alert('卸载功能只在桌面绿色版 MahLeMah.exe 中可用。');
-    }
-  }
-}
+/**
+ * v2.0.0 安全边界：前端不再删除任何文件或调用系统命令。
+ * 卸载由 NSIS 安装器生成的卸载程序负责；游戏内按钮只展示操作指引，
+ * 关闭说明时仅恢复暂停状态，不改动牌局 / 存档 / 磁盘。
+ */
 
 function onDown(e) {
   if (e.preventDefault) e.preventDefault();
@@ -333,7 +312,10 @@ function applySave(saved) {
 
 function boot() {
   fit();
-  fetchDataDir(function (dir) { dataDir = dir; });  // 仅桌面绿色版有值
+  fetchDataDir(function (dir) {
+    dataDir = dir; // 仅桌面版有值；只读诊断，卸载由安装器的卸载程序处理
+    if (dir) console.info('[mah] 数据目录 ' + dir);
+  });
   applySave(loadSave());          // 同步：所有浏览器
   syncDesktopSave(applySave);     // 异步：仅 Tauri 桌面端，稍晚覆盖
 

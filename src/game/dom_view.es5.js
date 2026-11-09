@@ -9,34 +9,46 @@
  *     与 render.js 的纯函数 —— 逻辑坐标始终是 720×1280，所以点击换算不变；
  *   · 用绝对定位 div 代替 Canvas 绘制，按 z 顺序 append 即天然层叠；
  *   · 只有离散状态变化（点牌 / 撤销 / 洗牌 / 切屏）才全量重建 DOM，
- *     悬停高亮只改已有节点的边框，避免 IE8 每帧重建 210 个节点；
- *   · 视觉是「方块牌 + 系统字体文字」的简化版：IE8 没有 border-radius、
- *     rgba、box-shadow、渐变、Web Audio、Canvas，无法还原像素级美术。
- *     玩法、关卡、遮挡判定、道具、存档全部保持一致。
+ *     悬停高亮只改已有节点的边框，避免 IE8 每帧重建 240 个节点；
+ *   · v2.0.0：16 种牌型的短标签 / 独立配色内嵌在此（ES5 不能 import），
+ *     与 src/game/tile_types.js 的 TILE_TYPES 一一对应；被压牌做灰化压暗，
+ *     背景与按钮统一换成暖白 / 奶油底 + 橙珊瑚红蓝。
  * ========================================================================== */
 (function (win, doc) {
   'use strict';
 
-  var CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  /* 第 3 轮：万子已删除，字牌 id 改为名字（zi-zhong / zi-fa / ...），
-     一条是幺鸡（yaoji）。这里只用汉字，不出现阿拉伯数字。 */
-  var HONOR_LABEL = {
-    'zi-zhong': { text: '中', color: '#B5342B' },
-    'zi-fa': { text: '發', color: '#2E7D32' },
-    'zi-bai': { text: '白', color: '#26558F' },
-    'zi-dong': { text: '東', color: '#20261F' },
-    'zi-nan': { text: '南', color: '#20261F' }
+  /* 与 tile_types.js 的 16 个稳定 ID 一一对应：短标签 / 图案主色 / 牌面底色 */
+  var TILE_LABEL = {
+    'sparrow':       { text: '雀', color: '#176B4A', face: '#E6F6EC' },
+    'red-centre':    { text: '中', color: '#A82C1C', face: '#FDE9E4' },
+    'green-fa':      { text: '發', color: '#27621F', face: '#E8F4D9' },
+    'blue-frame':    { text: '框', color: '#1E4E8C', face: '#E4F0FD' },
+    'coin-1':        { text: '金', color: '#8A5E12', face: '#FFF3D6' },
+    'coin-3':        { text: '三', color: '#593389', face: '#F1E8FB' },
+    'bamboo-2':      { text: '竹', color: '#2F6B21', face: '#E9F6E2' },
+    'bamboo-5':      { text: '五', color: '#12645A', face: '#DEF2EE' },
+    'flower-plum':   { text: '梅', color: '#9B2F5C', face: '#FDE8F0' },
+    'flower-orchid': { text: '兰', color: '#49308A', face: '#F0E9FC' },
+    'flower-chrys':  { text: '菊', color: '#945413', face: '#FFF0DA' },
+    'fish':          { text: '鲤', color: '#A83A24', face: '#FFE9DF' },
+    'moon':          { text: '月', color: '#2A357A', face: '#E7EAFB' },
+    'sun':           { text: '日', color: '#9A6B12', face: '#FFF4CF' },
+    'cloud':         { text: '云', color: '#1D6389', face: '#E3F4FB' },
+    'star':          { text: '星', color: '#5F3086', face: '#F6EBFF' }
+  };
+  /* 旧版 ID 兜底，避免老存档在兼容版里显示 '?' */
+  var LEGACY_LABEL = {
+    'yaoji':     { text: '雀', color: '#176B4A', face: '#E6F6EC' },
+    'zi-zhong':  { text: '中', color: '#A82C1C', face: '#FDE9E4' },
+    'zi-fa':     { text: '發', color: '#27621F', face: '#E8F4D9' },
+    'zi-bai':    { text: '框', color: '#1E4E8C', face: '#E4F0FD' }
   };
 
   function tileLabel(id) {
     var key = String(id || '');
-    if (key === 'yaoji') return { text: '幺鸡', color: '#2E7D32' };
-    if (Object.prototype.hasOwnProperty.call(HONOR_LABEL, key)) return HONOR_LABEL[key];
-    var p = key.split('-');
-    var n = parseInt(p[1], 10) || 0;
-    if (p[0] === 'tiao') return { text: CN[n] + '条', color: '#2E7D32' };
-    if (p[0] === 'tong') return { text: CN[n] + '筒', color: '#26558F' };
-    return { text: '?', color: '#333333' };
+    if (Object.prototype.hasOwnProperty.call(TILE_LABEL, key)) return TILE_LABEL[key];
+    if (Object.prototype.hasOwnProperty.call(LEGACY_LABEL, key)) return LEGACY_LABEL[key];
+    return { text: '?', color: '#4A3524', face: '#FFFDF6' };
   }
 
   function el(parent, css) {
@@ -62,8 +74,8 @@
     root.id = 'mah-dom-view';
     root.style.position = 'absolute';
     root.style.overflow = 'hidden';
-    root.style.backgroundColor = '#171310';
-    root.style.color = '#F0E5D2';
+    root.style.backgroundColor = '#F7EEDC';
+    root.style.color = '#4A3524';
     root.style.fontFamily = '"Microsoft YaHei", "SimHei", "Segoe UI", sans-serif';
     stage.appendChild(root);
 
@@ -86,7 +98,7 @@
       d.style.textAlign = align || 'center';
       d.style.fontSize = Math.max(9, Math.round(size * s)) + 'px';
       d.style.fontWeight = 'bold';
-      d.style.color = color || '#F0E5D2';
+      d.style.color = color || '#4A3524';
       d.style.lineHeight = Math.round(h * s) + 'px';
       d.style.overflow = 'hidden';
       d.innerHTML = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -97,31 +109,29 @@
       var lab = tileLabel(type);
       var d = el(parent);
       box(d, x, y, w, h, s);
-      d.style.backgroundColor = blocked ? '#DDD7C6' : '#FFFDF5';
+      /* 被压牌：牌面压暗（IE8 无 rgba，用手动混出的灰化实色）+ 灰边框 */
+      d.style.backgroundColor = blocked ? '#D9D2C2' : lab.face;
       var bw = Math.max(2, Math.round(2 * s));
-      d.style.border = bw + 'px solid ' + (blocked ? '#4E7A52' : '#2E7D32');
+      d.style.border = bw + 'px solid ' + (blocked ? '#9B8D77' : lab.color);
       d.style.overflow = 'hidden';
-      /* 阴影只给可点的顶层牌：IE8 的 Shadow filter 很贵，210 个会卡死 */
+      /* 阴影只给可点的顶层牌：IE8 的 Shadow filter 很贵，240 个会卡死 */
       if (!blocked) {
-        d.style.boxShadow = Math.round(4 * s) + 'px ' + Math.round(6 * s) + 'px ' + Math.round(9 * s) + 'px #000000';
-        try { d.style.filter = "progid:DXImageTransform.Microsoft.Shadow(color='#000000',Direction=135,Strength=5)"; } catch (e) {}
+        d.style.boxShadow = Math.round(3 * s) + 'px ' + Math.round(4 * s) + 'px ' + Math.round(8 * s) + 'px #C4A985';
+        try { d.style.filter = "progid:DXImageTransform.Microsoft.Shadow(color='#C4A985',Direction=135,Strength=4)"; } catch (e) {}
       }
       var fs = Math.min(w, h) * (isSmall ? 0.40 : 0.35);
       var inner = doc.createElement('div');
       inner.style.width = '100%';
       inner.style.height = '100%';
       inner.style.textAlign = 'center';
-      /* 不换行：IE8 里「三萬」两字一旦折到第二行就会被 overflow 裁掉半个字 */
+      /* 不换行：IE8 里两个字一旦折到第二行就会被 overflow 裁掉半个字 */
       inner.style.whiteSpace = 'nowrap';
       inner.style.fontWeight = 'bold';
-      inner.style.color = blocked ? '#8A836E' : lab.color;
+      inner.style.color = blocked ? '#7A6F5C' : lab.color;
       inner.innerHTML = lab.text;
-      /* 被压住时把文字挪进"露出来的那条缝"里 —— 否则上层牌正好压在字上，
-         IE8 玩家看到的永远是半个字，认不出是什么牌 */
+      /* 被压住时把文字挪进「露出来的那条缝」里，避免上层牌压住字 */
       if (blocked && expose) {
         var bandH = Math.max(10, expose.y1 - expose.y0);
-        /* 缝里放不下两个字，只留前一个字：四萬→四 / 3条→3 / 東→東。
-           颜色仍在（红=万、绿=条、蓝=筒），所以不会认错花色种类 */
         if (bandH < h * 0.62) {
           inner.innerHTML = String(lab.text).charAt(0);
           fs = Math.min(w, bandH) * 0.72;
@@ -155,14 +165,12 @@
     }
 
     function drawSlot(game) {
-      /* 删掉侧堆后槽位面板重新排布：坐标 / 牌尺寸全部从 game.layout.slot 读，
-         它直接来自 config.js 的 SLOT_PANEL / SLOT_PITCH / TILE_W / TILE_H。
-         ES5 降级视图不能 import，所以这里不再硬编码任何数字。 */
+      /* 坐标 / 牌尺寸全部从 game.layout.slot 读，ES5 降级视图不能 import。 */
       var S = game.layout.slot;
       var panel = el(root);
       box(panel, S.x, S.y, S.w, S.h, s);
-      panel.style.backgroundColor = '#161311';
-      panel.style.border = '1px solid #3A3128';
+      panel.style.backgroundColor = '#FFFDF6';
+      panel.style.border = '1px solid #D8C6A8';
       panel.style.zIndex = '300';
       var g, i;
       for (i = 1; i < S.capacity; i++) {
@@ -171,7 +179,7 @@
         g.style.top = '0';
         g.style.width = '1px';
         g.style.height = '100%';
-        g.style.backgroundColor = '#3A3128';
+        g.style.backgroundColor = '#E3D5BC';
       }
       for (i = 0; i < game.slot.length && i < S.capacity; i++) {
         tileDiv(panel, S.padX + i * S.pitch, S.padY, S.cardW, S.cardH,
@@ -191,10 +199,10 @@
         var primary = b.kind === 'primary';
         var danger = b.kind === 'danger' || b.kind === 'danger-ghost';
         d.style.backgroundColor = primary
-          ? (enabled ? '#C79A4A' : '#5C4A2E')
-          : (danger ? (enabled ? '#5A2018' : '#241512') : (enabled ? '#2A241E' : '#211D19'));
-        d.style.border = '1px solid ' + (primary ? '#EBCB86' : (danger ? '#C8452F' : '#6A5B45'));
-        d.style.color = enabled ? (danger && !primary ? '#F0A08C' : '#F5E9D2') : '#7A7365';
+          ? (enabled ? '#F08A3C' : '#D8C6A8')
+          : (danger ? (enabled ? '#E4634A' : '#D8C6A8') : (enabled ? '#3E7FC1' : '#D8C6A8'));
+        d.style.border = '1px solid ' + (primary ? '#C4651F' : (danger ? '#B8452F' : '#2D5E92'));
+        d.style.color = enabled ? '#FFFFFF' : '#8B7154';
         d.style.fontWeight = 'bold';
         d.style.fontSize = Math.max(9, Math.round((b.size || 20) * s)) + 'px';
         d.style.lineHeight = Math.round(b.h * s) + 'px';
@@ -206,8 +214,7 @@
         if (b.kind === 'tool' && b.count != null) {
           var badge = doc.createElement('div');
           badge.style.position = 'absolute';
-          /* 必须显式给宽高和行高：父按钮的 line-height 会被继承，
-             不设的话 IE8 会把徽章拉成一条红色竖柱。 */
+          /* 必须显式给宽高和行高：父按钮的 line-height 会被继承 */
           var bs = Math.max(14, Math.round(18 * s));
           badge.style.right = Math.round(2 * s) + 'px';
           badge.style.top = Math.round(2 * s) + 'px';
@@ -219,7 +226,7 @@
           badge.style.fontSize = Math.max(9, Math.round(11 * s)) + 'px';
           badge.style.fontWeight = 'bold';
           badge.style.color = '#FFFFFF';
-          badge.style.backgroundColor = b.count > 0 ? '#C8452F' : '#6A6258';
+          badge.style.backgroundColor = b.count > 0 ? '#E4634A' : '#A9987E';
           badge.innerHTML = String(b.count);
           d.appendChild(badge);
         }
@@ -227,11 +234,11 @@
     }
 
     function drawHUD(game) {
-      textDiv(root, 0, 22, W, 52, 'Mah 了个 Mah', 34, '#EBCB86');
+      textDiv(root, 0, 22, W, 52, 'Mah 了个 Mah', 34, '#C4651F');
       if (game.screen === 'play') {
         var left = 0;
         for (var i = 0; i < game.cards.length; i++) if (game.cards[i].state === 'board') left++;
-        textDiv(root, 0, 76, W, 30, '第 ' + game.level + ' 关 · 共 2 关　剩 ' + left + ' 张', 18, '#D8C9AF');
+        textDiv(root, 0, 76, W, 30, '第 ' + game.level + ' 关 · 共 2 关　剩 ' + left + ' 张', 18, '#8B7154');
       }
     }
 
@@ -245,10 +252,10 @@
       var p = el(root);
       box(p, 90, 520, 540, 150, s);
       p.style.zIndex = '390';
-      p.style.backgroundColor = '#241D18';
-      p.style.border = '2px solid #C79A4A';
+      p.style.backgroundColor = '#FFFDF6';
+      p.style.border = '2px solid #F08A3C';
       p.style.textAlign = 'center';
-      p.style.color = '#EBCB86';
+      p.style.color = '#C4651F';
       p.style.fontWeight = 'bold';
       p.style.fontSize = Math.max(12, Math.round(28 * s)) + 'px';
       p.style.lineHeight = Math.round(150 * s) + 'px';
@@ -257,15 +264,15 @@
 
     function rebuild(game, ui) {
       root.innerHTML = '';
-      /* 背景：IE8 不支持 CSS 渐变，用实色 + 顶部暖色带 */
+      /* 背景：IE8 不支持 CSS 渐变，用实色 + 顶部暖白标题带 */
       var band = el(root);
       box(band, 0, 0, W, 160, s);
-      band.style.backgroundColor = '#2A1C13';
+      band.style.backgroundColor = '#FFFDF6';
       band.style.zIndex = '0';
 
       if (game.screen === 'title') {
-        textDiv(root, 0, 300, W, 80, 'Mah 了个 Mah', 56, '#EBCB86');
-        textDiv(root, 0, 400, W, 50, '堆叠卡牌三消 · 两关制', 22, '#C9B694');
+        textDiv(root, 0, 300, W, 80, 'Mah 了个 Mah', 56, '#C4651F');
+        textDiv(root, 0, 400, W, 50, '堆叠卡牌三消 · 两关制', 22, '#8B7154');
       } else {
         drawBoard(game);
         drawSlot(game);
@@ -290,7 +297,8 @@
         var c = null, i;
         for (i = 0; i < game.cards.length; i++) if (String(game.cards[i].id) === String(id)) { c = game.cards[i]; break; }
         var hovered = c && !c.blocked && String(game.hoverId) === String(c.id);
-        cardNodes[id].style.borderColor = hovered ? '#EBCB86' : (c && c.blocked ? '#4E7A52' : '#2E7D32');
+        var lab = c ? tileLabel(c.type) : { color: '#2E8B62' };
+        cardNodes[id].style.borderColor = hovered ? '#F08A3C' : (c && c.blocked ? '#9B8D77' : lab.color);
         cardNodes[id].style.borderWidth = (hovered ? Math.max(3, Math.round(3 * s)) : Math.max(2, Math.round(2 * s))) + 'px';
       }
     }

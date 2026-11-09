@@ -1,61 +1,44 @@
 /**
- * 全局唯一常量源（玩法层重做版）。
+ * MahLeMah v2.0.0 —— 全局唯一常量源。
  *
- * ── 单一尺寸 ──────────────────────────────────────────────────────
- * 全项目只有一对牌面尺寸：TILE_W × TILE_H = 66 × 88（严格 3:4）。
- * 所有层、所有关卡、主堆、槽位、临时区、命中判定、遮挡判定全部只读这两个常量。
- * 禁止出现按 layer / 关卡 / 剩余张数缩放牌面的代码。
+ * ── v2.0.0 相对 v1 的变化 ────────────────────────────────────────────
+ *  · 两关都使用完整的 16 种牌型（唯一注册表见 tile_types.js）；
+ *  · 两关布局改为独立模板驱动（见 layout_templates.js），第 2 关是多区域牌堆；
+ *  · 难度参数 / 机器人参数集中在 DIFFICULTY；
+ *  · 配色改为暖白 / 奶油底 + 多色卡牌 + 橙珊瑚红蓝按钮，绿色只作辅助色；
+ *  · C 里的旧深色字段保留同名，但值全部换成浅色系（render.js 只读这些字段）。
  *
- * ── 一堆 ──────────────────────────────────────────────────────────
- * 两关都只有一个牌堆：没有侧堆、没有多簇、没有随机抖动。
- * 同层坐标 = 层原点 + (i·TILE_W, j·TILE_H)；层原点逐层累加半格错位向量，
- * 于是所有坐标都落在 (TILE_W/2, TILE_H/2) 的整数倍晶格上。
- *
- * 舞台固定 720 × 1280（竖屏），坐标均为绝对左上角像素。
+ * ── 保持不变的硬契约（engine.js / render.js / ES5 降级视图依赖） ──────
+ *  · TILE_W / TILE_H 全项目唯一一对牌面尺寸；
+ *  · SLOT_CAPACITY = 7、OVERLAP_THRESHOLD = 0.10、MATCH_DELAY_MS = 200；
+ *  · LAYOUTS[level].slot 的字段名与坐标结构；
+ *  · levelParams() / layoutFor() / LAYOUTS / C / FUNNEL / LAYER_SHAPE 的导出名。
  */
+export const VERSION = '2.0.0';
+
 export const W = 720;
 export const H = 1280;
 
-/* ==================== 第 1 步：统一常量 ==================== */
+/* ==================== 统一常量 ==================== */
 
-/** 牌面宽（所有层、所有关卡共用，禁止缩放；允许 60~72，此处取 66） */
 export const TILE_W = 66;
-/** 牌面高（严格 3:4：66 × 4 / 3 = 88） */
 export const TILE_H = 88;
-/** 单张牌面积：遮挡判定的分母 */
 export const TILE_AREA = TILE_W * TILE_H;
-/** 半格晶格步长：所有牌的 x 必为 LATTICE_X 的整数倍，y 必为 LATTICE_Y 的整数倍 */
 export const LATTICE_X = TILE_W / 2;
 export const LATTICE_Y = TILE_H / 2;
-/** 槽位格数 */
 export const SLOT_CAPACITY = 7;
-/** 相交面积 / 牌面积 > 此值即视为被压住 */
 export const OVERLAP_THRESHOLD = 0.10;
-/** 入槽到消除的延迟（毫秒），期间禁止重复触发 */
 export const MATCH_DELAY_MS = 200;
-
-/* ---------- 仍被引用的旧导出名（值全部指向单一常量源） ---------- */
 export const SLOT_SIZE = SLOT_CAPACITY;
-
-/** 总关卡数：固定 2 关 */
 export const LEVEL_COUNT = 2;
 
 /* ==================== 牌桌 ==================== */
 
-/** 画布安全区：所有牌矩形必须完整落在里面，且牌堆整体居中于此 */
 export const BOARD_BAND = { top: 196, bottom: 918, left: 20, right: 700 };
 export const BOARD_CX = (BOARD_BAND.left + BOARD_BAND.right) / 2;
 export const BOARD_CY = (BOARD_BAND.top + BOARD_BAND.bottom) / 2;
-/** 断言单堆连通时，每张牌矩形各外扩的像素 */
 export const CONNECT_PAD = 4;
 
-/* ==================== 半格晶格与层间错位 ==================== */
-
-/**
- * 层间错位向量，单位是 (LATTICE_X, LATTICE_Y)。
- * 规范给定的三个向量：{(W/2,H/2), (0,H/2), (W/2,0)}。
- * 逐层由 seed 随机选一个并用整数累加，因此坐标永远落在半格晶格上。
- */
 export const LAYER_OFFSETS = [
   [1, 1],
   [0, 1],
@@ -64,87 +47,158 @@ export const LAYER_OFFSETS = [
 
 /* ==================== 关卡规格 ==================== */
 
+/**
+ * 两关都完整使用 16 种牌型，每种张数都是 3 的倍数。
+ * 第 1 关：16 种 × 3 张 = 48 张，3 层浅堆（教学但不无脑）。
+ * 第 2 关：240 张 = 80 组三消，7 层「主堆 + 两侧盲盒 + 底部保留区」多区域。
+ * plan 是层张数基准；真正坐标由 layout_templates.js 的模板数据生成。
+ */
 export const LEVEL_SPEC = {
   1: {
     level: 1,
-    cardCount: 24, // 8 组三消
-    groups: 8,
+    cardCount: 48,
+    groups: 16,
     layers: 3,
-    types: 8, // 每种恰好 3 张
-    plan: [12, 8, 4], // 底层 → 顶层，总和 24，上窄下宽
+    types: 16,
+    plan: [21, 15, 12],
     props: { shuffle: 3, undo: 3, remove: 3 },
     reviveMax: 1,
+    template: 'L1_TUTORIAL',
   },
   2: {
     level: 2,
-    cardCount: 222, // 74 组三消
-    groups: 74,
-    layers: 7,
-    types: 15,
-    // 只作为「基准」保留给文档 / 兼容字段；运行时一律用 LAYER_SHAPE.planBase
-    // 按 seed 做 ±2 浮动并归一化到 222，绝不所有 seed 共用一张写死的表。
-    plan: [54, 48, 44, 36, 22, 12, 6],
+    cardCount: 240,
+    groups: 80,
+    layers: 15, // 15 个互不重复的全局堆叠层：主堆 7 + 左右各 3 + 保留区 2
+    types: 16,
+    plan: [45, 39, 33, 27, 21, 9, 6],
     props: { shuffle: 3, undo: 3, remove: 3 },
     reviveMax: 1,
+    template: 'L2_MULTI_ZONE',
   },
 };
 
-/* ==================== 第 2 关外形：葫芦轮廓（可调参数） ==================== */
+/** 两关专属牌型分布（单位：三消组数，不是张数） */
+export const LEVEL_MIX = {
+  1: {
+    // 16 种各 1 组；开局 4 组只用「易识别」的 4 种，后期逐步放开
+    groups: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    openingSuits: 4,
+    openingGroups: 4,
+    span: 2,
+    easyFirst: ['sparrow', 'red-centre', 'coin-1', 'blue-frame'],
+  },
+  2: {
+    // 不均匀：常见牌型多、稀有牌型少，且与布局区域联动
+    groups: [7, 7, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4],
+    openingSuits: 10,
+    openingGroups: 6,
+    span: 3,
+    regionBias: {
+      core: [0, 1, 2, 3, 6, 7, 8, 11, 12],
+      side: [4, 5, 9, 10, 13],
+      reserve: [2, 3, 14, 15, 8],
+    },
+  },
+};
 
-/**
- * 三个可调外形 / 发牌参数都集中在这里：
- *   LAYER_SHAPE.planBase      —— 层张数基准表（底→顶，总和 222）
- *   LAYER_SHAPE.bellyExtraPx  —— 「肚子」比第 0 层至少宽出的像素数
- *   BAND_RATIOS               —— 漏斗三带在 order 上的占比 [上, 中, 下]
- *
- * 其余是结构常量（列数参考、填充率区间、相位），调轮廓不必改。
- */
-export const LAYER_SHAPE = {
-  /** 层张数基准（底→顶），总和 222；运行时每层按 seed 在 ±2 内浮动后归一化 */
-  planBase: [54, 48, 44, 36, 22, 12, 6],
-  /** 参考列数（整张牌为单位）：9/9/10/10/7/5/3，可按安全区调整 */
-  colsBase: [9, 9, 10, 10, 7, 5, 3],
-  /** 第 2、3 层包围盒宽度 ≥ 第 0 层宽度 + 这个值 */
-  bellyExtraPx: TILE_W / 2, // 33
-  /** 每层张数相对基准的浮动上限 */
+/* ==================== 布局外形参数（阶段 4 的模板系统读取） ==================== */
+
+export const LAYOUT_SHAPE = {
+  /** 主堆每层张数基准，总和 = 主堆张数 */
+  corePlanBase: [45, 39, 33, 27, 21, 9, 6],
+  /** 每层相对基准的浮动上限（按 seed 变化，总和归一化回主堆张数） */
   planJitter: 2,
-  /** 第 0–3 层填充率区间（牌数 / 包围盒格点数） */
+  /** 两侧盲盒长条：每侧张数（3 层 × 4 张） */
+  sideCount: 12,
+  /** 底部保留区：张数（2 层 × 18 张） */
+  reserveCount: 36,
+  /** 主堆第 2、3 层包围盒宽度至少比第 0 层宽出的像素（「中间厚」） */
+  bellyExtraPx: TILE_W / 2,
+  /** 主堆底层 / 中层填充率区间 */
   fillMin: 0.80,
-  fillMax: 0.90,
-  /** 第 4 层最低填充率 */
+  fillMax: 0.92,
+  /** 主堆第 4 层最低填充率 */
   topFillMin: 0.85,
   /** 第 0–3 层每层至少留几处边缘缺口 */
   minEdgeGaps: 2,
 };
 
-/* ==================== 漏斗发牌参数 ==================== */
+/** 旧导出名保留：第三轮工具 / 文档里出现过，值指向同一份新配置 */
+export const LAYER_SHAPE = {
+  planBase: LAYOUT_SHAPE.corePlanBase,
+  colsBase: [9, 9, 10, 10, 7, 5, 3],
+  bellyExtraPx: LAYOUT_SHAPE.bellyExtraPx,
+  planJitter: LAYOUT_SHAPE.planJitter,
+  fillMin: LAYOUT_SHAPE.fillMin,
+  fillMax: LAYOUT_SHAPE.fillMax,
+  topFillMin: LAYOUT_SHAPE.topFillMin,
+  minEdgeGaps: LAYOUT_SHAPE.minEdgeGaps,
+};
 
-/**
- * 按 order 位置分三带：上 25% / 中 30% / 下 45%，各带张数对齐到 3 的倍数。
- * 上带花色种类多（≥12）、三张紧邻；中带把组内三张间距拉开、部分成员落进下带；
- * 下带把大量花色的最后一张埋到 order 最深处。
- *
- * HILL_STEPS / HILL_PROBES 是保留的生成期爬山（方案 a）开关，默认 0；
- * 本轮难度仍由 tools/tune_pool.mjs 离线筛 seed 池（方案 b）。
- */
+/* ==================== 发牌 / 难度参数 ==================== */
+
+/** 三带：上 25% / 中 30% / 下 45%（按 order 位置，段长对齐 3 的倍数） */
 export const BAND_RATIOS = [0.25, 0.30, 0.45];
+
 export const FUNNEL = {
-  /** 上带最少用到的花色种类数 */
   TOP_SUIT_MIN: 12,
-  /** 中带批内并发组数（= 同花色三张在 order 里的间距） */
   MID_SPAN: 3,
-  /** 下带「最后一张埋最深处」的长线组数 */
   LONG_TAIL_GROUPS: 3,
   HILL_STEPS: 0,
   HILL_PROBES: 3,
 };
 
+/**
+ * 难度模型参数（阶段 5）。所有数值有默认值，运行时由 clampDifficulty() 做边界检查。
+ * seedPool 仍走「离线筛选 + 运行时查表」机制，不在生成期做爬山。
+ */
+export const DIFFICULTY = {
+  /** 第 2 关机器人验收：每种策略的样本量 */
+  sampleSeeds: 1000,
+  /** 蒙特卡洛每次决策的随机走法数 */
+  mcPlayouts: 3,
+  /** 有限深度搜索的最大展开深度（步） */
+  searchDepth: 6,
+  /** 多步前瞻的展开宽度 */
+  lookaheadWidth: 6,
+  /** 带错误惩罚贪心的失误率 */
+  noise: 0.10,
+  /**
+   * seed 池筛选条件（tools/tune_pool.mjs）。
+   *
+   * v2 不再用「贪心机器人通关率 ≤20%」当硬门槛 —— 需求 5.1 明确指出
+   * 单一机器人通关率不能代表真实玩家难度。数学上：SLOT_CAPACITY=7，
+   * 波次剥离顺序的前 ~23 张就是开局可点牌，证书要求这 23 张里槽位 ≤6，
+   * 因此必然有约 6 组三张同花色的牌同时可点；拥有完整信息的贪心机器人
+   * 必然高通关率，这只能证明「关卡可解」，不能证明「关卡简单」。
+   *
+   * 改为：硬门槛只验「结构合法 + 随机必败 + 强策略可解」，
+   * 其余用复合难度指数排序，取最难且仍可解的一批 seed。
+   */
+  pool: {
+    minFreeRatio: 0.10,
+    maxFreeRatio: 0.30,
+    minAvgPressDepth: 3.0,
+    minBottomCovered: 0.85,
+    minFreeKinds: 8,
+    targetPool: 120,
+    /** 硬门槛：随机机器人 0 通关；至少一条强策略能通关（不是死局） */
+    requireRandomZero: true,
+    requireStrongSolver: true,
+    /** 复合难度指数权重（和 = 1）：优先「死局后置」，不奖励开局秒杀 */
+    weights: {
+      naiveFailure: 0.20,   // 带失误玩家（noisy）失败率越高越难
+      mistakeGap: 0.15,    // greedy 与 noisy 的通关率差（失误惩罚）
+      lateDeath: 0.35,     // 失败进度越靠后越公平（权重最高）
+      pressure: 0.15,      // 平均压深 / 底层被压率
+      diversity: 0.15,     // 开局可点牌型数
+    },
+  },
+};
+
 /* ==================== 槽位 / 临时区 ==================== */
 
-/**
- * 删掉侧堆后重新排布：7 格紧贴、面板居中，不再为左右侧堆留空洞。
- * 7 × SLOT_PITCH = 546 = 面板内宽；槽位牌与牌堆牌同为 TILE_W × TILE_H。
- */
 export const SLOT_PITCH = 78;
 export const SLOT_PANEL = { x: 73, y: 1024, w: 574, h: 124, x0Pad: 14, y0Pad: 18 };
 export const SLOT_CARD_W = TILE_W;
@@ -152,26 +206,18 @@ export const SLOT_CARD_H = TILE_H;
 export const SLOT_X0 = SLOT_PANEL.x + SLOT_PANEL.x0Pad;
 export const SLOT_Y = SLOT_PANEL.y + SLOT_PANEL.y0Pad;
 
-/** 移出道具的临时区：不占槽位，点击可放回槽位 */
 export const TEMP_ZONE = { x: 36, y: 1172, pitch: 72, max: 9 };
 
 /* ==================== 顶部 / 道具栏 ==================== */
 
 export const MENU_BTN = { x: 22, y: 30, w: 54, h: 54 };
 export const SOUND_BTN = { x: 644, y: 30, w: 54, h: 54 };
-
-/** 道具栏居中三等分，紧贴牌桌下沿、槽位面板上沿 */
 export const TOOL_Y = 968;
 export const TOOL_R = 42;
 export const TOOL_XS = [150, 360, 570];
 
 /* ==================== 布局预设 ==================== */
 
-/**
- * 保留旧字段名供 DOM 降级视图 / 放置逻辑读取。
- * tileW / tileH 只从常量取；pitchX / pitchY 等于牌面尺寸（同层零重叠）；
- * jitter 恒为 0（禁止随机抖动）。
- */
 function makeLayout(level) {
   const spec = LEVEL_SPEC[level];
   return {
@@ -181,7 +227,6 @@ function makeLayout(level) {
     pitchY: TILE_H,
     jitter: 0,
     plan: spec.plan.map((n, li) => ({ li, n })),
-    // ES5 降级视图画槽位面板时用的绝对坐标（不能 import，只能从 game.layout 读）
     slot: {
       x: SLOT_PANEL.x,
       y: SLOT_PANEL.y,
@@ -205,45 +250,51 @@ export function layoutFor(level) {
   return level <= 1 ? LAYOUTS[1] : LAYOUTS[2];
 }
 
-/* ==================== 配色：深色沉浸 ==================== */
+/* ==================== 配色：暖白 / 奶油底 + 多色卡牌 ==================== */
 
+/**
+ * v2.0.0 视觉体系：浅米白 / 暖白 / 淡奶油为主背景，
+ * 橙 / 珊瑚红 / 蓝为关键按钮，紫 / 金黄为特殊道具，绿色只作品牌辅助色。
+ * 字段名沿用 v1（render.js 不改结构），值全部换成浅色系，文字为深棕。
+ */
 export const C = {
-  bgTop: '#1B1714',
-  bgMid: '#131010',
-  bgBot: '#080707',
-  wood: 'rgba(126, 92, 58, 0.10)',
+  bgTop: '#FFF9EC',
+  bgMid: '#F7EEDC',
+  bgBot: '#EFDFC2',
+  wood: 'rgba(196, 158, 108, 0.10)',
 
-  panel: 'rgba(22, 19, 17, 0.94)',
-  panelHi: 'rgba(48, 41, 35, 0.94)',
-  panelLine: 'rgba(255, 226, 176, 0.16)',
-  well: 'rgba(8, 7, 6, 0.86)',
-  wellLine: 'rgba(255, 236, 200, 0.10)',
+  panel: '#FFFFFF',
+  panelHi: '#FFF5E2',
+  panelLine: 'rgba(150, 112, 70, 0.26)',
+  well: '#F2E6CE',
+  wellLine: 'rgba(150, 112, 70, 0.20)',
 
-  gold: '#EBCB86',
-  goldDeep: '#C79A4A',
-  goldGhost: 'rgba(235, 203, 134, 0.30)',
+  gold: '#D79B33',
+  goldDeep: '#A97520',
+  goldGhost: 'rgba(215, 155, 51, 0.30)',
 
-  text: '#F0E5D2',
-  textDim: 'rgba(228, 213, 190, 0.55)',
-  textFaint: 'rgba(228, 213, 190, 0.30)',
+  text: '#4A3524',
+  textDim: '#8B7154',
+  textFaint: 'rgba(90, 68, 44, 0.36)',
 
-  red: '#C8452F',
-  redSoft: '#E0705C',
-  green: '#4E9E6E',
-  bad: '#E0705C',
+  red: '#DD5B3E',
+  redSoft: '#EE8A68',
+  green: '#58A473',
+  bad: '#D9533B',
 
-  tileFace: '#FFFDF5',
-  shadow: 'rgba(0,0,0,0.5)',
-  dim: 'rgba(0, 0, 0, 0.35)',
+  blue: '#3E7FC1',
+  orange: '#F08A3C',
+  coral: '#E4634A',
+  purple: '#8C63C8',
+  yellow: '#E9B93C',
+
+  tileFace: '#FFFDF6',
+  shadow: 'rgba(96, 66, 38, 0.30)',
+  dim: 'rgba(28, 22, 16, 0.45)',
 };
 
 /* ==================== 关卡参数 ==================== */
 
-/**
- * 关卡参数。保留 (level, rand) 签名与全部旧字段。
- * @param {number} level 1 | 2
- * @param {() => number} rand 随机源（保留参数位）
- */
 export function levelParams(level, rand = Math.random) {
   void rand;
   const spec = LEVEL_SPEC[level <= 1 ? 1 : 2];
@@ -256,9 +307,20 @@ export function levelParams(level, rand = Math.random) {
     props: { ...spec.props },
     reviveMax: spec.reviveMax,
     layout: layoutFor(spec.level),
-    mode: spec.level === 1 ? 'funnel' : 'funnel-hill',
+    mode: spec.level === 1 ? 'tutorial' : 'multi-zone',
     plan: spec.plan.slice(),
     funnel: { ...FUNNEL },
     spec,
   };
+}
+
+/** 难度配置边界检查：任何新增配置都要有默认值和边界 */
+export function clampDifficulty(raw) {
+  const d = { ...DIFFICULTY, ...(raw || {}) };
+  d.sampleSeeds = Math.max(1, Math.min(100000, d.sampleSeeds | 0));
+  d.mcPlayouts = Math.max(1, Math.min(32, d.mcPlayouts | 0));
+  d.searchDepth = Math.max(1, Math.min(64, d.searchDepth | 0));
+  d.lookaheadWidth = Math.max(1, Math.min(32, d.lookaheadWidth | 0));
+  d.noise = Math.max(0, Math.min(1, d.noise));
+  return d;
 }

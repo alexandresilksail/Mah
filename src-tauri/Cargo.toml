@@ -1,6 +1,6 @@
 [package]
 name = "mah-le-mah"
-version = "1.0.0"
+version = "2.0.0"
 description = "Mah Le Mah - stacked tile triple match"
 authors = ["Mah Le Mah"]
 publisher = "MahLeMah"
@@ -19,8 +19,8 @@ path = "src/main.rs"
 
 [dependencies]
 tauri = { version = "2", features = [] }
-# 前端「一键卸载」优先用它删 MahLeMah_Data；Rust 侧 uninstall_app 兜底
-tauri-plugin-fs = "2"
+# v2.0.0：移除 tauri-plugin-fs。前端不持有任何文件 capability，
+# 存档只经 Rust 侧 4 个白名单命令读写；卸载由 NSIS 卸载程序负责。
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [

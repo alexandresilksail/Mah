@@ -1,8 +1,8 @@
 {
   "name": "mah-le-mah",
   "private": true,
-  "version": "1.0.0",
-  "description": "Mah Le Mah - an original stacked-tile triple-match casual game",
+  "version": "2.0.0",
+  "description": "MahLeMah v2.0.0 - 16 tile types / two rebuilt levels / six-robot difficulty model",
   "type": "module",
   "scripts": {
     "icons": "python tools/gen_icon.py",
