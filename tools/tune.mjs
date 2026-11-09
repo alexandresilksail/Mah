@@ -1,68 +1,54 @@
 /**
- * 难度调参脚本：跑 N 局"AI 玩家"，统计通关率 / 步数 / 死局比例 / 开局可点数。
- * 用法：node tools/tune.mjs [局数] [maxVisibleTriples]
+ * 难度调参 / 现场体检（当前规格：单堆半格晶格 + 漏斗三带）。
+ *
+ * 用法：node tools/tune.mjs [每关局数] [起始 seed]
+ *   node tools/tune.mjs 40 7000
+ *
+ * 旧的 GRID 参数（按网格缩放 tileW/tileH）已删除：牌面尺寸现在是
+ * config.js 里唯一的 TILE_W × TILE_H，任何脚本都不允许改写它。
+ * 想重新生成验收 seed 池请用 tools/tune_pool.mjs（npm run tune:pool）。
  */
-import { generateLevel, simulatePlayer } from '../src/game/generator.js';
+import { generateLevel, simulateRobot, verify } from '../src/game/generator.js';
 import { makeRng } from '../src/game/rng.js';
-import { levelParams } from '../src/game/config.js';
+import { TILE_W, TILE_H, FUNNEL, LEVEL_SPEC } from '../src/game/config.js';
 
 const N = parseInt(process.argv[2] || '40', 10);
-const MAXT = parseInt(process.argv[3] || '2', 10);
-const MINP = parseInt(process.argv[4] || '0', 10);
-const TYPES = parseInt(process.argv[5] || '0', 10);
-const GRID = process.argv[6] || '';
-const NOISE = parseFloat(process.argv[7] || '0');
-if (GRID) {
-  const [c, r] = GRID.split('x').map(Number);
-  const L = levelParams(2).layout;
-  L.cols = c;
-  L.rows = r;
-  L.cellW = Math.floor(668 / c);
-  L.cellH = Math.floor(696 / r);
-  L.tileW = L.cellW - 10;
-  L.tileH = L.cellH - 12;
-}
-const rng = makeRng(987654321);
+const SEED0 = parseInt(process.argv[3] || '7000', 10);
+const MODES = ['random', 'greedy'];
 
-let wins = 0;
-let hard = 0;
-let forced = 0;
-let losses = 0;
-const moves = [];
-const visibles = [];
-const cardsN = [];
-const typesN = [];
+console.log(`TILE ${TILE_W}x${TILE_H} · FUNNEL TOP_SUITS=${FUNNEL.TOP_SUITS} MID_SPAN=${FUNNEL.MID_SPAN} CROSS_GROUPS=${FUNNEL.CROSS_GROUPS}`);
+console.log(`局数 ${N} × ${MODES.length} 种机器人 × 2 关（均不使用道具）\n`);
 
-for (let i = 0; i < N; i++) {
-  const seed = (i * 2654435761 + 12345) >>> 0;
-  const lvl = generateLevel(2, seed, { maxVisibleTriples: MAXT, minVisiblePairs: MINP, types: TYPES || undefined });
-  cardsN.push(lvl.cards.length);
-  typesN.push(new Set(lvl.cards.map((c) => c.type)).size);
-  visibles.push(lvl.visible);
-
-  const r = simulatePlayer(lvl, rng, { noise: NOISE });
-  if (r.win) wins++;
-  else {
-    losses++;
-    if (r.deadlock) hard++;
-    if (r.forced) forced++;
+for (const lv of [1, 2]) {
+  const spec = LEVEL_SPEC[lv];
+  console.log(`第 ${lv} 关：${spec.cardCount} 张 / ${spec.layers} 层 / ${spec.types} 种花色 / plan=${spec.plan.join('/')}`);
+  for (const mode of MODES) {
+    let wins = 0;
+    const pcts = [];
+    const visibles = [];
+    let certOK = 0;
+    for (let i = 0; i < N; i++) {
+      const seed = (SEED0 + i * 2654435761) >>> 0;
+      const d = generateLevel(lv, seed);
+      if (verify(d) && d.certificate.ok) certOK++;
+      visibles.push(d.visible);
+      const r = simulateRobot(d, makeRng((seed ^ 0xabcdef) >>> 0), { mode });
+      if (r.win) wins++;
+      else pcts.push(r.pct);
+    }
+    pcts.sort((a, b) => a - b);
+    const med = pcts.length ? pcts[Math.floor(pcts.length / 2)] : 1;
+    const avgPct = pcts.length
+      ? pcts.reduce((a, b) => a + b, 0) / pcts.length
+      : 1;
+    console.log(
+      `  ${mode.padEnd(6)} 通关 ${String(wins).padStart(3)}/${N} (${((wins / N) * 100).toFixed(1)}%)` +
+      ` · 死局 ${pcts.length}` +
+      ` · 平均进度 ${(avgPct * 100).toFixed(1)}%` +
+      ` · 失败进度中位 ${(med * 100).toFixed(1)}%` +
+      ` · 证书 ${certOK}/${N}` +
+      ` · 开局可点 ${Math.min.apply(null, visibles)}~${Math.max.apply(null, visibles)}`
+    );
   }
-  moves.push(r.moves);
+  console.log('');
 }
-
-const sum = (a) => a.reduce((x, y) => x + y, 0);
-const avg = (a) => sum(a) / a.length;
-const med = (a) => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
-const pct = (a, p) => a.slice().sort((x, y) => x - y)[Math.min(a.length - 1, Math.floor(a.length * p))];
-
-console.log(`局数 ${N}  maxTriples=${MAXT}  minPairs=${MINP}  types=${TYPES||'12~15'}  grid=${GRID||'6x5'} noise=${NOISE}`);
-console.log(`通关            ${wins}  (${((wins / N) * 100).toFixed(0)}%)`);
-console.log(`失败            ${losses}`);
-console.log(`  其中硬死局    ${hard}  (${((hard / Math.max(1, losses)) * 100).toFixed(0)}%)`);
-console.log(`  其中被迫死    ${forced}  (${((forced / Math.max(1, losses)) * 100).toFixed(0)}%)`);
-console.log(`步数 均值/中位  ${avg(moves).toFixed(0)} / ${med(moves)}`);
-console.log(`步数 p10~p90    ${pct(moves, 0.1)} ~ ${pct(moves, 0.9)}`);
-console.log(`步数 最小/最大  ${Math.min(...moves)} / ${Math.max(...moves)}`);
-console.log(`开局可点        ${Math.min(...visibles)}~${Math.max(...visibles)}`);
-console.log(`牌数            ${Math.min(...cardsN)}~${Math.max(...cardsN)}  牌型 ${Math.min(...typesN)}~${Math.max(...typesN)}`);
-console.log(`估算时长(1.6s/步) ${(avg(moves) * 1.6 / 60).toFixed(1)} 分钟`);

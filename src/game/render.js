@@ -125,7 +125,7 @@ export function cardAt(game, x, y) {
     }
   }
 
-  // 2) 牌堆：收集所有命中矩形的牌，按 z 降序（= 层高 + 同层 y 大者优先）
+  // 2) 单堆：收集所有命中矩形的牌，按 z 降序（= 层高 + 同层 y 大者优先）
   const hits = [];
   for (let i = 0; i < game.cards.length; i++) {
     const c = game.cards[i];
@@ -135,8 +135,11 @@ export function cardAt(game, x, y) {
   }
   if (!hits.length) return null;
   hits.sort((a, b) => b.z - a.z || b.y - a.y || b.x - a.x);
-  // 最上面那张如果被压住，就不响应 —— 不允许「透过上层牌点下层」
-  return hits[0].blocked ? null : hits[0];
+  // 从最高 z 往下取第一张「可点」的牌：被压住的牌一律跳过，不响应。
+  for (let i = 0; i < hits.length; i++) {
+    if (!hits[i].blocked) return hits[i];
+  }
+  return null;
 }
 
 /* ==================== 背景 ==================== */
@@ -465,14 +468,9 @@ function drawTableMat(ctx) {
 function paintBoard(ctx, game, alive, now) {
   const tileW = TILE_W;
   const tileH = TILE_H;
-  // 第 6 步绘制顺序：layer 升序 → 同层 y 升序 → 侧堆最后绘制。
+  // 单堆绘制顺序：layer 升序 → 同层 y 升序 → x 升序。没有侧堆 / 簇分支。
   // z 由 generator.assignZ 按同一套顺序编号，所以「画在后面的」正好就是「压住别人的」。
-  alive.sort((a, b) =>
-    (a.side ? 1 : 0) - (b.side ? 1 : 0) ||
-    a.layer - b.layer ||
-    a.y - b.y ||
-    a.x - b.x
-  );
+  alive.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
 
   // 牌桌绒布垫：把"这些牌是摞在一张桌子上"说清楚，牌堆才有立足的地方
   drawTableMat(ctx);
@@ -846,7 +844,7 @@ export function drawOverlay(ctx, game, ui) {
         size: 22,
         fill: C.textDim,
       });
-      text(ctx, '下一关：225 张 · 12 条牌链 · 深渊在后头', W / 2, 610, { size: 19, fill: '#E8A66F' });
+      text(ctx, '下一关：222 张 · 7 层单堆 · 深渊在后头', W / 2, 610, { size: 19, fill: '#E8A66F' });
       text(ctx, '开局管够，越往下越不讲道理', W / 2, 642, { size: 18, fill: C.textDim });
     }
     drawButtons(ctx, ui, game);

@@ -12,6 +12,8 @@
     "release": "python tools/make_release.py",
     "test": "node test.js && node tools/test_render.mjs",
     "test:sim": "node test.js",
+    "tune": "node tools/tune.mjs",
+    "tune:pool": "node tools/tune_pool.mjs",
     "dev": "tauri dev",
     "build": "tauri build",
     "tauri": "tauri",

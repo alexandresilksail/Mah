@@ -1,57 +1,45 @@
 /**
- * 布局生成（纯 JS，零 DOM 依赖）。
+ * 单堆几何（纯 JS，零 DOM 依赖）。
  *
- * ── 第 4 步：簇模板，而不是"整体网格墙" ──────────────────────────
- * 每局随机取 3~5 个簇，每个簇随机选 T 字形 / 回字形 / 锥子形模板之一，
- * 随机落在主堆安全区里，簇与簇的边缘允许互相压叠。
- * 模板只定义**簇的轮廓与中心点**，不是整个盘面的形状。
+ * ── 本轮重做的硬规则 ──────────────────────────────────────────────
+ * · 两关都只有一个牌堆：没有侧堆、没有多簇、没有簇间压叠、没有任何 x/y 随机抖动。
+ * · 同层牌坐标 = 该层原点 + (i·TILE_W, j·TILE_H)，所以同层两两相交面积恒为 0。
+ * · 层原点 = 上一层原点 + 从 LAYER_OFFSETS 里按 seed 随机选的错位向量，
+ *   用整数半格单位累加，于是所有坐标都落在 (LATTICE_X, LATTICE_Y) 晶格上。
+ * · 每层用「随机生长」在晶格上取一个 4-邻接连通团块，边缘自然留缺口，不是方块。
+ * · 每张非底层牌必须与下一层至少一张牌相交面积 > 牌面积 × OVERLAP_THRESHOLD（有支撑）。
+ * · 所有牌矩形完整落在 BOARD_BAND 内，牌堆整体居中（平移量也是半格整数倍）。
  *
- * 簇内部逐层堆叠：相邻层的平移偏移从
- *   {(W/2,H/2), (0,H/2), (W/2,0), (-W/2,H/2)}
- * 中随机选（W = TILE_W，H = TILE_H），个别牌再叠 ±TILE_W/4 的小抖动。
- * 所有牌矩形必须完整落在画布安全区内（越界直接丢弃）。
- * 同一层内的牌重叠面积不得超过 OVERLAP_THRESHOLD（超过就重采样抖动）。
- *
- * 对外主函数 generateLayout(seed) 返回 [{id, x, y, layer, cluster}]，
- * 数量严格等于目标张数：不足继续增补簇内牌，超出裁掉最高层边缘牌。
+ * 对外函数：
+ *   generateLayout(seed, opt)      → [{ id, x, y, layer }]
+ *   generateEasyLayout(seed, opt)  → 第 1 关的薄壳（转发到 generateLayout）
+ *   peelOrder(cards, rand)         → 合法全消除顺序，波内随机打散，附 .waves
+ *   countComponents(cards, pad)    → 矩形各外扩 pad 后的连通分量数
+ *   overlapArea / isBlocked / buildBlockerGraph / hasSupport / isHalfLattice
  */
 import {
   TILE_W,
   TILE_H,
   TILE_AREA,
+  LATTICE_X,
+  LATTICE_Y,
   OVERLAP_THRESHOLD,
-  MAIN_ZONE,
-  SIDE_ZONES,
-  SIDE_QUEUES,
-  SIDE_QUEUE_LEN,
-  SIDE_STEP_Y,
-  SIDE_PITCH_X,
-  SIDE_PITCH_Y,
+  BOARD_BAND,
+  BOARD_CX,
+  BOARD_CY,
+  CONNECT_PAD,
   LEVEL_SPEC,
-  LAYOUTS,
+  LAYER_OFFSETS,
 } from './config.js';
 import { makeRng, randomSeed } from './rng.js';
 
-/** 同层格距：比牌面各多 6px，保证同层零重叠 */
-const GRID_X = TILE_W + 6;
-const GRID_Y = TILE_H + 6;
-
-/** 层间平移偏移的四选一集合（严格按规范写死为半张牌的组合） */
-export const LAYER_OFFSETS = [
-  [TILE_W / 2, TILE_H / 2],
-  [0, TILE_H / 2],
-  [TILE_W / 2, 0],
-  [-TILE_W / 2, TILE_H / 2],
-];
-
-/** 三种簇模板的标识（测试会统计 50 个种子下是否三种都用到了） */
-export const CLUSTER_TEMPLATES = ['T', 'ring', 'cone'];
+export { LAYER_OFFSETS };
 
 const THRESH_AREA = OVERLAP_THRESHOLD * TILE_AREA;
 
 /* ==================== 几何工具 ==================== */
 
-/** 两张牌矩形的相交面积 */
+/** 两张牌矩形的相交面积（a/b 只需 x、y） */
 export function overlapArea(a, b) {
   const ix = Math.min(a.x + TILE_W, b.x + TILE_W) - Math.max(a.x, b.x);
   const iy = Math.min(a.y + TILE_H, b.y + TILE_H) - Math.max(a.y, b.y);
@@ -60,9 +48,7 @@ export function overlapArea(a, b) {
 
 /**
  * 遮挡判定（几何定义，不是层数比较）：
- * 存在 z 更高且仍在盘面的牌，与本牌相交面积 > TILE_AREA * OVERLAP_THRESHOLD。
- * @param {object} card
- * @param {Array} alive 当前仍在盘面（state === 'board'）的牌
+ * 存在 z 更高且仍在盘面的牌，与本牌相交面积 > TILE_AREA × OVERLAP_THRESHOLD。
  */
 export function isBlocked(card, alive) {
   for (let i = 0; i < alive.length; i++) {
@@ -73,10 +59,27 @@ export function isBlocked(card, alive) {
   return false;
 }
 
+/** 非底层牌的支撑：下一层至少有一张牌与它相交面积 > 阈值 */
+export function hasSupport(card, lower) {
+  for (let i = 0; i < lower.length; i++) {
+    if (overlapArea(card, lower[i]) > THRESH_AREA) return true;
+  }
+  return false;
+}
+
+/** 所有坐标是否都落在半格晶格上（全局基准为 0，坐标均为整数） */
+export function isHalfLattice(cards) {
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    if (Math.abs(c.x / LATTICE_X - Math.round(c.x / LATTICE_X)) > 1e-9) return false;
+    if (Math.abs(c.y / LATTICE_Y - Math.round(c.y / LATTICE_Y)) > 1e-9) return false;
+  }
+  return true;
+}
+
 /**
- * 预先建好「谁压住谁」的图，peelOrder 用拓扑剥离，避免 O(N^3)。
- * blockers[c.id] = 压住 c 的更高 z 的牌 id 数组。
- * dependents[o.id] = 被 o 压住的牌 id 数组。
+ * 预先建好「谁压住谁」的图。
+ * blockers[c.id] = 压住 c 的更高 z 的牌 id 数组；dependents[o.id] = 被 o 压住的牌 id 数组。
  */
 export function buildBlockerGraph(cards) {
   const blockers = {};
@@ -100,42 +103,73 @@ export function buildBlockerGraph(cards) {
 }
 
 /**
+ * 矩形各外扩 pad 像素后的连通分量数。
+ * 相交（含边界接触）即连一条边；用并查集数根。
+ */
+export function countComponents(cards, pad = CONNECT_PAD) {
+  const n = cards.length;
+  if (n === 0) return 0;
+  const parent = new Array(n);
+  for (let i = 0; i < n; i++) parent[i] = i;
+  const find = (x) => {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[rb] = ra;
+  };
+  const W2 = TILE_W + pad * 2;
+  const H2 = TILE_H + pad * 2;
+  for (let i = 0; i < n; i++) {
+    const a = cards[i];
+    for (let j = i + 1; j < n; j++) {
+      const b = cards[j];
+      const dx = Math.abs((a.x - pad) - (b.x - pad));
+      const dy = Math.abs((a.y - pad) - (b.y - pad));
+      if (dx < W2 && dy < H2) union(i, j);
+    }
+  }
+  let roots = 0;
+  for (let i = 0; i < n; i++) if (find(i) === i) roots++;
+  return roots;
+}
+
+/**
  * 模拟剥离顺序：反复取出当前「未被遮挡」的牌，得到一条合法的全消除顺序。
- * 每一步取的牌在取走的那一瞬间一定没有被任何留在盘面的牌压住，
- * 所以按 order 依次点牌是一条真实存在的通关路径（槽位约束另由花色分配保证）。
+ * 每一步取的牌在取走那一瞬间没有被任何留在盘面的牌压住，因此按 order 依次点牌
+ * 是一条真实存在的通关路径（槽位约束由花色分配的可解性证书保证）。
  *
- * @param {Array} cards 全部牌
- * @param {Function} rand 随机源（同层多张可点时用来打散，默认取 z 最高）
- * @returns {Array} card id 的全序数组
+ * 「同一波可点牌之间随机打散」：波内用随机 key 排序，不按 z、不按坐标，
+ * 于是前段 order 只是一批同时可点牌的随机排列，而不是自上而下的固定顺序。
+ *
+ * @returns {Array} card id 的全序数组，附 .waves = [[start,end), ...]
  */
 export function peelOrder(cards, rand) {
   const g = buildBlockerGraph(cards);
   const indeg = {};
   const byId = {};
-  const alive = [];
+  let free = [];
   for (let i = 0; i < cards.length; i++) {
     const c = cards[i];
     byId[c.id] = c;
     indeg[c.id] = g.blockers[c.id].length;
-    alive.push(c);
-  }
-  const free = [];
-  for (let i = 0; i < cards.length; i++) {
-    if (indeg[cards[i].id] === 0) free.push(cards[i]);
+    if (indeg[c.id] === 0) free.push(c);
   }
   const order = [];
+  const waves = [];
   const r = rand || Math.random;
   while (free.length) {
-    // 按「剥离波次」成批取：当前所有可点的牌同属一波，波内按 z 降序排，
-    // 波内任意顺序都合法（它们互不遮挡），所以这仍是一条严格可解的全序。
-    // 好处是 order 的前缀恰好就是「开局可点的那批牌」—— 花色分配的前段
-    // 于是真的落在玩家一上来就能点到的牌上，而不是散在盘面深处。
     const batch = free.slice();
-    free.length = 0;
+    free = [];
     const key = {};
     for (let i = 0; i < batch.length; i++) key[batch[i].id] = r();
-    // 波内按 z 降序（塔顶先走），同 z 用随机 key 打散，保证可复现。
-    batch.sort((a, b) => b.z - a.z || b.y - a.y || key[a.id] - key[b.id]);
+    batch.sort((a, b) => key[a.id] - key[b.id]);
+    waves.push([order.length, order.length + batch.length]);
     for (let i = 0; i < batch.length; i++) order.push(batch[i].id);
     for (let i = 0; i < batch.length; i++) {
       const dep = g.dependents[batch[i].id];
@@ -146,315 +180,211 @@ export function peelOrder(cards, rand) {
       }
     }
   }
-  // 理论上不会剩下：blockers 一定是 z 更高的牌，不可能成环。
-  // 真出现了（比如浮点边界），把剩下的按 z 降序补进 order，保证返回全序。
+  // 理论上不会剩下（blockers 一定是 z 更高的牌，不可能成环）。真出现了按 z 降序补齐。
   if (order.length < cards.length) {
     const seen = {};
     for (let i = 0; i < order.length; i++) seen[order[i]] = 1;
     const rest = cards.filter((c) => !seen[c.id]).sort((a, b) => b.z - a.z);
+    if (rest.length) waves.push([order.length, order.length + rest.length]);
     for (let i = 0; i < rest.length; i++) order.push(rest[i].id);
   }
+  order.waves = waves;
   return order;
 }
 
-/* ==================== 簇模板 ==================== */
+/* ==================== 单堆布局 ==================== */
 
 /**
- * 模板只决定轮廓与中心点：返回某一层应该放哪些格点（以 GRID 为单位的相对坐标）。
- * li = 0 是最底层，layers 是簇的总层数。
+ * 在晶格上随机生长一个 4-邻接连通团块。
+ * 候选格必须：未选 + 完整落在 BOARD_BAND 内 + （非底层时）被下一层支撑。
+ * 每次从边界候选里随机取一个，因此团块边缘自然留缺口，不会长成规整方块。
  */
-function templateCells(kind, li, layers, rng) {
-  const cells = [];
-  if (kind === 'T') {
-    // T 字形：横梁 + 竖柄；越往上横梁越短
-    const half = Math.max(1, 2 - Math.floor(li / 2));
-    for (let u = -half; u <= half; u++) cells.push([u, 0]);
-    const stem = Math.max(1, 3 - Math.floor(li / 2));
-    for (let v = 1; v <= stem; v++) cells.push([0, v]);
-    return cells;
-  }
-  if (kind === 'ring') {
-    // 回字形：3×3 外圈 8 格，中心留空；高层收成 4 角
-    const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-    const edges = [[0, -1], [-1, 0], [1, 0], [0, 1]];
-    const keepEdges = li < Math.ceil(layers / 2);
-    const out = corners.slice();
-    if (keepEdges) out.push.apply(out, edges);
-    return out;
-  }
-  // cone：锥子形，中间高四周低 —— 底层 4×3，每上一层削掉一圈外沿
-  const shrink = Math.min(1, li);
-  for (let v = -1 + shrink; v <= 1 - shrink; v++) {
-    for (let u = -2 + shrink; u <= 2 - shrink; u++) cells.push([u, v]);
-  }
-  if (!cells.length) cells.push([0, 0]);
-  return cells;
-}
+function growCluster(target, u0, v0, lower, ox, oy, rng) {
+  const key = (u, v) => u + ',' + v;
+  const chosen = new Map();
+  const inFrontier = {};
+  const frontier = [];
 
-/** 单个簇生成候选牌 */
-function buildCluster(clusterId, rng, maxLayer) {
-  const kind = CLUSTER_TEMPLATES[rng.int(0, CLUSTER_TEMPLATES.length - 1)];
-  const layers = Math.min(maxLayer, rng.int(4, maxLayer));
-  // 中心点：主堆安全区内随机，但要留出簇的最大半径
-  const halfW = GRID_X * 2 + TILE_W / 2;
-  const halfH = GRID_Y * 1.5 + TILE_H / 2;
-  const loX = MAIN_ZONE.left + halfW * 0.35;
-  const hiX = MAIN_ZONE.right - TILE_W - halfW * 0.35;
-  const loY = MAIN_ZONE.top + halfH * 0.55;
-  const hiY = MAIN_ZONE.bottom - TILE_H - halfH * 0.55;
-  const cx = loX + rng.next() * Math.max(1, hiX - loX);
-  const cy = loY + rng.next() * Math.max(1, hiY - loY);
+  const rectOf = (u, v) => ({ x: ox + u * TILE_W, y: oy + v * TILE_H });
+  const inBounds = (u, v) => {
+    const r = rectOf(u, v);
+    return (
+      r.x >= BOARD_BAND.left &&
+      r.x + TILE_W <= BOARD_BAND.right &&
+      r.y >= BOARD_BAND.top &&
+      r.y + TILE_H <= BOARD_BAND.bottom
+    );
+  };
+  const supported = (u, v) => {
+    if (lower.length === 0) return true;
+    return hasSupport(rectOf(u, v), lower);
+  };
+  const valid = (u, v) => !chosen.has(key(u, v)) && inBounds(u, v) && supported(u, v);
+
+  const pushFrontier = (u, v) => {
+    const nb = [[u + 1, v], [u - 1, v], [u, v + 1], [u, v - 1]];
+    for (let i = 0; i < nb.length; i++) {
+      const a = nb[i][0];
+      const b = nb[i][1];
+      const k = key(a, b);
+      if (inFrontier[k] || chosen.has(k)) continue;
+      if (inBounds(a, b) && supported(a, b)) {
+        inFrontier[k] = 1;
+        frontier.push({ u: a, v: b });
+      }
+    }
+  };
+  const add = (u, v) => {
+    chosen.set(key(u, v), { u, v });
+    pushFrontier(u, v);
+  };
+
+  // 种子：优先用中心格；若不满足支撑，就在附近找一个合法格
+  let seed = null;
+  for (let ring = 0; ring <= 4 && !seed; ring++) {
+    for (let du = -ring; du <= ring && !seed; du++) {
+      for (let dv = -ring; dv <= ring; dv++) {
+        if (Math.max(Math.abs(du), Math.abs(dv)) !== ring) continue;
+        if (valid(u0 + du, v0 + dv)) {
+          seed = { u: u0 + du, v: v0 + dv };
+          break;
+        }
+      }
+    }
+  }
+  if (!seed) seed = { u: u0, v: v0 };
+  add(seed.u, seed.v);
+
+  // 随机生长
+  let guard = 0;
+  while (chosen.size < target && frontier.length && guard++ < target * 60) {
+    const idx = rng.int(0, frontier.length - 1);
+    const cand = frontier[idx];
+    frontier[idx] = frontier[frontier.length - 1];
+    frontier.pop();
+    delete inFrontier[key(cand.u, cand.v)];
+    if (!valid(cand.u, cand.v)) continue;
+    add(cand.u, cand.v);
+  }
+
+  // 确定性补足：frontier 耗尽（或边界/支撑挡住）时，扫描中心附近的合法空格。
+  // 数量必须精确等于层计划，所以这一步不能省。
+  if (chosen.size < target) {
+    for (let ring = 1; chosen.size < target && ring <= 12; ring++) {
+      const candidates = [];
+      for (let du = -ring; du <= ring; du++) {
+        for (let dv = -ring; dv <= ring; dv++) {
+          if (Math.max(Math.abs(du), Math.abs(dv)) !== ring) continue;
+          const u = seed.u + du;
+          const v = seed.v + dv;
+          if (valid(u, v)) candidates.push({ u, v });
+        }
+      }
+      // 同环内用 rng 打散，仍保持「边缘有缺口」的观感
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = rng.int(0, i);
+        const t = candidates[i];
+        candidates[i] = candidates[j];
+        candidates[j] = t;
+      }
+      for (let i = 0; i < candidates.length && chosen.size < target; i++) {
+        add(candidates[i].u, candidates[i].v);
+      }
+    }
+  }
 
   const out = [];
-  let ox = 0;
-  let oy = 0;
-  for (let li = 0; li < layers; li++) {
-    if (li > 0) {
-      const d = LAYER_OFFSETS[rng.int(0, LAYER_OFFSETS.length - 1)];
-      ox += d[0];
-      oy += d[1];
-    }
-    const cells = templateCells(kind, li, layers, rng);
-    for (let k = 0; k < cells.length; k++) {
-      const u = cells[k][0];
-      const v = cells[k][1];
-      // 个别牌叠加 ±TILE_W/4 的小抖动，打破规整格点感
-      const jx = (rng.next() - 0.5) * 2 * (TILE_W / 4);
-      const jy = (rng.next() - 0.5) * 2 * (TILE_W / 4);
-      const x = cx + ox + u * GRID_X + jx;
-      const y = cy + oy + v * GRID_Y + jy;
-      out.push({ x, y, layer: li, cluster: clusterId, kind, cx, cy, u, v });
-    }
-  }
+  chosen.forEach((c) => out.push(c));
   return out;
 }
 
-/** 越界裁剪：矩形必须完整落在安全区里 */
-function inside(c) {
-  return (
-    c.x >= MAIN_ZONE.left &&
-    c.x + TILE_W <= MAIN_ZONE.right &&
-    c.y >= MAIN_ZONE.top &&
-    c.y + TILE_H <= MAIN_ZONE.bottom
-  );
-}
-
 /**
- * 同层不得互相重叠超过阈值；越界的牌也在这里挡掉。
- * 留 3% 余量：坐标最终会 round 到 2 位小数，边界擦线的两张牌四舍五入后
- * 可能刚好越过 0.10（实测过 0.10005）。宁可少放一张，也不能踩线。
- */
-const SAME_LAYER_LIMIT = THRESH_AREA * 0.97;
-function sameLayerOk(c, acc) {
-  if (!inside(c)) return false;
-  for (let i = 0; i < acc.length; i++) {
-    const o = acc[i];
-    if (o.layer !== c.layer) continue;
-    if (overlapArea(c, o) > SAME_LAYER_LIMIT) return false;
-  }
-  return true;
-}
-
-/**
- * 主堆布局。
+ * 单堆布局主函数。
  * @param {number} seed 可复现随机种子
- * @param {object} opt  { target: 目标张数（默认 150）, layers: 层数（默认 7） }
- * @returns {Array} [{id, x, y, layer, cluster}]
+ * @param {object} opt { level: 1|2, plan: 层计划数组, startId }
+ * @returns {Array} [{ id, x, y, layer }]
  */
 export function generateLayout(seed, opt) {
   const o = opt || {};
-  const target = o.target === undefined ? LEVEL_SPEC[2].mainCount : o.target;
-  const layers = o.layers === undefined ? LEVEL_SPEC[2].layers : o.layers;
-  const rng = makeRng((seed === undefined ? randomSeed() : seed) >>> 0);
-  const acc = [];
-  const kinds = {};
+  const level = o.level === 1 ? 1 : 2;
+  const spec = LEVEL_SPEC[level];
+  const plan = o.plan || spec.plan;
+  const layers = plan.length;
+  const startId = o.startId === undefined ? 0 : o.startId;
+  const rng = makeRng((((seed === undefined ? randomSeed() : seed) >>> 0) ^ (level === 1 ? 0x1f2e3d4c : 0)) >>> 0);
 
-  // 每局 3~5 个簇；不足目标张数时继续增补簇内牌（最多再加 10 个簇）
-  const baseClusters = rng.int(3, 5);
-  let clusterId = 0;
-  for (let round = 0; round < baseClusters + 10 && acc.length < target; round++) {
-    const cand = buildCluster(clusterId, rng, layers);
-    kinds[cand.length ? cand[0].kind : '?'] = 1;
-    for (let i = 0; i < cand.length && acc.length < target; i++) {
-      const c = cand[i];
-      // 抖动可能撞上同层兄弟：重采样最多 4 次，仍不行就丢这张
-      let ok = sameLayerOk(c, acc);
-      for (let t = 0; t < 4 && !ok; t++) {
-        c.x += (rng.next() - 0.5) * TILE_W;
-        c.y += (rng.next() - 0.5) * TILE_H;
-        ok = sameLayerOk(c, acc);
-      }
-      if (ok) acc.push(c);
+  // 层原点（半格单位），逐层累加随机错位向量
+  const origins = [{ kx: 0, ky: 0 }];
+  for (let li = 1; li < layers; li++) {
+    const d = LAYER_OFFSETS[rng.int(0, LAYER_OFFSETS.length - 1)];
+    origins.push({ kx: origins[li - 1].kx + d[0], ky: origins[li - 1].ky + d[1] });
+  }
+
+  const byLayer = [];
+  for (let li = 0; li < layers; li++) {
+    const ox = origins[li].kx * LATTICE_X;
+    const oy = origins[li].ky * LATTICE_Y;
+    // 每层的种子格都对准牌桌中心，于是自然「上窄下宽」且整堆居中
+    const u0 = Math.round((BOARD_CX - TILE_W / 2 - ox) / TILE_W);
+    const v0 = Math.round((BOARD_CY - TILE_H / 2 - oy) / TILE_H);
+    const lower = li > 0 ? byLayer[li - 1] : [];
+    const cells = growCluster(plan[li], u0, v0, lower, ox, oy, rng);
+    byLayer.push(
+      cells.map((cell) => ({
+        x: ox + cell.u * TILE_W,
+        y: oy + cell.v * TILE_H,
+        u: cell.u,
+        v: cell.v,
+      }))
+    );
+  }
+
+  const cards = [];
+  for (let li = 0; li < layers; li++) {
+    for (let i = 0; i < byLayer[li].length; i++) {
+      cards.push({ x: byLayer[li][i].x, y: byLayer[li][i].y, layer: li });
     }
-    clusterId++;
   }
 
-  // 超出目标：裁掉「最高层的边缘牌」（layer 降序、离簇中心距离降序）
-  if (acc.length > target) {
-    acc.sort((a, b) => {
-      if (b.layer !== a.layer) return b.layer - a.layer;
-      const da = Math.abs(a.x - a.cx) + Math.abs(a.y - a.cy);
-      const db = Math.abs(b.x - b.cx) + Math.abs(b.y - b.cy);
-      return db - da;
-    });
-    acc.length = target;
+  // 整体居中：平移量必须是半格整数倍，才能保持晶格；同时 clamp 到不越界
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i].x < minX) minX = cards[i].x;
+    if (cards[i].x > maxX) maxX = cards[i].x;
+    if (cards[i].y < minY) minY = cards[i].y;
+    if (cards[i].y > maxY) maxY = cards[i].y;
+  }
+  const cx = (minX + maxX + TILE_W) / 2;
+  const cy = (minY + maxY + TILE_H) / 2;
+  const kxMin = Math.ceil((BOARD_BAND.left - minX) / LATTICE_X);
+  const kxMax = Math.floor((BOARD_BAND.right - maxX - TILE_W) / LATTICE_X);
+  const kyMin = Math.ceil((BOARD_BAND.top - minY) / LATTICE_Y);
+  const kyMax = Math.floor((BOARD_BAND.bottom - maxY - TILE_H) / LATTICE_Y);
+  let kx = Math.round((BOARD_CX - cx) / LATTICE_X);
+  let ky = Math.round((BOARD_CY - cy) / LATTICE_Y);
+  kx = Math.max(kxMin, Math.min(kxMax, kx));
+  ky = Math.max(kyMin, Math.min(kyMax, ky));
+  const dx = kx * LATTICE_X;
+  const dy = ky * LATTICE_Y;
+  for (let i = 0; i < cards.length; i++) {
+    cards[i].x += dx;
+    cards[i].y += dy;
   }
 
-  // 仍不足：在已有簇中心附近补牌（仍受越界 + 同层不重叠约束）
-  let guard = 0;
-  while (acc.length < target && guard++ < target * 40) {
-    const base = acc.length ? acc[rng.int(0, acc.length - 1)] : null;
-    const li = base ? base.layer : 0;
-    const c = {
-      x: (base ? base.x : (MAIN_ZONE.left + MAIN_ZONE.right) / 2) + (rng.next() - 0.5) * GRID_X * 3,
-      y: (base ? base.y : (MAIN_ZONE.top + MAIN_ZONE.bottom) / 2) + (rng.next() - 0.5) * GRID_Y * 3,
-      layer: li,
-      cluster: base ? base.cluster : 0,
-      kind: base ? base.kind : 'T',
-      cx: base ? base.cx : 0,
-      cy: base ? base.cy : 0,
-    };
-    if (sameLayerOk(c, acc)) acc.push(c);
-  }
-
-  // 统一编号，返回规范要求的字段
-  acc.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
-  const out = [];
-  for (let i = 0; i < acc.length; i++) {
-    out.push({
-      id: i,
-      x: Math.round(acc[i].x * 100) / 100,
-      y: Math.round(acc[i].y * 100) / 100,
-      layer: acc[i].layer,
-      cluster: acc[i].cluster,
-      kind: acc[i].kind,
-    });
-  }
-  out.templates = Object.keys(kinds);
-  return out;
+  // 统一编号：layer 升序 → y 升序 → x 升序（绘制顺序也是这一套）
+  cards.sort((a, b) => a.layer - b.layer || a.y - b.y || a.x - b.x);
+  for (let i = 0; i < cards.length; i++) cards[i].id = startId + i;
+  return cards;
 }
 
-/* ==================== 侧堆 ==================== */
-
 /**
- * 左右两个侧堆，每堆 SIDE_QUEUES 个竖向队列、每队列 SIDE_QUEUE_LEN 张。
- * 队列内牌沿 y 露边 13px、z 逐张递增 —— 于是 k 与 k+1 的几何交集达 82%，
- * 每张牌都被紧邻的更高 z 牌压住，只有队首（z 最高）可点。
- * 「只有最前一张可点」因此仍然是**纯几何遮挡**，没有额外的规则分支。
- */
-export function generateSidePiles(seed, opt) {
-  const o = opt || {};
-  const perSide = o.perSide === undefined ? LEVEL_SPEC[2].sideCount : o.perSide;
-  const rng = makeRng(((seed === undefined ? randomSeed() : seed) >>> 0) ^ 0x5bf03635);
-  const out = [];
-  let id = o.startId === undefined ? 0 : o.startId;
-
-  for (let s = 0; s < SIDE_ZONES.length; s++) {
-    const zone = SIDE_ZONES[s];
-    const cols = 2;
-    const rows = Math.ceil(SIDE_QUEUES / cols);
-    let made = 0;
-    for (let q = 0; q < SIDE_QUEUES && made < perSide; q++) {
-      const col = q % cols;
-      const row = Math.floor(q / cols);
-      const baseX = zone.left + col * SIDE_PITCH_X;
-      const baseY = zone.top + row * SIDE_PITCH_Y;
-      const len = Math.min(SIDE_QUEUE_LEN, perSide - made);
-      for (let k = 0; k < len; k++) {
-        out.push({
-          id: id++,
-          x: baseX,
-          y: baseY + k * SIDE_STEP_Y,
-          layer: k,
-          cluster: 100 + s * 10 + q,
-          kind: 'side',
-          side: true,
-          sideIndex: s,
-          queue: q,
-          depth: k,
-        });
-        made++;
-      }
-    }
-    // 队列数不够放满 36 张时，把剩余牌继续往已有队列深处塞
-    let guard = 0;
-    while (made < perSide && guard++ < 500) {
-      const q = made % SIDE_QUEUES;
-      const col = q % cols;
-      const row = Math.floor(q / cols);
-      const k = SIDE_QUEUE_LEN + Math.floor(made / SIDE_QUEUES);
-      const y = zone.top + row * SIDE_PITCH_Y + k * SIDE_STEP_Y;
-      if (y + TILE_H > zone.bottom) break;
-      out.push({
-        id: id++,
-        x: zone.left + col * SIDE_PITCH_X,
-        y,
-        layer: Math.min(6, k),
-        cluster: 100 + s * 10 + q,
-        kind: 'side',
-        side: true,
-        sideIndex: s,
-        queue: q,
-        depth: k,
-      });
-      made++;
-    }
-  }
-  return out;
-}
-
-/* ==================== 教学关 ==================== */
-
-/**
- * 第 1 关：底层 4×3 = 12 张规整网格；顶层 6 张压在相邻底牌的接缝上，
- * 相对底层错开 (TILE_W/2, TILE_H/2)，形成半错位的两层堆叠。
+ * 第 1 关薄壳：保留旧导出名，实际走同一套单堆晶格几何。
+ * 24 张 / 3 层 / 12+8+4。
  */
 export function generateEasyLayout(seed, opt) {
-  const o = opt || {};
-  const L = LAYOUTS[1];
-  const spec = LEVEL_SPEC[1];
-  const rng = makeRng(((seed === undefined ? randomSeed() : seed) >>> 0) ^ 0x1f2e3d4c);
-  const out = [];
-  let id = o.startId === undefined ? 0 : o.startId;
-
-  const bw = (spec.bottom.c - 1) * L.pitchX + TILE_W;
-  const bh = (spec.bottom.r - 1) * L.pitchY + TILE_H;
-  const ox = Math.round((720 - bw) / 2);
-  const oy = Math.round((MAIN_ZONE.top + MAIN_ZONE.bottom) / 2 - bh / 2);
-
-  for (let r = 0; r < spec.bottom.r; r++) {
-    for (let c = 0; c < spec.bottom.c; c++) {
-      out.push({
-        id: id++,
-        x: ox + c * L.pitchX,
-        y: oy + r * L.pitchY,
-        layer: 0,
-        cluster: 0,
-        kind: 'grid',
-        cx: c,
-        cy: r,
-      });
-    }
-  }
-  // 顶层 2 列 × 3 行：x / y 各偏移半个牌宽 / 半个牌高（严格 = TILE_W/2, TILE_H/2），
-  // 于是每张顶层牌正好骑在底层四张牌的接缝上，交集都远超 OVERLAP_THRESHOLD。
-  const tx = ox + L.staggerX;
-  const ty = oy + L.staggerY;
-  for (let r = 0; r < spec.top.r; r++) {
-    for (let c = 0; c < spec.top.c; c++) {
-      out.push({
-        id: id++,
-        x: tx + c * L.pitchX * 2,
-        y: ty + r * L.pitchY,
-        layer: 1,
-        cluster: 1,
-        kind: 'grid-top',
-        cx: c,
-        cy: r,
-      });
-    }
-  }
-  // 教学关不需要随机，但保留 rng 位以便将来加微抖动
-  void rng;
-  return out;
+  const o = { ...(opt || {}), level: 1 };
+  return generateLayout(seed, o);
 }

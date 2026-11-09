@@ -8,6 +8,7 @@ import { drawMascot, drawTitle } from '../src/game/logo.js';
 import { drawTile } from '../src/game/tiles.js';
 import { Game } from '../src/game/engine.js';
 import { TYPE_LIST } from '../src/game/tiles.js';
+import { TILE_W, TILE_H } from '../src/game/config.js';
 
 function makeCtx() {
   const grad = { addColorStop() {} };
@@ -72,11 +73,11 @@ const uiTitle = R.getUI(g);
 R.drawTitleScreen(ctx, g, uiTitle, 1.2);
 count++;
 
-// 34 种牌全部绘制一遍（两种尺寸：第 1 关大牌 / 第 2 关小牌 / 槽位牌）
+// 34 种牌全部绘制一遍：统一只用 config.js 的 TILE_W × TILE_H，不再有「按关卡分大小牌」
 for (const t of TYPE_LIST) {
-  drawTile(ctx, 10, 10, 84, 96, t.id, { covered: false, glow: 0.5, lift: 3 });
-  drawTile(ctx, 10, 10, 68, 76, t.id, { covered: true });
-  drawTile(ctx, 10, 10, 80, 98, t.id, {});
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: false, glow: 0.5, lift: 2 });
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, { covered: true });
+  drawTile(ctx, 10, 10, TILE_W, TILE_H, t.id, {});
   count++;
 }
 

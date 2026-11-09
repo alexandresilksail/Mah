@@ -146,24 +146,27 @@
     }
 
     function drawSlot(game) {
-      /* 与 config.js 的 SLOT_* 常量一致 */
+      /* 删掉侧堆后槽位面板重新排布：坐标 / 牌尺寸全部从 game.layout.slot 读，
+         它直接来自 config.js 的 SLOT_PANEL / SLOT_PITCH / TILE_W / TILE_H。
+         ES5 降级视图不能 import，所以这里不再硬编码任何数字。 */
+      var S = game.layout.slot;
       var panel = el(root);
-      box(panel, 26, 1028, 668, 126, s);
+      box(panel, S.x, S.y, S.w, S.h, s);
       panel.style.backgroundColor = '#161311';
       panel.style.border = '1px solid #3A3128';
       panel.style.zIndex = '300';
       var g, i;
-      for (i = 1; i < 7; i++) {
+      for (i = 1; i < S.capacity; i++) {
         g = el(panel);
-        g.style.left = Math.round((668 / 7) * i * s) + 'px';
+        g.style.left = Math.round((12 + i * S.pitch) * s) + 'px';
         g.style.top = '0';
         g.style.width = '1px';
         g.style.height = '100%';
         g.style.backgroundColor = '#3A3128';
       }
-      for (i = 0; i < game.slot.length && i < 7; i++) {
-        tileDiv(panel, (41 + i * 92 - 26), 12, 86, 102, game.slot[i].type, false, true)
-          .style.zIndex = '310';
+      for (i = 0; i < game.slot.length && i < S.capacity; i++) {
+        tileDiv(panel, S.padX + i * S.pitch, S.padY, S.cardW, S.cardH,
+          game.slot[i].type, false, true).style.zIndex = '310';
       }
     }
 

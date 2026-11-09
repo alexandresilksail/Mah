@@ -154,7 +154,7 @@ export function drawTile(ctx, x, y, w, h, typeId, opt = {}) {
 /**
  * 单张牌的投影。规范值：shadowColor rgba(0,0,0,0.6) / blur 10 / offsetX 4 / offsetY 6。
  *
- * 真实 `ctx.shadowBlur` 逐帧对 225 张牌开一遍会直接把帧率打到个位数，
+ * 真实 `ctx.shadowBlur` 逐帧对 222 张牌开一遍会直接把帧率打到个位数，
  * 所以这里把"模糊圆角矩形"烘焙成离屏位图，每帧只 drawImage ——
  * 视觉效果与规范里的四个参数完全一致，代价只有一次纹理采样。
  *
