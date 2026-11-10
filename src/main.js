@@ -136,11 +136,18 @@ function applyAudioSettings() {
   music.setVolume(game.bgmVol);
 }
 
+/** 把当前曲目信息同步给渲染层（设置面板会显示曲名 / 编号，让用户看到「每次不同」） */
+function refreshTrackInfo() {
+  try { game.trackInfo = music.getTrackInfo(); } catch { /* 音乐失败不影响游戏 */ }
+}
+
 function startLevelWithMusic(level) {
   game.startLevel(level);
   try {
-    music.setTrack(game.level);
+    // 每次开局即兴一首全新的原创曲：曲库近乎无限，不会连着听到同一首。
+    music.nextTrack(game.level);
     music.play();
+    refreshTrackInfo();
   } catch { /* 音乐失败不影响游戏 */ }
 }
 
@@ -200,6 +207,9 @@ function handleButton(id) {
       sound.setVolume(game.sfxVol);
       persist(true);
       break;
+    case 'set-next-track':
+      try { music.nextTrack(); refreshTrackInfo(); } catch { /* 音乐失败不影响游戏 */ }
+      break;
     case 'menu':
       game.paused = !game.paused;
       if (game.paused) music.pause();
@@ -222,8 +232,12 @@ function handleButton(id) {
       game.paused = false;
       game.screen = 'title';
       game.status = 'play';
-      music.setTrack('title');
-      music.play();
+      try {
+        // 回标题也换一首，避免「回主菜单又听到刚才那首」
+        music.nextTrack('title');
+        music.play();
+        refreshTrackInfo();
+      } catch { /* 音乐失败不影响游戏 */ }
       persist(true);
       break;
     case 'revive':
@@ -433,10 +447,11 @@ function boot() {
   applySave(loadSave());          // 同步：所有浏览器
   syncDesktopSave(applySave);     // 异步：仅 Tauri 桌面端，稍晚覆盖
 
-  // 背景音乐：预设标题曲与「应当出声」意图；首次交互（unlock）后才真正起播
+  // 背景音乐：本次启动已即兴生成标题曲；首次交互（unlock）后才真正起播
   try {
     music.playing = true;
     music.setTrack('title');
+    refreshTrackInfo();
   } catch { /* 音乐失败不影响游戏 */ }
 
   // 启动自检：第 1 关校验可解性；第 2 关只做"发牌是否合法"的体检（不校验可解）

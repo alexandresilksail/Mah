@@ -1,5 +1,39 @@
 # Mah 了个 Mah · 发布日志
 
+## v2.3.0 —— 程序化即兴曲库 + 点击零干扰（2026-11-10）
+
+### 修复：点击鼠标时音乐明显受影响（v2.2 回归）
+- 根因不是音量不够，而是上一版引入的两个干扰源：① 每次点击 `music.duck()` 压低 BGM 再拉回，
+  密集点击时音乐一下一下「抽」；② 音效与 BGM 共用总线压缩器，点击瞬态触发压缩把音乐也压下去。
+- 彻底移除 `duckGain` / `duck()` 调用 / `cancelAndHoldAtTime` 排程；音效输出改为
+  `sfxBus → destination` **直连**，不经过音乐 `comp / master / trackGain`。
+  点击音效不改写音乐链路上任何一个 AudioParam。
+- 音效进一步收敛：1600Hz 高通、音源 1.8–4.2kHz、总电平 0.10、时长 20–110ms。
+- 真机（msedge）实测：连续 40+ 次 click/pick/match/win/lose 后，`master / trackGain / musicBus`
+  增益前后完全一致，期间 `trackGain.gain` 的 `setValueAtTime / linearRampToValueAtTime` 调用次数 **0**。
+
+### 新增：程序化原创作曲引擎（曲库近乎无限）
+- 新增 `src/game/music_composer.js`：seed 驱动的 LCG 伪随机 + 12 调性 / 大调·小调五声音阶 /
+  7 组大调 + 5 组小调和弦进行 / 1 小节核心动机 hook（反复 + 问答句 + 句尾收束主音）/
+  节奏骨架池 / 鼓组与切分琶音池，自动配 bass（和弦根音·五度）与 A/B 段。
+  强拍落和弦内音、音域锁两个八度，随机但符合乐理。
+- `music.js` 每次启动 `composeLibrary(sessionSeed)` 为标题 / L1 / L2 各即兴一首；
+  每次开局、回标题、设置面板「♪ 换一首」再即兴一首（`validateComposition()` 先严格自检）。
+  静态 `TRACKS` 3 首仅作结构兜底。
+- 标题页与设置面板显示当前曲名 / 编号 / BPM，让「每次不同」可见。
+- 【版权边界】不逐音复刻任何现有商业游戏 / 唱片的旋律或音频素材，工程内零音频文件；
+  借鉴的只是休闲消除类 BGM 的通用体裁技法（风格与作曲法不受版权保护），
+  生成的具体音符序列每次都是全新原创结果。
+
+### 验证
+- 真机连续 5 次 reload：曲名 / BPM / 和弦进行 / 前 8 个旋律音 / seed **全部不同**。
+- 离线渲染三首即兴曲 WAV（`.build/audio-preview/`，不进仓库）：RMS 0.067–0.076、
+  峰值 0.427–0.531 无削波、8 段响度全程平稳（和声铺底保证连续）。
+- `test.js` [8c] 重写为「点击零干扰 / 动态曲库」：360 首即兴曲全部合法且互不相同、
+  seed 可复现、`nextTrack()` 确实换曲、点击音效不改动 BGM 任一增益。
+  `npm test` **1022 通过 / 0 失败 / EXIT=0**，含 `test_render.mjs` 26 个渲染场景。
+- 重新打包 web / legacy（legacy 仍为纯 ES5）；README / DELIVERY 同步 v2.3.0。
+
 ## v2.2.0 —— 音频混音修复 + 每次启动编曲变奏（2026-11-10）
 
 ### 修复：点击音与背景音乐相互干扰

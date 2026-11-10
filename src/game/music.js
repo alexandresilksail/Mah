@@ -24,15 +24,22 @@
  *  · 任何播放失败都吞掉（try/catch），不影响游戏；
  *  · 遵守浏览器自动播放策略：new AudioContext 与起播都发生在用户首次交互后。
  *
- * 【v2.2.0 混音与变化】
- *  · 音效与音乐共用同一个 AudioContext 和同一个总线限幅器（sfxBus → comp），
- *    不再出现两路独立输出互相叠加、无法统一限幅造成的忽响忽闷。
- *  · 音效触发时 BGM 短暂闪避（duckGain 只作用于音乐分支），点击声清晰但音乐不断。
- *  · 每次启动随机选一套「编曲变奏」（段落顺序 / 琶音八度 / hat 密度 / 延迟湿度 /
- *    fill 位置），曲谱数据不变，重复游玩不再逐次完全一致。
+ * 【v2.3.0 动态曲库 + 点击零干扰】
+ *  · 曲子不再写死：每次启动用随机 seed 经 music_composer.js 即兴生成
+ *    标题 / 第一关 / 第二关三首全新原创曲（调性、和声、动机、节奏、鼓组全变）。
+ *    每次进关、以及设置面板「换一首」，都会再即兴一首 —— 曲库近乎无限。
+ *    静态 TRACKS 保留为兜底（曲谱结构参考），实际播放一律走动态曲库。
+ *  · 【关键修复】彻底移除「音效闪避 duck」和「音效共享 BGM 压缩器」。
+ *    旧版点击会压低 BGM 增益、且音效瞬态会触发音乐压缩器，导致音乐一下一下被「抽」，
+ *    这正是用户反馈的「点击鼠标音乐明显受影响」。现在：
+ *      BGM 链路：musicBus → trackGain → master → comp → destination（完全独立）
+ *      SFX 链路：sfxBus → destination（直连，不经过音乐任何增益 / 压缩节点）
+ *    点击音效**不改动音乐链路上的任何一个 AudioParam**，音乐电平恒定。
+ *  · 音效进一步收敛为极短、极轻的高频反馈，只靠频段与音量避让，不靠调制音乐。
  */
 
 import { TRACKS, NOTE_FREQ, CHORD_TONES, shiftOct } from './music_tracks.js';
+import { composeLibrary, composeTrack, validateComposition } from './music_composer.js';
 
 /** 每次启动随机选一套编曲变奏；只改「怎么演奏」，不改曲谱音符与段落结构 */
 const VARIANTS = [
@@ -40,6 +47,13 @@ const VARIANTS = [
   { name: '倒叙', flipAB: true,  arpOct: 1, hatSkip: false, wet: 0.20, fillInA: true },
   { name: '轻盈', flipAB: false, arpOct: 2, hatSkip: true,  wet: 0.12, fillInA: false },
 ];
+
+/** 随机种子（曲库标识用） */
+function randomSeed() {
+  // 不用 Date.now()：IE8 没有该静态方法（兼容版 Babel 也不会补运行时 API）
+  const ms = new Date().getTime();
+  return ((Math.random() * 4294967296) >>> 0) ^ ((ms & 0xffff) << 8);
+}
 
 /** 音名 → 频率；未知音名回退 440 */
 function freqOf(n) {
@@ -60,15 +74,19 @@ export class Music {
     this.delay = null;         // 节拍同步延迟（空间感）
     this.feedback = null;
     this.delayWet = null;
-    this.comp = null;          // 总线压缩（粘合 + 防削波）
-    this.sfxBus = null;        // 音效共享输入：与 BGM 并列进入同一个限幅器
-    this.duckGain = null;      // BGM 闪避：音效响起时只压低音乐分支
-    this.duckEnabled = true;   // 自动闪避总开关
+    this.comp = null;          // 音乐专用总线压缩（音效不经过它）
+    this.sfxBus = null;        // 音效独立输出：直连 destination，绝不经过音乐链路
     this.noiseBuffer = null;   // 打击乐用的噪声样本
 
     // 每次启动选一套编曲变奏（游戏进行中保持不变，避免听感跳变）
     this.variantIndex = Math.floor(Math.random() * VARIANTS.length) % VARIANTS.length;
     this.variant = VARIANTS[this.variantIndex];
+
+    // 【动态曲库】每次启动即兴生成全新三首；seed 决定一切，曲子互不重复。
+    this.sessionSeed = randomSeed() >>> 0;
+    this.library = composeLibrary(this.sessionSeed);
+    this.compositionSeq = 1;   // 本次会话已即兴的曲子数（用于「换一首」编号）
+    this._lastBuildKey = null;
 
     this.bgmOn = true;
     this.bgmVol = 0.6;
@@ -117,8 +135,14 @@ export class Music {
     }
   }
 
+  /** 当前 key 对应的曲子：优先动态曲库，静态 TRACKS 仅作兜底 */
+  _track(key) {
+    return (this.library && this.library[key]) || TRACKS[key] || TRACKS.title;
+  }
+
   _buildSteps(key) {
-    const t = TRACKS[key] || TRACKS.title;
+    const t = this._track(key);
+    this._lastBuildKey = key;
     const v = this.variant || VARIANTS[0];
     const beatSec = 60 / t.bpm;
     const stepDur = beatSec / 2; // 八分音符栅格
@@ -236,22 +260,18 @@ export class Music {
       this.master.connect(this.comp);
       this.comp.connect(ctx.destination);
 
-      // 音效共享输入：Sound 复用本 AudioContext 并接到这里，让 BGM 与 SFX
-      // 共用同一个总线限幅器，避免两路独立输出叠加造成削波 / 响度忽大忽小。
+      // 【点击零干扰 · 关键】音效走完全独立的输出分支：sfxBus 直连 destination。
+      // 绝不接到 master / comp / trackGain —— 否则音效瞬态会触发音乐压缩器，
+      // 或（旧版 duck）直接压低音乐增益，用户就会听到「点一下音乐抽一下」。
       this.sfxBus = ctx.createGain();
       this.sfxBus.gain.value = 1;
-      this.sfxBus.connect(this.comp);
+      this.sfxBus.connect(ctx.destination);
 
-      // BGM 闪避总线：只串在音乐分支上，音效触发时短暂让路、随后自动回满。
-      // 与 trackGain（切关淡变）、master（用户音量）分离，互不干扰。
-      this.duckGain = ctx.createGain();
-      this.duckGain.gain.value = 1;
-      this.duckGain.connect(this.master);
-
-      // 关卡切换淡入淡出（per-track crossfade）
+      // 关卡切换淡入淡出（per-track crossfade）：直连 master，链路中没有任何
+      // 会被音效改写的增益节点。
       this.trackGain = ctx.createGain();
       this.trackGain.gain.value = 1;
-      this.trackGain.connect(this.duckGain);
+      this.trackGain.connect(this.master);
 
       // 干声汇总总线
       this.musicBus = ctx.createGain();
@@ -259,7 +279,7 @@ export class Music {
       this.musicBus.connect(this.trackGain);
 
       // 节拍同步延迟（附点八分）：旋律 / 琶音送进来
-      const t = TRACKS[this.trackKey] || TRACKS.title;
+      const t = this._track(this.trackKey);
       this.delay = ctx.createDelay(1.5);
       this.delay.delayTime.value = (60 / t.bpm) * 0.75;
       this.feedback = ctx.createGain();
@@ -590,11 +610,16 @@ export class Music {
     } catch { /* 音乐失败不影响游戏 */ }
   }
 
-  /** 切换曲目（title / 1 / 2）：淡出 0.35s → 换谱 → 淡入 0.35s */
-  setTrack(key) {
+  _validKey(key) {
+    return ((this.library && this.library[key]) || TRACKS[key]) ? key : 'title';
+  }
+
+  /** 切换曲目（title / 1 / 2）：淡出 0.35s → 换谱 → 淡入 0.35s
+   *  force=true 时即使 key 未变也强制换谱（用于「换一首」重新即兴）。 */
+  setTrack(key, force = false) {
     try {
-      const k = TRACKS[key] ? key : 'title';
-      if (k === this.trackKey && !this.pendingKey) return;
+      const k = this._validKey(key);
+      if (k === this.trackKey && !this.pendingKey && !force) return;
       if (!this.ctx || !this.unlocked) {
         // 还没解锁：只记谱，不出声
         this._buildSteps(k);
@@ -628,7 +653,9 @@ export class Music {
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       this.nextTime = ctx.currentTime + 0.05;
       this._startTimer();
-      this._fadeTo(1, 0.4);
+      // 切关 / 换曲时 setTrack 已排好「淡出→换谱→淡入」曲线，别用淡入覆盖它，
+      // 否则交叉淡变会被打断、旧曲音符会漏进新曲开头。
+      if (!this.pendingKey) this._fadeTo(1, 0.4);
     } catch { /* 不影响游戏 */ }
   }
 
@@ -681,47 +708,45 @@ export class Music {
     return this.sfxBus;
   }
 
+  /** 【已移除 duck】v2.3.0 起音效不再以任何方式调制音乐增益。
+   *  保留同名空方法是为兼容旧调用点（音频链路里已无 duckGain 节点）。
+   *  点击音效走独立的 sfxBus → destination，音乐链路电平恒定。 */
+  duck() { /* 故意不做任何事：点击绝不影响 BGM */ }
+  setDucking() { /* 兼容旧调用，无副作用 */ }
+
   /**
-   * 音效播放时让背景音乐短暂闪避（轻量 sidechain ducking）。
-   * strength 越大让得越多；无论调用多密集，末尾都会平滑回到 1，不会把音乐卡在低音量。
-   * 只作用于 duckGain（音乐分支），音效本身始终全音量。
+   * 「换一首」：为当前（或指定）场景即兴一首全新的原创曲，并平滑换谱。
+   * 每次进关与设置面板都会调用，因此同一首曲子几乎不会连续出现两次。
    */
-  duck(strength = 0.25, hold = 0.05, release = 0.20) {
+  nextTrack(key) {
     try {
-      if (!this.duckEnabled || !this.duckGain || !this.ctx || !this.bgmOn || !this.playing) return;
-      const s = Math.max(0, Math.min(0.8, Number(strength) || 0));
-      if (s <= 0) return;
-      const target = 1 - s;
-      const now = this.ctx.currentTime;
-      const h = Math.max(0, Number(hold) || 0);
-      const r = Math.max(0.05, Number(release) || 0.2);
-      const g = this.duckGain.gain;
-      // 连续点击时若直接 cancelScheduledValues + setValueAtTime(g.value)，
-      // AudioParam.value 在自动化期间返回的是「固有值」而非实时值，会瞬间跳回 1
-      // 产生咔嗒声。优先用 cancelAndHoldAtTime 保住当前真实值再平滑过渡。
-      if (typeof g.cancelAndHoldAtTime === 'function') {
-        g.cancelAndHoldAtTime(now);
-      } else {
-        const cur = Math.max(0.0001, g.value);
-        g.cancelScheduledValues(now);
-        g.setValueAtTime(cur, now);
-      }
-      g.linearRampToValueAtTime(target, now + 0.02);
-      g.setValueAtTime(target, now + 0.02 + h);
-      g.linearRampToValueAtTime(1, now + 0.02 + h + r);
-    } catch { /* 闪避失败不影响游戏 */ }
+      const k = this._validKey(key === undefined || key === null ? this.trackKey : key);
+      this.compositionSeq += 1;
+      const seed = (randomSeed() ^ ((this.compositionSeq * 2654435761) >>> 0)) >>> 0;
+      const fresh = composeTrack(k, seed);
+      // 生成结果必须合法；不合法就保留旧曲，绝不把坏数据送进调度器
+      if (!validateComposition(fresh).ok) return this.getTrackInfo();
+      this.library[k] = fresh;
+      this.setTrack(k, true);
+      return this.getTrackInfo();
+    } catch { return this.getTrackInfo(); }
   }
 
-  /** 自动闪避总开关（默认开启；关闭时立即把音乐音量恢复） */
-  setDucking(on) {
-    this.duckEnabled = !!on;
-    if (!on && this.duckGain && this.ctx) {
-      try {
-        const now = this.ctx.currentTime;
-        this.duckGain.gain.cancelScheduledValues(now);
-        this.duckGain.gain.setValueAtTime(1, now);
-      } catch { /* ignore */ }
-    }
+  /** 当前曲目的可读信息（供设置面板显示，让用户直观看到「每次不同」） */
+  getTrackInfo() {
+    try {
+      const t = this._track(this.trackKey);
+      return {
+        key: String(this.trackKey),
+        name: t.name || '原创即兴',
+        seed: t.seed >>> 0,
+        bpm: t.bpm,
+        chords: (t.chords || []).join('–'),
+        seq: this.compositionSeq,
+        session: this.sessionSeed >>> 0,
+        variant: (this.variant || VARIANTS[0]).name,
+      };
+    } catch { return { key: 'title', name: '原创即兴', seq: 1 }; }
   }
 
   /** 本次启动的编曲变奏（仅信息用，游戏逻辑不依赖） */
@@ -741,8 +766,10 @@ export function getMusic() {
     return {
       unlock() {}, setTrack() {}, play() {}, pause() {}, resume() {},
       setEnabled() {}, setVolume() {}, duck() {}, setDucking() {},
+      nextTrack() { return { name: '原创即兴', seq: 1 }; },
       getContext() { return null; }, getSfxBus() { return null; },
       getVariant() { return { index: 0, name: '标准' }; },
+      getTrackInfo() { return { key: 'title', name: '原创即兴', seq: 1, bpm: 96, chords: '', session: 0 }; },
       bgmOn: true, bgmVol: 0.6,
     };
   }

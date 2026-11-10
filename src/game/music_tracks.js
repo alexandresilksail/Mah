@@ -49,6 +49,25 @@ export const CHORD_TONES = {
   E:  ['E4', 'G#4', 'B4'],
 };
 
+/* v2.3.0：程序化作曲会在 12 个调上即兴，静态表只覆盖了常用白键。
+ * 这里按十二平均律把 C2..B7 的全部半音、以及 12 个大三 + 12 个小三和弦补齐；
+ * 已存在的条目保留原值（静态曲目依赖它们，不能改动），只补空缺。 */
+const _PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const _midiName = (m) => _PITCH_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+for (let m = 36; m <= 107; m++) {
+  const key = _midiName(m);
+  if (NOTE_FREQ[key] === undefined) {
+    NOTE_FREQ[key] = +(440 * Math.pow(2, (m - 69) / 12)).toFixed(2);
+  }
+}
+for (let pc = 0; pc < 12; pc++) {
+  const root = 60 + pc;
+  const maj = _PITCH_NAMES[pc];
+  const min = _PITCH_NAMES[pc] + 'm';
+  if (!CHORD_TONES[maj]) CHORD_TONES[maj] = [_midiName(root), _midiName(root + 4), _midiName(root + 7)];
+  if (!CHORD_TONES[min]) CHORD_TONES[min] = [_midiName(root), _midiName(root + 3), _midiName(root + 7)];
+}
+
 /** 把一个音名升高/降低一个八度（用于琶音上移八度增加亮度） */
 export function shiftOct(n, up) {
   return n.replace(/(\d)$/, (d) => String(Math.max(1, Math.min(7, +d + (up ? 1 : -1)))));

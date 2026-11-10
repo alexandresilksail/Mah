@@ -52,7 +52,9 @@ export function getUI(game) {
     });
     push('set-sfx-minus', 438, 622, 52, 52, '−', { kind: 'ghost', size: 28 });
     push('set-sfx-plus', 586, 622, 52, 52, '＋', { kind: 'ghost', size: 24 });
-    push('settings-close', W / 2 - 130, 780, 260, 64, '关闭', { kind: 'primary', size: 26 });
+    // v2.3.0：随时即兴换一首全新原创曲（曲库近乎无限）
+    push('set-next-track', W / 2 - 150, 706, 300, 52, '♪ 换一首', { kind: 'ghost', size: 22 });
+    push('settings-close', W / 2 - 130, 800, 260, 64, '关闭', { kind: 'primary', size: 26 });
     return { buttons };
   }
 
@@ -873,11 +875,16 @@ export function drawTitleScreen(ctx, game, ui, t) {
   } else if (game.best > 1) {
     text(ctx, '已通关第 1 关 · 卡在第 2 关', W / 2, 808, { size: 19, fill: C.gold, weight: '700' });
   }
-  // 首次交互前提示：背景音乐受浏览器自动播放策略限制，需点击后才出声
+  // 首次交互前提示点击解锁音频；解锁后改为显示本次启动即兴生成的曲名，
+  // 让用户一眼看到「每次打开的都不是同一首」。
   if (!game.audioUnlocked) {
     const a = 0.5 + 0.4 * Math.sin((t || 0) / 420);
     text(ctx, '♪ 点击任意处开启背景音乐', W / 2, 842, {
       size: 20, fill: C.gold, weight: '700', alpha: a,
+    });
+  } else if (game.trackInfo) {
+    text(ctx, `♪ 本次即兴：${game.trackInfo.name} · 第 ${game.trackInfo.seq} 首`, W / 2, 842, {
+      size: 18, fill: C.gold, weight: '700',
     });
   }
   if (!game.uninstallAsk && !game.settingsAsk) drawButtons(ctx, ui, game);
@@ -997,9 +1004,9 @@ function volumeBar(ctx, x, y, w, h, v) {
 
 export function drawSettingsPanel(ctx, game, ui) {
   if (!game.settingsAsk) return;
-  panel(ctx, 80, 380, W - 160, 520);
-  text(ctx, '声音与音乐设置', W / 2, 442, { size: 32, weight: '800', fill: C.orange });
-  text(ctx, '背景音乐与音效完全独立，可分别开关和调音量', W / 2, 482, { size: 16, fill: C.textDim });
+  panel(ctx, 80, 360, W - 160, 560);
+  text(ctx, '声音与音乐设置', W / 2, 420, { size: 32, weight: '800', fill: C.orange });
+  text(ctx, '音效与背景音乐完全独立 · 点击不会影响音乐', W / 2, 458, { size: 16, fill: C.textDim });
 
   text(ctx, '背景音乐', 130, 546, { size: 22, weight: '700', fill: C.text });
   text(ctx, '音效', 130, 656, { size: 22, weight: '700', fill: C.text });
@@ -1009,10 +1016,22 @@ export function drawSettingsPanel(ctx, game, ui) {
   volumeBar(ctx, 494, 528, 88, 14, game.bgmVol);
   volumeBar(ctx, 494, 638, 88, 14, game.sfxVol);
 
+  // 当前即兴曲目：曲名 / 编号 / 速度 / 和声进行，直观说明「每次都是新曲」
+  const info = game.trackInfo;
+  if (info) {
+    text(ctx, `♪ 当前：${info.name} · 第 ${info.seq} 首 · ${info.bpm} BPM`, W / 2, 688, {
+      size: 16, fill: C.gold, weight: '700',
+    });
+  } else {
+    text(ctx, '♪ 每次启动都会即兴生成全新原创曲', W / 2, 688, {
+      size: 16, fill: C.gold, weight: '700',
+    });
+  }
+
   drawButtons(ctx, ui, game);
 
-  text(ctx, '设置自动保存 · 兼容旧存档', W / 2, 742, { size: 15, fill: C.textFaint });
-  text(ctx, '音乐为 Web Audio 实时合成的原创曲目', W / 2, 872, { size: 14, fill: C.textFaint });
+  text(ctx, '点击「换一首」立即即兴新曲 · 设置自动保存', W / 2, 778, { size: 15, fill: C.textFaint });
+  text(ctx, '全部 Web Audio 实时合成 · 原创 · 零音频文件', W / 2, 894, { size: 14, fill: C.textFaint });
 }
 
 /* ==================== 特效 ==================== */

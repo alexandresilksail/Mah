@@ -1,20 +1,31 @@
 /**
  * 全部音效由 Web Audio API 实时合成，工程内不含任何音频文件。
  *
- * v2.2.0 混音改造 —— 解决「点击鼠标的声音与背景音乐相互干扰」：
- *  1) 共用 AudioContext：复用 Music 的唯一 ctx，并把输出接到 music.sfxBus，
- *     与 BGM 共用同一个总线压缩器，不再有两路独立输出叠加、无法统一限幅。
- *  2) 频段避让：音效总线串 1000Hz 高通，音源频率整体上移到 1.0–4.2kHz，
- *     把 523–1047Hz 的中频让给 BGM 主旋律，消除频谱掩蔽（旧版 pick/match/click
- *     全落在这段，等于和主旋律同时唱）。
- *  3) 自动闪避：每次音效触发请求 BGM 短暂让路（music.duck），点击声清晰、
- *     音乐不中断；幅度小（0.10–0.30）、恢复快，听感自然。
- *  4) 更短更轻：所有音效的时长与音量下调，不再「叮叮当当」盖过音乐。
+ * v2.3.0 —— 【点击零干扰】彻底移除「音效闪避 BGM」机制。
+ *
+ * 旧版（v2.2）的两个干扰源都已拆除：
+ *  1) 每次点击调用 music.duck() 压低 BGM 增益再拉回 → 密集点击时音乐一下一下「抽」；
+ *  2) 音效与 BGM 共用总线压缩器 → 点击瞬态触发压缩，把音乐也压下去。
+ * 用户实测反馈「点击鼠标音乐明显受影响」正是这两处造成的，而不是音量不够。
+ *
+ * 现在的策略是**物理隔离 + 只靠频段/响度避让，绝不调制音乐**：
+ *  · 音乐链路：musicBus → trackGain → master → comp → destination
+ *  · 音效链路：Sound.master → highpass → music.sfxBus → destination
+ *    两条链路没有任何共享的增益 / 压缩节点；音效不改写音乐链路上任何一个 AudioParam。
+ *  · 音效总线串 1600Hz 高通，音源集中在 1.8–4.2kHz，把 200–1100Hz 的中频
+ *    完整留给 BGM 主旋律与和声，消除频谱掩蔽。
+ *  · 音效时长压到 20–55ms、电平压到 0.10，做成轻巧的「tick / tap」反馈，
+ *    不再是会盖过音乐的「叮叮当当」。
+ *
+ * 音效与音乐仍各自独立开关、独立音量（setEnabled / setVolume）。
  */
 import { getMusic } from './music.js';
 
-/** 音效高通截止：把中频留给 BGM 主旋律，音效只保留清脆高频 */
-const HP_HZ = 1000;
+/** 音效高通截止：把中低频完整留给 BGM，音效只保留清脆高频 */
+const HP_HZ = 1600;
+
+/** 音效总线上限（比 BGM 低得多，避免任何叠加感） */
+const SFX_LEVEL = 0.10;
 
 export class Sound {
   constructor() {
@@ -25,7 +36,7 @@ export class Sound {
     this.volume = 1;         // 音效独立音量（0..1），与背景音乐完全解耦
   }
 
-  /** 取得（或复用）AudioContext：优先复用音乐的 ctx 与共享限幅总线 */
+  /** 取得（或复用）AudioContext；输出接到音乐提供的独立音效总线（直连 destination） */
   ensure() {
     if (!this.enabled) return null;
     if (!this.ctx) {
@@ -46,7 +57,7 @@ export class Sound {
       try {
         this.ctx = ctx;
         this.master = ctx.createGain();
-        this.master.gain.value = this.enabled ? 0.2 * this.volume : 0;
+        this.master.gain.value = this.enabled ? SFX_LEVEL * this.volume : 0;
         this.hp = ctx.createBiquadFilter();
         this.hp.type = 'highpass';
         this.hp.frequency.value = HP_HZ;
@@ -57,7 +68,7 @@ export class Sound {
         // 极端兜底：滤波器创建失败也要保证音效可用
         try {
           this.master = this.master || ctx.createGain();
-          this.master.gain.value = this.enabled ? 0.2 * this.volume : 0;
+          this.master.gain.value = this.enabled ? SFX_LEVEL * this.volume : 0;
           this.master.connect(out);
         } catch { this.ctx = null; return null; }
       }
@@ -66,19 +77,10 @@ export class Sound {
     return this.ctx;
   }
 
-  /** 请求背景音乐短暂让路；音效关闭 / 静音时不触发 */
-  _duck(strength) {
-    if (!this.enabled || this.volume <= 0) return;
-    try {
-      const music = getMusic();
-      if (music && music.duck) music.duck(strength);
-    } catch { /* 闪避失败不影响游戏 */ }
-  }
-
   /** 音效独立开关 */
   setEnabled(on) {
     this.enabled = on;
-    if (this.master) this.master.gain.value = on ? 0.2 * this.volume : 0;
+    if (this.master) this.master.gain.value = on ? SFX_LEVEL * this.volume : 0;
   }
 
   /** 音效独立音量（0..1） */
@@ -86,10 +88,10 @@ export class Sound {
     const x = Number(v);
     if (!Number.isFinite(x)) return;
     this.volume = Math.max(0, Math.min(1, x));
-    if (this.master) this.master.gain.value = this.enabled ? 0.2 * this.volume : 0;
+    if (this.master) this.master.gain.value = this.enabled ? SFX_LEVEL * this.volume : 0;
   }
 
-  tone({ freq = 440, to = null, dur = 0.1, type = 'sine', vol = 0.5, delay = 0, attack = 0.006 }) {
+  tone({ freq = 440, to = null, dur = 0.1, type = 'sine', vol = 0.5, delay = 0, attack = 0.004 }) {
     const ctx = this.ensure();
     if (!ctx) return;
     const t0 = ctx.currentTime + delay;
@@ -130,57 +132,50 @@ export class Sound {
     src.start(t0);
   }
 
+  /* ---- 以下全部是轻量反馈音：极短、极轻、高频，不调制 BGM ---- */
+
   click() {
-    this._duck(0.10);
-    this.tone({ freq: 1650, to: 1250, dur: 0.035, type: 'triangle', vol: 0.10 });
+    this.tone({ freq: 2100, to: 1750, dur: 0.022, type: 'triangle', vol: 0.07 });
   }
 
   pick() {
-    this._duck(0.12);
-    this.tone({ freq: 1500, to: 2050, dur: 0.05, type: 'triangle', vol: 0.16 });
-    this.tone({ freq: 2700, dur: 0.035, type: 'sine', vol: 0.05, delay: 0.02 });
+    this.tone({ freq: 1900, to: 2400, dur: 0.030, type: 'triangle', vol: 0.11 });
+    this.tone({ freq: 3100, dur: 0.020, type: 'sine', vol: 0.035, delay: 0.012 });
   }
 
   match() {
-    this._duck(0.26);
-    [1760, 2093, 2637].forEach((f, i) => {
-      this.tone({ freq: f, dur: 0.10, type: 'triangle', vol: 0.14, delay: i * 0.035 });
+    [2200, 2640, 3136].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.055, type: 'triangle', vol: 0.10, delay: i * 0.022 });
     });
   }
 
   deny() {
-    this._duck(0.12);
-    this.noise({ dur: 0.07, vol: 0.09, from: 2600, to: 1500 });
+    this.noise({ dur: 0.045, vol: 0.06, from: 3000, to: 1900 });
   }
 
   undo() {
-    this._duck(0.14);
-    this.tone({ freq: 1800, to: 1100, dur: 0.07, type: 'sine', vol: 0.14 });
+    this.tone({ freq: 2200, to: 1500, dur: 0.042, type: 'sine', vol: 0.10 });
   }
 
   shuffle() {
-    this._duck(0.22);
-    this.noise({ dur: 0.20, vol: 0.10, from: 3200, to: 1600 });
+    this.noise({ dur: 0.11, vol: 0.07, from: 3600, to: 2100 });
   }
 
   revive() {
-    this._duck(0.28);
-    [1568, 2093, 2637, 3136].forEach((f, i) => {
-      this.tone({ freq: f, dur: 0.14, type: 'sine', vol: 0.14, delay: i * 0.045 });
+    [1960, 2640, 3136, 3800].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.085, type: 'sine', vol: 0.10, delay: i * 0.032 });
     });
   }
 
   win() {
-    this._duck(0.30);
-    [2093, 2637, 3136, 3520, 4186].forEach((f, i) => {
-      this.tone({ freq: f, dur: 0.17, type: 'triangle', vol: 0.15, delay: i * 0.055 });
+    [2640, 3136, 3520, 3900, 4200].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.10, type: 'triangle', vol: 0.10, delay: i * 0.038 });
     });
   }
 
   lose() {
-    this._duck(0.22);
-    [1568, 1318, 1174, 1046].forEach((f, i) => {
-      this.tone({ freq: f, dur: 0.13, type: 'sawtooth', vol: 0.09, delay: i * 0.06 });
+    [1960, 1760, 1568, 1400].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.075, type: 'sine', vol: 0.07, delay: i * 0.040 });
     });
   }
 }
