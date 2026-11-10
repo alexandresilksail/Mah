@@ -34,7 +34,7 @@ import {
 } from './src/game/layout.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot, runDifficultySuite } from './src/game/robots.js';
-import { validateTracks } from './src/game/music_tracks.js';
+import { validateTracks, TRACKS } from './src/game/music_tracks.js';
 import { slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
 import { makeRng } from './src/game/rng.js';
 import { SEED_POOL, POOL_META, pickPoolSeed } from './src/game/seed_pool.js';
@@ -407,6 +407,12 @@ ok(/music:\s*game\.bgmOn/.test(read('src/main.js')) && /saved\.music !== false/.
   '音乐设置持久化且兼容旧存档');
 const tracksCheck = validateTracks();
 ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (tracksCheck.ok ? '' : '：' + tracksCheck.issues.join('；')));
+ok(Object.values(TRACKS).every((t) => Array.isArray(t.variation) && t.variation.length >= 16
+    && JSON.stringify(t.variation) !== JSON.stringify(t.melody)),
+  '三首曲目均含 A/B 段落变奏（B 段旋律区别于 A 段，避免机械循环）');
+ok(Object.values(TRACKS).every((t) => Array.isArray(t.arpPattern)
+    && t.arpPattern.some((v) => v === 0) && t.arpPattern.some((v) => v === 1)),
+  '琶音采用切分 pattern（非每八分满击，避免「叮叮叮」糊成一片）');
 
 /* 运行时回归：背景音乐必须真的有信号到达扬声器。
  * 曾因 _playNote 里音符混音总线 out.gain=0 且未被拉起，导致整条总线乘 0 → BGM 完全静音
