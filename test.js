@@ -416,8 +416,9 @@ ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (t
   let gains = [];
   class P { constructor(v){ this.value = v; } setValueAtTime(_, v){ this.value = v; } linearRampToValueAtTime(v){ this.value = v; } exponentialRampToValueAtTime(v){ this.value = Math.max(0.0001, v); } cancelScheduledValues(){} setTargetAtTime(v){ this.value = v; } }
   class G { constructor(){ this.gain = new P(1); this.ins = []; gains.push(this); } connect(n){ this.ins.push(n); } }
-  class O { constructor(){ this.frequency = new P(440); } connect(n){ this.dest = n; } start(){} stop(){} }
-  class Ctx { constructor(){ this.state = 'suspended'; this.currentTime = 0; this.destination = new G(); } createGain(){ return new G(); } createOscillator(){ return new O(); } resume(){ this.state = 'running'; return Promise.resolve(); } suspend(){ this.state = 'suspended'; return Promise.resolve(); } }
+  class N { constructor(){ this.frequency = new P(440); this.detune = new P(0); this.delayTime = new P(0.25); this.pan = new P(0); this.Q = new P(1); this.threshold = new P(0); this.ratio = new P(1); this.attack = new P(0); this.release = new P(0); this.buffer = null; this.ins = []; } connect(n){ this.ins.push(n); } start(){} stop(){} }
+  class O { constructor(){ this.frequency = new P(440); this.detune = new P(0); } connect(n){ this.dest = n; } start(){} stop(){} }
+  class Ctx { constructor(){ this.state = 'suspended'; this.currentTime = 0; this.sampleRate = 44100; this.destination = new G(); } createGain(){ return new G(); } createOscillator(){ return new O(); } createBiquadFilter(){ return new N(); } createDynamicsCompressor(){ return new N(); } createDelay(){ return new N(); } createStereoPanner(){ return new N(); } createBuffer(_c, len){ return { getChannelData(){ return new Float32Array(len); } }; } createBufferSource(){ return new N(); } resume(){ this.state = 'running'; return Promise.resolve(); } suspend(){ this.state = 'suspended'; return Promise.resolve(); } }
   globalThis.window = { AudioContext: Ctx };
   globalThis.document = { addEventListener(){}, hidden: false };
   _resetMusicSingletonForTests();
@@ -425,7 +426,9 @@ ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (t
   m.playing = true; m.setTrack('title'); m.unlock(); m.setTrack('1'); m.play();
   for (let i = 0; i < 20; i++) { m.ctx.currentTime += 0.15; m._tick(); }
   const trackGain = m.trackGain;
-  const noteBuses = gains.filter(g => g !== trackGain && g !== m.master && g.ins.includes(trackGain));
+  // 新架构：音符总线 out 连到 musicBus（干声汇总），再由 musicBus → trackGain → master。
+  // 因此「连到 trackGain 的总线」是 musicBus 本身；真正的音符总线是连到 musicBus 的那些。
+  const noteBuses = gains.filter(g => g !== trackGain && g !== m.master && g !== m.musicBus && g.ins.includes(m.musicBus));
   const anyZero = noteBuses.some(g => g.gain.value === 0);
   const anyOne = noteBuses.some(g => g.gain.value === 1);
   const outProd = m.master.gain.value * trackGain.gain.value * (anyOne ? 1 : 0);
