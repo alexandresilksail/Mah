@@ -34,8 +34,6 @@ import {
 } from './src/game/layout.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot, runDifficultySuite } from './src/game/robots.js';
-import { validateTracks, TRACKS } from './src/game/music_tracks.js';
-import { composeLibrary, composeTrack, validateComposition, TRACK_STYLES } from './src/game/music_composer.js';
 import { slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
 import { makeRng } from './src/game/rng.js';
 import { SEED_POOL, POOL_META, pickPoolSeed } from './src/game/seed_pool.js';
@@ -358,8 +356,8 @@ ok(labelCovered, 'ES5 降级视图内嵌了全部 16 种牌型标签');
 ok(!/\buninstallGame\s*\(/.test(read('src/main.js') + read('src/game/store.js')),
   '前端不再调用自删除 IPC');
 
-/* ---- [8b] Rust 存档接口安全加固 + 背景音乐系统静态验收 ---- */
-line('\n[8b] Rust 存档加固 / 音乐系统');
+/* ---- [8b] Rust 存档接口安全加固 + 生产音频配置静态验收 ---- */
+line('\n[8b] Rust 存档加固 / 生产音频配置（仅音效）');
 ok(/MAX_SAVE_BYTES[^=]*=\s*(64\s*\*\s*1024|65536)/.test(rust), 'save_state 设置 64 KB 大小上限');
 ok(/serde_json::from_str/.test(rust) && /serde_json\s*=/.test(read('src-tauri/Cargo.toml')),
   'save_state 用 serde_json 做 JSON 合法性校验');
@@ -370,14 +368,24 @@ ok(/validate_save_json/.test(rust) && /fn save_state\(data: String\)/.test(rust)
 ok(/save\.json\.tmp/.test(rust) && /fs::rename/.test(rust), 'save_state 保持原子写入（tmp + rename）');
 ok(/v != 1 && v != 2|版本/.test(rust), 'save_state 校验存档版本号');
 
-const musicSrc = read('src/game/music.js');
-const tracksSrc = read('src/game/music_tracks.js');
-ok(musicSrc.length > 1000 && tracksSrc.length > 500, 'music.js / music_tracks.js 已就位');
-ok(/_created/.test(musicSrc) && /单例/.test(musicSrc), 'Music 单例守护（禁止重复创建实例）');
-ok(/unlock\s*\(/.test(musicSrc) && /首次交互/.test(musicSrc), '音乐在用户首次交互后启动（自动播放合规）');
-ok(/visibilitychange/.test(musicSrc), '支持切后台 / 回前台');
-ok(/linearRampToValueAtTime/.test(musicSrc), '关卡切换淡入淡出');
-ok(/catch/.test(musicSrc) && /不影响游戏/.test(musicSrc), '播放失败全部捕获，不影响游戏');
+const audioSrc = read('src/game/audio.js');
+const mainSrc = read('src/main.js');
+const renderSrc = read('src/game/render.js');
+const engineSrc = read('src/game/engine.js');
+const configSrc = read('src/game/config.js');
+const prodSrc = mainSrc + audioSrc + renderSrc + engineSrc + configSrc;
+
+const bgmFiles = ['src/game/music.js', 'src/game/music_tracks.js', 'src/game/music_composer.js'];
+ok(bgmFiles.every((f) => !existsSync(ROOT + f)),
+  '生产源码目录已彻底移除 BGM 引擎 / 曲谱 / 作曲器（3 个文件均不存在）');
+// 注释里会说明「已移除 music.js」这类历史背景，必须剥离注释后只检查真实代码
+const codeOnly = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+ok(!/getMusic|music\.js|music_tracks|music_composer|MUSIC_BTN|bgmOn|bgmVol|iconMusic/.test(codeOnly(prodSrc)),
+  '入口 / 渲染 / 音效 / 引擎 / 配置均不再引用任何背景音乐模块或状态');
+ok(/setEnabled/.test(audioSrc) && /setVolume/.test(audioSrc) && /new AC\(\)/.test(audioSrc),
+  '音效引擎保留独立开关 / 音量，并自建唯一 AudioContext');
+ok(/sound\.ensure\(\)/.test(mainSrc) && /首次用户手势/.test(audioSrc),
+  '音效遵守自动播放策略：首次用户手势后才创建 AudioContext');
 {
   // 工程内不得存在任何外部音频素材文件（音效 / 音乐全部 Web Audio 实时合成）
   const { readdirSync } = await import('node:fs');
@@ -399,144 +407,81 @@ ok(/catch/.test(musicSrc) && /不影响游戏/.test(musicSrc), '播放失败全�
   walk(ROOT.replace(/\/[A-Za-z]:/, (m) => m.slice(1)).replace(/\/$/, ''), 0);
   ok(found.length === 0, '工程不含外部音频文件，全部实时合成' + (found.length ? '：' + found.join(',') : ''));
 }
-ok(!/new Audio\s*\(|new AudioBuffer/.test(musicSrc + read('src/main.js')), '音乐不加载任何音频文件对象');
-ok(/setVolume/.test(read('src/game/audio.js')) && /setVolume/.test(musicSrc),
-  '背景音乐与音效各自独立音量');
-ok(/set-bgm/.test(read('src/main.js')) && /set-sfx/.test(read('src/main.js')) && /drawSettingsPanel/.test(read('src/game/render.js')),
-  'UI 提供背景音乐 / 音效独立开关与音量入口');
-ok(/music:\s*game\.bgmOn/.test(read('src/main.js')) && /saved\.music !== false/.test(read('src/main.js')),
-  '音乐设置持久化且兼容旧存档');
-const tracksCheck = validateTracks();
-ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (tracksCheck.ok ? '' : '：' + tracksCheck.issues.join('；')));
-ok(Object.values(TRACKS).every((t) => Array.isArray(t.variation) && t.variation.length >= 16
-    && JSON.stringify(t.variation) !== JSON.stringify(t.melody)),
-  '三首曲目均含 A/B 段落变奏（B 段旋律区别于 A 段，避免机械循环）');
-ok(Object.values(TRACKS).every((t) => Array.isArray(t.arpPattern)
-    && t.arpPattern.some((v) => v === 0) && t.arpPattern.some((v) => v === 1)),
-  '琶音采用切分 pattern（非每八分满击，避免「叮叮叮」糊成一片）');
+ok(!/new Audio\s*\(|new AudioBuffer/.test(audioSrc + mainSrc),
+  '音效不加载任何音频文件对象（全部 Web Audio 实时合成）');
+ok(/set-sfx/.test(mainSrc) && /drawSettingsPanel/.test(renderSrc)
+    && !/set-bgm|set-next-track|'music'|♪|背景音乐/.test(mainSrc),
+  '设置面板只保留音效控制；音乐开关 / 换一首 / 音乐图标全部移除');
+ok(!/set-bgm|set-next-track|'music'|iconMusic|trackInfo|bgmVol/.test(renderSrc),
+  '渲染层不再绘制音乐按钮 / 图标 / 曲目信息');
+ok(!/music:\s*game\.bgmOn/.test(mainSrc) && !/saved\.music/.test(mainSrc)
+    && /"music"/.test(rust) && /"musicVol"/.test(rust),
+  '前端不再写入音乐设置，Rust 白名单仍兼容旧存档的 music / musicVol 字段');
 
-/* ---- [8c] 点击零干扰（物理隔离）+ 程序化动态曲库 ---- */
-line('\n[8c] 点击零干扰 / 动态曲库');
-const audioSrc = read('src/game/audio.js');
-const composerSrc = read('src/game/music_composer.js');
-const mainSrc = read('src/main.js');
-const renderSrc = read('src/game/render.js');
+/* ---- [8c] 最终生产包：零 BGM，仅音效（源码 + 产物双重验收） ---- */
+line('\n[8c] 生产包零 BGM / 仅音效');
 
-// v2.2 的两个干扰源必须彻底消失：duck 增益调制 + 音效共用 BGM 压缩器
-ok(!/this\.duckGain\s*=|duckEnabled/.test(musicSrc) && !/cancelAndHoldAtTime/.test(musicSrc),
-  '已移除 BGM 闪避增益节点与排程（点击不再压低音乐）');
-// 只检查真实代码：注释里会提到旧版 duck 机制，必须先剥离块注释 / 行注释，
-// 否则「说明旧问题」的文字会被误判成「仍在调用」。
+ok(/createBiquadFilter/.test(audioSrc) && /highpass/.test(audioSrc) && /HP_HZ\s*=\s*1600/.test(audioSrc),
+  '音效链路就位：master → 1600Hz 高通 → destination');
+ok(/SFX_LEVEL\s*=\s*0\.10/.test(audioSrc) && /freq:\s*(1900|2100|2200)/.test(audioSrc),
+  '音效仍是极轻的高频反馈（0.10 电平 / 1.8–4.2kHz）');
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const audioCode = stripComments(audioSrc);
-ok(!/_duck\s*\(/.test(audioCode) && !/\.duck\s*\(/.test(audioCode),
-  '音效引擎不再请求 BGM 闪避（audio.js 真实代码无 duck 调用）');
-ok(/sfxBus\.connect\(ctx\.destination\)/.test(musicSrc) && !/sfxBus\.connect\(this\.comp\)/.test(musicSrc),
-  '音效独立输出直连 destination，不经过 BGM 压缩器 / master / trackGain');
-ok(/getSfxBus/.test(audioSrc) && /getContext/.test(musicSrc),
-  '音效仍复用唯一 AudioContext（遵守自动播放策略），但链路完全隔离');
-ok(/createBiquadFilter/.test(audioSrc) && /highpass/.test(audioSrc) && /HP_HZ\s*=\s*1600/.test(audioSrc),
-  '音效总线 1600Hz 高通，把中低频完整留给 BGM 主旋律');
-ok(!/freq:\s*(880|520|659|784|1046)/.test(audioSrc) && /freq:\s*(1900|2100|2200)/.test(audioSrc),
-  '音效频率全部上移到 1.8–4.2kHz，不再撞 BGM 主旋律频段');
-ok(/SFX_LEVEL\s*=\s*0\.10/.test(audioSrc),
-  '音效总电平压到 0.10，成为轻反馈而非盖过音乐的「叮叮当当」');
+ok(!/_duck\s*\(/.test(audioCode) && !/\.duck\s*\(/.test(audioCode)
+    && !/getSfxBus|getContext|createDynamicsCompressor/.test(audioCode),
+  '音效引擎完全独立：无闪避、无共享总线、无压缩器');
+ok(!/setInterval|_startTimer|_tick\s*\(/.test(audioCode + stripComments(mainSrc)),
+  '生产代码不再有音乐调度定时器（不会有任何后台循环播放）');
 
-// 动态曲库：曲子不再写死 3 首
-ok(/composeLibrary\(/.test(musicSrc) && /composeTrack\(/.test(musicSrc) && composerSrc.length > 3000,
-  '音乐引擎接入程序化原创作曲引擎（seed 驱动，非固定曲谱）');
-ok(/nextTrack\(/.test(musicSrc) && /getTrackInfo\(/.test(musicSrc) && /music\.nextTrack\(/.test(mainSrc),
-  '每次开局 / 回标题 / 设置面板都会即兴换一首全新曲');
-ok(/set-next-track/.test(mainSrc) && /set-next-track/.test(renderSrc) && /trackInfo/.test(renderSrc),
-  '设置面板提供「换一首」按钮与当前曲目信息展示');
-ok(['title', '1', '2'].every((k) => TRACKS[k]) && Object.keys(TRACKS).length === 3,
-  '静态 TRACKS 保留 3 首作兜底（与 LEVEL_COUNT = 2 对应），实际播放走动态曲库');
-ok(/VARIANTS/.test(musicSrc) && /variantIndex/.test(musicSrc) && /flipAB/.test(musicSrc),
-  '编曲变奏仍作为额外维度（段落顺序 / 琶音八度 / hat 密度 / 延迟湿度）');
-
-/* [8c-2] 运行时验证：动态曲库合法、多样、可复现、换一首确实换曲 */
-{
-  const seen = new Set();
-  let illegal = 0;
-  for (let i = 0; i < 120; i++) {
-    const lib = composeLibrary((i * 2654435761) >>> 0);
-    for (const k of ['title', '1', '2']) {
-      const r = validateComposition(lib[k]);
-      if (!r.ok) illegal++;
-      seen.add(k + '|' + JSON.stringify(lib[k].melody) + '|' + lib[k].bpm + '|' + lib[k].chords.join(','));
-    }
-  }
-  ok(illegal === 0, '360 首即兴曲全部通过严格自检（拍数 / 音名 / 和弦 / 鼓组 / A-B 段）');
-  ok(seen.size === 360, '360 首即兴曲互不相同（' + seen.size + ' 个唯一签名，证明每次启动不同）');
-  const a = composeTrack('1', 424242), b = composeTrack('1', 424242), c = composeTrack('1', 909090);
-  ok(JSON.stringify(a.melody) === JSON.stringify(b.melody), '同一 seed 可确定性复现（便于调试）');
-  ok(JSON.stringify(a.melody) !== JSON.stringify(c.melody), '不同 seed 生成不同旋律');
-  ok(Object.keys(TRACK_STYLES).length === 3 && TRACK_STYLES['2'].minor === true,
-    '三种场景气质模板齐备（标题/第一关明快大调，第二关小调紧张）');
+/* 生产网页版产物必须真的不含任何 BGM 代码。dist/ 是随仓库交付的制品，
+   这条断言直接扫最终 HTML 里的字符串字面量与总线节点名。 */
+const distNames = ['dist/index.html', 'dist/MahLeMah.html', 'dist/Mah了个Mah.html', 'dist/MahLeMah-legacy.html'];
+const distHtml = distNames.filter((f) => existsSync(ROOT + f)).map((f) => read(f));
+ok(distHtml.length === 4, '四个生产网页版产物齐全（含 IE8 兼容版）');
+const BGM_MARKERS = ['原创即兴', '♪ 换一首', '♪ 本次即兴', 'musicBus', 'trackGain', 'composeLibrary', 'getMusic', 'sessionSeed'];
+for (let i = 0; i < distHtml.length; i++) {
+  const hits = BGM_MARKERS.filter((m) => distHtml[i].indexOf(m) >= 0);
+  ok(hits.length === 0, distNames[i] + ' 不含任何背景音乐代码' + (hits.length ? '（残留：' + hits.join(',') + '）' : ''));
+  ok(distHtml[i].indexOf('createOscillator') >= 0 && distHtml[i].indexOf('声音设置') >= 0,
+    distNames[i] + ' 保留音效合成与「声音设置」面板');
 }
 
-/* 运行时回归：背景音乐必须真的有信号到达扬声器。
- * 曾因 _playNote 里音符混音总线 out.gain=0 且未被拉起，导致整条总线乘 0 → BGM 完全静音
- *（音效是独立 sound 引擎，所以只听得到点击声、听不到音乐）。 */
+/* [8c-2] 运行时回归：音效在没有任何音乐模块的环境下独立发声。
+ * 用 mock Web Audio 真实播放一串点击 / 消除 / 道具 / 胜负音效，验证自建 ctx、
+ * 唯一链路 master → 高通 → destination、独立开关与音量生效。 */
 {
-  const { getMusic, _resetMusicSingletonForTests } = await import(new URL('./src/game/music.js', import.meta.url).href);
-  let gains = [];
-  class P { constructor(v){ this.value = v; } setValueAtTime(_, v){ this.value = v; } linearRampToValueAtTime(v){ this.value = v; } exponentialRampToValueAtTime(v){ this.value = Math.max(0.0001, v); } cancelScheduledValues(){} setTargetAtTime(v){ this.value = v; } }
-  class G { constructor(){ this.gain = new P(1); this.ins = []; gains.push(this); } connect(n){ this.ins.push(n); } }
-  class N { constructor(){ this.frequency = new P(440); this.detune = new P(0); this.delayTime = new P(0.25); this.pan = new P(0); this.Q = new P(1); this.threshold = new P(0); this.ratio = new P(1); this.attack = new P(0); this.release = new P(0); this.buffer = null; this.ins = []; } connect(n){ this.ins.push(n); } start(){} stop(){} }
-  class O { constructor(){ this.frequency = new P(440); this.detune = new P(0); } connect(n){ this.dest = n; } start(){} stop(){} }
-  class Ctx { constructor(){ this.state = 'suspended'; this.currentTime = 0; this.sampleRate = 44100; this.destination = new G(); } createGain(){ return new G(); } createOscillator(){ return new O(); } createBiquadFilter(){ return new N(); } createDynamicsCompressor(){ return new N(); } createDelay(){ return new N(); } createStereoPanner(){ return new N(); } createBuffer(_c, len){ return { getChannelData(){ return new Float32Array(len); } }; } createBufferSource(){ return new N(); } resume(){ this.state = 'running'; return Promise.resolve(); } suspend(){ this.state = 'suspended'; return Promise.resolve(); } }
+  const soundMod = await import(new URL('./src/game/audio.js', import.meta.url).href);
+  let oscStarts = 0;
+  let ctxCount = 0;
+  class P { constructor(v){ this.value = v; } setValueAtTime(_, v){ this.value = v; } exponentialRampToValueAtTime(v){ this.value = Math.max(0.0001, v); } }
+  class G { constructor(){ this.gain = new P(1); this.ins = []; } connect(n){ this.ins.push(n); } }
+  class N { constructor(){ this.frequency = new P(440); this.Q = new P(1); this.buffer = null; this.ins = []; } connect(n){ this.ins.push(n); } start(){} stop(){} }
+  class O { constructor(){ this.frequency = new P(440); } connect(n){ this.dest = n; } start(){ oscStarts++; } stop(){} }
+  class Ctx {
+    constructor(){ ctxCount++; this.state = 'running'; this.currentTime = 0; this.sampleRate = 44100; this.destination = new G(); }
+    createGain(){ return new G(); }
+    createBiquadFilter(){ return new N(); }
+    createOscillator(){ return new O(); }
+    createBuffer(_c, len){ return { getChannelData(){ return new Float32Array(len); } }; }
+    createBufferSource(){ return new N(); }
+    resume(){ return Promise.resolve(); }
+  }
   globalThis.window = { AudioContext: Ctx };
-  globalThis.document = { addEventListener(){}, hidden: false };
-  _resetMusicSingletonForTests();
-  const m = getMusic();
-  m.playing = true; m.setTrack('title'); m.unlock(); m.setTrack('1'); m.play();
-  for (let i = 0; i < 20; i++) { m.ctx.currentTime += 0.15; m._tick(); }
-  const trackGain = m.trackGain;
-  // 新架构：音符总线 out 连到 musicBus（干声汇总），再由 musicBus → trackGain → master。
-  // 因此「连到 trackGain 的总线」是 musicBus 本身；真正的音符总线是连到 musicBus 的那些。
-  const noteBuses = gains.filter(g => g !== trackGain && g !== m.master && g !== m.musicBus && g.ins.includes(m.musicBus));
-  const anyZero = noteBuses.some(g => g.gain.value === 0);
-  const anyOne = noteBuses.some(g => g.gain.value === 1);
-  const outProd = m.master.gain.value * trackGain.gain.value * (anyOne ? 1 : 0);
-  ok(noteBuses.length > 0 && !anyZero && anyOne && outProd > 0,
-    'BGM 运行时确有信号到达扬声器（' + noteBuses.length + ' 个音符总线增益均=1，修复 out.gain=0 静音）');
-  ok(!!m.sfxBus && m.sfxBus.ins.includes(m.ctx.destination) && !m.sfxBus.ins.includes(m.comp),
-    '运行时确认音效总线直连 destination、未接入音乐压缩器（物理隔离）');
-
-  /* 关键回归：真实地播放一串点击 / 消除音效，检查音乐链路上的每一个增益值
-   * 都完全不变 —— 这正是用户反馈「点击鼠标音乐明显受影响」的根因。 */
-  {
-    const soundMod = await import(new URL('./src/game/audio.js', import.meta.url).href);
-    const s = new soundMod.Sound();
-    const bgmNodes = [m.master, m.trackGain, m.musicBus, m.comp];
-    const snapshot = () => bgmNodes.map((n) => (n && n.gain ? n.gain.value : null));
-    const before = snapshot();
-    s.click(); s.pick(); s.match(); s.click(); s.pick(); s.win(); s.lose();
-    const after = snapshot();
-    ok(JSON.stringify(before) === JSON.stringify(after),
-      '连续播放 7 个音效后，BGM 链路（master/trackGain/musicBus/comp）增益完全不变');
-    ok(!!s.hp && s.hp.frequency.value === 1600 && !!s.master && s.master.ins.includes(s.hp),
-      '音效自身链路就位：master → 1600Hz 高通 → 独立音效总线');
-  }
-
-  /* 「换一首」确实换曲，且换完仍合法、仍能出声 */
-  {
-    const beforeInfo = m.getTrackInfo();
-    const beforeMel = JSON.stringify(m._track(m.trackKey).melody);
-    const nextInfo = m.nextTrack();
-    const afterMel = JSON.stringify(m._track(m.trackKey).melody);
-    ok(beforeMel !== afterMel && nextInfo.seq === beforeInfo.seq + 1,
-      'nextTrack() 即兴出新曲且编号递增（旧曲不会被重复播放）');
-    ok(validateComposition(m._track(m.trackKey)).ok,
-      '新曲通过严格自检后才进入播放（非法数据绝不送入调度器）');
-  }
-
-  // play()/unlock() 会启动真实 setInterval 调度器；不清理会让 Node 进程永不退出，
-  // 导致 npm test 挂起、后续的 test_render.mjs 永远执行不到。
-  try { m._stopTimer(); } catch { /* ignore */ }
-  ok(m.timer === null, '音乐运行时回归结束后清理调度器定时器（避免 npm test 挂起）');
-  delete globalThis.window; delete globalThis.document;
+  const s = new soundMod.Sound();
+  s.click(); s.pick(); s.match(); s.click(); s.pick(); s.win(); s.lose(); s.shuffle(); s.deny();
+  ok(oscStarts >= 10, '无音乐模块时点击 / 消除 / 道具 / 胜负音效仍真实发声（' + oscStarts + ' 个音源启动）');
+  ok(ctxCount === 1 && s.ctx instanceof Ctx, '音效自建且全局只有一个 AudioContext');
+  ok(!!s.master && s.master.ins.includes(s.hp) && s.hp.ins.includes(s.ctx.destination),
+    '音效链路正确：master → 1600Hz 高通 → destination');
+  ok(s.hp.frequency.value === 1600 && Math.abs(s.master.gain.value - 0.10) < 1e-9,
+    '音效电平 0.10 / 高通 1600Hz 生效');
+  s.setEnabled(false);
+  const muted = s.master.gain.value === 0;
+  s.setEnabled(true); s.setVolume(0.5);
+  ok(muted && Math.abs(s.master.gain.value - 0.05) < 1e-9, '音效独立开关与独立音量真实生效');
+  s.setVolume(0); s.click();
+  ok(s.master.gain.value === 0, '音量归零后点击不再产生任何音频输出');
+  delete globalThis.window;
 }
 
 /* ---------------- [9] 运行时生成耗时 ---------------- */

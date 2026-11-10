@@ -212,8 +212,8 @@ export const TEMP_ZONE = { x: 36, y: 1172, pitch: 72, max: 9 };
 
 export const MENU_BTN = { x: 22, y: 30, w: 54, h: 54 };
 export const SETTINGS_BTN = { x: 516, y: 30, w: 54, h: 54 };
-export const MUSIC_BTN = { x: 580, y: 30, w: 54, h: 54 };
-export const SOUND_BTN = { x: 644, y: 30, w: 54, h: 54 };
+// 最终版移除了背景音乐按钮，音效按钮补齐原本留给音乐图标的位置
+export const SOUND_BTN = { x: 580, y: 30, w: 54, h: 54 };
 export const TOOL_Y = 968;
 export const TOOL_R = 42;
 export const TOOL_XS = [150, 360, 570];

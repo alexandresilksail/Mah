@@ -1,30 +1,24 @@
 /**
+ * 最终生产版（2026-11-10）：**只保留音效，不提供背景音乐**。
+ *
  * 全部音效由 Web Audio API 实时合成，工程内不含任何音频文件。
+ * 音乐引擎（music.js / music_tracks.js / music_composer.js）已从生产源码中整体移除，
+ * 网页版与桌面版都不会加载、创建或播放任何 BGM。
  *
- * v2.3.0 —— 【点击零干扰】彻底移除「音效闪避 BGM」机制。
+ * 音频链路（自建、完全独立）：
+ *   Sound.master → 1600Hz 高通 → ctx.destination
+ *  · 首次用户手势（pointerdown / keydown）时才 new AudioContext()，遵守自动播放策略；
+ *  · 音效是极短极轻的高频反馈（1.8–4.2kHz / 0.10 电平 / 20–110ms），
+ *    不再需要与任何背景音乐做频段或响度避让；
+ *  · 独立开关 setEnabled() / 独立音量 setVolume()，设置写入存档。
  *
- * 旧版（v2.2）的两个干扰源都已拆除：
- *  1) 每次点击调用 music.duck() 压低 BGM 增益再拉回 → 密集点击时音乐一下一下「抽」；
- *  2) 音效与 BGM 共用总线压缩器 → 点击瞬态触发压缩，把音乐也压下去。
- * 用户实测反馈「点击鼠标音乐明显受影响」正是这两处造成的，而不是音量不够。
- *
- * 现在的策略是**物理隔离 + 只靠频段/响度避让，绝不调制音乐**：
- *  · 音乐链路：musicBus → trackGain → master → comp → destination
- *  · 音效链路：Sound.master → highpass → music.sfxBus → destination
- *    两条链路没有任何共享的增益 / 压缩节点；音效不改写音乐链路上任何一个 AudioParam。
- *  · 音效总线串 1600Hz 高通，音源集中在 1.8–4.2kHz，把 200–1100Hz 的中频
- *    完整留给 BGM 主旋律与和声，消除频谱掩蔽。
- *  · 音效时长压到 20–55ms、电平压到 0.10，做成轻巧的「tick / tap」反馈，
- *    不再是会盖过音乐的「叮叮当当」。
- *
- * 音效与音乐仍各自独立开关、独立音量（setEnabled / setVolume）。
+ * 全链路 try/catch 兜底：AudioContext 不可用只是无声，绝不影响游戏。
  */
-import { getMusic } from './music.js';
 
-/** 音效高通截止：把中低频完整留给 BGM，音效只保留清脆高频 */
+/** 音效高通截止：只保留清脆高频，做成轻巧的点击反馈 */
 const HP_HZ = 1600;
 
-/** 音效总线上限（比 BGM 低得多，避免任何叠加感） */
+/** 音效总线上限（轻量反馈，不刺耳） */
 const SFX_LEVEL = 0.10;
 
 export class Sound {
@@ -36,24 +30,14 @@ export class Sound {
     this.volume = 1;         // 音效独立音量（0..1），与背景音乐完全解耦
   }
 
-  /** 取得（或复用）AudioContext；输出接到音乐提供的独立音效总线（直连 destination） */
+  /** 首次用户手势时自建唯一 AudioContext：master → 高通 → destination */
   ensure() {
     if (!this.enabled) return null;
     if (!this.ctx) {
+      const AC = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
+      if (!AC) return null;
       let ctx = null;
-      let out = null;
-      try {
-        const music = getMusic();
-        ctx = music && music.getContext ? music.getContext() : null;
-        out = music && music.getSfxBus ? music.getSfxBus() : null;
-      } catch { /* 音乐不可用时退回独立 ctx */ }
-      if (!ctx) {
-        const AC = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
-        if (!AC) return null;
-        try { ctx = new AC(); } catch { return null; }
-        out = ctx.destination;
-      }
-      if (!out) out = ctx.destination;
+      try { ctx = new AC(); } catch { return null; }
       try {
         this.ctx = ctx;
         this.master = ctx.createGain();
@@ -63,13 +47,13 @@ export class Sound {
         this.hp.frequency.value = HP_HZ;
         this.hp.Q.value = 0.7;
         this.master.connect(this.hp);
-        this.hp.connect(out);
+        this.hp.connect(ctx.destination);
       } catch {
         // 极端兜底：滤波器创建失败也要保证音效可用
         try {
           this.master = this.master || ctx.createGain();
           this.master.gain.value = this.enabled ? SFX_LEVEL * this.volume : 0;
-          this.master.connect(out);
+          this.master.connect(ctx.destination);
         } catch { this.ctx = null; return null; }
       }
     }
@@ -132,7 +116,7 @@ export class Sound {
     src.start(t0);
   }
 
-  /* ---- 以下全部是轻量反馈音：极短、极轻、高频，不调制 BGM ---- */
+  /* ---- 以下全部是轻量反馈音：极短、极轻、高频 ---- */
 
   click() {
     this.tone({ freq: 2100, to: 1750, dur: 0.022, type: 'triangle', vol: 0.07 });

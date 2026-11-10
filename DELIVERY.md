@@ -1,4 +1,4 @@
-# 交付说明 · v2.0.0（16 牌型 / 双关卡模板 / 六机器人 / 原创 BGM / 双 Windows 产物）
+# 交付说明 · v2.0.0 最终生产版（16 牌型 / 双关卡模板 / 六机器人 / 仅音效 / 双 Windows 产物）
 
 > 本文件是本轮交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
 > 所有「旧版」信息（24 张第一关、222 张第二关、8/15 种牌型、葫芦单堆、200 局机器人报告、
@@ -10,7 +10,7 @@
 
 | 类别 | 文件 | 说明 |
 |---|---|---|
-| 源码 | `src/game/*` | 16 牌型注册表、双关卡模板、六机器人、原创 BGM、严格模板校验 |
+| 源码 | `src/game/*` | 16 牌型注册表、双关卡模板、六机器人、音效引擎（无 BGM）、严格模板校验 |
 | 桌面外壳 | `src-tauri/*` | Tauri 2，4 个白名单 IPC，存档加固，最小权限 |
 | A·便携版 | `dist/MahLeMah-Portable-v2.0.0.zip` | exe + WebView2Loader.dll + 说明，解压即玩 |
 | B·安装版 | `dist/MahLeMah-Setup-v2.0.0.exe` | NSIS（amd64），标准卸载入口 + 确认流程 |
@@ -78,27 +78,25 @@
 
 ---
 
-## 4. 原创背景音乐与音效（v2.3.0）
+## 4. 音频最终态：仅音效，无背景音乐（2026-11-10）
 
-- 全部 Web Audio API **实时合成**，工程内**零音频文件**（`.mp3/.wav/.ogg` 在源码与产物中均不存在）。
-- **曲库近乎无限**：`music_composer.js` 按 `sessionSeed` 程序化即兴作曲，每次启动为标题 /
-  第 1 关 / 第 2 关各生成一首全新原创曲（12 调性、大调/小调五声、12 组和弦进行、
-  核心动机 hook、节奏骨架、鼓组与切分琶音、88–138 BPM）。每次开局、回标题、设置面板
-  「♪ 换一首」都会再即兴一首；标题页与设置面板显示曲名 / 编号 / BPM。
-- 生成结果先经 `validateComposition()` 严格自检（拍数 / 音名 / 和弦 / 鼓组 / A-B 段），
-  非法数据绝不进入调度器；`music_tracks.js` 的 3 首手写曲谱仅作结构兜底。
-- 分层编曲：主旋律复合音色 + 持续和声铺底 + 流动琶音 + 驱动鼓组 + 节拍同步延迟 + 总线压缩，
-  A/B 段落循环；切关 `setTrack()` 淡出/淡入。
-- **点击零干扰（物理隔离）**：已移除 v2.2 的 duck 闪避与共享压缩器（那正是「点击时音乐被抽一下」的根因）。
-  BGM 链路 `musicBus → trackGain → master → comp → destination`；SFX 链路 `sfxBus → destination`
-  直连，不经过音乐任何增益/压缩节点，点击不改写音乐链路上任何 AudioParam。
-  音效总线 1600Hz 高通、音源 1.8–4.2kHz、总电平 0.10、时长 20–110ms。
-- 真机实测：40+ 次点击 / 消除 / 胜负音效后，BGM 增益前后完全一致，期间音乐增益写入次数为 0。
-- 独立开关：`bgmOn`（音乐）/ `soundOn`（音效）分离；独立音量：`bgmVol` / `sfxVol`（0~1）。
-- 循环播放；`pause()/resume()`；`visibilitychange` 后台挂起、回前台恢复。
-- 单例守护：第二次 `new Music()` 直接抛错；全链路 `try/catch`，AudioContext 不可用只是无声，不崩溃。
-- 首次用户交互（`pointerdown` / `keydown`）后才解锁音频，兼容浏览器自动播放限制；标题页有开启提示。
-- 设置持久化到存档 `music` / `musicVol` / `sfxVol`，旧档缺字段用默认值（兼容）。
+**用户决定**：生产包取消全部背景音乐，只保留音效；项目至此冻结，不再改动。
+
+- 从生产源码**整体删除** `src/game/music.js`、`music_tracks.js`、`music_composer.js`；
+  `main.js` / `render.js` / `config.js` / `engine.js` 中所有音乐导入、调用、按钮、设置项、
+  曲目信息与标题提示一并移除。桌面 exe 与安装包重新编译，不再嵌入任何音乐资源。
+- 唯一音频模块 `src/game/audio.js` 自建唯一 AudioContext：
+  `master(0.10 × sfxVol) → 1600Hz 高通 → destination`；音源 1.8–4.2kHz、20–110ms。
+  无 `setInterval` 调度器、无循环播放、无后台常驻音源、无压缩器与共享总线。
+- 音效独立开关 `soundOn` / 音量 `sfxVol`，写入存档 `sound` / `sfxVol`；
+  旧档中的 `music` / `musicVol` 读入时忽略，Rust 白名单仍保留两键以兼容旧档。
+- 首次 `pointerdown` / `keydown` 才创建 AudioContext（自动播放策略合规）；
+  全链路 `try/catch`，AudioContext 不可用只是无声，不影响游戏。
+- **验收**：`npm test` 1012 项断言全过（含「生产源码零 BGM 模块」「四个生产 HTML 零 BGM 标记」
+  「音效运行时自建 ctx 并真实发声」）；headless Edge 真机实测启动后 AudioContext 数 0、
+  定时器数 0、`window.__mah` 无 music 实例，点击后仅 1 个 AudioContext + 1 个音效振荡器。
+- 网页版体积随之下降：`MahLeMah.html` 109.7 KB → **82.3 KB**，
+  `MahLeMah-legacy.html` 145.2 KB → **116.0 KB**。
 
 ---
 
@@ -134,7 +132,7 @@
 
 ```bash
 npm install                                  # 安装开发依赖
-npm test                                     # 996 项断言 + 渲染冒烟
+npm test                                     # 1012 项断言 + 27 个渲染场景冒烟
 npm run build:web && npm run build:legacy    # 两个单文件网页版
 npm run build                                # Portable zip + NSIS exe
 npm run test:release                         # 每关 1000 seed × 6 机器人 = 12000 局 → reports/DIFFICULTY.md

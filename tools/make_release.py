@@ -50,7 +50,9 @@ def main():
 
     present, missing = [], []
     for name, kind, desc in DELIVERABLES:
-        p = os.path.join(DIST, name)
+        # 文档类交付物在仓库根目录（如 RELEASE_NOTES.md），其余都在 dist/
+        base = ROOT if kind == "文档" else DIST
+        p = os.path.join(base, name)
         if os.path.isfile(p) and os.path.getsize(p) > 0:
             present.append((name, kind, desc, p))
         else:

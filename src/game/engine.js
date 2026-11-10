@@ -131,10 +131,8 @@ export class Game {
     this.uninstallAsk = false;
     this.settingsAsk = false;
     this._pausedBeforeSettings = false;
-    // 音频设置（v2.0.1）：背景音乐 / 音效各自独立的开关与音量，
-    // 由 main.js 同步到 Sound / Music 单例并持久化
-    this.bgmOn = true;
-    this.bgmVol = 0.6;
+    // 最终版只保留音效：soundOn / sfxVol 由 main.js 同步到 Sound 并持久化。
+    // 旧档中的 music / musicVol 字段已废弃，读入时忽略。
     this.sfxVol = 1;
     this.pendingMatch = null; // { due, dueClock, types } —— 200ms 延迟消除
     this.resolving = false; // 防止重复触发

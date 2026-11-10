@@ -2,7 +2,6 @@
 import { W, H, LEVEL_COUNT, SLOT_SIZE } from './game/config.js';
 import { Game } from './game/engine.js';
 import { Sound } from './game/audio.js';
-import { getMusic } from './game/music.js';
 import * as R from './game/render.js';
 import {
   loadSave,
@@ -27,7 +26,6 @@ const domView = hasCanvas ? null :
     : null);
 
 const sound = new Sound();
-const music = getMusic();
 const game = new Game(sound);
 
 /* ---------------- 自适应缩放（720x1280 居中） ---------------- */
@@ -115,15 +113,14 @@ function persist(force = false) {
   const now = nowMs();
   if (!force && now - lastSave < 800) return;
   lastSave = now;
-  // v:2 —— 增加背景音乐 / 音效的独立开关与音量；v1 旧档读入时走默认值
+  // v:2 —— 音效独立开关与音量。旧档里的 music / musicVol 字段已废弃，
+  // 读入时忽略即可（Rust 白名单仍允许它们，保证旧存档不会被判非法）。
   const data = {
     v: 2,
     level: game.level,
     best: Math.max(1, game.best),
     sound: game.soundOn,
     sfxVol: game.sfxVol,
-    music: game.bgmOn,
-    musicVol: game.bgmVol,
   };
   writeSave(data);
   writeDesktopSave(data);
@@ -132,39 +129,17 @@ function persist(force = false) {
 function applyAudioSettings() {
   sound.setEnabled(game.soundOn);
   sound.setVolume(game.sfxVol);
-  music.setEnabled(game.bgmOn);
-  music.setVolume(game.bgmVol);
-}
-
-/** 把当前曲目信息同步给渲染层（设置面板会显示曲名 / 编号，让用户看到「每次不同」） */
-function refreshTrackInfo() {
-  try { game.trackInfo = music.getTrackInfo(); } catch { /* 音乐失败不影响游戏 */ }
-}
-
-function startLevelWithMusic(level) {
-  game.startLevel(level);
-  try {
-    // 每次开局即兴一首全新的原创曲：曲库近乎无限，不会连着听到同一首。
-    music.nextTrack(game.level);
-    music.play();
-    refreshTrackInfo();
-  } catch { /* 音乐失败不影响游戏 */ }
 }
 
 function handleButton(id) {
   if (id !== 'sound') sound.click();
   switch (id) {
     case 'start':
-      startLevelWithMusic(game.level);
+      game.startLevel(game.level);
       break;
     case 'sound':
       game.soundOn = !game.soundOn;
       sound.setEnabled(game.soundOn);
-      persist(true);
-      break;
-    case 'music':
-      game.bgmOn = !game.bgmOn;
-      music.setEnabled(game.bgmOn);
       persist(true);
       break;
     case 'settings':
@@ -175,21 +150,6 @@ function handleButton(id) {
     case 'settings-close':
       game.settingsAsk = false;
       game.paused = game._pausedBeforeSettings || false;
-      persist(true);
-      break;
-    case 'set-bgm':
-      game.bgmOn = !game.bgmOn;
-      music.setEnabled(game.bgmOn);
-      persist(true);
-      break;
-    case 'set-bgm-minus':
-      game.bgmVol = Math.max(0, Math.round((game.bgmVol - 0.1) * 100) / 100);
-      music.setVolume(game.bgmVol);
-      persist(true);
-      break;
-    case 'set-bgm-plus':
-      game.bgmVol = Math.min(1, Math.round((game.bgmVol + 0.1) * 100) / 100);
-      music.setVolume(game.bgmVol);
       persist(true);
       break;
     case 'set-sfx':
@@ -207,37 +167,25 @@ function handleButton(id) {
       sound.setVolume(game.sfxVol);
       persist(true);
       break;
-    case 'set-next-track':
-      try { music.nextTrack(); refreshTrackInfo(); } catch { /* 音乐失败不影响游戏 */ }
-      break;
     case 'menu':
       game.paused = !game.paused;
-      if (game.paused) music.pause();
-      else music.play();
       break;
     case 'resume':
       game.paused = false;
-      music.play();
       break;
     case 'restart':
     case 'replay':
       game.paused = false;
-      startLevelWithMusic(game.level);
+      game.startLevel(game.level);
       break;
     case 'next':
-      startLevelWithMusic(game.level + 1);
+      game.startLevel(game.level + 1);
       persist(true);
       break;
     case 'home':
       game.paused = false;
       game.screen = 'title';
       game.status = 'play';
-      try {
-        // 回标题也换一首，避免「回主菜单又听到刚才那首」
-        music.nextTrack('title');
-        music.play();
-        refreshTrackInfo();
-      } catch { /* 音乐失败不影响游戏 */ }
       persist(true);
       break;
     case 'revive':
@@ -272,21 +220,18 @@ function handleButton(id) {
  * 关闭说明时仅恢复暂停状态，不改动牌局 / 存档 / 磁盘。
  */
 
-/** 解锁背景音乐：浏览器自动播放策略要求首次用户手势后才允许出声。
- *  集中处理「解锁 + 标记已解锁（用于标题页提示）」，避免到处重复。 */
+/** 解锁音效：浏览器自动播放策略要求首次用户手势后才允许出声。
+ *  Sound 自建唯一 AudioContext，反复调用 ensure() 只会复用同一个实例。 */
 function unlockAudio() {
   try {
-    music.unlock();
+    sound.ensure();
     game.audioUnlocked = true;
-  } catch { /* 音乐失败不影响游戏 */ }
+  } catch { /* 音频失败不影响游戏 */ }
 }
 
 function onDown(e) {
   if (e.preventDefault) e.preventDefault();
-  // 顺序关键：先解锁音乐建立唯一 AudioContext，音效再复用它，
-  // 两者才能共用同一个总线限幅器（否则会各自建 ctx 互相叠加）。
-  unlockAudio(); // 浏览器自动播放限制：首次交互后才启动背景音乐
-  sound.ensure();
+  unlockAudio(); // 自动播放限制：首次交互后才允许出声
   const p = toLocal(e);
   const ui = R.getUI(game);
   const btn = R.hitButton(ui, p.x, p.y);
@@ -337,7 +282,7 @@ on(window, 'resize', fit);
 on(window, 'orientationchange', () => setTimeout(fit, 120));
 
 /* 兜底解锁：即便首次点击落在画布之外（如页面留白、滚动条），
- * 也能通过 document 级的一次性监听解锁背景音乐，避免「点了却没声」。 */
+ * 也能通过 document 级的一次性监听解锁音效，避免「点了却没声」。 */
 function onceUnlock() {
   unlockAudio();
   if (typeof document !== 'undefined' && document.removeEventListener) {
@@ -356,13 +301,9 @@ on(window, 'keydown', (e) => {
   // IE8/IE9 只有 keyCode，没有 e.key
   const k = e.key || String.fromCharCode(e.keyCode || 0);
   if (k === 'Escape' || k === 'Esc') {
-    if (game.screen === 'play') {
-      game.paused = !game.paused;
-      if (game.paused) music.pause();
-      else music.play();
-    }
+    if (game.screen === 'play') game.paused = !game.paused;
   } else if (k === 'r' || k === 'R') {
-    if (game.screen === 'play') startLevelWithMusic(game.level);
+    if (game.screen === 'play') game.startLevel(game.level);
   } else if (k === '1') {
     game.useShuffle();
   } else if (k === '2') {
@@ -430,11 +371,9 @@ function applySave(saved) {
   if (!saved || typeof saved !== 'object') return;
   game.level = Math.max(1, saved.level || 1);
   game.best = Math.max(1, saved.best || 1);
-  // 旧存档兼容：v1 只有 sound 字段，音乐字段缺失时用默认值
+  // 旧存档兼容：v1 只有 sound 字段；旧档里的 music / musicVol 已废弃，直接忽略
   game.soundOn = saved.sound !== false;
   game.sfxVol = typeof saved.sfxVol === 'number' ? saved.sfxVol : 1;
-  game.bgmOn = saved.music !== false;
-  game.bgmVol = typeof saved.musicVol === 'number' ? saved.musicVol : 0.6;
   applyAudioSettings();
 }
 
@@ -446,13 +385,6 @@ function boot() {
   });
   applySave(loadSave());          // 同步：所有浏览器
   syncDesktopSave(applySave);     // 异步：仅 Tauri 桌面端，稍晚覆盖
-
-  // 背景音乐：本次启动已即兴生成标题曲；首次交互（unlock）后才真正起播
-  try {
-    music.playing = true;
-    music.setTrack('title');
-    refreshTrackInfo();
-  } catch { /* 音乐失败不影响游戏 */ }
 
   // 启动自检：第 1 关校验可解性；第 2 关只做"发牌是否合法"的体检（不校验可解）
   try {
@@ -468,7 +400,7 @@ function boot() {
   }
 
   // 供自动化验证与调试使用（IE COM 测试脚本会读它）
-  window.__mah = { game, sound, music, R, hasCanvas, domView };
+  window.__mah = { game, sound, R, hasCanvas, domView };
 
   // 开发调试：?lv=2 直接进第 2 关；?pick=N 先点 N 张可点的牌（用来看槽位动画）
   const q = new URLSearchParams(location.search);

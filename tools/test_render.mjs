@@ -178,6 +178,29 @@ let uiFail = 0;
   count++;
 }
 
+/* ---------- 最终版音频 UI：只有音效，没有任何背景音乐入口 ---------- */
+{
+  const audioFail = [];
+  const titleUI = R.getUI(new Game(null)).buttons.map((b) => b.id);
+  if (titleUI.includes('music') || titleUI.includes('set-bgm') || titleUI.includes('set-next-track')) {
+    audioFail.push('标题页仍存在音乐按钮');
+  }
+  const sg = new Game(null);
+  sg.settingsAsk = true;
+  const sUI = R.getUI(sg);
+  const ids = sUI.buttons.map((b) => b.id).sort().join(',');
+  if (ids !== 'set-sfx,set-sfx-minus,set-sfx-plus,settings-close') {
+    audioFail.push('设置面板按钮异常: ' + ids);
+  }
+  R.drawSettingsPanel(ctx, sg, sUI);
+  count++;
+  if (audioFail.length) {
+    for (const msg of audioFail) console.error('  [FAIL] ' + msg);
+    process.exit(1);
+  }
+  console.log('  [PASS] 标题页与设置面板均无任何背景音乐入口，仅保留音效开关 / 音量');
+}
+
 // 命中测试
 const hit = R.cardAt(g, 400, 500);
 console.log('cardAt ->', hit ? `card#${hit.id}` : 'null');

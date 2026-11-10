@@ -20,7 +20,6 @@ import {
   TOOL_XS,
   MENU_BTN,
   SETTINGS_BTN,
-  MUSIC_BTN,
   SOUND_BTN,
 } from './config.js';
 import { rr, circle, text, clamp, easeOutCubic } from './draw.js';
@@ -40,20 +39,13 @@ export function getUI(game) {
     return { buttons };
   }
 
-  // v2.0.1：声音与音乐设置面板（背景音乐 / 音效各自独立开关与音量）
+  // 最终版：设置面板只保留音效（生产包不含背景音乐）
   if (game.settingsAsk) {
-    push('set-bgm', 300, 512, 110, 52, game.bgmOn ? '开' : '关', {
-      kind: game.bgmOn ? 'primary' : 'ghost', size: 22,
-    });
-    push('set-bgm-minus', 438, 512, 52, 52, '−', { kind: 'ghost', size: 28 });
-    push('set-bgm-plus', 586, 512, 52, 52, '＋', { kind: 'ghost', size: 24 });
-    push('set-sfx', 300, 622, 110, 52, game.soundOn ? '开' : '关', {
+    push('set-sfx', 300, 512, 110, 52, game.soundOn ? '开' : '关', {
       kind: game.soundOn ? 'primary' : 'ghost', size: 22,
     });
-    push('set-sfx-minus', 438, 622, 52, 52, '−', { kind: 'ghost', size: 28 });
-    push('set-sfx-plus', 586, 622, 52, 52, '＋', { kind: 'ghost', size: 24 });
-    // v2.3.0：随时即兴换一首全新原创曲（曲库近乎无限）
-    push('set-next-track', W / 2 - 150, 706, 300, 52, '♪ 换一首', { kind: 'ghost', size: 22 });
+    push('set-sfx-minus', 438, 512, 52, 52, '−', { kind: 'ghost', size: 28 });
+    push('set-sfx-plus', 586, 512, 52, 52, '＋', { kind: 'ghost', size: 24 });
     push('settings-close', W / 2 - 130, 800, 260, 64, '关闭', { kind: 'primary', size: 26 });
     return { buttons };
   }
@@ -61,7 +53,6 @@ export function getUI(game) {
   if (game.screen === 'title') {
     push('start', W / 2 - 150, 880, 300, 86, '开始游戏', { kind: 'primary', size: 32 });
     push('settings', SETTINGS_BTN.x, SETTINGS_BTN.y, SETTINGS_BTN.w, SETTINGS_BTN.h, '', { kind: 'icon' });
-    push('music', MUSIC_BTN.x, MUSIC_BTN.y, MUSIC_BTN.w, MUSIC_BTN.h, '', { kind: 'icon' });
     push('sound', SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.w, SOUND_BTN.h, '', { kind: 'icon' });
     // v2.0.0：只展示「如何用正规卸载程序卸载」，前端不再自删除
     push('uninstall', W / 2 - 120, 1000, 240, 56, '如何卸载', {
@@ -74,7 +65,6 @@ export function getUI(game) {
 
   push('menu', MENU_BTN.x, MENU_BTN.y, MENU_BTN.w, MENU_BTN.h, '', { kind: 'icon' });
   push('settings', SETTINGS_BTN.x, SETTINGS_BTN.y, SETTINGS_BTN.w, SETTINGS_BTN.h, '', { kind: 'icon' });
-  push('music', MUSIC_BTN.x, MUSIC_BTN.y, MUSIC_BTN.w, MUSIC_BTN.h, '', { kind: 'icon' });
   push('sound', SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.w, SOUND_BTN.h, '', {
     kind: 'icon',
     withSound: true,
@@ -292,32 +282,6 @@ function iconSound(ctx, cx, cy, on) {
   }
 }
 
-function iconMusic(ctx, cx, cy, on) {
-  ctx.strokeStyle = C.text;
-  ctx.fillStyle = C.text;
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  // 八分音符
-  ctx.beginPath();
-  ctx.moveTo(cx - 3, cy + 11);
-  ctx.lineTo(cx - 3, cy - 11);
-  ctx.lineTo(cx + 11, cy - 15);
-  ctx.lineTo(cx + 11, cy + 6);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx - 9, cy + 10, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(cx + 5, cy + 6, 6, 0, Math.PI * 2);
-  ctx.fill();
-  if (!on) {
-    ctx.beginPath();
-    ctx.moveTo(cx - 15, cy - 13);
-    ctx.lineTo(cx + 17, cy + 15);
-    ctx.stroke();
-  }
-}
-
 function iconSettings(ctx, cx, cy) {
   ctx.strokeStyle = C.text;
   ctx.lineWidth = 2.6;
@@ -351,12 +315,11 @@ function roundIconButton(ctx, b, draw, dim = false) {
   ctx.restore();
 }
 
-/** 统一绘制全部圆形图标按钮（菜单 / 音效 / 背景音乐 / 设置） */
+/** 统一绘制全部圆形图标按钮（菜单 / 音效 / 设置） */
 export function drawIcons(ctx, game, ui) {
   for (const b of ui.buttons) {
     if (b.id === 'menu') roundIconButton(ctx, b, iconMenu);
     if (b.id === 'sound') roundIconButton(ctx, b, (c, x, y) => iconSound(c, x, y, game.soundOn));
-    if (b.id === 'music') roundIconButton(ctx, b, (c, x, y) => iconMusic(c, x, y, !!game.bgmOn));
     if (b.id === 'settings') roundIconButton(ctx, b, iconSettings);
   }
 }
@@ -414,7 +377,6 @@ export function drawHUD(ctx, game, ui) {
   for (const b of ui.buttons) {
     if (b.id === 'menu') roundIconButton(ctx, b, iconMenu);
     if (b.id === 'sound') roundIconButton(ctx, b, (c, x, y) => iconSound(c, x, y, game.soundOn));
-    if (b.id === 'music') roundIconButton(ctx, b, (c, x, y) => iconMusic(c, x, y, !!game.bgmOn));
     if (b.id === 'settings') roundIconButton(ctx, b, iconSettings);
   }
 }
@@ -875,16 +837,15 @@ export function drawTitleScreen(ctx, game, ui, t) {
   } else if (game.best > 1) {
     text(ctx, '已通关第 1 关 · 卡在第 2 关', W / 2, 808, { size: 19, fill: C.gold, weight: '700' });
   }
-  // 首次交互前提示点击解锁音频；解锁后改为显示本次启动即兴生成的曲名，
-  // 让用户一眼看到「每次打开的都不是同一首」。
+  // 首次交互前提示点击解锁音效（自动播放策略）；本版本不含背景音乐。
   if (!game.audioUnlocked) {
     const a = 0.5 + 0.4 * Math.sin((t || 0) / 420);
-    text(ctx, '♪ 点击任意处开启背景音乐', W / 2, 842, {
+    text(ctx, '点击任意处开启音效', W / 2, 842, {
       size: 20, fill: C.gold, weight: '700', alpha: a,
     });
-  } else if (game.trackInfo) {
-    text(ctx, `♪ 本次即兴：${game.trackInfo.name} · 第 ${game.trackInfo.seq} 首`, W / 2, 842, {
-      size: 18, fill: C.gold, weight: '700',
+  } else {
+    text(ctx, '本版本仅保留音效 · 无背景音乐', W / 2, 842, {
+      size: 17, fill: C.textFaint,
     });
   }
   if (!game.uninstallAsk && !game.settingsAsk) drawButtons(ctx, ui, game);
@@ -987,7 +948,7 @@ export function drawUninstallConfirm(ctx, game, ui) {
   drawButtons(ctx, ui, game);
 }
 
-/* ==================== 声音与音乐设置（v2.0.1） ==================== */
+/* ==================== 声音设置（最终版：仅音效） ==================== */
 
 /** 音量条：0..1，10 段 */
 function volumeBar(ctx, x, y, w, h, v) {
@@ -1005,33 +966,24 @@ function volumeBar(ctx, x, y, w, h, v) {
 export function drawSettingsPanel(ctx, game, ui) {
   if (!game.settingsAsk) return;
   panel(ctx, 80, 360, W - 160, 560);
-  text(ctx, '声音与音乐设置', W / 2, 420, { size: 32, weight: '800', fill: C.orange });
-  text(ctx, '音效与背景音乐完全独立 · 点击不会影响音乐', W / 2, 458, { size: 16, fill: C.textDim });
+  text(ctx, '声音设置', W / 2, 420, { size: 32, weight: '800', fill: C.orange });
+  text(ctx, '本版本仅保留音效 · 不提供背景音乐', W / 2, 458, { size: 16, fill: C.textDim });
 
-  text(ctx, '背景音乐', 130, 546, { size: 22, weight: '700', fill: C.text });
-  text(ctx, '音效', 130, 656, { size: 22, weight: '700', fill: C.text });
+  text(ctx, '音效', 130, 546, { size: 22, weight: '700', fill: C.text });
   text(ctx, '音量', 424, 546, { size: 15, fill: C.textFaint });
-  text(ctx, '音量', 424, 656, { size: 15, fill: C.textFaint });
+  volumeBar(ctx, 494, 528, 88, 14, game.sfxVol);
 
-  volumeBar(ctx, 494, 528, 88, 14, game.bgmVol);
-  volumeBar(ctx, 494, 638, 88, 14, game.sfxVol);
-
-  // 当前即兴曲目：曲名 / 编号 / 速度 / 和声进行，直观说明「每次都是新曲」
-  const info = game.trackInfo;
-  if (info) {
-    text(ctx, `♪ 当前：${info.name} · 第 ${info.seq} 首 · ${info.bpm} BPM`, W / 2, 688, {
-      size: 16, fill: C.gold, weight: '700',
-    });
-  } else {
-    text(ctx, '♪ 每次启动都会即兴生成全新原创曲', W / 2, 688, {
-      size: 16, fill: C.gold, weight: '700',
-    });
-  }
+  text(ctx, '点击 / 消除 / 道具 / 胜负均有轻巧的反馈音', W / 2, 618, {
+    size: 17, fill: C.textDim,
+  });
+  text(ctx, '音效开关与音量随时可调 · 设置自动保存', W / 2, 688, {
+    size: 16, fill: C.gold, weight: '700',
+  });
 
   drawButtons(ctx, ui, game);
 
-  text(ctx, '点击「换一首」立即即兴新曲 · 设置自动保存', W / 2, 778, { size: 15, fill: C.textFaint });
-  text(ctx, '全部 Web Audio 实时合成 · 原创 · 零音频文件', W / 2, 894, { size: 14, fill: C.textFaint });
+  text(ctx, '首次点击后才开启音效（浏览器自动播放策略）', W / 2, 762, { size: 15, fill: C.textFaint });
+  text(ctx, '全部 Web Audio 实时合成 · 零音频文件', W / 2, 894, { size: 14, fill: C.textFaint });
 }
 
 /* ==================== 特效 ==================== */

@@ -15,7 +15,7 @@
  * 用法：node tools/build_nsis.mjs
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, renameSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -26,6 +26,9 @@ const DIST = join(ROOT, 'dist');
 const STAGE_NAME = `MahLeMah-Portable-v${VERSION}`; // 复用便携版 staging 里的文件清单
 const STAGE = join(DIST, STAGE_NAME);
 const OUTFILE = join(DIST, `MahLeMah-Setup-v${VERSION}.exe`);
+// 某些受管环境会拦截「直接创建」正式安装包同名文件（Access denied / Can't open output file），
+// 但对「改名」不设限。先让 makensis 写到临时名，再原子改名为正式交付名。
+const TMP_OUTFILE = join(DIST, `.MahLeMah-Setup-v${VERSION}.build.exe`);
 const NSIS_DIR = join(ROOT, '.build', 'nsis64');
 const MAKENSIS = join(NSIS_DIR, 'Bin', 'makensis.exe');
 const NSI = join(ROOT, 'tools', 'make_installer.nsi');
@@ -63,7 +66,7 @@ console.log(`  makensis: ${MAKENSIS}`);
 const args = [
   `/DVERSION=${VERSION}`,
   `/DBUILD_DIR=${STAGE.replace(/\//g, '\\')}`,
-  `/DOUTFILE=${OUTFILE.replace(/\//g, '\\')}`,
+  `/DOUTFILE=${TMP_OUTFILE.replace(/\//g, '\\')}`,
   NSI.replace(/\//g, '\\'),
 ];
 console.log(`  $ makensis ${args.join(' ')}`);
@@ -73,8 +76,14 @@ if (r.status !== 0) {
   process.exit(1);
 }
 
+if (!existsSync(TMP_OUTFILE)) {
+  console.error(`[NSIS] 未生成 ${TMP_OUTFILE}`);
+  process.exit(1);
+}
+if (existsSync(OUTFILE)) rmSync(OUTFILE, { force: true });
+renameSync(TMP_OUTFILE, OUTFILE);
 if (!existsSync(OUTFILE)) {
-  console.error(`[NSIS] 未生成 ${OUTFILE}`);
+  console.error(`[NSIS] 改名后未找到 ${OUTFILE}`);
   process.exit(1);
 }
 

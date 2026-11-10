@@ -18,6 +18,9 @@
 //!     或 tools/make_release.py 用 64 位 makensis 编译 tools/make_installer.nsi），
 //!     提供标准卸载入口（控制面板 / 开始菜单）与卸载确认流程。
 //!   两种产物分别构建、分别命名，互不混淆。
+//!
+//! 最终生产版（2026-11-10）：前端已从 ../src 中整体移除背景音乐模块，
+//! 只保留 Web Audio 音效。此处同步标注以触发重新编译，确保 exe 重新嵌入最新前端资源。
 
 use std::fs;
 use std::io::Write;

@@ -1,12 +1,13 @@
-# 测试报告 · Mah 了个 Mah v2.0.0
+# 测试报告 · Mah 了个 Mah v2.0.0 最终生产版（仅音效）
 
 > 本报告记录实际运行的测试与结果。未实际运行的项不在本报告声称已通过。
+> 音频方向最终定稿：**生产包取消背景音乐，只保留音效**（2026-11-10）。
 
 ## 1. 单元测试（`node test.js` → `npm test` 第一部分）
 
 - **运行命令**：`node test.js`
-- **结果**：**断言通过 996 项，失败 0 项，EXIT=0**（本机 Node v22.22.2）
-- 运行时间：约 9s（含 40 seed 快速难度回归与渲染相关静态验收）
+- **结果**：**断言通过 1012 项，失败 0 项，EXIT=0**（本机 Node v22.22.2）
+- 运行时间：约 9s（含 40 seed 快速难度回归与生产产物静态验收）
 
 ### 1.1 覆盖节区
 - `[1]` 单一常量源 / 16 牌型注册表 / 可调参数
@@ -29,7 +30,8 @@
 
 ### 1.3 恒真断言排查
 - 已清除所有 `|| true` / `=== 0 ||` 类恒真断言；每个断言验证明确结果。
-- 音乐系统断言改为验证真实字段（如 `catch` 容错、`getMusic()` 单例、`read('src/main.js')` 中的 `music:` 持久化）。
+- 音频断言全部改为验证真实状态：生产源码目录不存在 BGM 模块、剥离注释后无音乐引用、
+  四个生产 HTML 无 BGM 标记且保留音效、mock Web Audio 下音效真实发声与开关/音量生效。
 
 ### 1.4 硬指标（全部达标）
 - 16 牌型注册表唯一性 ✓
@@ -37,7 +39,7 @@
 - 模板严格校验通过、5 类反例全拒 ✓
 - L1 greedy ≥50%（实测 98.7%）；L1 证书 50/50 ✓
 - Tauri `bundle.targets=["nsis"]`；Rust 存档加固静态验收 ✓
-- 音乐系统：零音频文件、单例不重复、容错、持久化、旧档兼容 ✓
+- 音频最终态：生产源码零 BGM 模块、四个 HTML 零 BGM 标记、音效独立发声、旧档兼容 ✓
 
 ### 1.5 软指标（如实标 ✗，阈值/实测均未改写）
 | 指标 | 阈值 | 实测 | 说明 |
@@ -48,23 +50,33 @@
 | 开局可点花色 | ≥10 种 | L2 9.0 | 仍在合理区间 |
 
 ## 2. 渲染冒烟（`node tools/test_render.mjs` → `npm test` 第二部分）
-- 25+ 场景绘制无异常，EXIT=0。
+- 27 个场景绘制无异常，EXIT=0；新增断言：标题页与设置面板均无任何背景音乐入口，
+  设置面板按钮集合恰为 `set-sfx / set-sfx-minus / set-sfx-plus / settings-close`。
 
 ## 3. 发布压力测试（`npm run test:release` → `reports/DIFFICULTY.md`）
 - **实际模拟 12000 局**（L1 6000 + L2 6000），每关 1000 seed × 6 策略。
 - **证书 / 可解性 verify 1000/1000 全过**（每局牌堆保证可解，零死局牌堆生成）。
 - 详细数据见 `reports/DIFFICULTY.md`。
 
-## 4. 构建与产物验证
+## 4. 构建与产物验证（最终生产版，2026-11-10 重新全量构建）
 | 项 | 命令 | 结果 |
 |---|---|---|
-| 便携版 | `npm run build:portable` | `dist/MahLeMah-Portable-v2.0.0.zip` 真实生成（exe 2.85 MB） |
-| 安装版 | `npm run build:nsis` | `dist/MahLeMah-Setup-v2.0.0.exe` 真实生成（1.23 MB，amd64） |
-| 网页版 | `npm run build:web` / `build:legacy` | 两个单文件 HTML 生成 |
-| 校验和 | `npm run release` | `dist/SHA256SUMS.txt`（8 项） |
-| 安装→卸载 | 真机静默安装 + 静默卸载 | 文件/注册表/开始菜单正确清理；卸载默认保留存档已验证 |
+| 便携版 | `npm run build:portable` | GNU 工具链重编 exe（2.84 MB）→ `dist/MahLeMah-Portable-v2.0.0.zip`（1.32 MB） |
+| 安装版 | `npm run build:nsis` | 64 位 makensis 重编 → `dist/MahLeMah-Setup-v2.0.0.exe`（1.22 MB，amd64） |
+| 网页版 | `npm run build:web` / `build:legacy` | 现代版 82.3 KB / ES5 兼容版 116.0 KB；四个 HTML 均零 BGM 标记 |
+| 校验和 | `npm run release` | `dist/SHA256SUMS.txt`（8 项，全部交付物齐全） |
+| 安装→卸载 | 真机 `/S` 静默安装 + `/S` 静默卸载 | 安装目录 3 个文件与 HKCU 卸载项创建成功，卸载后目录与注册表项均清除 |
+| PE 头 | 读安装包前 2 字节 | `MZ`，amd64 NSIS 原生安装程序 |
+
+### 4.1 headless Edge 运行时验证（真实浏览器，非静态推断）
+- 启动 `dist/index.html` 后：`AudioContext` 创建数 **0**、`setInterval` 数 **0**、
+  `window.__mah` 键集合为 `game / sound / R / hasCanvas / domView`（**无 music**）。
+- 模拟点击「开始游戏」：仅创建 **1** 个 AudioContext、启动 **1** 个音效振荡器、
+  定时器仍为 **0**；音效高通 1600Hz；`game.screen` 变为 `play`。
+- 8 项检查全部 PASS，EXIT=0。
 
 ## 5. 未执行项（如实说明）
 - 以下**未**在本次会话实际执行（环境/时间限制），不声称已通过：
   - Tauri 官方 `tauri build` 的 NSIS 打包路径（改用 64 位 makensis 直接编译，等价产出）；
-  - 真实启动 `MahLeMah.exe` 进入 GUI 游玩（仅验证了文件存在、安装/卸载流程、代码静态验收）。
+  - 真实启动 `MahLeMah.exe` 进入 GUI 长时间游玩（仅验证文件存在、安装/卸载流程、
+    网页版真实浏览器运行时行为与代码静态验收）。

@@ -38,14 +38,17 @@ const js = result.outputFiles[0].text;
 const css = await readFile(p('src/styles.css'), 'utf8');
 const html = await readFile(p('src/index.html'), 'utf8');
 
+/* 必须用函数式替换：压缩后的 JS / CSS 里可能含有 "$&"、"$'" 这类序列，
+   若直接传字符串，String.replace 会把它当作特殊替换模式，把被匹配的
+   <script src="main.js"> 重新注入产物（内联检查随即失败）。 */
 const out = html
   .replace(
     /\s*<link rel="stylesheet" href="styles\.css" \/>/,
-    `\n  <style>\n${css.trim()}\n  </style>`
+    () => `\n  <style>\n${css.trim()}\n  </style>`
   )
   .replace(
     /\s*<script type="module" src="main\.js"><\/script>/,
-    `\n  <script>\n${js.trim()}\n  </script>`
+    () => `\n  <script>\n${js.trim()}\n  </script>`
   );
 
 if (out.includes('styles.css') || out.includes('main.js')) {
