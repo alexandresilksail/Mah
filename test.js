@@ -414,6 +414,22 @@ ok(Object.values(TRACKS).every((t) => Array.isArray(t.arpPattern)
     && t.arpPattern.some((v) => v === 0) && t.arpPattern.some((v) => v === 1)),
   '琶音采用切分 pattern（非每八分满击，避免「叮叮叮」糊成一片）');
 
+/* ---- [8c] 音效 / BGM 混音隔离 + 每次启动编曲变奏 ---- */
+line('\n[8c] 混音隔离 / 编曲变奏');
+const audioSrc = read('src/game/audio.js');
+ok(/sfxBus/.test(musicSrc) && /getSfxBus/.test(musicSrc) && /getSfxBus/.test(audioSrc),
+  '音效与 BGM 共用 AudioContext + 共享总线限幅器（sfxBus → comp）');
+ok(/duckGain/.test(musicSrc) && /duck\s*\(/.test(musicSrc) && /_duck\s*\(/.test(audioSrc),
+  '音效触发时 BGM 自动闪避（ducking），音效自身音量不受影响');
+ok(/createBiquadFilter/.test(audioSrc) && /highpass/.test(audioSrc) && /HP_HZ/.test(audioSrc),
+  '音效总线做高通频段避让，把中频留给 BGM 主旋律');
+ok(!/freq:\s*880/.test(audioSrc) && !/\[659\.25/.test(audioSrc) && !/freq:\s*520/.test(audioSrc),
+  '音效频率已移出 523–1047Hz 主旋律区（旧版 click/pick/match 全部撞频段）');
+ok(/VARIANTS/.test(musicSrc) && /variantIndex/.test(musicSrc) && /flipAB/.test(musicSrc),
+  '每次启动随机选一套编曲变奏（段落顺序 / 琶音八度 / hat 密度 / 延迟湿度）');
+ok(['title', '1', '2'].every((k) => TRACKS[k]) && Object.keys(TRACKS).length === 3,
+  '标题 + 两关共 3 首独立曲目（与 LEVEL_COUNT = 2 对应）');
+
 /* 运行时回归：背景音乐必须真的有信号到达扬声器。
  * 曾因 _playNote 里音符混音总线 out.gain=0 且未被拉起，导致整条总线乘 0 → BGM 完全静音
  *（音效是独立 sound 引擎，所以只听得到点击声、听不到音乐）。 */
@@ -440,6 +456,16 @@ ok(Object.values(TRACKS).every((t) => Array.isArray(t.arpPattern)
   const outProd = m.master.gain.value * trackGain.gain.value * (anyOne ? 1 : 0);
   ok(noteBuses.length > 0 && !anyZero && anyOne && outProd > 0,
     'BGM 运行时确有信号到达扬声器（' + noteBuses.length + ' 个音符总线增益均=1，修复 out.gain=0 静音）');
+  ok(!!m.sfxBus && m.sfxBus.ins.includes(m.comp) && !!m.duckGain && m.duckGain.gain.value === 1,
+    '共享限幅总线 / 闪避节点就位（sfxBus→comp，duckGain 默认 1）');
+  const duckBefore = m.duckGain.gain.value;
+  m.duck(0.3, 0.05, 0.2);
+  ok(duckBefore === 1 && m.duckGain.gain.value === 1,
+    'duck() 调用后自动回满，不会把 BGM 永久压低');
+  // play()/unlock() 会启动真实 setInterval 调度器；不清理会让 Node 进程永不退出，
+  // 导致 npm test 挂起、后续的 test_render.mjs 永远执行不到。
+  try { m._stopTimer(); } catch { /* ignore */ }
+  ok(m.timer === null, '音乐运行时回归结束后清理调度器定时器（避免 npm test 挂起）');
   delete globalThis.window; delete globalThis.document;
 }
 

@@ -23,8 +23,23 @@
  *  · 单例：全局只允许一个 Music 实例 / 一个 AudioContext；
  *  · 任何播放失败都吞掉（try/catch），不影响游戏；
  *  · 遵守浏览器自动播放策略：new AudioContext 与起播都发生在用户首次交互后。
+ *
+ * 【v2.2.0 混音与变化】
+ *  · 音效与音乐共用同一个 AudioContext 和同一个总线限幅器（sfxBus → comp），
+ *    不再出现两路独立输出互相叠加、无法统一限幅造成的忽响忽闷。
+ *  · 音效触发时 BGM 短暂闪避（duckGain 只作用于音乐分支），点击声清晰但音乐不断。
+ *  · 每次启动随机选一套「编曲变奏」（段落顺序 / 琶音八度 / hat 密度 / 延迟湿度 /
+ *    fill 位置），曲谱数据不变，重复游玩不再逐次完全一致。
  */
+
 import { TRACKS, NOTE_FREQ, CHORD_TONES, shiftOct } from './music_tracks.js';
+
+/** 每次启动随机选一套编曲变奏；只改「怎么演奏」，不改曲谱音符与段落结构 */
+const VARIANTS = [
+  { name: '标准', flipAB: false, arpOct: 1, hatSkip: false, wet: 0.16, fillInA: false },
+  { name: '倒叙', flipAB: true,  arpOct: 1, hatSkip: false, wet: 0.20, fillInA: true },
+  { name: '轻盈', flipAB: false, arpOct: 2, hatSkip: true,  wet: 0.12, fillInA: false },
+];
 
 /** 音名 → 频率；未知音名回退 440 */
 function freqOf(n) {
@@ -46,7 +61,14 @@ export class Music {
     this.feedback = null;
     this.delayWet = null;
     this.comp = null;          // 总线压缩（粘合 + 防削波）
+    this.sfxBus = null;        // 音效共享输入：与 BGM 并列进入同一个限幅器
+    this.duckGain = null;      // BGM 闪避：音效响起时只压低音乐分支
+    this.duckEnabled = true;   // 自动闪避总开关
     this.noiseBuffer = null;   // 打击乐用的噪声样本
+
+    // 每次启动选一套编曲变奏（游戏进行中保持不变，避免听感跳变）
+    this.variantIndex = Math.floor(Math.random() * VARIANTS.length) % VARIANTS.length;
+    this.variant = VARIANTS[this.variantIndex];
 
     this.bgmOn = true;
     this.bgmVol = 0.6;
@@ -97,11 +119,12 @@ export class Music {
 
   _buildSteps(key) {
     const t = TRACKS[key] || TRACKS.title;
+    const v = this.variant || VARIANTS[0];
     const beatSec = 60 / t.bpm;
     const stepDur = beatSec / 2; // 八分音符栅格
     const stepsPerBar = t.beatsPerBar * 2;
     const sectionSteps = t.bars * stepsPerBar;
-    const totalSteps = sectionSteps * 2; // A 段 + B 段
+    const totalSteps = sectionSteps * 2; // A 段 + B 段（变奏只换先后顺序，不改结构）
     const steps = [];
     for (let i = 0; i < totalSteps; i++) steps.push([]);
 
@@ -110,9 +133,12 @@ export class Music {
       ? t.arpPattern
       : [1, 0, 1, 0, 1, 0, 1, 0];
 
-    // 主旋律：A 段用 melody，B 段用 variation（无则复用）
-    this._place(t.melody || [], steps, 0, beatSec, 'mel', (t.melodyGain) || 0.30);
-    this._place(t.variation || t.melody || [], steps, sectionSteps, beatSec, 'mel', (t.melodyGain) || 0.30);
+    // 主旋律：A 段 melody / B 段 variation；变奏可让 B 段先出场。
+    // 两段的和声进行相同，交换顺序不会造成旋律与铺底不搭。
+    const aOffset = v.flipAB ? sectionSteps : 0;
+    const bOffset = v.flipAB ? 0 : sectionSteps;
+    this._place(t.melody || [], steps, aOffset, beatSec, 'mel', (t.melodyGain) || 0.30);
+    this._place(t.variation || t.melody || [], steps, bOffset, beatSec, 'mel', (t.melodyGain) || 0.30);
 
     // 贝斯：两段重复，作为循环基底
     this._place(t.bass || [], steps, 0, beatSec, 'bass', (t.bassGain) || 0.26);
@@ -129,19 +155,20 @@ export class Music {
       });
     }
 
-    // 流动琶音：按切分 pattern 触发，避免满击
+    // 流动琶音：按切分 pattern 触发；变奏决定上移几个八度
     if (t.arpOn) {
       for (let s = 0; s < totalSteps; s++) {
         const local = s % stepsPerBar;
         if (!arpPattern[local]) continue;
         const bar = Math.floor(s / stepsPerBar) % padChords.length;
-        const pool = (padChords[bar] || ['C4', 'E4', 'G4']).map((n) => shiftOct(n, true));
-        const note = pool[this._arpIndex(local, pool.length, t.arpStyle)];
+        const pool = padChords[bar] || ['C4', 'E4', 'G4'];
+        let note = pool[this._arpIndex(local, pool.length, t.arpStyle)];
+        for (let o = 0; o < v.arpOct; o++) note = shiftOct(note, true);
         steps[s].push({ kind: 'arp', freq: freqOf(note), dur: stepDur * 1.1, gain: (t.arpGain) || 0.075 });
       }
     }
 
-    // 鼓组：两段重复；B 段末小节加 fill（hat 加密 + 反拍 kick）
+    // 鼓组：两段重复；B 段末小节 fill；变奏可让 hat 隔拍、A 段末小节也加 fill
     const dp = t.drums || {};
     const kp = dp.kick || [];
     const sp = dp.snare || [];
@@ -149,10 +176,12 @@ export class Music {
     for (let s = 0; s < totalSteps; s++) {
       const local = s % stepsPerBar;
       const isB = s >= sectionSteps;
-      const inLastBar = isB && s >= totalSteps - stepsPerBar;
+      const sectionBase = isB ? sectionSteps : 0;
+      const inLastBar = (isB || v.fillInA) && s >= sectionBase + sectionSteps - stepsPerBar;
       if (kp[local]) steps[s].push({ kind: 'kick' });
       if (sp[local]) steps[s].push({ kind: 'snare' });
-      if (hp[local] || (inLastBar && local % 2 === 1)) steps[s].push({ kind: 'hat' });
+      const hatOn = hp[local] && !(v.hatSkip && local % 2 === 1);
+      if (hatOn || (inLastBar && local % 2 === 1)) steps[s].push({ kind: 'hat' });
       if (inLastBar && local === 7) steps[s].push({ kind: 'kick' }); // fill
     }
 
@@ -207,10 +236,22 @@ export class Music {
       this.master.connect(this.comp);
       this.comp.connect(ctx.destination);
 
+      // 音效共享输入：Sound 复用本 AudioContext 并接到这里，让 BGM 与 SFX
+      // 共用同一个总线限幅器，避免两路独立输出叠加造成削波 / 响度忽大忽小。
+      this.sfxBus = ctx.createGain();
+      this.sfxBus.gain.value = 1;
+      this.sfxBus.connect(this.comp);
+
+      // BGM 闪避总线：只串在音乐分支上，音效触发时短暂让路、随后自动回满。
+      // 与 trackGain（切关淡变）、master（用户音量）分离，互不干扰。
+      this.duckGain = ctx.createGain();
+      this.duckGain.gain.value = 1;
+      this.duckGain.connect(this.master);
+
       // 关卡切换淡入淡出（per-track crossfade）
       this.trackGain = ctx.createGain();
       this.trackGain.gain.value = 1;
-      this.trackGain.connect(this.master);
+      this.trackGain.connect(this.duckGain);
 
       // 干声汇总总线
       this.musicBus = ctx.createGain();
@@ -224,7 +265,7 @@ export class Music {
       this.feedback = ctx.createGain();
       this.feedback.gain.value = 0.28;
       this.delayWet = ctx.createGain();
-      this.delayWet.gain.value = 0.16;
+      this.delayWet.gain.value = (this.variant || VARIANTS[0]).wet;
       this.delay.connect(this.feedback);
       this.feedback.connect(this.delay);
       this.delay.connect(this.delayWet);
@@ -629,6 +670,64 @@ export class Music {
       }
     } catch { /* ignore */ }
   }
+
+  /** 供音效引擎复用：返回唯一 AudioContext（不主动创建，遵守自动播放策略） */
+  getContext() {
+    return this.ctx;
+  }
+
+  /** 供音效引擎复用：返回与 BGM 共用限幅器的音效输入节点 */
+  getSfxBus() {
+    return this.sfxBus;
+  }
+
+  /**
+   * 音效播放时让背景音乐短暂闪避（轻量 sidechain ducking）。
+   * strength 越大让得越多；无论调用多密集，末尾都会平滑回到 1，不会把音乐卡在低音量。
+   * 只作用于 duckGain（音乐分支），音效本身始终全音量。
+   */
+  duck(strength = 0.25, hold = 0.05, release = 0.20) {
+    try {
+      if (!this.duckEnabled || !this.duckGain || !this.ctx || !this.bgmOn || !this.playing) return;
+      const s = Math.max(0, Math.min(0.8, Number(strength) || 0));
+      if (s <= 0) return;
+      const target = 1 - s;
+      const now = this.ctx.currentTime;
+      const h = Math.max(0, Number(hold) || 0);
+      const r = Math.max(0.05, Number(release) || 0.2);
+      const g = this.duckGain.gain;
+      // 连续点击时若直接 cancelScheduledValues + setValueAtTime(g.value)，
+      // AudioParam.value 在自动化期间返回的是「固有值」而非实时值，会瞬间跳回 1
+      // 产生咔嗒声。优先用 cancelAndHoldAtTime 保住当前真实值再平滑过渡。
+      if (typeof g.cancelAndHoldAtTime === 'function') {
+        g.cancelAndHoldAtTime(now);
+      } else {
+        const cur = Math.max(0.0001, g.value);
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(cur, now);
+      }
+      g.linearRampToValueAtTime(target, now + 0.02);
+      g.setValueAtTime(target, now + 0.02 + h);
+      g.linearRampToValueAtTime(1, now + 0.02 + h + r);
+    } catch { /* 闪避失败不影响游戏 */ }
+  }
+
+  /** 自动闪避总开关（默认开启；关闭时立即把音乐音量恢复） */
+  setDucking(on) {
+    this.duckEnabled = !!on;
+    if (!on && this.duckGain && this.ctx) {
+      try {
+        const now = this.ctx.currentTime;
+        this.duckGain.gain.cancelScheduledValues(now);
+        this.duckGain.gain.setValueAtTime(1, now);
+      } catch { /* ignore */ }
+    }
+  }
+
+  /** 本次启动的编曲变奏（仅信息用，游戏逻辑不依赖） */
+  getVariant() {
+    return { index: this.variantIndex, name: (this.variant || VARIANTS[0]).name };
+  }
 }
 
 /** 全局唯一实例入口 */
@@ -641,7 +740,10 @@ export function getMusic() {
     // 极端兜底：构造失败也不让游戏崩溃
     return {
       unlock() {}, setTrack() {}, play() {}, pause() {}, resume() {},
-      setEnabled() {}, setVolume() {}, bgmOn: true, bgmVol: 0.6,
+      setEnabled() {}, setVolume() {}, duck() {}, setDucking() {},
+      getContext() { return null; }, getSfxBus() { return null; },
+      getVariant() { return { index: 0, name: '标准' }; },
+      bgmOn: true, bgmVol: 0.6,
     };
   }
 }

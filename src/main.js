@@ -269,8 +269,10 @@ function unlockAudio() {
 
 function onDown(e) {
   if (e.preventDefault) e.preventDefault();
-  sound.ensure();
+  // 顺序关键：先解锁音乐建立唯一 AudioContext，音效再复用它，
+  // 两者才能共用同一个总线限幅器（否则会各自建 ctx 互相叠加）。
   unlockAudio(); // 浏览器自动播放限制：首次交互后才启动背景音乐
+  sound.ensure();
   const p = toLocal(e);
   const ui = R.getUI(game);
   const btn = R.hitButton(ui, p.x, p.y);

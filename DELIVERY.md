@@ -78,15 +78,21 @@
 
 ---
 
-## 4. 原创背景音乐（`src/game/music.js` + `music_tracks.js`）
+## 4. 原创背景音乐与音效（v2.2.0）
 
 - 全部 Web Audio API **实时合成**，工程内**零音频文件**（`.mp3/.wav/.ogg` 在源码与产物中均不存在）。
-- 两关独立主题：第 1 关轻松明亮（木琴/钟琴/钢琴）；第 2 关稍快、低音脉冲、适度紧张。
-- 独立开关：`bgmOn`（音乐）/ `sfxOn`（音效）分离；独立音量：`musicVol` / `sfxVol`（0~1）。
-- 关卡切换 `crossfade()` 淡入淡出；循环播放；`pause()/resume()`；`visibilitychange` 后台静音回前台恢复。
-- 单例守护：第二次 `new` 直接抛错；全部 `try/catch`，AudioContext 不可用只是无声，不崩溃。
-- 首次用户交互（`pointerdown`）后才 `resume()`，兼容浏览器自动播放限制。
-- 设置持久化到存档 `music` / `musicVol`，旧档缺字段默认开（兼容）。
+- **标题 + 两关共 3 首**独立主题：晴日序曲（96 BPM）/ 糖果冲刺（112 BPM）/ 暗流（128 BPM，小调）；
+  每首含 A/B 段落变奏、切分琶音、和声铺底、鼓组与节拍同步延迟。切关 `setTrack()` 淡出/淡入。
+- 地图每次启动随机（L1 `randomSeed()`、L2 离线验收 seed 池抽样）；曲谱固定，但引擎每次启动
+  随机选一套**编曲变奏**（段落顺序 / 琶音八度 / hat 密度 / 延迟湿度 / fill 位置）。
+- **音效与 BGM 不打架**：`Sound` 复用 `Music` 的唯一 AudioContext，经 `sfxBus` 共用总线压缩器；
+  音效总线串 1000Hz 高通、音源移到 1.0–4.2kHz，把中频让给主旋律；音效触发时 `duck()` 让 BGM
+  短暂让路（0.10–0.30）并在约 0.27s 内平滑回满。
+- 独立开关：`bgmOn`（音乐）/ `soundOn`（音效）分离；独立音量：`bgmVol` / `sfxVol`（0~1）。
+- 循环播放；`pause()/resume()`；`visibilitychange` 后台挂起、回前台恢复。
+- 单例守护：第二次 `new Music()` 直接抛错；全链路 `try/catch`，AudioContext 不可用只是无声，不崩溃。
+- 首次用户交互（`pointerdown` / `keydown`）后才解锁音频，兼容浏览器自动播放限制；标题页有开启提示。
+- 设置持久化到存档 `music` / `musicVol` / `sfxVol`，旧档缺字段用默认值（兼容）。
 
 ---
 
