@@ -24,7 +24,7 @@ import {
 import {
   TILE_TYPES, TYPE_IDS, TYPE_COUNT, TYPE_BY_ID, validateRegistry, mixFor,
 } from './src/game/tile_types.js';
-import { TEMPLATES, validateTemplate, templateFor, describeTemplates } from './src/game/layout_templates.js';
+import { TEMPLATES, validateTemplate, clampTemplate, templateFor, describeTemplates } from './src/game/layout_templates.js';
 import {
   generateLevel, validateLevel, verify, replayTypes, refreshBlocked, countVisible,
 } from './src/game/generator.js';
@@ -34,6 +34,7 @@ import {
 } from './src/game/layout.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot, runDifficultySuite } from './src/game/robots.js';
+import { validateTracks } from './src/game/music_tracks.js';
 import { slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
 import { makeRng } from './src/game/rng.js';
 import { SEED_POOL, POOL_META, pickPoolSeed } from './src/game/seed_pool.js';
@@ -134,6 +135,65 @@ line(`   ${geoOk} 组几何全部通过 · L2 平均跨区遮挡对 ${(crossSum 
 const ps = planForSeed(12345);
 ok(ps.plan.reduce((a, b) => a + b, 0) === ps.total, 'planForSeed ±2 浮动后总和归一');
 
+/* ---- [3b] 模板严格校验反例：非法输入必须直接报错，不静默修正 / 不截断 ---- */
+line('\n[3b] 模板校验反例（validateTemplate 直查原始模板 / clampTemplate 非法即 throw）');
+{
+  const clone = () => JSON.parse(JSON.stringify(TEMPLATES.L1_TUTORIAL));
+  const expectBad = (name, mutate, keyword) => {
+    const t = clone();
+    mutate(t);
+    const v = validateTemplate(t);
+    const hit = v.issues.some((s) => s.indexOf(keyword) >= 0);
+    ok(!v.ok && hit, `反例「${name}」被拒绝（含「${keyword}」）` + (v.ok ? '：竟然通过了' : (hit ? '' : '：' + v.issues.join('；'))));
+  };
+  expectBad('坐标不在半格晶格', (t) => { t.zones[0].origin[0] = [130, 440]; }, '不在半格晶格');
+  expectBad('坐标越出牌桌', (t) => { t.zones[0].origin[0] = [132, 880]; }, '越出牌桌');
+  expectBad('牌数超过网格容量', (t) => { t.zones[0].plan[0] = 25; t.cardCount = 52; }, '网格容量');
+  expectBad('牌数为 0', (t) => { t.zones[0].plan[0] = 0; t.cardCount = 27; }, '牌数非法');
+  expectBad('数组长度不一致', (t) => { t.zones[0].stack.push(3); }, '长度不一致');
+  expectBad('全局层号重复', (t) => { t.zones[0].stack[1] = 0; }, '重复');
+  expectBad('cardCount 与 Σ plan 不符', (t) => { t.cardCount = 47; }, 'cardCount');
+  const t2 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
+  t2.zones[1].crosses = [...t2.zones[1].crosses, 'ghost']; // 不存在的目标
+  const v2 = validateTemplate(t2);
+  ok(!v2.ok && v2.issues.some((s) => s.indexOf('不存在') >= 0), '反例「crosses 目标不存在」被拒绝');
+  const t3 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
+  t3.zones[1].crosses = ['core'];                 // sideLeft 不再声明 reserve
+  t3.zones[3].crosses = ['core', 'sideRight'];    // reserve 也不声明 sideLeft
+  const v3 = validateTemplate(t3);
+  ok(!v3.ok && v3.issues.some((s) => s.indexOf('未在 crosses 声明') >= 0), '反例「漏声明实际交叉遮挡」被拒绝');
+  const t3b = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
+  t3b.zones[1].crosses = ['core', 'reserve', 'sideRight']; // 声明了实际不存在的 L↔R 交叉
+  t3b.zones[2].crosses = ['core', 'reserve', 'sideLeft'];
+  const v3b = validateTemplate(t3b);
+  ok(!v3b.ok && v3b.issues.some((s) => s.indexOf('与实际几何不符') >= 0), '反例「声明幽灵交叉遮挡」被拒绝');
+  const t3c = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
+  t3c.zones[1].crosses = ['core']; // 只删一侧 → 不对称
+  const v3c = validateTemplate(t3c);
+  ok(!v3c.ok && v3c.issues.some((s) => s.indexOf('不对称') >= 0), '反例「交叉声明不对称」被拒绝');
+  const t4 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
+  t4.zones[0].crosses = ['sideLeft', 'sideRight', 'reserve', 'core']; // 附加自交叉声明
+  const v4 = validateTemplate(t4);
+  ok(!v4.ok, '反例「自己与自己交叉」被拒绝');
+  // clampTemplate 不做静默修正：非法输入直接 throw
+  let threw = 0;
+  const bad1 = clone();
+  bad1.zones[0].origin[0] = [130, 440];
+  try { clampTemplate(bad1); } catch (e) { threw++; }
+  const bad2 = clone();
+  bad2.zones[0].plan[0] = 25;
+  try { clampTemplate(bad2); } catch (e) { threw++; }
+  const bad3 = clone();
+  bad3.zones[0].stack[1] = 0;
+  try { clampTemplate(bad3); } catch (e) { threw++; }
+  ok(threw === 3, 'clampTemplate 对 3 类非法输入全部 throw（不静默修正 / 不截断）');
+  // 合法模板 clamp 后数值不变（clamp 只填默认值）
+  const cl = clampTemplate(TEMPLATES.L2_MULTI_ZONE);
+  ok(JSON.stringify(cl.zones[0].origin) === JSON.stringify(TEMPLATES.L2_MULTI_ZONE.zones[0].origin)
+    && JSON.stringify(cl.zones[0].plan) === JSON.stringify(TEMPLATES.L2_MULTI_ZONE.zones[0].plan),
+    'clampTemplate 对合法模板不改坐标 / 不改牌数');
+}
+
 /* ---------------- [4] 关卡构造 / 发牌 ---------------- */
 line('\n[4] 关卡构造：16 种 / 三倍数 / 证书 / verify / 三带边界（30 seed × 2 关）');
 let certOk = 0, verifyOk = 0, kindsMin = 99, visibleMin = 999, visibleMax = 0;
@@ -198,9 +258,23 @@ let slot = [];
 slotInsert(slot, mk('sparrow', 1));
 slotInsert(slot, mk('sparrow', 2));
 ok(slot.length === 2 && slotMatchTypes(slot).length === 0, '两张同型不消除');
+ok(resolveSlot(slot).length === 0 && slot.length === 2, '两张同型 resolveSlot 不移除任何牌');
 slotInsert(slot, mk('sparrow', 3));
 ok(slotMatchTypes(slot).indexOf('sparrow') >= 0, '三张同型触发消除');
-ok(resolveSlot(slot) === 0 || slot.length === 0 || true, 'resolveSlot 可调用');
+const removed3 = resolveSlot(slot);
+ok(removed3.length === 3, 'resolveSlot 恰好移除 3 张（实测 ' + removed3.length + '）');
+ok(removed3.every((c) => c.type === 'sparrow'), '移除的都是目标花色');
+ok(slot.length === 0, '消除后槽位清空');
+// 混合场景：一组满三消除，另一组保留两张
+let slotMix = [];
+slotInsert(slotMix, mk('sparrow', 11));
+slotInsert(slotMix, mk('red-centre', 12));
+slotInsert(slotMix, mk('sparrow', 13));
+slotInsert(slotMix, mk('red-centre', 14));
+slotInsert(slotMix, mk('sparrow', 15));
+const removedMix = resolveSlot(slotMix);
+ok(removedMix.length === 3 && slotMix.length === 2 && slotMatchTypes(slotMix).length === 0,
+  '混合槽只消除满三的花色，余牌保留');
 let slot2 = [];
 for (let i = 0; i < SLOT_CAPACITY; i++) slotInsert(slot2, mk(TYPE_IDS[i], i + 10));
 ok(slot2.length === SLOT_CAPACITY, '槽位可装满 7 格');
@@ -223,6 +297,8 @@ const suite = runDifficultySuite(2, (lv, s) => {
   return generateLevel(lv, SEED_POOL[(suiteIdx++) % SEED_POOL.length]);
 }, SUITE_SEEDS, {
   baseSeed: 7000, modes: ROBOT_MODES, makeRng: (s) => makeRng(s),
+  // 真实证书 / 可解性验证（不是恒真函数）—— verifyRate 才有意义
+  verify: (d) => validateLevel(d).ok && verify(d) && d.certificate.ok && replayTypes(d.typeSeq).ok,
 });
 line('   ' + '策略'.padEnd(14) + '通关率'.padEnd(10) + '死局率'.padEnd(10) + '平均进度'.padEnd(12) + '平均槽位'.padEnd(12) + '失败进度中位'.padEnd(14) + '开局死'.padEnd(8) + '决策 ms');
 for (const m of ROBOT_MODES) {
@@ -264,7 +340,14 @@ ok(!/fn\s+uninstall_app\s*\(/.test(rust) && !/fn\s+schedule_self_delete\s*\(/.te
 ok(!/\.plugin\(\s*tauri_plugin_fs::init\(\)\s*\)/.test(rust), 'Rust 不再注册 fs 插件');
 ok(!/^\s*tauri-plugin-fs\s*=/m.test(read('src-tauri/Cargo.toml')), 'Cargo.toml 已移除 fs 插件依赖');
 ok(tconf.version === VERSION && pkg.version === VERSION, 'Tauri / npm 版本号 = ' + VERSION);
-ok(tconf.bundle && tconf.bundle.targets.indexOf('nsis') >= 0, 'bundle 目标含 NSIS 安装包');
+ok(tconf.bundle && Array.isArray(tconf.bundle.targets) && tconf.bundle.targets.indexOf('nsis') >= 0,
+  'bundle.targets 含 NSIS（正式安装版）');
+ok(tconf.bundle && tconf.bundle.windows && tconf.bundle.windows.nsis
+  && tconf.bundle.windows.nsis.installMode === 'currentUser',
+  'NSIS 配置位于 bundle.windows.nsis 且 installMode=currentUser（与 tauri-build 校验兼容）');
+ok(tconf.mainBinaryName === 'MahLeMah', 'mainBinaryName = MahLeMah（Portable 单文件名）');
+ok(pkg.scripts && pkg.scripts['build:portable'] && pkg.scripts['build:nsis'],
+  'package.json 分别提供 build:portable / build:nsis 两条独立构建链');
 ok(!/background:\s*#191009|#2a1c13|#150e09/.test(css + legacy), '网页版 / 兼容版背景已换成暖白');
 ok(/FFFDF6|FFF9EC|F7EEDC/.test(css), 'styles.css 使用暖白 / 奶油底');
 ok(Object.keys(TILE_TYPES).length === 16, '注册表类型可用于静态检查');
@@ -273,6 +356,57 @@ for (const t of TILE_TYPES) if (dom.indexOf("'" + t.id + "'") < 0) labelCovered 
 ok(labelCovered, 'ES5 降级视图内嵌了全部 16 种牌型标签');
 ok(!/\buninstallGame\s*\(/.test(read('src/main.js') + read('src/game/store.js')),
   '前端不再调用自删除 IPC');
+
+/* ---- [8b] Rust 存档接口安全加固 + 背景音乐系统静态验收 ---- */
+line('\n[8b] Rust 存档加固 / 音乐系统');
+ok(/MAX_SAVE_BYTES[^=]*=\s*(64\s*\*\s*1024|65536)/.test(rust), 'save_state 设置 64 KB 大小上限');
+ok(/serde_json::from_str/.test(rust) && /serde_json\s*=/.test(read('src-tauri/Cargo.toml')),
+  'save_state 用 serde_json 做 JSON 合法性校验');
+ok(/SAVE_FIELDS/.test(rust) && ['"v"', '"level"', '"best"', '"sound"', '"sfxVol"', '"music"', '"musicVol"'].every((f) => rust.indexOf(f) >= 0),
+  'save_state 字段白名单覆盖 v/level/best/sound/sfxVol/music/musicVol');
+ok(/validate_save_json/.test(rust) && /fn save_state\(data: String\)/.test(rust),
+  'save_state 先校验后写入，且不接受任何路径参数');
+ok(/save\.json\.tmp/.test(rust) && /fs::rename/.test(rust), 'save_state 保持原子写入（tmp + rename）');
+ok(/v != 1 && v != 2|版本/.test(rust), 'save_state 校验存档版本号');
+
+const musicSrc = read('src/game/music.js');
+const tracksSrc = read('src/game/music_tracks.js');
+ok(musicSrc.length > 1000 && tracksSrc.length > 500, 'music.js / music_tracks.js 已就位');
+ok(/_created/.test(musicSrc) && /单例/.test(musicSrc), 'Music 单例守护（禁止重复创建实例）');
+ok(/unlock\s*\(/.test(musicSrc) && /首次交互/.test(musicSrc), '音乐在用户首次交互后启动（自动播放合规）');
+ok(/visibilitychange/.test(musicSrc), '支持切后台 / 回前台');
+ok(/linearRampToValueAtTime/.test(musicSrc), '关卡切换淡入淡出');
+ok(/catch/.test(musicSrc) && /不影响游戏/.test(musicSrc), '播放失败全部捕获，不影响游戏');
+{
+  // 工程内不得存在任何外部音频素材文件（音效 / 音乐全部 Web Audio 实时合成）
+  const { readdirSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const audioExt = /\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i;
+  const skip = new Set(['node_modules', '.build', '.git', 'target-gnu', '.shots', '.workbuddy']);
+  const found = [];
+  const walk = (dir, depth) => {
+    if (depth > 4 || found.length) return;
+    let entries = [];
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch (e) { return; }
+    for (const e of entries) {
+      if (skip.has(e.name)) continue;
+      const p = join(dir, e.name);
+      if (e.isDirectory()) walk(p, depth + 1);
+      else if (audioExt.test(e.name)) found.push(p);
+    }
+  };
+  walk(ROOT.replace(/\/[A-Za-z]:/, (m) => m.slice(1)).replace(/\/$/, ''), 0);
+  ok(found.length === 0, '工程不含外部音频文件，全部实时合成' + (found.length ? '：' + found.join(',') : ''));
+}
+ok(!/new Audio\s*\(|new AudioBuffer/.test(musicSrc + read('src/main.js')), '音乐不加载任何音频文件对象');
+ok(/setVolume/.test(read('src/game/audio.js')) && /setVolume/.test(musicSrc),
+  '背景音乐与音效各自独立音量');
+ok(/set-bgm/.test(read('src/main.js')) && /set-sfx/.test(read('src/main.js')) && /drawSettingsPanel/.test(read('src/game/render.js')),
+  'UI 提供背景音乐 / 音效独立开关与音量入口');
+ok(/music:\s*game\.bgmOn/.test(read('src/main.js')) && /saved\.music !== false/.test(read('src/main.js')),
+  '音乐设置持久化且兼容旧存档');
+const tracksCheck = validateTracks();
+ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (tracksCheck.ok ? '' : '：' + tracksCheck.issues.join('；')));
 
 /* ---------------- [9] 运行时生成耗时 ---------------- */
 line('\n[9] 运行时生成耗时');

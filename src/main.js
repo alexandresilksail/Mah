@@ -2,6 +2,7 @@
 import { W, H, LEVEL_COUNT, SLOT_SIZE } from './game/config.js';
 import { Game } from './game/engine.js';
 import { Sound } from './game/audio.js';
+import { getMusic } from './game/music.js';
 import * as R from './game/render.js';
 import {
   loadSave,
@@ -26,6 +27,7 @@ const domView = hasCanvas ? null :
     : null);
 
 const sound = new Sound();
+const music = getMusic();
 const game = new Game(sound);
 
 /* ---------------- 自适应缩放（720x1280 居中） ---------------- */
@@ -113,41 +115,115 @@ function persist(force = false) {
   const now = nowMs();
   if (!force && now - lastSave < 800) return;
   lastSave = now;
-  const data = { v: 1, level: game.level, best: Math.max(1, game.best), sound: game.soundOn };
+  // v:2 —— 增加背景音乐 / 音效的独立开关与音量；v1 旧档读入时走默认值
+  const data = {
+    v: 2,
+    level: game.level,
+    best: Math.max(1, game.best),
+    sound: game.soundOn,
+    sfxVol: game.sfxVol,
+    music: game.bgmOn,
+    musicVol: game.bgmVol,
+  };
   writeSave(data);
   writeDesktopSave(data);
+}
+
+function applyAudioSettings() {
+  sound.setEnabled(game.soundOn);
+  sound.setVolume(game.sfxVol);
+  music.setEnabled(game.bgmOn);
+  music.setVolume(game.bgmVol);
+}
+
+function startLevelWithMusic(level) {
+  game.startLevel(level);
+  try {
+    music.setTrack(game.level);
+    music.play();
+  } catch { /* 音乐失败不影响游戏 */ }
 }
 
 function handleButton(id) {
   if (id !== 'sound') sound.click();
   switch (id) {
     case 'start':
-      game.startLevel(game.level, undefined);
+      startLevelWithMusic(game.level);
       break;
     case 'sound':
       game.soundOn = !game.soundOn;
       sound.setEnabled(game.soundOn);
       persist(true);
       break;
+    case 'music':
+      game.bgmOn = !game.bgmOn;
+      music.setEnabled(game.bgmOn);
+      persist(true);
+      break;
+    case 'settings':
+      game._pausedBeforeSettings = game.paused;
+      game.paused = true;
+      game.settingsAsk = true;
+      break;
+    case 'settings-close':
+      game.settingsAsk = false;
+      game.paused = game._pausedBeforeSettings || false;
+      persist(true);
+      break;
+    case 'set-bgm':
+      game.bgmOn = !game.bgmOn;
+      music.setEnabled(game.bgmOn);
+      persist(true);
+      break;
+    case 'set-bgm-minus':
+      game.bgmVol = Math.max(0, Math.round((game.bgmVol - 0.1) * 100) / 100);
+      music.setVolume(game.bgmVol);
+      persist(true);
+      break;
+    case 'set-bgm-plus':
+      game.bgmVol = Math.min(1, Math.round((game.bgmVol + 0.1) * 100) / 100);
+      music.setVolume(game.bgmVol);
+      persist(true);
+      break;
+    case 'set-sfx':
+      game.soundOn = !game.soundOn;
+      sound.setEnabled(game.soundOn);
+      persist(true);
+      break;
+    case 'set-sfx-minus':
+      game.sfxVol = Math.max(0, Math.round((game.sfxVol - 0.1) * 100) / 100);
+      sound.setVolume(game.sfxVol);
+      persist(true);
+      break;
+    case 'set-sfx-plus':
+      game.sfxVol = Math.min(1, Math.round((game.sfxVol + 0.1) * 100) / 100);
+      sound.setVolume(game.sfxVol);
+      persist(true);
+      break;
     case 'menu':
       game.paused = !game.paused;
+      if (game.paused) music.pause();
+      else music.play();
       break;
     case 'resume':
       game.paused = false;
+      music.play();
       break;
     case 'restart':
     case 'replay':
       game.paused = false;
-      game.startLevel(game.level);
+      startLevelWithMusic(game.level);
       break;
     case 'next':
-      game.startLevel(game.level + 1);
+      startLevelWithMusic(game.level + 1);
       persist(true);
       break;
     case 'home':
       game.paused = false;
       game.screen = 'title';
       game.status = 'play';
+      music.setTrack('title');
+      music.play();
       persist(true);
       break;
     case 'revive':
@@ -185,6 +261,7 @@ function handleButton(id) {
 function onDown(e) {
   if (e.preventDefault) e.preventDefault();
   sound.ensure();
+  music.unlock(); // 浏览器自动播放限制：首次交互后才启动背景音乐
   const p = toLocal(e);
   const ui = R.getUI(game);
   const btn = R.hitButton(ui, p.x, p.y);
@@ -237,9 +314,13 @@ on(window, 'keydown', (e) => {
   // IE8/IE9 只有 keyCode，没有 e.key
   const k = e.key || String.fromCharCode(e.keyCode || 0);
   if (k === 'Escape' || k === 'Esc') {
-    if (game.screen === 'play') game.paused = !game.paused;
+    if (game.screen === 'play') {
+      game.paused = !game.paused;
+      if (game.paused) music.pause();
+      else music.play();
+    }
   } else if (k === 'r' || k === 'R') {
-    if (game.screen === 'play') game.startLevel(game.level);
+    if (game.screen === 'play') startLevelWithMusic(game.level);
   } else if (k === '1') {
     game.useShuffle();
   } else if (k === '2') {
@@ -293,8 +374,9 @@ function frame(now) {
     }
   }
 
-  // 卸载确认框永远画在最上层（标题页 / 暂停面板之上）
+  // 卸载确认框 / 设置面板永远画在最上层（标题页 / 暂停面板之上）
   if (ctx && game.uninstallAsk) R.drawUninstallConfirm(ctx, game, ui);
+  if (ctx && game.settingsAsk) R.drawSettingsPanel(ctx, game, ui);
 
   if (game.screen === 'play' && game.status === 'win') persist(true);
 
@@ -306,8 +388,12 @@ function applySave(saved) {
   if (!saved || typeof saved !== 'object') return;
   game.level = Math.max(1, saved.level || 1);
   game.best = Math.max(1, saved.best || 1);
+  // 旧存档兼容：v1 只有 sound 字段，音乐字段缺失时用默认值
   game.soundOn = saved.sound !== false;
-  sound.setEnabled(game.soundOn);
+  game.sfxVol = typeof saved.sfxVol === 'number' ? saved.sfxVol : 1;
+  game.bgmOn = saved.music !== false;
+  game.bgmVol = typeof saved.musicVol === 'number' ? saved.musicVol : 0.6;
+  applyAudioSettings();
 }
 
 function boot() {
@@ -318,6 +404,12 @@ function boot() {
   });
   applySave(loadSave());          // 同步：所有浏览器
   syncDesktopSave(applySave);     // 异步：仅 Tauri 桌面端，稍晚覆盖
+
+  // 背景音乐：预设标题曲与「应当出声」意图；首次交互（unlock）后才真正起播
+  try {
+    music.playing = true;
+    music.setTrack('title');
+  } catch { /* 音乐失败不影响游戏 */ }
 
   // 启动自检：第 1 关校验可解性；第 2 关只做"发牌是否合法"的体检（不校验可解）
   try {
@@ -333,7 +425,7 @@ function boot() {
   }
 
   // 供自动化验证与调试使用（IE COM 测试脚本会读它）
-  window.__mah = { game, sound, R, hasCanvas, domView };
+  window.__mah = { game, sound, music, R, hasCanvas, domView };
 
   // 开发调试：?lv=2 直接进第 2 关；?pick=N 先点 N 张可点的牌（用来看槽位动画）
   const q = new URLSearchParams(location.search);

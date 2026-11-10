@@ -2,7 +2,9 @@
 node_modules/
 .DS_Store
 Thumbs.db
-# 注意：dist/ 是网页版交付物（单文件游戏），不忽略
+# 注意：dist/ 是网页版交付物（单文件游戏）+ 安装包，不忽略；
+# 但便携版的「解压前」staging 目录是构建中间产物，不提交
+dist/MahLeMah-Portable-v*/
 
 # Rust / Tauri
 src-tauri/target/

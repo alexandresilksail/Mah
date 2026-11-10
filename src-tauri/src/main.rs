@@ -11,7 +11,13 @@
 //!      （load_state / save_state / reset_state / data_dir_path）读写
 //!      `MahLeMah_Data/save.json`；卸载完全交给 NSIS 安装器生成的卸载程序。
 //!
-//! 产物：`cargo build --release`（或 `npm run tauri build`，bundle.targets=["nsis"]）。
+//! 产物：
+//!   · Portable 绿色版 = `cargo build --release` 直接得到的 MahLeMah.exe
+//!     （+ 运行时自建的 MahLeMah_Data，无需安装）；
+//!   · NSIS 正式安装版 = `npm run build:nsis`（tauri bundle targets=["nsis"]，
+//!     或 tools/make_release.py 用 64 位 makensis 编译 tools/make_installer.nsi），
+//!     提供标准卸载入口（控制面板 / 开始菜单）与卸载确认流程。
+//!   两种产物分别构建、分别命名，互不混淆。
 
 use std::fs;
 use std::io::Write;
@@ -19,6 +25,12 @@ use std::path::{Path, PathBuf};
 
 /// 与 exe 同级的数据目录名（对外承诺的唯一落点）
 const DATA_DIR: &str = "MahLeMah_Data";
+
+/// 存档大小上限：64 KB（存档只有几个进度/音量字段，远小于该上限）
+const MAX_SAVE_BYTES: usize = 64 * 1024;
+
+/// 存档 JSON 字段白名单：出现任何未知字段一律拒绝
+const SAVE_FIELDS: [&str; 7] = ["v", "level", "best", "sound", "sfxVol", "music", "musicVol"];
 
 fn exe_path() -> Result<PathBuf, String> {
     std::env::current_exe().map_err(|e| format!("无法定位程序路径: {e}"))
@@ -42,27 +54,100 @@ pub fn data_dir() -> Result<PathBuf, String> {
 /* IPC 命令                                                            */
 /* ------------------------------------------------------------------ */
 
-/// 前端用它做「数据目录」展示与 fs 插件的目标路径
+/// 存档 JSON 严格校验：
+///   1. 大小 ≤ 64 KB；
+///   2. 必须是合法 JSON 对象；
+///   3. 字段白名单（未知字段直接拒绝）；
+///   4. 版本号 v ∈ {1, 2}（v1 = 旧档兼容，v2 = 当前格式）；
+///   5. 各字段类型 / 数值范围严格检查，任何异常数据一律拒绝。
+fn validate_save_json(data: &str) -> Result<(), String> {
+    if data.len() > MAX_SAVE_BYTES {
+        return Err(format!("存档过大：{} 字节 > 上限 {MAX_SAVE_BYTES}", data.len()));
+    }
+    let value: serde_json::Value =
+        serde_json::from_str(data).map_err(|e| format!("存档 JSON 非法: {e}"))?;
+    let obj = value
+        .as_object()
+        .ok_or_else(|| "存档必须是 JSON 对象".to_string())?;
+
+    for key in obj.keys() {
+        if !SAVE_FIELDS.contains(&key.as_str()) {
+            return Err(format!("存档包含未知字段: {key}"));
+        }
+    }
+
+    // 版本号：必须是 1 或 2 的整数
+    let v = match obj.get("v") {
+        Some(serde_json::Value::Number(n)) => n.as_i64(),
+        _ => None,
+    }
+    .ok_or_else(|| "存档缺少合法的版本号 v".to_string())?;
+    if v != 1 && v != 2 {
+        return Err(format!("不支持的存档版本: {v}"));
+    }
+
+    // level / best：非负整数（level 上限 999，best 上限 1_000_000）
+    for (key, max) in [("level", 999i64), ("best", 1_000_000i64)] {
+        if let Some(val) = obj.get(key) {
+            let n = val.as_i64().ok_or_else(|| format!("{key} 必须是整数"))?;
+            if n < 0 || n > max {
+                return Err(format!("{key} 超出范围 0..{max}: {n}"));
+            }
+        }
+    }
+
+    // sound / music：布尔
+    for key in ["sound", "music"] {
+        if let Some(val) = obj.get(key) {
+            if !val.is_boolean() {
+                return Err(format!("{key} 必须是布尔值"));
+            }
+        }
+    }
+
+    // sfxVol / musicVol：0.0..=1.0 的有限数
+    for key in ["sfxVol", "musicVol"] {
+        if let Some(val) = obj.get(key) {
+            let f = val.as_f64().filter(|f| f.is_finite());
+            match f {
+                Some(f) if (0.0..=1.0).contains(&f) => {}
+                _ => return Err(format!("{key} 必须是 0..1 的数值")),
+            }
+        }
+    }
+    Ok(())
+}
+
+/// 前端用它做「数据目录」展示（只读；v2 起前端不再据此做任何文件操作）
 #[tauri::command]
 fn data_dir_path() -> Result<String, String> {
     Ok(data_dir()?.to_string_lossy().to_string())
 }
 
-/// 读取存档；文件不存在时返回空串（前端按"无存档"处理）
+/// 读取存档；文件不存在 / 为空 / 损坏（校验不过）时返回空串（前端按"无存档"处理）
 #[tauri::command]
 fn load_state() -> Result<String, String> {
     let path = data_dir()?.join("save.json");
     match fs::read_to_string(&path) {
-        Ok(s) if !s.trim().is_empty() => Ok(s),
+        Ok(s) if !s.trim().is_empty() => {
+            if validate_save_json(&s).is_ok() {
+                Ok(s)
+            } else {
+                // 损坏 / 异常存档：视作无存档，不让脏数据进游戏
+                Ok(String::new())
+            }
+        }
         Ok(_) => Ok(String::new()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
         Err(e) => Err(format!("读取存档失败: {e}")),
     }
 }
 
-/// 原子写：先写 .tmp 再 rename，避免断电/崩溃导致存档损坏
+/// 保存存档：严格校验 + 原子写入。
+/// 路径固定为 <exe 同级>/MahLeMah_Data/save.json —— 前端不能指定任何保存路径。
 #[tauri::command]
 fn save_state(data: String) -> Result<(), String> {
+    validate_save_json(&data)?;
     let dir = data_dir()?;
     let path = dir.join("save.json");
     let tmp = dir.join("save.json.tmp");

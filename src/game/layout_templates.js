@@ -10,24 +10,38 @@
  * 第二关主堆 + 两侧长条 + 底部保留区的多区域、多层交叉遮挡。
  * 所有坐标、层数、张数均为本项目原创人工校准，差异在 DELIVERY.md 如实记录。
  *
+ * ── 校验与归一的职责分离（v2.0.1 测试有效性修复） ──────────────────────
+ *  · validateTemplate(原始模板)：严格校验，不修改任何数值。
+ *    数组长度不一致、牌数非法、网格容量不足、坐标不在半格晶格 / 越界、
+ *    全局层号重复、crosses 目标不存在或与实际几何不符 —— 一律直接报错，
+ *    不做静默修正、不做自动截断。
+ *  · clampTemplate(原始模板)：先跑 validateTemplate，非法直接 throw；
+ *    合法时只做「默认值填充 + 数组复制」，不改坐标、不改牌数。
+ *    它是运行时防御性归一（templateFor / describeTemplates 用），
+ *    不再被 validateTemplate 调用，两者职责互不渗透。
+ *
  * ── 模板字段 ────────────────────────────────────────────────────────
  *  id / level / cardCount   模板标识与总牌数（必须 = Σ zone.plan）
  *  zones[]                  区域列表，每个区域：
  *    name        区域 id（core / sideLeft / sideRight / reserve）
- *    plan[]      每层张数（底→顶）
+ *    plan[]      每层张数（底→顶），整数且 ≥1
  *    grids[]     每层 {cols, rows}，cells = cols*rows ≥ plan[li]
  *    origin[]    每层**绝对左上角坐标** [x, y]，单位 px，且必须是
  *                (LATTICE_X, LATTICE_Y) 的整数倍 —— 零随机抖动、半格晶格
- *    stack[]     每层的全局堆叠层号（决定 z 与跨区域交叉遮挡）
+ *    stack[]     每层的全局堆叠层号（0..31，全部区域合起来互不重复）
  *    anchor      区域锚点说明（文档用）
  *    gaps        'edge'（边缘缺口，非长方形）| 'none'（完整矩形）
- *    crosses[]   该区域与哪些区域交叉遮挡（结构说明 + 测试断言）
- *    bias[]      该区域偏重的牌型下标（generator.js 发牌时读取）
- *
- * 所有数值都经过 clampTemplate() 边界检查：坐标落在 BOARD_BAND 内、
- * 列数 ≤ 安全区宽度、行数 ≤ 安全区高度、层号 0..6、plan 总和 = cardCount。
+ *    crosses[]   该区域与哪些区域交叉遮挡；必须与实际几何双向一致
+ *                （声明了的必须真有几何交叉遮挡；有几何交叉遮挡的必须声明，
+ *                  且 A 列出 B 时 B 也必须列出 A）
+ *    bias[]      该区域偏重的牌型下标 0..15（generator.js 发牌时读取）
  */
-import { TILE_W, TILE_H, LATTICE_X, LATTICE_Y, BOARD_BAND, LEVEL_SPEC } from './config.js';
+import {
+  TILE_W, TILE_H, LATTICE_X, LATTICE_Y,
+  BOARD_BAND, LEVEL_SPEC, OVERLAP_THRESHOLD, TILE_AREA,
+} from './config.js';
+
+const THRESH_AREA = OVERLAP_THRESHOLD * TILE_AREA;
 
 export const TEMPLATES = {
   /* ==================== 第 1 关：教学浅堆 ==================== */
@@ -63,7 +77,7 @@ export const TEMPLATES = {
     level: 2,
     cardCount: 240,
     shape: '中央 7 层主堆（中层外鼓）+ 左右各一条 3 层盲盒长条 + 底部 2 层保留区',
-    note: '三个区域在坐标上互相咬合：侧条压住主堆外沿，保留区压住主堆底沿；上层消除后逐层暴露下层',
+    note: '三个区域在坐标上互相咬合：侧条压住主堆外沿，保留区压住主堆底沿与侧条内下角；上层消除后逐层暴露下层',
     zones: [
       {
         name: 'core',
@@ -92,7 +106,7 @@ export const TEMPLATES = {
       },
       {
         name: 'sideLeft',
-        shape: '左侧盲盒长条：3 层 × 2×2，压住主堆左外沿',
+        shape: '左侧盲盒长条：3 层 × 2×2，压住主堆左外沿；内下角与保留区交叉',
         plan: [4, 4, 4],
         grids: [
           { cols: 2, rows: 2 }, { cols: 2, rows: 2 }, { cols: 2, rows: 2 },
@@ -101,12 +115,12 @@ export const TEMPLATES = {
         stack: [4, 8, 11],
         anchor: 'left',
         gaps: 'none',
-        crosses: ['core'],
+        crosses: ['core', 'reserve'],
         bias: [4, 5, 9, 10, 13],
       },
       {
         name: 'sideRight',
-        shape: '右侧盲盒长条：3 层 × 2×2，压住主堆右外沿',
+        shape: '右侧盲盒长条：3 层 × 2×2，压住主堆右外沿；内下角与保留区交叉',
         plan: [4, 4, 4],
         grids: [
           { cols: 2, rows: 2 }, { cols: 2, rows: 2 }, { cols: 2, rows: 2 },
@@ -115,12 +129,12 @@ export const TEMPLATES = {
         stack: [5, 9, 12],
         anchor: 'right',
         gaps: 'none',
-        crosses: ['core'],
+        crosses: ['core', 'reserve'],
         bias: [4, 5, 9, 10, 13],
       },
       {
         name: 'reserve',
-        shape: '底部保留区：2 层 × 6×3，压住主堆下沿，是最后才暴露的暗牌区',
+        shape: '底部保留区：2 层 × 6×3，压住主堆下沿与两侧条内下角，是最后才暴露的暗牌区',
         plan: [18, 18],
         grids: [
           { cols: 6, rows: 3 }, { cols: 6, rows: 3 },
@@ -129,100 +143,230 @@ export const TEMPLATES = {
         stack: [2, 6],
         anchor: 'bottom',
         gaps: 'none',
-        crosses: ['core'],
+        crosses: ['core', 'sideLeft', 'sideRight'],
         bias: [2, 3, 14, 15, 8],
       },
     ],
   },
 };
 
-/** 边界检查：任何模板配置都要有默认值和边界 */
-export function clampTemplate(tpl) {
-  if (!tpl || !tpl.zones || !tpl.zones.length) throw new Error('模板缺少 zones');
-  const maxCols = Math.floor((BOARD_BAND.right - BOARD_BAND.left) / TILE_W);
-  const maxRows = Math.floor((BOARD_BAND.bottom - BOARD_BAND.top) / TILE_H);
-  const out = { ...tpl, zones: [] };
+/* ==================== 几何工具（只依赖模板数据） ==================== */
+
+function overlapArea(a, b) {
+  const ix = Math.min(a.x + TILE_W, b.x + TILE_W) - Math.max(a.x, b.x);
+  const iy = Math.min(a.y + TILE_H, b.y + TILE_H) - Math.max(a.y, b.y);
+  return ix > 0 && iy > 0 ? ix * iy : 0;
+}
+
+/** 一层的全部格点（按网格容量展开，坐标 = origin + 格距） */
+function layerCells(z, li) {
+  const ox = z.origin[li][0];
+  const oy = z.origin[li][1];
+  const { cols, rows } = z.grids[li];
+  const out = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) out.push({ x: ox + c * TILE_W, y: oy + r * TILE_H });
+  }
+  return out;
+}
+
+/**
+ * 由模板几何计算真实存在的「跨区域交叉遮挡」无序对集合。
+ * 两个区域交叉 ⇔ 存在各自一层（层号不同）的格点对相交面积 > 阈值。
+ */
+function geometricCrossPairs(zones) {
+  const pairs = new Set();
+  for (let i = 0; i < zones.length; i++) {
+    for (let j = i + 1; j < zones.length; j++) {
+      const A = zones[i];
+      const B = zones[j];
+      let hit = false;
+      for (let la = 0; la < A.stack.length && !hit; la++) {
+        for (let lb = 0; lb < B.stack.length && !hit; lb++) {
+          if (A.stack[la] === B.stack[lb]) continue;
+          const ca = layerCells(A, la);
+          const cb = layerCells(B, lb);
+          for (let x = 0; x < ca.length && !hit; x++) {
+            for (let y = 0; y < cb.length; y++) {
+              if (overlapArea(ca[x], cb[y]) > THRESH_AREA) { hit = true; break; }
+            }
+          }
+        }
+      }
+      if (hit) pairs.add([A.name, B.name].sort().join('|'));
+    }
+  }
+  return pairs;
+}
+
+/** crosses 声明的无序对集合 */
+function declaredCrossPairs(zones) {
+  const byName = {};
+  for (const z of zones) byName[z.name] = z;
+  const pairs = new Set();
+  for (const z of zones) {
+    for (const t of (z.crosses || [])) {
+      pairs.add([z.name, t].sort().join('|'));
+    }
+  }
+  return pairs;
+}
+
+/* ==================== 严格校验（不修改输入） ==================== */
+
+/**
+ * 严格校验「原始模板」：所有非法输入直接进 issues，不做任何静默修正。
+ * 返回 { ok, issues, zones, cardCount }；cardCount = Σ plan（实测值，便于对照）。
+ */
+export function validateTemplate(tpl) {
+  const issues = [];
+  const push = (m) => issues.push(m);
+  if (!tpl || typeof tpl !== 'object') {
+    return { ok: false, issues: ['模板不是对象'], zones: 0, cardCount: 0 };
+  }
+  if (!tpl.id || typeof tpl.id !== 'string') push('模板缺少 id');
+  if (tpl.level !== 1 && tpl.level !== 2) push(`level 必须是 1 或 2（实测 ${tpl.level}）`);
+  if (!Array.isArray(tpl.zones) || tpl.zones.length === 0) {
+    push('模板缺少 zones');
+    return { ok: false, issues, zones: 0, cardCount: 0 };
+  }
+
+  const names = {};
   let total = 0;
+
   for (let zi = 0; zi < tpl.zones.length; zi++) {
     const z = tpl.zones[zi];
-    const plan = (z.plan || []).slice();
-    const grids = (z.grids || []).map((g) => ({
-      cols: Math.max(1, Math.min(maxCols, g.cols | 0)),
-      rows: Math.max(1, Math.min(maxRows, g.rows | 0)),
-    }));
-    const origin = (z.origin || []).map((o, li) => {
-      const cols = grids[li] ? grids[li].cols : 1;
-      const rows = grids[li] ? grids[li].rows : 1;
-      let x = Math.round((o[0] || 0) / LATTICE_X) * LATTICE_X;
-      let y = Math.round((o[1] || 0) / LATTICE_Y) * LATTICE_Y;
-      x = Math.max(BOARD_BAND.left, Math.min(BOARD_BAND.right - cols * TILE_W, x));
-      y = Math.max(BOARD_BAND.top, Math.min(BOARD_BAND.bottom - rows * TILE_H, y));
-      return [x, y];
-    });
-    const stack = (z.stack || []).map((s) => Math.max(0, Math.min(31, s | 0)));
-    const n = Math.min(plan.length, grids.length, origin.length, stack.length);
-    plan.length = n;
-    grids.length = n;
-    origin.length = n;
-    stack.length = n;
-    for (let li = 0; li < n; li++) {
-      const cells = grids[li].cols * grids[li].rows;
-      if (plan[li] > cells) plan[li] = cells;
-      if (plan[li] < 1) plan[li] = 1;
-      total += plan[li];
+    const tag = (z && z.name) || `zones[${zi}]`;
+    if (!z || typeof z !== 'object') { push(`${tag} 不是对象`); continue; }
+    if (!z.name || typeof z.name !== 'string') push(`zones[${zi}] 缺少 name`);
+    else if (names[z.name]) push(`区域名 ${z.name} 重复`);
+    else names[z.name] = 1;
+
+    const { plan, grids, origin, stack } = z;
+    const arrays = [plan, grids, origin, stack];
+    if (!arrays.every(Array.isArray)) {
+      push(`${tag}: plan/grids/origin/stack 必须都是数组`);
+      continue;
     }
+    // 数组长度必须一致 —— 不一致直接报错，不截断
+    const n = plan.length;
+    if (n < 1) push(`${tag}: 至少 1 层`);
+    if (grids.length !== n || origin.length !== n || stack.length !== n) {
+      push(`${tag}: plan(${n})/grids(${grids.length})/origin(${origin.length})/stack(${stack.length}) 长度不一致`);
+      continue;
+    }
+
+    for (let li = 0; li < n; li++) {
+      const p = plan[li];
+      const g = grids[li];
+      const o = origin[li];
+      const s = stack[li];
+      // 牌数：必须是 ≥1 的整数，且不超过网格容量 —— 不截断、不兜底
+      if (!Number.isInteger(p) || p < 1) {
+        push(`${tag} 第 ${li} 层牌数非法（${p}）`);
+        continue;
+      }
+      if (!g || !Number.isInteger(g.cols) || !Number.isInteger(g.rows) || g.cols < 1 || g.rows < 1) {
+        push(`${tag} 第 ${li} 层网格非法（${JSON.stringify(g)}）`);
+        continue;
+      }
+      const cells = g.cols * g.rows;
+      if (p > cells) push(`${tag} 第 ${li} 层 ${p} 张 > 网格容量 ${cells}（不自动截断）`);
+      // 坐标：必须是半格晶格整数倍且在版面内 —— 不吸附、不夹取
+      if (!Array.isArray(o) || o.length !== 2 || !Number.isFinite(o[0]) || !Number.isFinite(o[1])) {
+        push(`${tag} 第 ${li} 层坐标非法（${JSON.stringify(o)}）`);
+        continue;
+      }
+      const [ox, oy] = o;
+      if (ox % LATTICE_X !== 0 || oy % LATTICE_Y !== 0) {
+        push(`${tag} 第 ${li} 层坐标 (${ox},${oy}) 不在半格晶格上（不静默修正）`);
+      }
+      if (ox < BOARD_BAND.left || oy < BOARD_BAND.top ||
+          ox + g.cols * TILE_W > BOARD_BAND.right || oy + g.rows * TILE_H > BOARD_BAND.bottom) {
+        push(`${tag} 第 ${li} 层网格 (${ox},${oy}) ${g.cols}×${g.rows} 越出牌桌 ${JSON.stringify(BOARD_BAND)}`);
+      }
+      if (!Number.isInteger(s) || s < 0 || s > 31) push(`${tag} 第 ${li} 层层号非法（${s}）`);
+      total += p;
+    }
+  }
+
+  // 全局层号互不重复（跨区域共享同层会导致同层重叠）
+  const stackSeen = {};
+  for (const z of tpl.zones) {
+    if (!Array.isArray(z.stack)) continue;
+    for (const s of z.stack) {
+      if (stackSeen[s]) push(`全局层号 ${s} 重复（同层会重叠）`);
+      stackSeen[s] = 1;
+    }
+  }
+
+  // 总张数与关卡规格
+  if (tpl.cardCount !== total) push(`cardCount ${tpl.cardCount} ≠ Σ plan ${total}`);
+  const spec = LEVEL_SPEC[tpl.level];
+  if (spec && total !== spec.cardCount) push(`总张数 ${total} ≠ 关卡规格 ${spec.cardCount}`);
+
+  // bias：牌型下标必须是 0..15 的整数
+  for (const z of tpl.zones) {
+    if (!Array.isArray(z.bias)) continue;
+    for (const b of z.bias) {
+      if (!Number.isInteger(b) || b < 0 || b > 15) push(`${z.name}.bias 含非法牌型下标 ${b}`);
+    }
+  }
+
+  // crosses：目标存在 + 对称 + 与实际几何双向一致
+  for (const z of tpl.zones) {
+    if (!Array.isArray(z.crosses)) continue;
+    for (const t of z.crosses) {
+      if (t === z.name) push(`${z.name}.crosses 不应包含自己`);
+      else if (!names[t]) push(`${z.name} 的交叉目标 ${t} 不存在`);
+    }
+  }
+  if (issues.length === 0) {
+    const declared = declaredCrossPairs(tpl.zones);
+    const actual = geometricCrossPairs(tpl.zones);
+    // 对称性：A 声明 B ⇒ B 声明 A
+    for (const z of tpl.zones) {
+      for (const t of (z.crosses || [])) {
+        const other = tpl.zones.find((o) => o.name === t);
+        if (other && !(other.crosses || []).includes(z.name)) {
+          push(`交叉声明不对称：${z.name} → ${t}，但 ${t}.crosses 未包含 ${z.name}`);
+        }
+      }
+    }
+    for (const p of declared) {
+      if (!actual.has(p)) push(`声明的交叉遮挡 ${p.replace('|', ' ↔ ')} 与实际几何不符（无 >10% 重叠遮挡）`);
+    }
+    for (const p of actual) {
+      if (!declared.has(p)) push(`区域对 ${p.replace('|', ' ↔ ')} 存在实际交叉遮挡但未在 crosses 声明`);
+    }
+  }
+
+  return { ok: issues.length === 0, issues, zones: tpl.zones.length, cardCount: total };
+}
+
+/**
+ * 运行时防御性归一：先严格校验，非法直接 throw；
+ * 合法时只做默认值填充与数组复制 —— 不改坐标、不改牌数、不截断。
+ */
+export function clampTemplate(tpl) {
+  const v = validateTemplate(tpl);
+  if (!v.ok) throw new Error('布局模板非法：' + v.issues.join('；'));
+  const out = { ...tpl, zones: [] };
+  for (const z of tpl.zones) {
     out.zones.push({
       ...z,
-      plan,
-      grids,
-      origin,
-      stack,
+      plan: z.plan.slice(),
+      grids: z.grids.map((g) => ({ cols: g.cols, rows: g.rows })),
+      origin: z.origin.map((o) => [o[0], o[1]]),
+      stack: z.stack.slice(),
       anchor: z.anchor || 'center',
       gaps: z.gaps === 'edge' ? 'edge' : 'none',
       crosses: (z.crosses || []).slice(),
       bias: (z.bias || []).slice(),
     });
   }
-  out.cardCount = total;
+  out.cardCount = v.cardCount;
   return out;
-}
-
-/** 模板自检：张数、网格容量、半格晶格坐标、层号、交叉遮挡目标存在 */
-export function validateTemplate(tpl) {
-  const issues = [];
-  const t = clampTemplate(tpl);
-  if (t.cardCount !== LEVEL_SPEC[t.level].cardCount) {
-    issues.push(`总张数 ${t.cardCount} ≠ 关卡规格 ${LEVEL_SPEC[t.level].cardCount}`);
-  }
-  const names = {};
-  const stacks = {};
-  for (let zi = 0; zi < t.zones.length; zi++) {
-    const z = t.zones[zi];
-    names[z.name] = 1;
-    for (let li = 0; li < z.stack.length; li++) {
-      if (stacks[z.stack[li]]) issues.push(`全局层号 ${z.stack[li]} 重复（同层会重叠）`);
-      stacks[z.stack[li]] = 1;
-    }
-    if (z.plan.length !== z.grids.length || z.plan.length !== z.origin.length || z.plan.length !== z.stack.length) {
-      issues.push(`${z.name}: plan/grids/origin/stack 长度不一致`);
-    }
-    for (let li = 0; li < z.plan.length; li++) {
-      const cells = z.grids[li].cols * z.grids[li].rows;
-      if (z.plan[li] > cells) issues.push(`${z.name} 第 ${li} 层 ${z.plan[li]} 张 > 网格 ${cells}`);
-      const ox = z.origin[li][0];
-      const oy = z.origin[li][1];
-      if (ox % LATTICE_X !== 0 || oy % LATTICE_Y !== 0) issues.push(`${z.name} 第 ${li} 层坐标不在半格晶格上`);
-      if (ox + z.grids[li].cols * TILE_W > BOARD_BAND.right) issues.push(`${z.name} 第 ${li} 层右侧越界`);
-      if (oy + z.grids[li].rows * TILE_H > BOARD_BAND.bottom) issues.push(`${z.name} 第 ${li} 层底部越界`);
-    }
-  }
-  for (let zi = 0; zi < t.zones.length; zi++) {
-    const z = t.zones[zi];
-    for (let k = 0; k < z.crosses.length; k++) {
-      if (!names[z.crosses[k]]) issues.push(`${z.name} 的交叉目标 ${z.crosses[k]} 不存在`);
-    }
-  }
-  return { ok: issues.length === 0, issues, zones: t.zones.length, cardCount: t.cardCount };
 }
 
 export function templateFor(level) {

@@ -3,7 +3,6 @@ name = "mah-le-mah"
 version = "2.0.0"
 description = "Mah Le Mah - stacked tile triple match"
 authors = ["Mah Le Mah"]
-publisher = "MahLeMah"
 license = "MIT"
 edition = "2021"
 rust-version = "1.77.2"
@@ -21,6 +20,8 @@ path = "src/main.rs"
 tauri = { version = "2", features = [] }
 # v2.0.0：移除 tauri-plugin-fs。前端不持有任何文件 capability，
 # 存档只经 Rust 侧 4 个白名单命令读写；卸载由 NSIS 卸载程序负责。
+# v2.0.1：serde_json 用于 save_state 的 JSON 合法性 / 字段白名单校验。
+serde_json = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [

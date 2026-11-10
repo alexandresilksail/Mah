@@ -4,6 +4,7 @@ export class Sound {
     this.ctx = null;
     this.master = null;
     this.enabled = true;
+    this.volume = 1; // 音效独立音量（0..1），与背景音乐完全解耦
   }
 
   ensure() {
@@ -17,16 +18,25 @@ export class Sound {
         return null;
       }
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.2;
+      this.master.gain.value = this.enabled ? 0.2 * this.volume : 0;
       this.master.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
     return this.ctx;
   }
 
+  /** 音效独立开关 */
   setEnabled(on) {
     this.enabled = on;
-    if (this.master) this.master.gain.value = on ? 0.2 : 0;
+    if (this.master) this.master.gain.value = on ? 0.2 * this.volume : 0;
+  }
+
+  /** 音效独立音量（0..1） */
+  setVolume(v) {
+    const x = Number(v);
+    if (!Number.isFinite(x)) return;
+    this.volume = Math.max(0, Math.min(1, x));
+    if (this.master) this.master.gain.value = this.enabled ? 0.2 * this.volume : 0;
   }
 
   tone({ freq = 440, to = null, dur = 0.1, type = 'sine', vol = 0.5, delay = 0, attack = 0.006 }) {
