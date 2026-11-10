@@ -873,6 +873,13 @@ export function drawTitleScreen(ctx, game, ui, t) {
   } else if (game.best > 1) {
     text(ctx, '已通关第 1 关 · 卡在第 2 关', W / 2, 808, { size: 19, fill: C.gold, weight: '700' });
   }
+  // 首次交互前提示：背景音乐受浏览器自动播放策略限制，需点击后才出声
+  if (!game.audioUnlocked) {
+    const a = 0.5 + 0.4 * Math.sin((t || 0) / 420);
+    text(ctx, '♪ 点击任意处开启背景音乐', W / 2, 842, {
+      size: 20, fill: C.gold, weight: '700', alpha: a,
+    });
+  }
   if (!game.uninstallAsk && !game.settingsAsk) drawButtons(ctx, ui, game);
   drawIcons(ctx, game, ui);
 

@@ -258,10 +258,19 @@ function handleButton(id) {
  * 关闭说明时仅恢复暂停状态，不改动牌局 / 存档 / 磁盘。
  */
 
+/** 解锁背景音乐：浏览器自动播放策略要求首次用户手势后才允许出声。
+ *  集中处理「解锁 + 标记已解锁（用于标题页提示）」，避免到处重复。 */
+function unlockAudio() {
+  try {
+    music.unlock();
+    game.audioUnlocked = true;
+  } catch { /* 音乐失败不影响游戏 */ }
+}
+
 function onDown(e) {
   if (e.preventDefault) e.preventDefault();
   sound.ensure();
-  music.unlock(); // 浏览器自动播放限制：首次交互后才启动背景音乐
+  unlockAudio(); // 浏览器自动播放限制：首次交互后才启动背景音乐
   const p = toLocal(e);
   const ui = R.getUI(game);
   const btn = R.hitButton(ui, p.x, p.y);
@@ -310,6 +319,23 @@ on(hitNode, 'contextmenu', (e) => { if (e.preventDefault) e.preventDefault(); })
 
 on(window, 'resize', fit);
 on(window, 'orientationchange', () => setTimeout(fit, 120));
+
+/* 兜底解锁：即便首次点击落在画布之外（如页面留白、滚动条），
+ * 也能通过 document 级的一次性监听解锁背景音乐，避免「点了却没声」。 */
+function onceUnlock() {
+  unlockAudio();
+  if (typeof document !== 'undefined' && document.removeEventListener) {
+    document.removeEventListener('pointerdown', onceUnlock);
+    document.removeEventListener('keydown', onceUnlock);
+    document.removeEventListener('touchstart', onceUnlock);
+  }
+}
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('pointerdown', onceUnlock, { once: false });
+  document.addEventListener('keydown', onceUnlock, { once: false });
+  document.addEventListener('touchstart', onceUnlock, { once: false });
+}
+
 on(window, 'keydown', (e) => {
   // IE8/IE9 只有 keyCode，没有 e.key
   const k = e.key || String.fromCharCode(e.keyCode || 0);
