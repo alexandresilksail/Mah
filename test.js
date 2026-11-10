@@ -408,6 +408,32 @@ ok(/music:\s*game\.bgmOn/.test(read('src/main.js')) && /saved\.music !== false/.
 const tracksCheck = validateTracks();
 ok(tracksCheck.ok, '曲目数据自检通过（拍数 / 音名 / 音色）' + (tracksCheck.ok ? '' : '：' + tracksCheck.issues.join('；')));
 
+/* 运行时回归：背景音乐必须真的有信号到达扬声器。
+ * 曾因 _playNote 里音符混音总线 out.gain=0 且未被拉起，导致整条总线乘 0 → BGM 完全静音
+ *（音效是独立 sound 引擎，所以只听得到点击声、听不到音乐）。 */
+{
+  const { getMusic, _resetMusicSingletonForTests } = await import(new URL('./src/game/music.js', import.meta.url).href);
+  let gains = [];
+  class P { constructor(v){ this.value = v; } setValueAtTime(_, v){ this.value = v; } linearRampToValueAtTime(v){ this.value = v; } exponentialRampToValueAtTime(v){ this.value = Math.max(0.0001, v); } cancelScheduledValues(){} setTargetAtTime(v){ this.value = v; } }
+  class G { constructor(){ this.gain = new P(1); this.ins = []; gains.push(this); } connect(n){ this.ins.push(n); } }
+  class O { constructor(){ this.frequency = new P(440); } connect(n){ this.dest = n; } start(){} stop(){} }
+  class Ctx { constructor(){ this.state = 'suspended'; this.currentTime = 0; this.destination = new G(); } createGain(){ return new G(); } createOscillator(){ return new O(); } resume(){ this.state = 'running'; return Promise.resolve(); } suspend(){ this.state = 'suspended'; return Promise.resolve(); } }
+  globalThis.window = { AudioContext: Ctx };
+  globalThis.document = { addEventListener(){}, hidden: false };
+  _resetMusicSingletonForTests();
+  const m = getMusic();
+  m.playing = true; m.setTrack('title'); m.unlock(); m.setTrack('1'); m.play();
+  for (let i = 0; i < 20; i++) { m.ctx.currentTime += 0.15; m._tick(); }
+  const trackGain = m.trackGain;
+  const noteBuses = gains.filter(g => g !== trackGain && g !== m.master && g.ins.includes(trackGain));
+  const anyZero = noteBuses.some(g => g.gain.value === 0);
+  const anyOne = noteBuses.some(g => g.gain.value === 1);
+  const outProd = m.master.gain.value * trackGain.gain.value * (anyOne ? 1 : 0);
+  ok(noteBuses.length > 0 && !anyZero && anyOne && outProd > 0,
+    'BGM 运行时确有信号到达扬声器（' + noteBuses.length + ' 个音符总线增益均=1，修复 out.gain=0 静音）');
+  delete globalThis.window; delete globalThis.document;
+}
+
 /* ---------------- [9] 运行时生成耗时 ---------------- */
 line('\n[9] 运行时生成耗时');
 const t0 = Date.now();

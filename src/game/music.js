@@ -127,7 +127,7 @@ export class Music {
     if (!ctx) return;
     try {
       const out = ctx.createGain();
-      out.gain.value = 0;
+      out.gain.value = 1; // 混音总线：纯旁路（各声部独立的音量包络在 eg 上）
       out.connect(this.trackGain);
       const mk = (type, f, g, decay) => {
         const osc = ctx.createOscillator();
