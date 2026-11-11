@@ -138,3 +138,70 @@ npm run build                                # Portable zip + NSIS exe
 npm run test:release                         # 每关 1000 seed × 6 机器人 = 12000 局 → reports/DIFFICULTY.md
 npm run release                              # dist/SHA256SUMS.txt
 ```
+
+---
+
+## 8. 本轮修订：动态档位系统（源码层，未重新发版）
+
+> `dist/` 下的网页版 / Portable zip / NSIS Setup 仍是 2026-11-10 冻结产物，
+> 本轮**未重新构建**，`SHA256SUMS.txt` 与本文件 §1–§4 的校验和继续有效。
+> 档位表、存档字段、抽取时机详见 `README.md` §0.2。
+
+### 8.1 修改文件清单
+
+| 文件 | 状态 | 变更 |
+|---|---|---|
+| `src/game/config.js` | 改 | 10 个 L2 / 4 个 L1 静态档位表、`rollProfile`、层张数插值、`levelParams(level, rand, profileId)`、`RETRY_KEEPS_PROFILE` live binding |
+| `src/game/layout_profiles.js` | **新增** | 档位驱动布局：半格晶格 / 沙漏轮廓 / 44 张盲盒队列 / 同层零重叠 / z 全序 |
+| `src/game/save_data.js` | **新增** | `makeSaveData` / `applySaveToGame`：毕业写 `level=1`、`best` 保持、`p1`/`p2` 容错 |
+| `tools/gen_profiles.mjs` | **新增** | 大盘档枚举脚本，17 个合法 (N,T) 组合中选 8 个固化 |
+| `src/game/tile_types.js` | 改 | `mixFor(level, profile)` 支持档位花色配额 |
+| `src/game/generator.js` | 改 | `generateLevel(level, seed, {profile})`、按档位配额发牌、`validateLevel` 按当前档位校验；L1 档位路径改三张紧邻 |
+| `src/game/engine.js` | 改 | `profile`、`startNewRun`、`rollCurrentProfile`、`restartLevel`、`console.info` 复现日志 |
+| `src/main.js` | 改 | 启动重抽、重开重抽、毕业继续重抽、`persist(true)`、桌面异步存档不覆盖档位 |
+| `src/game/render.js` | 改 | 标题页「开始新一轮」判据统一为 `graduated`；动态「下一关」文案；「重玩本关」 |
+| `src/game/seed_pool.js` | 改 | 由扁平数组改为 `SEED_POOL['L2-<id>']` 分库 + `POOL_META.profiles` |
+| `tools/tune_pool.mjs` | 改 | 按 10 档离线筛选，每档 40 个合格种子，缺口如实上报 |
+| `src-tauri/src/main.rs` | 改 | `SAVE_FIELDS` 扩为 9 个字段，`p1`/`p2` 校验整数 `0..=63`，旧档缺字段不判非法 |
+| `test.js` | 改 | 重写为 13 个节区，覆盖第 1–5 节全部断言 |
+| `tools/test_render.mjs` | 改 | 截图分支适配分档 seed 池 |
+| `README.md` / `RELEASE_NOTES.md` / `DELIVERY.md` / `TEST_REPORT.md` | 改 | 同步档位系统、存档字段、测试结果 |
+
+### 8.2 `tune_pool` 生成结果（`node tools/tune_pool.mjs 200 40`）
+
+总耗时 **116906 ms（116.9 s）**；每档 200 候选，录取 40，全档**零缺口**。
+门槛：`minPending > 4`、`SOLVABLE_SHARE` 偏差 ≤3%、开局可点 19–25、
+平均压深 ≥ 0.28·N、最长遮挡链 ≥ N−8、random 0 通关、强策略可解。
+
+| 档位 | 合格种子 | 录取 | 缺口 | 耗时 |
+|---|---|---|---|---|
+| L2-0 | 174 | 40 | 0 | 14.8s |
+| L2-1 | 167 | 40 | 0 | 10.6s |
+| L2-2 | 163 | 40 | 0 | 13.0s |
+| L2-3 | 171 | 40 | 0 | 13.9s |
+| L2-4 | 172 | 40 | 0 | 12.1s |
+| L2-5 | 171 | 40 | 0 | 13.7s |
+| L2-6 | 151 | 40 | 0 | 9.8s |
+| L2-7 | 180 | 40 | 0 | 12.8s |
+| L2-8 | 169 | 40 | 0 | 6.4s |
+| L2-9 | 173 | 40 | 0 | 9.7s |
+
+### 8.3 存档字段变更
+
+| 字段 | 变更 |
+|---|---|
+| `v` | 仍为 2 |
+| `level` | 最后一关通关（`graduated`）即写 **1**，不再残留 2 |
+| `best` | 保持 2，用于「已毕业」徽标 |
+| `sound` / `sfxVol` | 不变 |
+| **`p1` / `p2`** | **新增**：两关当前档位 id，整数 `0..=63` |
+| `music` / `musicVol` | 前端不再写入；Rust 白名单保留以兼容旧档 |
+
+`SAVE_FIELDS` 由 7 个键扩为 9 个键；旧档缺 `p1`/`p2` 时按缺省档位 0 处理，不判非法。
+
+### 8.4 未达标项（如实上报，未放宽阈值）
+
+规格 5.2 的通关率 Wilson 上界阈值（每档 ≤3% / 合计 ≤1%）与规格 5.1
+「池内每个种子至少一条强策略可通关」互斥；真实逐档数据与断言结果见
+`TEST_REPORT.md` §6。按「不许放宽阈值」要求，阈值按字面写死在 `test.js`，
+未改阈值、未改测试凑数。

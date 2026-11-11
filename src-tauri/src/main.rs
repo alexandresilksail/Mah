@@ -33,7 +33,8 @@ const DATA_DIR: &str = "MahLeMah_Data";
 const MAX_SAVE_BYTES: usize = 64 * 1024;
 
 /// 存档 JSON 字段白名单：出现任何未知字段一律拒绝
-const SAVE_FIELDS: [&str; 7] = ["v", "level", "best", "sound", "sfxVol", "music", "musicVol"];
+/// p1 / p2 = 两关当前档位 id（本轮修订新增）；旧存档缺这两个字段时按缺省处理，不判非法。
+const SAVE_FIELDS: [&str; 9] = ["v", "level", "best", "sound", "sfxVol", "music", "musicVol", "p1", "p2"];
 
 fn exe_path() -> Result<PathBuf, String> {
     std::env::current_exe().map_err(|e| format!("无法定位程序路径: {e}"))
@@ -95,6 +96,16 @@ fn validate_save_json(data: &str) -> Result<(), String> {
             let n = val.as_i64().ok_or_else(|| format!("{key} 必须是整数"))?;
             if n < 0 || n > max {
                 return Err(format!("{key} 超出范围 0..{max}: {n}"));
+            }
+        }
+    }
+
+    // p1 / p2：档位 id，必须是 0..=63 的整数；缺失（旧存档）时跳过，不判非法
+    for key in ["p1", "p2"] {
+        if let Some(val) = obj.get(key) {
+            let n = val.as_i64().ok_or_else(|| format!("{key} 必须是整数"))?;
+            if !(0..=63).contains(&n) {
+                return Err(format!("{key} 超出范围 0..63: {n}"));
             }
         }
     }

@@ -1,5 +1,5 @@
 /** 入口：初始化画布缩放、输入、主循环、存档 */
-import { W, H, LEVEL_COUNT, SLOT_SIZE } from './game/config.js';
+import { W, H, LEVEL_COUNT, SLOT_SIZE, rollProfile } from './game/config.js';
 import { Game } from './game/engine.js';
 import { Sound } from './game/audio.js';
 import * as R from './game/render.js';
@@ -12,6 +12,7 @@ import {
   fetchDataDir,
 } from './game/store.js';
 import { generateLevel, verify } from './game/generator.js';
+import { makeSaveData, applySaveToGame } from './game/save_data.js';
 
 const canvas = document.getElementById('game');
 const stage = document.getElementById('stage');
@@ -113,15 +114,9 @@ function persist(force = false) {
   const now = nowMs();
   if (!force && now - lastSave < 800) return;
   lastSave = now;
-  // v:2 —— 音效独立开关与音量。旧档里的 music / musicVol 字段已废弃，
-  // 读入时忽略即可（Rust 白名单仍允许它们，保证旧存档不会被判非法）。
-  const data = {
-    v: 2,
-    level: game.level,
-    best: Math.max(1, game.best),
-    sound: game.soundOn,
-    sfxVol: game.sfxVol,
-  };
+  // v:2 —— 新增 p1 / p2（两关当前档位 id）。毕业时 level=1、best 保持 2；
+  // 旧档里的 music / musicVol 已废弃，读入时忽略（Rust 白名单仍兼容）。
+  const data = makeSaveData(game);
   writeSave(data);
   writeDesktopSave(data);
 }
@@ -131,11 +126,28 @@ function applyAudioSettings() {
   sound.setVolume(game.sfxVol);
 }
 
+/**
+ * 第 2.3 ②：重开本关（暂停菜单「重新开始」/ 失败面板「重开」/ 普通胜利面板
+ * 「重玩」共用同一分支）。RETRY_KEEPS_PROFILE=false 时只重抽当前关档位
+ * （结果 ≠ 当前档位）并换 seed；=true 时保持档位、只换 seed。
+ * 抽取后立即 persist(true) 写入 p1/p2，保证下次启动的「上次档位」是最新值。
+ */
+function restartLevel() {
+  game.restartLevel(Math.random); // 档位开关与 seed 重抽由 engine 统一处理
+  persist(true);
+}
+
 function handleButton(id) {
   if (id !== 'sound') sound.click();
   switch (id) {
     case 'start':
-      game.startLevel(game.level);
+      // 第 3.3 节：毕业后回标题再点「开始新一轮」= 从第 1 关开始且档位全新
+      if (game.graduated) {
+        game.startNewRun(Math.random);
+        persist(true);
+      } else {
+        game.startLevel(game.level);
+      }
       break;
     case 'sound':
       game.soundOn = !game.soundOn;
@@ -175,8 +187,14 @@ function handleButton(id) {
       break;
     case 'restart':
     case 'replay':
-      game.paused = false;
-      game.startLevel(game.level);
+      // 第 3.2 节：毕业面板的「再玩一次」走 startNewRun()；
+      // 非毕业状态走 2.3 ② 的重开本关。
+      if (game.graduated) {
+        game.startNewRun(Math.random);
+        persist(true);
+      } else {
+        restartLevel();
+      }
       break;
     case 'next':
       game.startLevel(game.level + 1);
@@ -367,13 +385,10 @@ function frame(now) {
 }
 
 /* ---------------- 启动 ---------------- */
-function applySave(saved) {
+function applySave(saved, preserveProfile = false) {
   if (!saved || typeof saved !== 'object') return;
-  game.level = Math.max(1, saved.level || 1);
-  game.best = Math.max(1, saved.best || 1);
-  // 旧存档兼容：v1 只有 sound 字段；旧档里的 music / musicVol 已废弃，直接忽略
-  game.soundOn = saved.sound !== false;
-  game.sfxVol = typeof saved.sfxVol === 'number' ? saved.sfxVol : 1;
+  // 第 4.3 节：p1/p2 容错读取（旧存档缺字段按缺省档位 0，不判非法）
+  applySaveToGame(game, saved, preserveProfile);
   applyAudioSettings();
 }
 
@@ -384,12 +399,18 @@ function boot() {
     if (dir) console.info('[mah] 数据目录 ' + dir);
   });
   applySave(loadSave());          // 同步：所有浏览器
-  syncDesktopSave(applySave);     // 异步：仅 Tauri 桌面端，稍晚覆盖
+  // 第 2.3 ①：启动后两关都重抽档位，各自 ≠ 存档里上次的 p1 / p2。
+  // 第 2.4 节：抽取后立即 persist(true) 写入 p1/p2。
+  game.profile.l1 = rollProfile(1, Math.random, game.profile.l1);
+  game.profile.l2 = rollProfile(2, Math.random, game.profile.l2);
+  persist(true);
+  // 异步桌面存档只覆盖音量等设置，不覆盖刚抽好的档位
+  syncDesktopSave((raw) => applySave(raw, true));
 
   // 启动自检：第 1 关校验可解性；第 2 关只做"发牌是否合法"的体检（不校验可解）
   try {
-    const l1 = generateLevel(1, 1234);
-    const l2 = generateLevel(2, 5678);
+    const l1 = generateLevel(1, 1234, { profile: game.profile.l1 });
+    const l2 = generateLevel(2, 5678, { profile: game.profile.l2 });
     const kinds = new Set(l2.cards.map((c) => c.type)).size;
     const legal = l2.cards.length % 3 === 0;
     console.info(

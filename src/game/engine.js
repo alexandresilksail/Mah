@@ -27,6 +27,8 @@ import {
   LEVEL_COUNT,
   layoutFor,
   levelParams,
+  rollProfile,
+  RETRY_KEEPS_PROFILE,
 } from './config.js';
 import { generateLevel, refreshBlocked, isCovered } from './generator.js';
 
@@ -113,6 +115,8 @@ export class Game {
     this.level = 1;
     this.best = 1;
     this.graduated = false;
+    // 第 2.1 节：当前两关各自使用的档位 id；每次启动 / 重开 / 新一轮都会重抽
+    this.profile = { l1: 0, l2: 0 };
     this.layout = layoutFor(1);
     this.soundOn = true;
     this.seed = 0;
@@ -142,9 +146,17 @@ export class Game {
 
   /* -------------------- 生命周期 -------------------- */
 
+  /**
+   * 第 2.5 节：每局都按当前关卡的档位生成，层数 / 牌种类 / 张数全部来自档位；
+   * 不传 seed 时从第 2 关当前档位的 seed 池抽（第 1 关随机），保证重开必换 seed。
+   */
   startLevel(level, seed) {
     const lv = Math.min(LEVEL_COUNT, Math.max(1, level | 0));
-    const data = generateLevel(lv, seed === undefined ? undefined : seed);
+    const pid = lv <= 1 ? this.profile.l1 : this.profile.l2;
+    const data = generateLevel(lv, seed === undefined ? undefined : seed, { profile: pid });
+    if (typeof console !== 'undefined' && console.info) {
+      console.info(`[mah] level=${lv} profileId=${pid} seed=${data.seed}`);
+    }
     this.cards = data.cards;
     this.layersMeta = data.layers || [];
     this.solution = data.solution;
@@ -173,6 +185,37 @@ export class Game {
     this.maxZ = this.cards.reduce((m, c) => Math.max(m, c.z), 0);
     this.levelStartAt = nowMs();
     this.refresh(true);
+  }
+
+  /**
+   * 第 3.2 节：毕业面板「再玩一次」/ 标题页「开始新一轮」。
+   * rollProfile 两关（各自 ≠ 当前档位）→ level=1 → startLevel(1)。
+   * graduated 由 startLevel 清零；persist(true) 由 main.js 在调用后执行。
+   */
+  startNewRun(rand = Math.random) {
+    this.profile.l1 = rollProfile(1, rand, this.profile.l1);
+    this.profile.l2 = rollProfile(2, rand, this.profile.l2);
+    this.level = 1;
+    this.startLevel(1);
+  }
+
+  /** 第 2.3 ②：重开本关只重抽当前关档位（结果 ≠ 当前档位），seed 由 startLevel 重抽 */
+  rollCurrentProfile(rand = Math.random) {
+    const lv = this.level;
+    const key = lv <= 1 ? 'l1' : 'l2';
+    this.profile[key] = rollProfile(lv, rand, this.profile[key]);
+    return this.profile[key];
+  }
+
+  /**
+   * 重开本关（暂停菜单 / 失败面板 / 普通胜利面板共用）。
+   * RETRY_KEEPS_PROFILE=false：重抽档位 + 换 seed；true：保持档位、只换 seed。
+   * main.js 调用后再 persist(true) 写 p1/p2。
+   */
+  restartLevel(rand = Math.random) {
+    this.paused = false;
+    if (!RETRY_KEEPS_PROFILE) this.rollCurrentProfile(rand);
+    this.startLevel(this.level); // 不传 seed → 从当前档位池重抽 / L1 随机，必换 seed
   }
 
   refresh(withIntro = false) {

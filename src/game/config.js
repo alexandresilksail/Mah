@@ -102,6 +102,159 @@ export const LEVEL_MIX = {
   },
 };
 
+/* ==================== 档位系统（本轮修订：静态档位表，不是运行时随机数） ==================== */
+
+/**
+ * LEVEL2_PROFILES —— 10 个 L2 预设。
+ *
+ * 大盘档 id 0..7 由 tools/gen_profiles.mjs 枚举后固化为静态表：
+ *   N ∈ [22,28]、T ∈ [13,16]、mainCount = round(9.9·N)（对齐 3 的倍数）、
+ *   total = mainCount + 44、G = total/3、G/T ∈ [6.5,8.0]、
+ *   groupsPerType 只取 floor(G/T) 或 ceil(G/T)，相差 ≤1，总和 = G。
+ *   8 档 weight 合计 0.70；layers 覆盖 22..28 共 7 种、types 覆盖 13..16 共 4 种；
+ *   id 0 = (28 层, 15 种, 321 张) 原作基准档。
+ *
+ * 轻量档 id 8/9 不受 G/T 范围约束，weight 合计 0.30。
+ *   ⚠️ 档 B 原文写「256 张 = 85 组 / 主堆 212 + 队列 44」与三消规则冲突
+ *   （85 组 × 3 = 255 张）。经确认按 85 组实现：255 张 = 211 + 44，20 层。
+ *   ⚠️ 轻量档的层数（15 / 20）是按 9.9 张/层估算得出的，不是原作数据。
+ */
+export const LEVEL2_PROFILES = [
+  { id: 0, layers: 28, types: 15, mainCount: 277, queueCount: 44, groups: 107, groupsPerType: [8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 1, layers: 24, types: 13, mainCount: 238, queueCount: 44, groups: 94, groupsPerType: [8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 2, layers: 26, types: 14, mainCount: 256, queueCount: 44, groups: 100, groupsPerType: [8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 3, layers: 27, types: 16, mainCount: 268, queueCount: 44, groups: 104, groupsPerType: [7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6], weight: 0.0875, kind: 'large' },
+  { id: 4, layers: 23, types: 13, mainCount: 229, queueCount: 44, groups: 91, groupsPerType: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 5, layers: 25, types: 13, mainCount: 247, queueCount: 44, groups: 97, groupsPerType: [8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 6, layers: 22, types: 13, mainCount: 217, queueCount: 44, groups: 87, groupsPerType: [7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6], weight: 0.0875, kind: 'large' },
+  { id: 7, layers: 27, types: 14, mainCount: 268, queueCount: 44, groups: 104, groupsPerType: [8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7], weight: 0.0875, kind: 'large' },
+  { id: 8, layers: 15, types: 15, mainCount: 148, queueCount: 44, groups: 64, groupsPerType: [5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], weight: 0.15, kind: 'lite' },
+  { id: 9, layers: 20, types: 15, mainCount: 211, queueCount: 44, groups: 85, groupsPerType: [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5], weight: 0.15, kind: 'lite' },
+];
+
+/**
+ * LEVEL1_PROFILES —— 4 个 L1 预设（第一关其余规则不变，权重各 0.25）。
+ * 每种花色恰好 1 组：groups = types，总张数 = 3 × types。
+ */
+export const LEVEL1_PROFILES = [
+  { id: 0, layers: 2, types: 8, mainCount: 24, queueCount: 0, groups: 8, groupsPerType: [1, 1, 1, 1, 1, 1, 1, 1], weight: 0.25, kind: 'l1' },
+  { id: 1, layers: 3, types: 10, mainCount: 30, queueCount: 0, groups: 10, groupsPerType: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], weight: 0.25, kind: 'l1' },
+  { id: 2, layers: 3, types: 12, mainCount: 36, queueCount: 0, groups: 12, groupsPerType: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], weight: 0.25, kind: 'l1' },
+  { id: 3, layers: 3, types: 16, mainCount: 48, queueCount: 0, groups: 16, groupsPerType: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], weight: 0.25, kind: 'l1' },
+];
+
+/** false = 重开本关时重抽档位（同时换 seed）；true = 保持档位只换 seed。
+ *  用 let + setter 而不是 const：测试需要在同一进程里切到 true 验证开关语义，
+ *  ESM 的 live binding 让 engine.js 读到的是最新值。 */
+export let RETRY_KEEPS_PROFILE = false;
+export function setRetryKeepsProfile(v) { RETRY_KEEPS_PROFILE = !!v; }
+
+export function profilesFor(level) {
+  return level <= 1 ? LEVEL1_PROFILES : LEVEL2_PROFILES;
+}
+
+/** 按 id 取档位；非法 id 回退到该关第 0 档（旧存档无 p1/p2 时走这里）。 */
+export function profileFor(level, id) {
+  const list = profilesFor(level);
+  if (Number.isInteger(id) && id >= 0 && id < list.length) return list[id];
+  return list[0];
+}
+
+/**
+ * 只重抽指定关卡的档位：排除 current 后按 weight 重新归一化。
+ * rand 可注入（测试用确定性随机源）；结果 id 必定 ≠ current。
+ */
+export function rollProfile(level, rand = Math.random, current) {
+  const list = profilesFor(level);
+  const pool = list.filter((p) => p.id !== current);
+  let total = 0;
+  for (const p of pool) total += p.weight;
+  let r = rand();
+  if (!(r >= 0) || r >= 1) r = 0;
+  let acc = 0;
+  for (const p of pool) {
+    acc += p.weight / total;
+    if (r < acc) return p.id;
+  }
+  return pool[pool.length - 1].id;
+}
+
+/**
+ * 第 1.2 节：28 层基准曲线（沙漏轮廓）→ 按顶部 25% / 中段 36% / 底部核心 39%
+ * 的层数占比线性插值到 N 层，再归一化到 mainCount。
+ *
+ * ⚠️ 本轮工作区里没有第五轮修订版代码，原 28 层基准曲线的逐层数值未提供。
+ * 这里按本轮 1.2 的占比与「沙漏轮廓」约束重建基准曲线：顶部宽 → 中段收窄 →
+ * 底部核心最厚，全程确定性、零随机数；半格晶格与盲盒队列规则保持不变。
+ */
+const BASE28_SEGMENTS = [
+  { ratio: 0.25, n: 7, from: 1.30, to: 0.82 },  // 顶部 25%
+  { ratio: 0.36, n: 10, from: 0.78, to: 0.60 }, // 中段 36%（腰部最细）
+  { ratio: 0.39, n: 11, from: 0.72, to: 1.45 }, // 底部核心 39%（最厚）
+];
+
+/** 把一段基准权重线性重采样到 m 个点 */
+function resample(seg, m) {
+  const out = [];
+  if (m <= 1) return [seg.from];
+  for (let i = 0; i < m; i++) {
+    const u = i / (m - 1);
+    out.push(seg.from + (seg.to - seg.from) * u);
+  }
+  return out;
+}
+
+/** 归一化到整数层张数：每层 ≥1，总和严格 = total */
+function normalizePlan(weights, total) {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const plan = weights.map((w) => Math.max(1, Math.round((w / sum) * total)));
+  let err = total - plan.reduce((a, b) => a + b, 0);
+  let guard = 0;
+  while (err !== 0 && guard++ < 10000) {
+    // 余量优先摊到权重最大的层，保持沙漏形状不被小层吃掉
+    let bi = 0;
+    for (let i = 1; i < weights.length; i++) if (weights[i] > weights[bi]) bi = i;
+    const idx = (guard - 1) % plan.length;
+    const i = err > 0 ? idx : bi;
+    if (err > 0) { plan[i]++; err--; }
+    else if (plan[i] > 1) { plan[i]--; err++; }
+  }
+  return plan;
+}
+
+/** 当前档位的主堆层张数曲线（长度 = profile.layers，总和 = profile.mainCount） */
+export function layerPlanFor(profile) {
+  if (!profile) return [];
+  if (profile.level === 1 || profile.kind === 'l1') {
+    // 第 1.3 节：2 层按 60/40，3 层按 50/33/17
+    const w = profile.layers === 2 ? [0.60, 0.40] : [0.50, 0.33, 0.17];
+    return normalizePlan(w, profile.mainCount);
+  }
+  const N = profile.layers;
+  const n1 = Math.max(1, Math.round(N * BASE28_SEGMENTS[0].ratio));
+  const n2 = Math.max(1, Math.round(N * BASE28_SEGMENTS[1].ratio));
+  const n3 = Math.max(1, N - n1 - n2);
+  const counts = [n1, n2, N - n1 - n2 >= 1 ? N - n1 - n2 : n3];
+  const weights = [];
+  for (let s = 0; s < 3; s++) {
+    const part = resample(BASE28_SEGMENTS[s], counts[s]);
+    for (const w of part) weights.push(w);
+  }
+  // 极端情况下层数分配可能与 N 差 1，这里补齐 / 截断到严格 N 层
+  while (weights.length < N) weights.push(BASE28_SEGMENTS[2].to);
+  weights.length = N;
+  return normalizePlan(weights, profile.mainCount);
+}
+
+/** 档位对应的 16 长度花色配额（单位：三消组数）；未用到的花色为 0 */
+export function groupsPerTypeFor(level, profile) {
+  if (!profile) return null;
+  const out = new Array(16).fill(0);
+  const gpt = profile.groupsPerType;
+  for (let i = 0; i < gpt.length && i < 16; i++) out[i] = gpt[i];
+  return out;
+}
+
 /* ==================== 布局外形参数（阶段 4 的模板系统读取） ==================== */
 
 export const LAYOUT_SHAPE = {
@@ -297,22 +450,58 @@ export const C = {
 
 /* ==================== 关卡参数 ==================== */
 
-export function levelParams(level, rand = Math.random) {
+/**
+ * 关卡参数：传入 profileId 时全部从当前档位读取（层数 / 牌种类 / 张数 / 层计划）；
+ * 不传时保持 v2 的 LEVEL_SPEC 行为，兼容旧工具与旧测试。
+ */
+export function levelParams(level, rand = Math.random, profileId) {
   void rand;
-  const spec = LEVEL_SPEC[level <= 1 ? 1 : 2];
+  const lv = level <= 1 ? 1 : 2;
+  const spec = LEVEL_SPEC[lv];
+  const profile = Number.isInteger(profileId) ? profileFor(lv, profileId) : null;
+  if (!profile) {
+    return {
+      level: spec.level,
+      triples: spec.cardCount / 3,
+      cardCount: spec.cardCount,
+      layers: spec.layers,
+      types: spec.types,
+      props: { ...spec.props },
+      reviveMax: spec.reviveMax,
+      layout: layoutFor(spec.level),
+      mode: spec.level === 1 ? 'tutorial' : 'multi-zone',
+      plan: spec.plan.slice(),
+      funnel: { ...FUNNEL },
+      spec,
+      profileId: null,
+      profile: null,
+      queueCount: 0,
+      groups: spec.groups,
+    };
+  }
+  const cardCount = profile.mainCount + profile.queueCount;
   return {
-    level: spec.level,
-    triples: spec.cardCount / 3,
-    cardCount: spec.cardCount,
-    layers: spec.layers,
-    types: spec.types,
+    level: lv,
+    triples: cardCount / 3,
+    cardCount,
+    layers: profile.layers,
+    types: profile.types,
     props: { ...spec.props },
     reviveMax: spec.reviveMax,
-    layout: layoutFor(spec.level),
-    mode: spec.level === 1 ? 'tutorial' : 'multi-zone',
-    plan: spec.plan.slice(),
+    layout: layoutFor(lv),
+    mode: lv === 1 ? 'tutorial' : 'multi-zone',
+    plan: layerPlanFor(profile),
     funnel: { ...FUNNEL },
-    spec,
+    spec: {
+      level: lv, cardCount, groups: profile.groups, layers: profile.layers,
+      types: profile.types, plan: layerPlanFor(profile),
+      props: { ...spec.props }, reviveMax: spec.reviveMax,
+      template: spec.template,
+    },
+    profileId: profile.id,
+    profile,
+    queueCount: profile.queueCount,
+    groups: profile.groups,
   };
 }
 

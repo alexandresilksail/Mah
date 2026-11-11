@@ -21,6 +21,7 @@ import {
   MENU_BTN,
   SETTINGS_BTN,
   SOUND_BTN,
+  levelParams,
 } from './config.js';
 import { rr, circle, text, clamp, easeOutCubic } from './draw.js';
 import { drawTile, drawTileShadow } from './tiles.js';
@@ -51,7 +52,11 @@ export function getUI(game) {
   }
 
   if (game.screen === 'title') {
-    push('start', W / 2 - 150, 880, 300, 86, '开始游戏', { kind: 'primary', size: 32 });
+    // 第 3.3 节：只有真正「毕业」后回到标题才显示「开始新一轮」。
+    // 判据必须与 main.js case 'start' 一致（graduated），不能用 best >= LEVEL_COUNT：
+    // 第 1 关通关时 best 就会被写成 2，那样按钮文字会与「继续当前关」的实际行为不符。
+    push('start', W / 2 - 150, 880, 300, 86,
+      game.graduated ? '开始新一轮' : '开始游戏', { kind: 'primary', size: 32 });
     push('settings', SETTINGS_BTN.x, SETTINGS_BTN.y, SETTINGS_BTN.w, SETTINGS_BTN.h, '', { kind: 'icon' });
     push('sound', SOUND_BTN.x, SOUND_BTN.y, SOUND_BTN.w, SOUND_BTN.h, '', { kind: 'icon' });
     // v2.0.0：只展示「如何用正规卸载程序卸载」，前端不再自删除
@@ -91,8 +96,10 @@ export function getUI(game) {
       push('replay', W / 2 - 210, 700, 200, 76, '再玩一次', { kind: 'primary', size: 26 });
       push('home', W / 2 + 10, 700, 200, 76, '回到标题', { kind: 'ghost', size: 24 });
     } else {
-      push('next', W / 2 - 210, 700, 200, 76, '进入第 2 关', { kind: 'primary', size: 24 });
-      push('home', W / 2 + 10, 700, 200, 76, '回到标题', { kind: 'ghost', size: 24 });
+      // 第 2.3 ②：普通胜利面板也提供「重玩本关」，与 restart / 失败面板共用重开分支
+      push('next', 100, 700, 165, 76, '进入第 2 关', { kind: 'primary', size: 22 });
+      push('replay', 277, 700, 165, 76, '重玩本关', { kind: 'ghost', size: 22 });
+      push('home', 454, 700, 165, 76, '回到标题', { kind: 'ghost', size: 22 });
     }
   } else if (game.status === 'lose') {
     if (game.reviveLeft > 0) {
@@ -904,7 +911,11 @@ export function drawOverlay(ctx, game, ui) {
         size: 22,
         fill: C.textDim,
       });
-      text(ctx, '下一关：240 张 · 多区域 15 层 · 真正的坎', W / 2, 610, { size: 19, fill: C.orange });
+      // 第 2.5 节：张数 / 层数 / 牌种数全部从下一关当前档位读取，不硬编码
+      const nextLv = Math.min(LEVEL_COUNT, game.level + 1);
+      const np = levelParams(nextLv, Math.random, nextLv <= 1 ? game.profile.l1 : game.profile.l2);
+      text(ctx, `下一关：${np.cardCount} 张 · ${np.types} 种 · ${np.layers} 层 · 真正的坎`,
+        W / 2, 610, { size: 19, fill: C.orange });
       text(ctx, '开局管够，越往下越不讲道理', W / 2, 642, { size: 18, fill: C.textDim });
     }
     drawButtons(ctx, ui, game);

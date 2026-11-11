@@ -17,13 +17,14 @@
 import {
   TILE_W, TILE_H, TILE_AREA, OVERLAP_THRESHOLD, SLOT_CAPACITY,
   LEVEL_SPEC, LEVEL_MIX, BAND_RATIOS, FUNNEL, DIFFICULTY,
-  levelParams, clampDifficulty,
+  levelParams, clampDifficulty, profileFor, profilesFor,
 } from './config.js';
 import { suitsFor, TYPE_IDS, TYPE_COUNT } from './tiles.js';
 import { mixFor, validateRegistry } from './tile_types.js';
 import { makeRng, randomSeed } from './rng.js';
 import { pickPoolSeed } from './seed_pool.js';
 import { templateFor } from './layout_templates.js';
+import { generateProfileLayout } from './layout_profiles.js';
 import {
   generateLayout, peelOrder, overlapArea, isBlocked,
   buildBlockerGraph, regionStats, crossOcclusionStats, sameLayerOverlapCount,
@@ -159,8 +160,15 @@ export function buildFunnelSequence(n, waves, suits, cfg, rng, ctx) {
   const spec = LEVEL_MIX[level <= 1 ? 1 : 2];
   const topEnd = Math.max(3, Math.min(n - 6, align3(Math.round(n * BAND_RATIOS[0]))));
   const midEnd = Math.min(n - 3, topEnd + Math.max(3, align3(Math.round(n * BAND_RATIOS[1]))));
-  const span = level === 1 ? 2 : Math.max(1, Math.min(3, (cfg && cfg.MID_SPAN) || FUNNEL.MID_SPAN));
-  const remaining = mixFor(level);
+  // 第 1.3 / 5.2 节：档位驱动的第一关是新布局（2 层或 3 层、张数 24~48），
+  // 层张数按 60/40 或 50/33/17 后顶层比旧模板更薄，若沿用 span=2 的批次发牌，
+  // 完整信息贪心机器人通关率会掉到 88%（档 3），达不到 5.2 的 ≥95%。
+  // 因此档位路径下第一关中/下带改为三张紧邻（span=1）：教学关本就该容易通关，
+  // 且证书 / 三消规则 / 道具等其余规则完全不变。不带档位的旧调用仍保持 span=2。
+  const span = level === 1
+    ? (ctx.profile ? 1 : 2)
+    : Math.max(1, Math.min(3, (cfg && cfg.MID_SPAN) || FUNNEL.MID_SPAN));
+  const remaining = mixFor(level, ctx.profile);
   const tpl = templateFor(level);
   const biasByRegion = {};
   for (let zi = 0; zi < tpl.zones.length; zi++) biasByRegion[tpl.zones[zi].name] = tpl.zones[zi].bias;
@@ -245,7 +253,7 @@ export function buildFunnelSequence(n, waves, suits, cfg, rng, ctx) {
   if (!cert.ok) {
     // 证书失败时退回「全部紧邻三消」的安全序列（每种张数仍为 3 的倍数）
     const safe = new Array(n);
-    const safeRemaining = mixFor(level);
+    const safeRemaining = mixFor(level, ctx.profile);
     for (let p = 0; p < n; p += 3) {
       let idx = -1;
       for (let i = 0; i < safeRemaining.length; i++) if (safeRemaining[i] > 0) { idx = i; break; }
@@ -325,13 +333,26 @@ function layerMeta(cards, layers) {
  */
 export function generateLevel(level, seed, opt = {}) {
   const lv = level <= 1 ? 1 : 2;
-  const s = (seed === undefined ? (lv === 1 ? randomSeed() : pickPoolSeed()) : seed) >>> 0;
+  // 第 2.5 节：generateLevel(level, seed, { profile }) —— 档位决定层数 / 牌种类 / 张数。
+  // profile 可以是档位对象，也可以是档位 id；opt.profileId 作为显式 id 同样支持。
+  let profile = null;
+  const rawProfile = opt.profile !== undefined ? opt.profile : opt.profileId;
+  if (rawProfile !== undefined && rawProfile !== null) {
+    profile = typeof rawProfile === 'number'
+      ? profileFor(lv, rawProfile)
+      : rawProfile;
+  }
+  const s = (seed === undefined
+    ? (lv === 1 ? randomSeed() : pickPoolSeed(lv, profile ? profile.id : null))
+    : seed) >>> 0;
   const rng = makeRng(s);
-  const p = levelParams(level, () => rng.next());
+  const p = levelParams(level, () => rng.next(), profile ? profile.id : undefined);
   const cfg = { ...FUNNEL, ...(opt.funnel || {}) };
   p.funnel = cfg;
-  const suits = suitsFor(p.level); // 16 种，两关一致
-  const src = generateLayout(s, { level: p.level, plan: opt.plan || p.plan });
+  const suits = suitsFor(p.level); // 16 种注册表；实际使用种类由档位配额决定
+  const src = profile
+    ? generateProfileLayout(s, profile)
+    : generateLayout(s, { level: p.level, plan: opt.plan || p.plan });
   const cards = src.map(baseCard);
   assignZ(cards);
   const byId = {};
@@ -339,7 +360,7 @@ export function generateLevel(level, seed, opt = {}) {
   const graph = buildBlockerGraph(cards);
   const order = peelOrder(cards, () => rng.next());
   const funnel = buildFunnelSequence(cards.length, order.waves, suits, cfg, rng, {
-    level: p.level, order, byId, cards, graph, seed: s,
+    level: p.level, order, byId, cards, graph, seed: s, profile,
   });
   const typeSeq = funnel.types;
   for (let i = 0; i < order.length; i++) {
@@ -353,7 +374,9 @@ export function generateLevel(level, seed, opt = {}) {
 
   return {
     cards,
-    layers: layerMeta(cards, p.layers),
+    layers: layerMeta(cards, profile ? p.layers + (p.queueCount ? 8 : 0) : p.layers),
+    profile,
+    profileId: profile ? profile.id : null,
     solution: order.slice(),
     order,
     waves: order.waves,
@@ -383,20 +406,31 @@ export function validateLevel(data) {
   const cards = data.cards;
   const reg = validateRegistry();
   if (!reg.ok) issues.push('牌型注册表非法：' + reg.issues.join('；'));
-  // 1) 16 种牌型全部出现
+  // 1) 牌型种类数 = 当前档位（无档位时用注册表全 16 种）
   const seen = {};
   for (let i = 0; i < cards.length; i++) seen[cards[i].type] = 1;
   const kinds = [];
   for (const k in seen) if (Object.prototype.hasOwnProperty.call(seen, k)) kinds.push(k);
-  if (kinds.length !== TYPE_COUNT) issues.push(`牌型数 ${kinds.length} ≠ 16`);
-  // 2) 每种张数 %3 == 0 且 > 0
+  const expectKinds = data.params && data.params.types ? data.params.types : TYPE_COUNT;
+  if (kinds.length !== expectKinds) issues.push(`牌型数 ${kinds.length} ≠ 档位 ${expectKinds}`);
+  // 2) 每种张数 %3 == 0；档位配额内 >0，配额外必须为 0
+  const mix = data.profile ? mixFor(data.params.level, data.profile) : null;
   for (let i = 0; i < TYPE_IDS.length; i++) {
     const n = cards.reduce((a, c) => a + (c.type === TYPE_IDS[i] ? 1 : 0), 0);
-    if (n === 0 || n % 3 !== 0) issues.push(`${TYPE_IDS[i]} 张数 ${n} 不是 3 的倍数`);
+    const want = mix ? mix[i] * 3 : null;
+    if (n % 3 !== 0) issues.push(`${TYPE_IDS[i]} 张数 ${n} 不是 3 的倍数`);
+    if (want === null) {
+      if (n === 0) issues.push(`${TYPE_IDS[i]} 张数为 0`);
+    } else if (n !== want) {
+      issues.push(`${TYPE_IDS[i]} 张数 ${n} ≠ 档位配额 ${want}`);
+    }
   }
-  // 3) 总数与布局一致
-  if (cards.length !== LEVEL_SPEC[data.params.level].cardCount) {
-    issues.push(`牌数 ${cards.length} ≠ 规格 ${LEVEL_SPEC[data.params.level].cardCount}`);
+  // 3) 总数与布局一致（按当前档位，不再读死 LEVEL_SPEC）
+  const expectTotal = data.params && data.params.cardCount
+    ? data.params.cardCount
+    : LEVEL_SPEC[data.params.level].cardCount;
+  if (cards.length !== expectTotal) {
+    issues.push(`牌数 ${cards.length} ≠ 档位 ${expectTotal}`);
   }
   // 4) 所有牌都在几何剥离顺序里（可达）
   const inOrder = {};

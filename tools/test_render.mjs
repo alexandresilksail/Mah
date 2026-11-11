@@ -217,7 +217,9 @@ if (process.argv.includes('--shots')) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const port = parseInt(process.env.CDP_PORT || '9333', 10);
   const pageUrl = 'file:///' + path.join(root, 'dist', 'index.html').replace(/\\/g, '/');
-  const seeds = [SEED_POOL[0], SEED_POOL[Math.floor(SEED_POOL.length / 2)], SEED_POOL[SEED_POOL.length - 1]];
+  // seed 池已按档位分库：SEED_POOL['L2-<id>']，不再是扁平数组
+  const pool = SEED_POOL['L2-0'];
+  const seeds = [pool[0], pool[Math.floor(pool.length / 2)], pool[pool.length - 1]];
 
   let list;
   try {

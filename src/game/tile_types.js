@@ -70,8 +70,18 @@ export function validateRegistry() {
   return { ok: issues.length === 0, issues, count: TILE_TYPES.length };
 }
 
-/** 每关的牌型组数配额（单位：三消组，不是张数） */
-export function mixFor(level) {
+/**
+ * 每关的牌型组数配额（单位：三消组，不是张数）。
+ * 传入档位时按 profile.groupsPerType 返回（前 types 种有效，其余为 0）；
+ * 不传时保持 v2 的固定配额，兼容旧调用与旧测试。
+ */
+export function mixFor(level, profile) {
+  if (profile && Array.isArray(profile.groupsPerType)) {
+    const out = new Array(16).fill(0);
+    const gpt = profile.groupsPerType;
+    for (let i = 0; i < gpt.length && i < 16; i++) out[i] = gpt[i];
+    return out;
+  }
   const raw = level <= 1
     ? [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     : [7, 7, 6, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4];

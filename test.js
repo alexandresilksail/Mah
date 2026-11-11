@@ -2,41 +2,57 @@
  * MahLeMah v2.0.0 可执行验证（Node 运行，不依赖 DOM）：node test.js / npm run test:sim
  *
  * 覆盖：
- *   [1] 单一常量源 / 版本号 / 两关规格 / 三带比例
- *   [2] 16 种牌型唯一注册表 + 两关牌面集合一致
- *   [3] 两关独立布局模板 + 几何契约（30 seed × 2 关逐个 assert）
- *   [4] 关卡构造：16 种全出现 / 每种 %3==0 / 总数 / 证书 / verify / 三带边界
- *   [5] seed 池：120 个池内 seed 全部合法 + POOL_META 完整
- *   [6] 引擎规则：7 格槽位 / 三消 / 200ms 延迟 / 道具配额（规则本身未改）
- *   [7] 六种机器人难度报告 + 软指标（达不到如实标 ✗，不改阈值不改测试）
- *   [8] 视觉 / 兼容版 / Tauri 最小权限 / 版本号的静态验收
- *   [9] 运行时生成耗时
+ *   [1]  单一常量源 / 版本号 / 两关旧规格（无档位兼容路径）
+ *   [2]  16 种牌型唯一注册表
+ *   [3]  两关独立布局模板 + 几何契约（30 seed × 2 关）
+ *   [3b] 模板校验反例
+ *   [4]  旧路径关卡构造：16 种 / 三倍数 / 证书 / verify / 三带边界
+ *   [5]  分档 seed 池 SEED_POOL['L2-<id>'] 与 POOL_META（第 5.1 节）
+ *   [6]  槽位 / 三消 / 道具规则
+ *   [7]  两关静态档位表 / 层张数插值 / levelParams（第 1、2.5 节）
+ *   [8]  视觉 / 兼容版 / Tauri 最小权限 / 版本号
+ *   [8b] Rust 存档加固 + p1/p2 白名单（第 4.2 节）
+ *   [8c] 生产包零 BGM / 仅音效 + 运行时音频回归
+ *   [9]  运行时生成耗时
+ *   [10] 分档关卡构造与几何验收（第 5.2 节结构部分）
+ *   [11] 分档机器人难度验收（第 5.2 节统计部分）
+ *   [12] rollProfile / 重开 / 通关 / 存档（第 5.3 节）
+ *   [13] 界面文案与源码一致性（第 2.5 / 3.2 / 3.3 / 4.2 节）
  *
  * 硬断言失败累加到 fail，末尾 process.exit(1)。
- * 所有实测值来自本机真实运行；软指标只报告，不影响退出码。
+ * 所有实测值来自本机真实运行；阈值按规格原文写死，不放宽、不改测试凑数。
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   VERSION, TILE_W, TILE_H, TILE_AREA, LATTICE_X, LATTICE_Y,
   SLOT_CAPACITY, OVERLAP_THRESHOLD, MATCH_DELAY_MS,
   LEVEL_SPEC, LEVEL_MIX, LEVEL_COUNT, BAND_RATIOS, LAYOUT_SHAPE, DIFFICULTY,
+  LEVEL2_PROFILES, LEVEL1_PROFILES, profilesFor, profileFor, rollProfile,
+  RETRY_KEEPS_PROFILE, setRetryKeepsProfile, layerPlanFor, groupsPerTypeFor,
+  levelParams,
 } from './src/game/config.js';
 import {
   TILE_TYPES, TYPE_IDS, TYPE_COUNT, TYPE_BY_ID, validateRegistry, mixFor,
 } from './src/game/tile_types.js';
-import { TEMPLATES, validateTemplate, clampTemplate, templateFor, describeTemplates } from './src/game/layout_templates.js';
+import {
+  TEMPLATES, validateTemplate, clampTemplate, templateFor, describeTemplates,
+} from './src/game/layout_templates.js';
 import {
   generateLevel, validateLevel, verify, replayTypes, refreshBlocked, countVisible,
 } from './src/game/generator.js';
 import {
   generateLayout, layoutReport, isHalfLattice, countComponents,
   sameLayerOverlapCount, crossOcclusionStats, pressureStats, hasSupport, planForSeed,
+  buildBlockerGraph,
 } from './src/game/layout.js';
+import { generateProfileLayout, describeProfileLayout } from './src/game/layout_profiles.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot, runDifficultySuite } from './src/game/robots.js';
-import { slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
+import { Game, slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
 import { makeRng } from './src/game/rng.js';
 import { SEED_POOL, POOL_META, pickPoolSeed } from './src/game/seed_pool.js';
+import { makeSaveData, applySaveToGame } from './src/game/save_data.js';
 
 let pass = 0;
 let fail = 0;
@@ -45,17 +61,46 @@ const ok = (cond, msg) => {
   else { fail++; console.error('  ✗ ' + msg); }
 };
 const soft = (cond, msg) => console.log('  ' + (cond ? '✓' : '✗') + ' ' + msg);
-const pct = (v) => (v * 100).toFixed(1) + '%';
+const pct = (v) => (v * 100).toFixed(2) + '%';
 const line = (s) => console.log(s);
 const ROOT = new URL('.', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 
+/** 95% Wilson 二项比例上界（规格 5.2 用） */
+function wilsonUpper(k, n, z = 1.96) {
+  if (n <= 0) return 1;
+  const p = k / n;
+  const z2 = z * z;
+  const denom = 1 + z2 / n;
+  const centre = p + z2 / (2 * n);
+  const margin = z * Math.sqrt((p * (1 - p) + z2 / (4 * n)) / n);
+  return (centre + margin) / denom;
+}
+
+/** 最长遮挡链：与 tools/tune_pool.mjs 完全相同的定义 */
+function longestChain(cards, graph) {
+  const memo = {};
+  let visiting = 0;
+  const dfs = (id) => {
+    if (memo[id] !== undefined) return memo[id];
+    if (++visiting > 1000000) return 1;
+    let m = 1;
+    const bs = graph.blockers[id] || [];
+    for (let i = 0; i < bs.length; i++) m = Math.max(m, 1 + dfs(bs[i]));
+    memo[id] = m;
+    return m;
+  };
+  let best = 0;
+  for (const c of cards) best = Math.max(best, dfs(c.id));
+  return best;
+}
+
 line('============================================================================');
-line(' MahLeMah v' + VERSION + ' 验证 · 16 牌型 / 双关卡模板 / 六机器人难度 / 最小权限');
+line(' MahLeMah v' + VERSION + ' 验证 · 动态档位 / 分档 seed 池 / 六机器人难度 / 最小权限');
 line('============================================================================');
 line(' Node ' + process.version);
 
 /* ---------------- [1] 单一常量源 ---------------- */
-line('\n[1] 单一常量源 / 版本号 / 两关规格');
+line('\n[1] 单一常量源 / 版本号 / 两关旧规格（无档位兼容路径）');
 ok(VERSION === '2.0.0', 'VERSION = 2.0.0');
 ok(TILE_W === 66 && TILE_H === 88 && TILE_W / TILE_H === 0.75, '牌面 66x88 严格 3:4');
 ok(TILE_AREA === TILE_W * TILE_H, 'TILE_AREA 与常量一致');
@@ -63,19 +108,19 @@ ok(LATTICE_X === TILE_W / 2 && LATTICE_Y === TILE_H / 2, '半格晶格 = 牌面�
 ok(SLOT_CAPACITY === 7 && OVERLAP_THRESHOLD === 0.10 && MATCH_DELAY_MS === 200,
   '槽位 7 格 / 遮挡阈值 10% / 三消延迟 200ms 未改');
 ok(LEVEL_COUNT === 2, '两关制');
-ok(LEVEL_SPEC[1].cardCount === 48 && LEVEL_SPEC[2].cardCount === 240, 'L1 48 张 / L2 240 张');
-ok(LEVEL_SPEC[1].types === 16 && LEVEL_SPEC[2].types === 16, '两关都是 16 种牌型');
-ok(LEVEL_SPEC[1].layers === 3 && LEVEL_SPEC[2].layers === 15, 'L1 3 层 / L2 15 个全局层');
-ok(LEVEL_SPEC[1].plan.reduce((a, b) => a + b, 0) === 48, 'L1 层计划合计 48');
+ok(LEVEL_SPEC[1].cardCount === 48 && LEVEL_SPEC[2].cardCount === 240, '旧兼容规格 L1 48 张 / L2 240 张');
+ok(LEVEL_SPEC[1].types === 16 && LEVEL_SPEC[2].types === 16, '旧兼容规格两关都是 16 种牌型');
+ok(LEVEL_SPEC[1].layers === 3 && LEVEL_SPEC[2].layers === 15, '旧兼容规格 L1 3 层 / L2 15 个全局层');
+ok(LEVEL_SPEC[1].plan.reduce((a, b) => a + b, 0) === 48, 'L1 旧层计划合计 48');
 const coreSum = LEVEL_SPEC[2].plan.reduce((a, b) => a + b, 0);
 ok(coreSum + LAYOUT_SHAPE.sideCount * 2 + LAYOUT_SHAPE.reserveCount === 240,
-  'L2 主堆 + 两侧盲盒 + 保留区 = 240（实测 ' + (coreSum + LAYOUT_SHAPE.sideCount * 2 + LAYOUT_SHAPE.reserveCount) + '）');
+  'L2 旧主堆 + 两侧盲盒 + 保留区 = 240');
 ok(mixFor(1).reduce((a, b) => a + b, 0) * 3 === 48 && mixFor(2).reduce((a, b) => a + b, 0) * 3 === 240,
-  'LEVEL_MIX 组数 ×3 = 两关总张数');
+  'LEVEL_MIX 组数 ×3 = 旧两关总张数');
 ok(Math.abs(BAND_RATIOS[0] - 0.25) < 1e-9 && Math.abs(BAND_RATIOS[1] - 0.30) < 1e-9 && Math.abs(BAND_RATIOS[2] - 0.45) < 1e-9,
   '三带比例 25% / 30% / 45%');
-line('   L1: 48 张 / 16 种 / 3 层 / plan ' + LEVEL_SPEC[1].plan.join('/'));
-line('   L2: 240 张 / 16 种 / 15 全局层 / 主堆 ' + LEVEL_SPEC[2].plan.join('/') + ' + 两侧 12×2 + 保留 36');
+line('   旧 L1: 48 张 / 16 种 / 3 层 / plan ' + LEVEL_SPEC[1].plan.join('/'));
+line('   旧 L2: 240 张 / 16 种 / 15 全局层 / 主堆 ' + LEVEL_SPEC[2].plan.join('/') + ' + 两侧 12×2 + 保留 36');
 line('   难度权重 ' + JSON.stringify(DIFFICULTY.pool.weights));
 
 /* ---------------- [2] 16 种牌型唯一注册表 ---------------- */
@@ -93,17 +138,17 @@ ok(suitsFor(1).length === 16 && suitsFor(2).length === 16 && SUITS_L1.length ===
 ok(TYPE_IDS.every((id) => TYPE_BY_ID[id] && typeof TYPE_MAP[id] !== 'undefined'), '注册表 ID 与绘制层一一对应');
 line('   ' + TILE_TYPES.map((t) => t.short + '(' + t.id + ')').join(' '));
 
-/* ---------------- [3] 两关模板 + 几何契约 ---------------- */
-line('\n[3] 两关独立布局模板（30 seed × 2 关逐个 assert）');
+/* ---------------- [3] 旧两关模板 + 几何契约 ---------------- */
+line('\n[3] 旧两关独立布局模板（30 seed × 2 关逐个 assert）');
 for (const key of ['L1_TUTORIAL', 'L2_MULTI_ZONE']) {
   const v = validateTemplate(TEMPLATES[key]);
   ok(v.ok, key + ' 模板合法' + (v.ok ? '' : '：' + v.issues.join('；')));
 }
 ok(templateFor(1).id === 'L1_TUTORIAL' && templateFor(2).id === 'L2_MULTI_ZONE', 'templateFor(level) 映射正确');
-ok(TEMPLATES.L2_MULTI_ZONE.zones.length === 4, 'L2 为四区域（主堆 + 左右盲盒 + 保留区）');
+ok(TEMPLATES.L2_MULTI_ZONE.zones.length === 4, 'L2 旧模板为四区域');
 const stacks = [];
 for (const z of TEMPLATES.L2_MULTI_ZONE.zones) for (const s of z.stack) stacks.push(s);
-ok(new Set(stacks).size === 15, 'L2 15 个互不重复的全局层号');
+ok(new Set(stacks).size === 15, 'L2 旧模板 15 个互不重复的全局层号');
 line('   ' + describeTemplates().join('\n   '));
 
 const GEO_SEEDS = 30;
@@ -113,15 +158,15 @@ for (let i = 0; i < GEO_SEEDS; i++) {
   for (const level of [1, 2]) {
     const cards = generateLayout(seed, { level });
     const rep = layoutReport(cards);
-    ok(cards.length === LEVEL_SPEC[level].cardCount, `L${level} seed ${seed} 张数 ${cards.length}`);
-    ok(rep.halfLattice, `L${level} seed ${seed} 坐标落在半格晶格上`);
-    ok(rep.sameLayerOverlap === 0, `L${level} seed ${seed} 同层零重叠`);
-    ok(rep.components === 1, `L${level} seed ${seed} 牌堆单连通`);
+    ok(cards.length === LEVEL_SPEC[level].cardCount, `旧 L${level} seed ${seed} 张数 ${cards.length}`);
+    ok(rep.halfLattice, `旧 L${level} seed ${seed} 坐标落在半格晶格上`);
+    ok(rep.sameLayerOverlap === 0, `旧 L${level} seed ${seed} 同层零重叠`);
+    ok(rep.components === 1, `旧 L${level} seed ${seed} 牌堆单连通`);
     if (level === 2) {
-      ok(rep.crossOcclusion.pairs > 0, `L2 seed ${seed} 存在跨区域交叉遮挡`);
+      ok(rep.crossOcclusion.pairs > 0, `旧 L2 seed ${seed} 存在跨区域交叉遮挡`);
       let bad = 0;
       for (const c of cards) if (c.layer > 0 && !hasSupport(c, cards.filter((o) => o.layer < c.layer))) bad++;
-      ok(bad === 0, `L2 seed ${seed} 所有非底层牌都有支撑（异常 ${bad}）`);
+      ok(bad === 0, `旧 L2 seed ${seed} 所有非底层牌都有支撑（异常 ${bad}）`);
       crossSum += rep.crossOcclusion.pairs;
       chainSum += rep.chain || 0;
     }
@@ -134,7 +179,7 @@ line(`   ${geoOk} 组几何全部通过 · L2 平均跨区遮挡对 ${(crossSum 
 const ps = planForSeed(12345);
 ok(ps.plan.reduce((a, b) => a + b, 0) === ps.total, 'planForSeed ±2 浮动后总和归一');
 
-/* ---- [3b] 模板严格校验反例：非法输入必须直接报错，不静默修正 / 不截断 ---- */
+/* ---- [3b] 模板严格校验反例 ---- */
 line('\n[3b] 模板校验反例（validateTemplate 直查原始模板 / clampTemplate 非法即 throw）');
 {
   const clone = () => JSON.parse(JSON.stringify(TEMPLATES.L1_TUTORIAL));
@@ -153,74 +198,68 @@ line('\n[3b] 模板校验反例（validateTemplate 直查原始模板 / clampTem
   expectBad('全局层号重复', (t) => { t.zones[0].stack[1] = 0; }, '重复');
   expectBad('cardCount 与 Σ plan 不符', (t) => { t.cardCount = 47; }, 'cardCount');
   const t2 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
-  t2.zones[1].crosses = [...t2.zones[1].crosses, 'ghost']; // 不存在的目标
+  t2.zones[1].crosses = [...t2.zones[1].crosses, 'ghost'];
   const v2 = validateTemplate(t2);
   ok(!v2.ok && v2.issues.some((s) => s.indexOf('不存在') >= 0), '反例「crosses 目标不存在」被拒绝');
   const t3 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
-  t3.zones[1].crosses = ['core'];                 // sideLeft 不再声明 reserve
-  t3.zones[3].crosses = ['core', 'sideRight'];    // reserve 也不声明 sideLeft
+  t3.zones[1].crosses = ['core'];
+  t3.zones[3].crosses = ['core', 'sideRight'];
   const v3 = validateTemplate(t3);
   ok(!v3.ok && v3.issues.some((s) => s.indexOf('未在 crosses 声明') >= 0), '反例「漏声明实际交叉遮挡」被拒绝');
   const t3b = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
-  t3b.zones[1].crosses = ['core', 'reserve', 'sideRight']; // 声明了实际不存在的 L↔R 交叉
+  t3b.zones[1].crosses = ['core', 'reserve', 'sideRight'];
   t3b.zones[2].crosses = ['core', 'reserve', 'sideLeft'];
   const v3b = validateTemplate(t3b);
   ok(!v3b.ok && v3b.issues.some((s) => s.indexOf('与实际几何不符') >= 0), '反例「声明幽灵交叉遮挡」被拒绝');
   const t3c = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
-  t3c.zones[1].crosses = ['core']; // 只删一侧 → 不对称
+  t3c.zones[1].crosses = ['core'];
   const v3c = validateTemplate(t3c);
   ok(!v3c.ok && v3c.issues.some((s) => s.indexOf('不对称') >= 0), '反例「交叉声明不对称」被拒绝');
   const t4 = JSON.parse(JSON.stringify(TEMPLATES.L2_MULTI_ZONE));
-  t4.zones[0].crosses = ['sideLeft', 'sideRight', 'reserve', 'core']; // 附加自交叉声明
-  const v4 = validateTemplate(t4);
-  ok(!v4.ok, '反例「自己与自己交叉」被拒绝');
-  // clampTemplate 不做静默修正：非法输入直接 throw
+  t4.zones[0].crosses = ['sideLeft', 'sideRight', 'reserve', 'core'];
+  ok(!validateTemplate(t4).ok, '反例「自己与自己交叉」被拒绝');
   let threw = 0;
-  const bad1 = clone();
-  bad1.zones[0].origin[0] = [130, 440];
+  const bad1 = clone(); bad1.zones[0].origin[0] = [130, 440];
   try { clampTemplate(bad1); } catch (e) { threw++; }
-  const bad2 = clone();
-  bad2.zones[0].plan[0] = 25;
+  const bad2 = clone(); bad2.zones[0].plan[0] = 25;
   try { clampTemplate(bad2); } catch (e) { threw++; }
-  const bad3 = clone();
-  bad3.zones[0].stack[1] = 0;
+  const bad3 = clone(); bad3.zones[0].stack[1] = 0;
   try { clampTemplate(bad3); } catch (e) { threw++; }
   ok(threw === 3, 'clampTemplate 对 3 类非法输入全部 throw（不静默修正 / 不截断）');
-  // 合法模板 clamp 后数值不变（clamp 只填默认值）
   const cl = clampTemplate(TEMPLATES.L2_MULTI_ZONE);
   ok(JSON.stringify(cl.zones[0].origin) === JSON.stringify(TEMPLATES.L2_MULTI_ZONE.zones[0].origin)
     && JSON.stringify(cl.zones[0].plan) === JSON.stringify(TEMPLATES.L2_MULTI_ZONE.zones[0].plan),
     'clampTemplate 对合法模板不改坐标 / 不改牌数');
 }
 
-/* ---------------- [4] 关卡构造 / 发牌 ---------------- */
-line('\n[4] 关卡构造：16 种 / 三倍数 / 证书 / verify / 三带边界（30 seed × 2 关）');
+/* ---------------- [4] 旧路径关卡构造 ---------------- */
+line('\n[4] 旧路径关卡构造：16 种 / 三倍数 / 证书 / verify / 三带边界（30 seed × 2 关）');
 let certOk = 0, verifyOk = 0, kindsMin = 99, visibleMin = 999, visibleMax = 0;
 for (let i = 0; i < GEO_SEEDS; i++) {
   const seed = (9000 + i * 2654435761) >>> 0;
   for (const level of [1, 2]) {
     const d = generateLevel(level, seed);
     const v = validateLevel(d);
-    ok(v.ok, `L${level} seed ${seed} validateLevel` + (v.ok ? '' : '：' + v.issues.join('；')));
-    ok(verify(d), `L${level} seed ${seed} 几何可解性 verify`);
-    ok(d.certificate.ok, `L${level} seed ${seed} 花色序列证书`);
-    ok(replayTypes(d.typeSeq).ok, `L${level} seed ${seed} 证书重放一致`);
+    ok(v.ok, `旧 L${level} seed ${seed} validateLevel` + (v.ok ? '' : '：' + v.issues.join('；')));
+    ok(verify(d), `旧 L${level} seed ${seed} 几何可解性 verify`);
+    ok(d.certificate.ok, `旧 L${level} seed ${seed} 花色序列证书`);
+    ok(replayTypes(d.typeSeq).ok, `旧 L${level} seed ${seed} 证书重放一致`);
     const kinds = Object.keys(d.typeCounts).length;
     kindsMin = Math.min(kindsMin, kinds);
-    ok(kinds === 16, `L${level} seed ${seed} 16 种牌型全出现（实测 ${kinds}）`);
+    ok(kinds === 16, `旧 L${level} seed ${seed} 16 种牌型全出现（实测 ${kinds}）`);
     let tripleOk = true;
     for (const id of TYPE_IDS) if ((d.typeCounts[id] || 0) % 3 !== 0 || (d.typeCounts[id] || 0) === 0) tripleOk = false;
-    ok(tripleOk, `L${level} seed ${seed} 每种张数都是 3 的倍数且 >0`);
+    ok(tripleOk, `旧 L${level} seed ${seed} 每种张数都是 3 的倍数且 >0`);
     const expect = level === 1 ? mixFor(1) : mixFor(2);
     let mixOk = true;
     for (let k = 0; k < TYPE_IDS.length; k++) if ((d.typeCounts[TYPE_IDS[k]] || 0) / 3 !== expect[k]) mixOk = false;
-    ok(mixOk, `L${level} seed ${seed} 张数分布与 LEVEL_MIX 一致`);
+    ok(mixOk, `旧 L${level} seed ${seed} 张数分布与 LEVEL_MIX 一致`);
     const b = d.bands;
     ok(b.top[0] === 0 && b.mid[0] === b.top[1] && b.bottom[0] === b.mid[1] && b.bottom[1] === d.cards.length,
-      `L${level} seed ${seed} 三带连续且覆盖全部牌`);
+      `旧 L${level} seed ${seed} 三带连续且覆盖全部牌`);
     ok([b.top[1] - b.top[0], b.mid[1] - b.mid[0]].every((n) => n % 3 === 0),
-      `L${level} seed ${seed} 三带段长对齐 3 的倍数`);
-    ok(d.degraded === false, `L${level} seed ${seed} 未退化为安全序列`);
+      `旧 L${level} seed ${seed} 三带段长对齐 3 的倍数`);
+    ok(d.degraded === false, `旧 L${level} seed ${seed} 未退化为安全序列`);
     certOk += d.certificate.ok ? 1 : 0;
     verifyOk += verify(d) ? 1 : 0;
     visibleMin = Math.min(visibleMin, d.visible);
@@ -228,29 +267,39 @@ for (let i = 0; i < GEO_SEEDS; i++) {
   }
 }
 const l2sample = generateLevel(2, 9000);
-line(`   L2 seed 9000 三带边界 [${l2sample.bands.top.join(',')}] [${l2sample.bands.mid.join(',')}] [${l2sample.bands.bottom.join(',')}]`);
+line(`   旧 L2 seed 9000 三带边界 [${l2sample.bands.top.join(',')}] [${l2sample.bands.mid.join(',')}] [${l2sample.bands.bottom.join(',')}]`);
 line(`   开局可点 ${l2sample.visible} 张 · 牌型 ${Object.keys(l2sample.typeCounts).length} 种 · 30×2 关可点范围 ${visibleMin}~${visibleMax}`);
 line(`   证书通过 ${certOk}/60 · verify 通过 ${verifyOk}/60 · 最少牌型数 ${kindsMin}`);
-ok(l2sample.crossOcclusion.pairs > 0 && l2sample.regions, 'L2 返回区域统计与跨区遮挡');
+ok(l2sample.crossOcclusion.pairs > 0 && l2sample.regions, '旧 L2 返回区域统计与跨区遮挡');
 
-/* ---------------- [5] seed 池 ---------------- */
-line('\n[5] 验收 seed 池');
-ok(SEED_POOL.length === DIFFICULTY.pool.targetPool, `池大小 = ${DIFFICULTY.pool.targetPool}（实测 ${SEED_POOL.length}）`);
-ok(new Set(SEED_POOL).size === SEED_POOL.length, '池内 seed 无重复');
-ok(POOL_META.version === VERSION && POOL_META.accepted === SEED_POOL.length, 'POOL_META 与池一致');
-ok(typeof POOL_META.difficultyIndex === 'number' && POOL_META.difficultyIndex > 0, '复合难度指数已写入');
-ok(SEED_POOL.indexOf(pickPoolSeed(() => 0)) >= 0, 'pickPoolSeed 从池内取值');
-const POOL_CHECK = Math.min(20, SEED_POOL.length);
-let poolOk = 0;
-for (let i = 0; i < POOL_CHECK; i++) {
-  const d = generateLevel(2, SEED_POOL[i]);
-  if (validateLevel(d).ok && verify(d)) poolOk++;
+/* ---------------- [5] 分档 seed 池（第 5.1 节） ---------------- */
+line('\n[5] 分档验收 seed 池（SEED_POOL[\'L2-<id>\'] / POOL_META）');
+const POOL_KEYS = Object.keys(SEED_POOL);
+ok(POOL_KEYS.length === LEVEL2_PROFILES.length, `10 个分档池（实测 ${POOL_KEYS.length}）`);
+ok(POOL_META.version === VERSION, 'POOL_META.version 与 VERSION 一致');
+ok(POOL_META.totalShort === 0, `全档合格种子零缺口（实测 ${POOL_META.totalShort}）`);
+line('   档位  N  T  张数  候选/合格/录取  缺口  minPending最小  遮挡链最小  压深最小  耗时');
+for (const p of LEVEL2_PROFILES) {
+  const key = 'L2-' + p.id;
+  const list = SEED_POOL[key];
+  const m = POOL_META.profiles[key];
+  ok(Array.isArray(list) && list.length >= 40, `${key} 池 ≥40 个种子（实测 ${list ? list.length : '缺失'}）`);
+  ok(Array.isArray(list) && new Set(list).size === list.length, `${key} 池内 seed 无重复`);
+  ok(!!m && m.accepted === list.length && m.target === 40 && m.short === 0,
+    `${key} POOL_META 录取数 / 目标 / 缺口一致`);
+  ok(!!m && m.badPendingSeeds === 0, `${key}「minPending ≤ 4 的种子数 = 0」（实测 ${m ? m.badPendingSeeds : '缺失'}）`);
+  ok(!!m && m.solvableOk === true && m.solvableDeviation <= 0.03,
+    `${key} SOLVABLE_SHARE 偏差 ≤3%（实测 ${m ? (m.solvableDeviation * 100).toFixed(2) + '%' : '缺失'}）`);
+  ok(pickPoolSeed(2, p.id, () => 0) === list[0], `${key} pickPoolSeed 只从当前档位池取值`);
+  line(`   ${key.padEnd(6)} ${String(p.layers).padStart(2)} ${String(p.types).padStart(2)} ${String(p.mainCount + p.queueCount).padStart(5)}`
+    + `   ${String(m ? m.candidates : '-').padStart(3)}/${String(m ? m.gatePass : '-').padStart(3)}/${String(m ? m.accepted : '-').padStart(3)}`
+    + `      ${String(m ? m.short : '-').padStart(2)}       ${String(m ? m.minPendingMin : '-').padStart(3)}`
+    + `          ${String(m ? m.chainMin : '-').padStart(3)}        ${String(m ? m.avgPressDepthMin : '-').padStart(6)}`
+    + `   ${m ? (m.ms / 1000).toFixed(1) + 's' : '-'}`);
 }
-ok(poolOk === POOL_CHECK, `抽查 ${POOL_CHECK} 个池内 seed 全部合法（${poolOk}/${POOL_CHECK}）`);
-line(`   池内画像 greedy ${pct(POOL_META.greedyWinRate)} · noisy ${pct(POOL_META.noisyWinRate)} · 失败进度 ${pct(POOL_META.lateDeathProgress)} · 开局花色 ${POOL_META.freeKinds.toFixed(1)} · 难度指数 ${POOL_META.difficultyIndex.toFixed(4)}`);
-line(`   离线扫描 ${POOL_META.candidates} 候选 · 硬门槛通过 ${POOL_META.gatePass} · 录取 ${POOL_META.accepted}`);
+line(`   tune_pool 总耗时 ${(POOL_META.generateMs / 1000).toFixed(1)}s · 每档候选 ${POOL_META.candidatesPerProfile} · 目标 ${POOL_META.targetPerProfile} · 总缺口 ${POOL_META.totalShort}`);
 
-/* ---------------- [6] 引擎规则（未改动） ---------------- */
+/* ---------------- [6] 引擎规则 ---------------- */
 line('\n[6] 槽位 / 三消 / 道具规则');
 const mk = (type, id) => ({ id, type, state: 'board', x: 0, y: 0, w: TILE_W, h: TILE_H, z: 0, blocked: false });
 let slot = [];
@@ -264,7 +313,6 @@ const removed3 = resolveSlot(slot);
 ok(removed3.length === 3, 'resolveSlot 恰好移除 3 张（实测 ' + removed3.length + '）');
 ok(removed3.every((c) => c.type === 'sparrow'), '移除的都是目标花色');
 ok(slot.length === 0, '消除后槽位清空');
-// 混合场景：一组满三消除，另一组保留两张
 let slotMix = [];
 slotInsert(slotMix, mk('sparrow', 11));
 slotInsert(slotMix, mk('red-centre', 12));
@@ -285,42 +333,86 @@ ok(countVisible(dCheck.cards) === dCheck.visible, 'countVisible 与关卡 visibl
 refreshBlocked(dCheck.cards);
 ok(dCheck.cards.every((c) => typeof c.blocked === 'boolean'), 'refreshBlocked 写入全量 blocked 标记');
 
-/* ---------------- [7] 六种机器人难度报告 ---------------- */
-line('\n[7] 六种机器人难度报告（软指标如实标注，不改阈值 / 不改测试）');
-// 用「实际交付的 seed 池」做独立回归（RNG 源与离线筛选不同，避免过拟合）
-const SUITE_SEEDS = Math.min(40, SEED_POOL.length);
-let suiteIdx = 0;
-const suiteStart = Date.now();
-const suite = runDifficultySuite(2, (lv, s) => {
-  void s;
-  return generateLevel(lv, SEED_POOL[(suiteIdx++) % SEED_POOL.length]);
-}, SUITE_SEEDS, {
-  baseSeed: 7000, modes: ROBOT_MODES, makeRng: (s) => makeRng(s),
-  // 真实证书 / 可解性验证（不是恒真函数）—— verifyRate 才有意义
-  verify: (d) => validateLevel(d).ok && verify(d) && d.certificate.ok && replayTypes(d.typeSeq).ok,
-});
-line('   ' + '策略'.padEnd(14) + '通关率'.padEnd(10) + '死局率'.padEnd(10) + '平均进度'.padEnd(12) + '平均槽位'.padEnd(12) + '失败进度中位'.padEnd(14) + '开局死'.padEnd(8) + '决策 ms');
-for (const m of ROBOT_MODES) {
-  const r = suite.modes[m];
-  line('   ' + m.padEnd(14) + pct(r.winRate).padEnd(10) + pct(r.deadlockRate).padEnd(10)
-    + pct(r.avgPct).padEnd(12) + r.avgSlot.toFixed(2).padEnd(12)
-    + pct(r.failureMedianPct).padEnd(14) + String(r.earlyDeaths).padEnd(8) + r.avgDecisionMs.toFixed(3));
+/* ---------------- [7] 静态档位表（第 1 / 2.5 节） ---------------- */
+line('\n[7] 两关静态档位表 / 层张数插值 / levelParams');
+ok(LEVEL2_PROFILES.length === 10, 'LEVEL2_PROFILES 恰好 10 个预设');
+ok(LEVEL1_PROFILES.length === 4, 'LEVEL1_PROFILES 恰好 4 个预设');
+ok(LEVEL2_PROFILES.every((p, i) => p.id === i), 'L2 档位 id 连续 0..9');
+ok(LEVEL1_PROFILES.every((p, i) => p.id === i), 'L1 档位 id 连续 0..3');
+const large = LEVEL2_PROFILES.filter((p) => p.kind === 'large');
+const lite = LEVEL2_PROFILES.filter((p) => p.kind === 'lite');
+ok(large.length === 8 && lite.length === 2, 'L2 大盘档 8 个 + 轻量档 2 个');
+ok(Math.abs(large.reduce((a, p) => a + p.weight, 0) - 0.70) < 1e-9
+  && Math.abs(lite.reduce((a, p) => a + p.weight, 0) - 0.30) < 1e-9,
+  '大盘档 weight 合计 0.70 / 轻量档合计 0.30');
+ok(new Set(large.map((p) => p.layers)).size >= 5, `大盘档 layers 至少 5 种取值（实测 ${new Set(large.map((p) => p.layers)).size}）`);
+ok(new Set(large.map((p) => p.types)).size >= 3, `大盘档 types 至少 3 种取值（实测 ${new Set(large.map((p) => p.types)).size}）`);
+ok(large.some((p) => p.layers === 28 && p.types === 15 && p.mainCount + p.queueCount === 321),
+  '包含原作基准档 (28 层, 15 种, 321 张)');
+ok(large.every((p) => p.queueCount === 44 && Math.abs(p.mainCount - Math.round(9.9 * p.layers)) <= 3),
+  '大盘档 mainCount = round(9.9·N) ±3（对齐 3 的倍数）');
+ok(large.every((p) => {
+  const total = p.mainCount + p.queueCount;
+  const G = total / 3;
+  const ratio = G / p.types;
+  return total % 3 === 0 && G === p.groups && ratio >= 6.5 && ratio <= 8.0;
+}), '大盘档 总数 %3==0、G/T ∈ [6.5, 8.0]、groups = G');
+ok(large.every((p) => {
+  const G = p.groups;
+  const lo = Math.floor(G / p.types), hi = lo + 1;
+  return p.groupsPerType.length === p.types
+    && p.groupsPerType.every((n) => n === lo || n === hi)
+    && p.groupsPerType.reduce((a, b) => a + b, 0) === G;
+}), '大盘档 每种花色组数只取 floor/ceil(G/T)，相差 ≤1 且总和 = G');
+ok(lite.some((p) => p.layers === 15 && p.types === 15 && p.mainCount === 148
+  && p.queueCount === 44 && p.groups === 64
+  && p.groupsPerType.filter((n) => n === 4).length === 11
+  && p.groupsPerType.filter((n) => n === 5).length === 4),
+  '轻量档 A：192 张 = 64 组 / 15 种 / 11×4 + 4×5 / 148+44 / 15 层');
+ok(lite.some((p) => p.layers === 20 && p.types === 15 && p.mainCount === 211
+  && p.queueCount === 44 && p.groups === 85
+  && p.groupsPerType.filter((n) => n === 6).length === 10
+  && p.groupsPerType.filter((n) => n === 5).length === 5),
+  '轻量档 B：255 张 = 85 组 / 15 种 / 10×6 + 5×5 / 211+44 / 20 层（按确认值实现）');
+const configSrcForProfile = readFileSync(ROOT + 'src/game/config.js', 'utf8');
+ok(/9\.9 张\/层估算|按 9\.9 张\/层/.test(configSrcForProfile), 'config 注释标明轻量档层数系 9.9 张/层估算，非原作数据');
+const l1Spec = [[2, 8, 24], [3, 10, 30], [3, 12, 36], [3, 16, 48]];
+ok(LEVEL1_PROFILES.every((p, i) => p.layers === l1Spec[i][0] && p.types === l1Spec[i][1]
+  && p.mainCount === l1Spec[i][2] && p.queueCount === 0 && p.groups === p.types
+  && p.groupsPerType.length === p.types && p.groupsPerType.every((n) => n === 1)
+  && p.weight === 0.25), 'L1 四档：2/8/24、3/10/30、3/12/36、3/16/48，每种 1 组、权重各 0.25');
+ok(LEVEL1_PROFILES[0].layers === 2 && layerPlanFor(LEVEL1_PROFILES[0]).every((n, i, a) => i === 0 || a.length === 2),
+  'L1 2 层档使用 60/40 曲线');
+ok(RETRY_KEEPS_PROFILE === false, 'config.RETRY_KEEPS_PROFILE = false（重开本关重抽档位）');
+ok(profilesFor(1) === LEVEL1_PROFILES && profilesFor(2) === LEVEL2_PROFILES, 'profilesFor(level) 返回对应静态表');
+ok(profileFor(2, 99).id === 0 && profileFor(1, -1).id === 0, 'profileFor 非法 id 回退到该关第 0 档');
+for (const p of [...LEVEL2_PROFILES, ...LEVEL1_PROFILES]) {
+  const plan = layerPlanFor(p);
+  const sum = plan.reduce((a, b) => a + b, 0);
+  ok(plan.length === p.layers && sum === p.mainCount && plan.every((n) => n >= 1),
+    `${p.kind === 'l1' ? 'L1' : 'L2'}-${p.id} 层计划 ${p.layers} 层 / 合计 ${p.mainCount} / 每层 ≥1`);
+  const par = levelParams(p.kind === 'l1' ? 1 : 2, Math.random, p.id);
+  ok(par.cardCount === p.mainCount + p.queueCount && par.layers === p.layers
+    && par.types === p.types && par.groups === p.groups && par.profileId === p.id,
+    `${p.kind === 'l1' ? 'L1' : 'L2'}-${p.id} levelParams 从档位读取张数 / 层数 / 牌种数`);
+  const gpt = groupsPerTypeFor(p.kind === 'l1' ? 1 : 2, p);
+  ok(gpt && gpt.length === 16 && gpt.reduce((a, b) => a + b, 0) === p.groups,
+    `${p.kind === 'l1' ? 'L1' : 'L2'}-${p.id} groupsPerTypeFor 补齐为 16 长度配额`);
 }
-line(`   样本 ${SUITE_SEEDS} 个池内 seed · 证书/verify 通过 ${suite.verified}/${suite.seeds} · 耗时 ${((Date.now() - suiteStart) / 1000).toFixed(1)}s`);
-const g = suite.modes.greedy, n = suite.modes.noisy, rnd = suite.modes.random;
-const strong = ['lookahead', 'montecarlo', 'search'].map((m) => suite.modes[m].winRate);
-soft(rnd.winRate <= 0.05, `随机机器人通关率 ≤5%（实测 ${pct(rnd.winRate)}）`);
-soft(n.winRate <= 0.30, `带 10% 失误玩家通关率 ≤30%（实测 ${pct(n.winRate)}）`);
-soft(g.winRate >= n.winRate, `失误受惩罚：greedy ${pct(g.winRate)} ≥ noisy ${pct(n.winRate)}`);
-soft(Math.max.apply(null, strong) >= 0.50, `至少一条强策略通关率 ≥50%（实测 ${pct(Math.max.apply(null, strong))}）`);
-soft(g.failureMedianPct >= 0.50, `失败局进度中位数 ≥50% / 死局后置（实测 ${pct(g.failureMedianPct)}，仅统计 ${g.failures} 个失败局）`);
-soft(g.avgSlot >= 3.0, `平均槽位占用 ≥3.0（实测 ${g.avgSlot.toFixed(2)}）`);
-soft(POOL_META.freeKinds >= 10, `开局可点花色 ≥10 种（实测 ${POOL_META.freeKinds.toFixed(1)}）`);
-ok(suite.verifyRate === 1, '难度样本 100% 通过证书 / verify');
-ok(ROBOT_MODES.length === 6, '六种策略齐全');
-line('   说明：完整信息贪心机器人高通关率只证明「关卡可解」，不代表真实玩家难度；');
-line('   7 槽位 + 波次剥离顺序下，开局 ~23 张可点牌必然含约 6 组三张同花色，');
-line('   这是证书保持槽位峰值 ≤6 的数学必然，故 v2 不使用单一贪心通关率做验收门槛。');
+ok(LEVEL1_PROFILES.every((p) => {
+  const plan = layerPlanFor(p);
+  const t = plan.reduce((a, b) => a + b, 0);
+  return plan.length === 2
+    ? Math.abs(plan[0] / t - 0.60) < 0.02
+    : Math.abs(plan[0] / t - 0.50) < 0.02 && Math.abs(plan[1] / t - 0.33) < 0.02;
+}), 'L1 层张数 2 层 60/40、3 层 50/33/17（±2%）');
+for (const p of LEVEL2_PROFILES) {
+  const desc = describeProfileLayout(p);
+  ok(desc.globalLayers === p.layers + 8 && desc.total === p.mainCount + p.queueCount,
+    `L2-${p.id} 布局说明：全局层 ${p.layers}+8、总张数来自档位`);
+}
+ok(generateProfileLayout(12345, LEVEL2_PROFILES[0]).length === LEVEL2_PROFILES[0].mainCount + 44,
+  'generateProfileLayout 张数 = 档位 mainCount + queueCount');
 
 /* ---------------- [8] 视觉 / 兼容 / 安全静态验收 ---------------- */
 line('\n[8] 视觉 / 兼容版 / Tauri 最小权限 / 版本号');
@@ -335,7 +427,7 @@ const dom = read('src/game/dom_view.es5.js');
 ok(!/fs:allow-remove|"path"\s*:\s*"\*\*"/.test(cap), 'capabilities 已删除过宽的 fs 删除授权 / ** 通配');
 ok(/core:default/.test(cap) && !/tauri_plugin_fs|fs:default/.test(cap), 'capabilities 仅保留 core:default');
 ok(!/fn\s+uninstall_app\s*\(/.test(rust) && !/fn\s+schedule_self_delete\s*\(/.test(rust),
-  'Rust 已删除前端自删除命令与自删脚本（按函数定义检查，忽略说明注释）');
+  'Rust 已删除前端自删除命令与自删脚本');
 ok(!/\.plugin\(\s*tauri_plugin_fs::init\(\)\s*\)/.test(rust), 'Rust 不再注册 fs 插件');
 ok(!/^\s*tauri-plugin-fs\s*=/m.test(read('src-tauri/Cargo.toml')), 'Cargo.toml 已移除 fs 插件依赖');
 ok(tconf.version === VERSION && pkg.version === VERSION, 'Tauri / npm 版本号 = ' + VERSION);
@@ -343,10 +435,10 @@ ok(tconf.bundle && Array.isArray(tconf.bundle.targets) && tconf.bundle.targets.i
   'bundle.targets 含 NSIS（正式安装版）');
 ok(tconf.bundle && tconf.bundle.windows && tconf.bundle.windows.nsis
   && tconf.bundle.windows.nsis.installMode === 'currentUser',
-  'NSIS 配置位于 bundle.windows.nsis 且 installMode=currentUser（与 tauri-build 校验兼容）');
+  'NSIS 配置 installMode=currentUser');
 ok(tconf.mainBinaryName === 'MahLeMah', 'mainBinaryName = MahLeMah（Portable 单文件名）');
 ok(pkg.scripts && pkg.scripts['build:portable'] && pkg.scripts['build:nsis'],
-  'package.json 分别提供 build:portable / build:nsis 两条独立构建链');
+  'package.json 提供 build:portable / build:nsis 两条独立构建链');
 ok(!/background:\s*#191009|#2a1c13|#150e09/.test(css + legacy), '网页版 / 兼容版背景已换成暖白');
 ok(/FFFDF6|FFF9EC|F7EEDC/.test(css), 'styles.css 使用暖白 / 奶油底');
 ok(Object.keys(TILE_TYPES).length === 16, '注册表类型可用于静态检查');
@@ -356,17 +448,39 @@ ok(labelCovered, 'ES5 降级视图内嵌了全部 16 种牌型标签');
 ok(!/\buninstallGame\s*\(/.test(read('src/main.js') + read('src/game/store.js')),
   '前端不再调用自删除 IPC');
 
-/* ---- [8b] Rust 存档接口安全加固 + 生产音频配置静态验收 ---- */
-line('\n[8b] Rust 存档加固 / 生产音频配置（仅音效）');
+/* ---- [8b] Rust 存档接口安全加固 + p1/p2（第 4.2 节） ---- */
+line('\n[8b] Rust 存档加固 / p1-p2 白名单 / 生产音频配置（仅音效）');
 ok(/MAX_SAVE_BYTES[^=]*=\s*(64\s*\*\s*1024|65536)/.test(rust), 'save_state 设置 64 KB 大小上限');
 ok(/serde_json::from_str/.test(rust) && /serde_json\s*=/.test(read('src-tauri/Cargo.toml')),
   'save_state 用 serde_json 做 JSON 合法性校验');
-ok(/SAVE_FIELDS/.test(rust) && ['"v"', '"level"', '"best"', '"sound"', '"sfxVol"', '"music"', '"musicVol"'].every((f) => rust.indexOf(f) >= 0),
-  'save_state 字段白名单覆盖 v/level/best/sound/sfxVol/music/musicVol');
+ok(/SAVE_FIELDS/.test(rust) && ['"v"', '"level"', '"best"', '"sound"', '"sfxVol"', '"music"', '"musicVol"', '"p1"', '"p2"'].every((f) => rust.indexOf(f) >= 0),
+  'SAVE_FIELDS 白名单 9 个字段：v/level/best/sound/sfxVol/music/musicVol/p1/p2');
+ok(/const SAVE_FIELDS:\s*\[&str;\s*9\]/.test(rust), 'SAVE_FIELDS 数组长度声明为 9');
+ok(/for key in \["p1", "p2"\]/.test(rust) && /if let Some\(val\) = obj\.get\(key\)/.test(rust)
+  && /as_i64\(\)/.test(rust) && /\(0\.\.=63\)\.contains\(&n\)/.test(rust),
+  'Rust 对 p1/p2 做「存在才校验」+ 整数 + 0..=63 范围校验，旧档缺字段不判非法');
 ok(/validate_save_json/.test(rust) && /fn save_state\(data: String\)/.test(rust),
   'save_state 先校验后写入，且不接受任何路径参数');
 ok(/save\.json\.tmp/.test(rust) && /fs::rename/.test(rust), 'save_state 保持原子写入（tmp + rename）');
 ok(/v != 1 && v != 2|版本/.test(rust), 'save_state 校验存档版本号');
+{
+  // 语义复刻：把 Rust 的 p1/p2 校验规则在 JS 里跑一遍真实边界值
+  const rustP = (raw) => {
+    if (!('p1' in raw) && !('p2' in raw)) return true;           // 旧档缺字段 → 合法
+    for (const key of ['p1', 'p2']) {
+      if (!(key in raw)) continue;
+      const n = raw[key];
+      if (!Number.isInteger(n)) return false;                    // as_i64 失败
+      if (n < 0 || n > 63) return false;                         // 0..=63
+    }
+    return true;
+  };
+  ok(rustP({ v: 2, level: 1, best: 2, sound: true, sfxVol: 1 }), 'Rust 规则：旧档无 p1/p2 → 合法');
+  ok(rustP({ p1: 0, p2: 63 }), 'Rust 规则：p1=0 / p2=63 边界合法');
+  ok(!rustP({ p1: 64 }) && !rustP({ p2: -1 }), 'Rust 规则：p1=64 / p2=-1 越界被拒');
+  ok(!rustP({ p1: 1.5 }) && !rustP({ p2: '3' }), 'Rust 规则：非整数 p1/p2 被拒');
+  ok(rustP({ p1: 3 }), 'Rust 规则：只提供 p1 也合法（p2 缺省）');
+}
 
 const audioSrc = read('src/game/audio.js');
 const mainSrc = read('src/main.js');
@@ -378,7 +492,6 @@ const prodSrc = mainSrc + audioSrc + renderSrc + engineSrc + configSrc;
 const bgmFiles = ['src/game/music.js', 'src/game/music_tracks.js', 'src/game/music_composer.js'];
 ok(bgmFiles.every((f) => !existsSync(ROOT + f)),
   '生产源码目录已彻底移除 BGM 引擎 / 曲谱 / 作曲器（3 个文件均不存在）');
-// 注释里会说明「已移除 music.js」这类历史背景，必须剥离注释后只检查真实代码
 const codeOnly = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 ok(!/getMusic|music\.js|music_tracks|music_composer|MUSIC_BTN|bgmOn|bgmVol|iconMusic/.test(codeOnly(prodSrc)),
   '入口 / 渲染 / 音效 / 引擎 / 配置均不再引用任何背景音乐模块或状态');
@@ -387,9 +500,6 @@ ok(/setEnabled/.test(audioSrc) && /setVolume/.test(audioSrc) && /new AC\(\)/.tes
 ok(/sound\.ensure\(\)/.test(mainSrc) && /首次用户手势/.test(audioSrc),
   '音效遵守自动播放策略：首次用户手势后才创建 AudioContext');
 {
-  // 工程内不得存在任何外部音频素材文件（音效 / 音乐全部 Web Audio 实时合成）
-  const { readdirSync } = await import('node:fs');
-  const { join } = await import('node:path');
   const audioExt = /\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i;
   const skip = new Set(['node_modules', '.build', '.git', 'target-gnu', '.shots', '.workbuddy']);
   const found = [];
@@ -418,9 +528,8 @@ ok(!/music:\s*game\.bgmOn/.test(mainSrc) && !/saved\.music/.test(mainSrc)
     && /"music"/.test(rust) && /"musicVol"/.test(rust),
   '前端不再写入音乐设置，Rust 白名单仍兼容旧存档的 music / musicVol 字段');
 
-/* ---- [8c] 最终生产包：零 BGM，仅音效（源码 + 产物双重验收） ---- */
+/* ---- [8c] 最终生产包：零 BGM，仅音效 ---- */
 line('\n[8c] 生产包零 BGM / 仅音效');
-
 ok(/createBiquadFilter/.test(audioSrc) && /highpass/.test(audioSrc) && /HP_HZ\s*=\s*1600/.test(audioSrc),
   '音效链路就位：master → 1600Hz 高通 → destination');
 ok(/SFX_LEVEL\s*=\s*0\.10/.test(audioSrc) && /freq:\s*(1900|2100|2200)/.test(audioSrc),
@@ -431,10 +540,7 @@ ok(!/_duck\s*\(/.test(audioCode) && !/\.duck\s*\(/.test(audioCode)
     && !/getSfxBus|getContext|createDynamicsCompressor/.test(audioCode),
   '音效引擎完全独立：无闪避、无共享总线、无压缩器');
 ok(!/setInterval|_startTimer|_tick\s*\(/.test(audioCode + stripComments(mainSrc)),
-  '生产代码不再有音乐调度定时器（不会有任何后台循环播放）');
-
-/* 生产网页版产物必须真的不含任何 BGM 代码。dist/ 是随仓库交付的制品，
-   这条断言直接扫最终 HTML 里的字符串字面量与总线节点名。 */
+  '生产代码不再有音乐调度定时器');
 const distNames = ['dist/index.html', 'dist/MahLeMah.html', 'dist/Mah了个Mah.html', 'dist/MahLeMah-legacy.html'];
 const distHtml = distNames.filter((f) => existsSync(ROOT + f)).map((f) => read(f));
 ok(distHtml.length === 4, '四个生产网页版产物齐全（含 IE8 兼容版）');
@@ -446,9 +552,7 @@ for (let i = 0; i < distHtml.length; i++) {
     distNames[i] + ' 保留音效合成与「声音设置」面板');
 }
 
-/* [8c-2] 运行时回归：音效在没有任何音乐模块的环境下独立发声。
- * 用 mock Web Audio 真实播放一串点击 / 消除 / 道具 / 胜负音效，验证自建 ctx、
- * 唯一链路 master → 高通 → destination、独立开关与音量生效。 */
+/* [8c-2] 运行时音频回归 */
 {
   const soundMod = await import(new URL('./src/game/audio.js', import.meta.url).href);
   let oscStarts = 0;
@@ -488,12 +592,294 @@ for (let i = 0; i < distHtml.length; i++) {
 line('\n[9] 运行时生成耗时');
 const t0 = Date.now();
 const N_GEN = 20;
-for (let i = 0; i < N_GEN; i++) generateLevel(2, (31000 + i * 7919) >>> 0);
+for (let i = 0; i < N_GEN; i++) generateLevel(2, (31000 + i * 7919) >>> 0, { profile: i % 10 });
 const genMs = (Date.now() - t0) / N_GEN;
-line(`   L2 生成 ${N_GEN} 次 · 平均 ${genMs.toFixed(2)} ms/局`);
+line(`   L2 分档生成 ${N_GEN} 次 · 平均 ${genMs.toFixed(2)} ms/局`);
 soft(genMs < 400, `单局生成 < 400ms（实测 ${genMs.toFixed(2)}ms）`);
+
+/* ---------------- [10] 分档关卡构造与几何（第 5.2 节结构部分） ---------------- */
+line('\n[10] 分档关卡构造与几何验收（10 个 L2 档位 × 40 个池内 seed + 4 个 L1 档位）');
+const L2_LEVELS = {};
+const tGeo = Date.now();
+for (const p of LEVEL2_PROFILES) {
+  const key = 'L2-' + p.id;
+  const seeds = SEED_POOL[key];
+  const levels = [];
+  const errs = [];
+  let visMin = 999, visMax = 0, pressMin = Infinity, chainMin = Infinity;
+  for (const seed of seeds) {
+    const d = generateLevel(2, seed, { profile: p.id });
+    levels.push({ seed, data: d });
+    const v = validateLevel(d);
+    if (!v.ok) errs.push(`${seed}:validate:${v.issues.join('/')}`);
+    if (!verify(d) || !d.certificate.ok) errs.push(`${seed}:cert/verify`);
+    if (d.cards.length !== p.mainCount + p.queueCount) errs.push(`${seed}:张数${d.cards.length}`);
+    if (Object.keys(d.typeCounts).length !== p.types) errs.push(`${seed}:种类${Object.keys(d.typeCounts).length}`);
+    const quota = mixFor(2, p);
+    for (let i = 0; i < TYPE_IDS.length; i++) {
+      const n = d.typeCounts[TYPE_IDS[i]] || 0;
+      if (n !== quota[i] * 3) errs.push(`${seed}:${TYPE_IDS[i]}=${n}≠${quota[i] * 3}`);
+    }
+    if (d.visible < 19 || d.visible > 25) errs.push(`${seed}:可点${d.visible}`);
+    if (!isHalfLattice(d.cards)) errs.push(`${seed}:晶格`);
+    if (countComponents(d.cards) !== 1) errs.push(`${seed}:连通`);
+    if (sameLayerOverlapCount(d.cards) !== 0) errs.push(`${seed}:同层重叠`);
+    if (!d.crossOcclusion || d.crossOcclusion.pairs <= 0) errs.push(`${seed}:跨区遮挡`);
+    const press = pressureStats(d.cards).avgPressDepth;
+    const chain = longestChain(d.cards, d._graph || buildBlockerGraph(d.cards));
+    if (press < 0.28 * p.layers) errs.push(`${seed}:压深${press.toFixed(2)}<${(0.28 * p.layers).toFixed(2)}`);
+    if (chain < p.layers - 8) errs.push(`${seed}:链${chain}<${p.layers - 8}`);
+    visMin = Math.min(visMin, d.visible); visMax = Math.max(visMax, d.visible);
+    pressMin = Math.min(pressMin, press); chainMin = Math.min(chainMin, chain);
+  }
+  L2_LEVELS[p.id] = levels;
+  ok(errs.length === 0, `${key} 40 个池内 seed 全部通过结构/几何/配额验收（异常 ${errs.length}${errs.length ? '：' + errs.slice(0, 3).join('；') : ''}）`);
+  ok(visMin >= 19 && visMax <= 25, `${key} 开局可点 19–25 张（实测 ${visMin}~${visMax}）`);
+  ok(pressMin >= 0.28 * p.layers, `${key} 平均压深 ≥ 0.28·N=${(0.28 * p.layers).toFixed(2)}（实测最小 ${pressMin.toFixed(2)}）`);
+  ok(chainMin >= p.layers - 8, `${key} 最长遮挡链 ≥ N−8=${p.layers - 8}（实测最小 ${chainMin}）`);
+  line(`   ${key} N=${String(p.layers).padStart(2)} T=${String(p.types).padStart(2)} 张=${String(p.mainCount + p.queueCount).padStart(3)}`
+    + ` · 可点 ${visMin}~${visMax} · 压深 ≥${pressMin.toFixed(2)} · 链 ≥${chainMin} · 全局层 ${p.layers + 8}`);
+}
+for (const p of LEVEL1_PROFILES) {
+  const errs = [];
+  for (let i = 0; i < 40; i++) {
+    const seed = (7000 + i * 2654435761) >>> 0;
+    const d = generateLevel(1, seed, { profile: p.id });
+    const v = validateLevel(d);
+    if (!v.ok) errs.push(`${seed}:${v.issues.join('/')}`);
+    if (!verify(d) || !d.certificate.ok) errs.push(`${seed}:cert/verify`);
+    if (d.cards.length !== p.mainCount) errs.push(`${seed}:张数${d.cards.length}`);
+    if (Object.keys(d.typeCounts).length !== p.types) errs.push(`${seed}:种类`);
+    const quota = mixFor(1, p);
+    for (let k = 0; k < TYPE_IDS.length; k++) {
+      if ((d.typeCounts[TYPE_IDS[k]] || 0) !== quota[k] * 3) errs.push(`${seed}:配额`);
+    }
+    if (!isHalfLattice(d.cards) || sameLayerOverlapCount(d.cards) !== 0) errs.push(`${seed}:几何`);
+  }
+  ok(errs.length === 0, `L1-${p.id} 40 个 seed 全部通过结构 / 配额验收（异常 ${errs.length}${errs.length ? '：' + errs.slice(0, 2).join('；') : ''}）`);
+}
+line(`   几何验收耗时 ${((Date.now() - tGeo) / 1000).toFixed(1)}s`);
+
+/* ---------------- [11] 分档机器人难度验收（第 5.2 节统计部分） ---------------- */
+line('\n[11] 分档机器人难度验收（每档 5 种机器人各 400 局，池内种子循环 10 轮）');
+line('   说明：greedy 单独用于第 5.2 节「4 个第一关档位 greedy ≥95%」，L2 的 5 种机器人取其余 5 种。');
+const DIFF_MODES = ['random', 'noisy', 'lookahead', 'montecarlo', 'search'];
+// 正式验收固定 10 轮 × 40 个池内 seed = 400 局 / 档 / 机器人（规格 5.2 下限）。
+// MAH_REPS 只用于本地开发自检；正式运行必须不带该环境变量，否则局数断言会如实标 ✗。
+const REPS = Math.max(1, parseInt(process.env.MAH_REPS || '10', 10) || 10);
+line(`   池内种子循环 ${REPS} 轮 × 40 seed = ${REPS * 40} 局 / 档 / 机器人${process.env.MAH_REPS ? '（开发自检模式，非交付输出）' : ''}`);
+const tSim = Date.now();
+const totalByMode = {};
+for (const m of DIFF_MODES) totalByMode[m] = { n: 0, wins: 0 };
+let allN = 0, allWins = 0;
+for (const p of LEVEL2_PROFILES) {
+  const key = 'L2-' + p.id;
+  const levels = L2_LEVELS[p.id];
+  let pooledN = 0, pooledWins = 0;
+  const row = [];
+  for (let mi = 0; mi < DIFF_MODES.length; mi++) {
+    const mode = DIFF_MODES[mi];
+    let n = 0, wins = 0;
+    for (let rep = 0; rep < REPS; rep++) {
+      for (let si = 0; si < levels.length; si++) {
+        const { seed, data } = levels[si];
+        const rngSeed = (seed ^ 0xabcdef ^ (mi * 0x9e3779b9) ^ (rep * 0x85ebca6b)) >>> 0;
+        if (simulateRobot(data, makeRng(rngSeed), { mode }).win) wins++;
+        n++;
+      }
+    }
+    ok(n >= 400, `${key} ${mode} 局数 ≥400（实测 ${n}）`);
+    totalByMode[mode].n += n; totalByMode[mode].wins += wins;
+    pooledN += n; pooledWins += wins;
+    allN += n; allWins += wins;
+    row.push(mode + ' ' + pct(wins / n) + '(' + wins + ')');
+    if (mode === 'random') ok(wins / n <= 0.001, `${key} random 通关率 ≤0.1%（实测 ${pct(wins / n)}）`);
+  }
+  const upper = wilsonUpper(pooledWins, pooledN);
+  ok(upper <= 0.03, `${key} 每档通关率 95% Wilson 上界 ≤3%（实测 ${pct(upper)}， pooled ${pooledWins}/${pooledN}）`);
+  line(`   ${key} N=${String(p.layers).padStart(2)} T=${String(p.types).padStart(2)} | ` + row.join(' | '));
+  line(`        pooled 通关率 ${pct(pooledWins / pooledN)} · 95% Wilson 上界 ${pct(upper)} · 阈值 ≤3% ${upper <= 0.03 ? '✓' : '✗'}`);
+}
+line('   全档合计：');
+for (const m of DIFF_MODES) {
+  const t = totalByMode[m];
+  ok(t.n >= 4000, `${m} 全档合计 ≥4000 局（实测 ${t.n}）`);
+  line(`     ${m.padEnd(12)} ${String(t.n).padStart(5)} 局 · 通关 ${String(t.wins).padStart(5)} · 通关率 ${pct(t.wins / t.n)} · Wilson 上界 ${pct(wilsonUpper(t.wins, t.n))}`);
+}
+const allUpper = wilsonUpper(allWins, allN);
+ok(allUpper <= 0.01, `全档合计通关率 95% Wilson 上界 ≤1%（实测 ${pct(allUpper)}， ${allWins}/${allN}）`);
+line(`     合计 ${allN} 局 · 通关 ${allWins} · 通关率 ${pct(allWins / allN)} · 95% Wilson 上界 ${pct(allUpper)} · 阈值 ≤1% ${allUpper <= 0.01 ? '✓' : '✗'}`);
+line(`   机器人仿真耗时 ${((Date.now() - tSim) / 1000).toFixed(1)}s`);
+
+line('\n[11b] 4 个第一关档位 greedy 通关率 ≥95%（每档 400 局）');
+for (const p of LEVEL1_PROFILES) {
+  let wins = 0;
+  for (let i = 0; i < 400; i++) {
+    const seed = (7000 + i * 2654435761) >>> 0;
+    const d = generateLevel(1, seed, { profile: p.id });
+    if (simulateRobot(d, makeRng((seed ^ 0xabcdef) >>> 0), { mode: 'greedy' }).win) wins++;
+  }
+  const rate = wins / 400;
+  ok(rate >= 0.95, `L1-${p.id} greedy 通关率 ≥95%（实测 ${pct(rate)}， ${wins}/400）`);
+  line(`   L1-${p.id} ${p.layers} 层 / ${p.types} 种 / ${p.mainCount} 张 · greedy ${pct(rate)} (${wins}/400)`);
+}
+
+/* ---------------- [12] 抽取 / 重开 / 通关 / 存档（第 5.3 节） ---------------- */
+line('\n[12] rollProfile / 100 次重开 / 通关流程 / 旧存档（第 5.3 节）');
+const realInfo = console.info;
+console.info = () => {}; // 屏蔽 engine 的每局复现日志，避免刷屏
+try {
+  for (const lv of [1, 2]) {
+    let cur = 0, same = 0;
+    for (let i = 0; i < 200; i++) {
+      const n = rollProfile(lv, Math.random, cur);
+      if (n === cur) same++;
+      cur = n;
+    }
+    ok(same === 0, `L${lv} rollProfile 连续 200 次每次都 ≠ 上一次（重复 ${same}）`);
+  }
+  for (const lv of [1, 2]) {
+    let cur = 0;
+    const hits = {};
+    let light = 0;
+    for (let i = 0; i < 2000; i++) {
+      const n = rollProfile(lv, Math.random, cur);
+      hits[n] = 1;
+      if (lv === 2 && n >= 8) light++;
+      cur = n;
+    }
+    const expected = lv === 1 ? 4 : 10;
+    ok(Object.keys(hits).length === expected, `L${lv} 抽 2000 次后 ${expected} 个档位都出现过（实测 ${Object.keys(hits).length}）`);
+    if (lv === 2) {
+      const share = light / 2000;
+      ok(share >= 0.25 && share <= 0.35, `L2 轻量档占比 30%±5%（实测 ${pct(share)}）`);
+    }
+  }
+
+  // 100 次连续重开本关：档位每次都变；seed 始终来自「当前档位」的分库
+  {
+    const g = new Game(null);
+    g.startLevel(2, SEED_POOL['L2-0'][0]);
+    let changed = 0, poolOk = 0;
+    for (let i = 0; i < 100; i++) {
+      const before = g.profile.l2;
+      g.restartLevel(Math.random);
+      if (g.profile.l2 !== before) changed++;
+      const key = 'L2-' + g.profile.l2;
+      if (SEED_POOL[key] && SEED_POOL[key].indexOf(g.seed) >= 0) poolOk++;
+    }
+    ok(changed === 100, `L2 连续 100 次「重开本关」档位每次都变化（实测 ${changed}/100）`);
+    ok(poolOk === 100, `重开后 seed 只来自当前档位分库（实测 ${poolOk}/100）`);
+    line(`   L2 100 次重开：档位变化 ${changed}/100 · seed 命中当前档位池 ${poolOk}/100`);
+  }
+
+  // RETRY_KEEPS_PROFILE=true：档位保持不变、seed 每次都变（第 1 关 seed 为随机源，可验证）
+  {
+    setRetryKeepsProfile(true);
+    ok(RETRY_KEEPS_PROFILE === true, 'RETRY_KEEPS_PROFILE 是 ESM live binding，setter 生效');
+    const g = new Game(null);
+    g.startLevel(1, 12345);
+    const before = { ...g.profile };
+    let prevSeed = g.seed, seedChanged = 0, profileSame = 0;
+    for (let i = 0; i < 100; i++) {
+      g.restartLevel(Math.random);
+      if (g.profile.l1 === before.l1 && g.profile.l2 === before.l2) profileSame++;
+      if (g.seed !== prevSeed) seedChanged++;
+      prevSeed = g.seed;
+    }
+    ok(profileSame === 100, `RETRY_KEEPS_PROFILE=true 时 100 次重开档位保持不变（实测 ${profileSame}/100）`);
+    ok(seedChanged === 100, `RETRY_KEEPS_PROFILE=true 时 100 次重开 seed 每次都变化（实测 ${seedChanged}/100）`);
+    setRetryKeepsProfile(false);
+    ok(RETRY_KEEPS_PROFILE === false, '开关复位为 false');
+    line(`   开关 true：档位保持 ${profileSame}/100 · seed 变化 ${seedChanged}/100`);
+  }
+
+  // 真实通关：沿 solution 逐张点击 → graduated / best / 写存档 level=1 → startNewRun
+  {
+    const g = new Game(null);
+    g.profile.l1 = 0; g.profile.l2 = 0;
+    g.startLevel(2, SEED_POOL['L2-0'][0]);
+    let pickFail = 0;
+    for (const id of g.solution) if (!g.pick(g.cards[id])) pickFail++;
+    if (g.pendingMatch) g.flushResolve();
+    ok(pickFail === 0 && g.status === 'win' && g.graduated === true && g.best === LEVEL_COUNT,
+      `最后一关真实通关（点牌失败 ${pickFail} / status ${g.status} / graduated ${g.graduated} / best ${g.best}）`);
+    const sv = makeSaveData(g);
+    ok(sv.level === 1, `通关那一刻 persist 写 level=1（实测 ${sv.level}）`);
+    ok(sv.best === LEVEL_COUNT, `best 保持 ${LEVEL_COUNT} 用于已毕业徽标（实测 ${sv.best}）`);
+    ok(sv.p1 === 0 && sv.p2 === 0 && Number.isInteger(sv.p1) && Number.isInteger(sv.p2),
+      `存档含整数 p1/p2（实测 ${sv.p1}/${sv.p2}）`);
+    const before = { ...g.profile };
+    g.startNewRun(Math.random);
+    ok(g.level === 1, `startNewRun 从第 1 关开始（实测 level=${g.level}）`);
+    ok(g.profile.l1 !== before.l1 && g.profile.l2 !== before.l2,
+      `startNewRun 两关档位都 ≠ 之前（${before.l1}/${before.l2} → ${g.profile.l1}/${g.profile.l2}）`);
+    ok(g.graduated === false, 'startNewRun 后 graduated 清零');
+    line(`   通关存档 ${JSON.stringify(sv)} · startNewRun 档位 ${before.l1}/${before.l2} → ${g.profile.l1}/${g.profile.l2}`);
+  }
+
+  // 旧存档 / 越界字段 / preserveProfile（桌面异步存档不覆盖刚抽好的档位）
+  {
+    const g = new Game(null);
+    applySaveToGame(g, { v: 2, level: 2, best: 2, sound: true, sfxVol: 1 });
+    ok(g.level === 2 && g.best === 2 && g.profile.l1 === 0 && g.profile.l2 === 0,
+      '旧存档（无 p1/p2）能正常读入，档位按缺省 0 处理');
+    applySaveToGame(g, { v: 2, level: 1, best: 1, p1: 99, p2: -1 });
+    ok(g.profile.l1 === 0 && g.profile.l2 === 0, '越界 p1/p2 按缺省档位 0 处理，不判非法');
+    g.profile.l1 = 3; g.profile.l2 = 7;
+    applySaveToGame(g, { v: 2, level: 2, best: 2, p1: 0, p2: 0 }, true);
+    ok(g.profile.l1 === 3 && g.profile.l2 === 7,
+      'preserveProfile=true 时桌面异步存档不覆盖 boot 刚抽好的档位');
+    applySaveToGame(g, null);
+    ok(g.level === 2, '空存档不改动游戏状态');
+  }
+} finally {
+  console.info = realInfo;
+}
+
+/* ---------------- [13] 界面文案与源码一致性（第 2.5 / 3.2 / 3.3 / 4.2 节） ---------------- */
+line('\n[13] 界面文案与源码一致性');
+ok(/game\.graduated\s*\?\s*'开始新一轮'\s*:\s*'开始游戏'/.test(renderSrc),
+  '标题页按钮「开始新一轮」判据 = game.graduated，与 case \'start\' 一致');
+ok(/levelParams\(nextLv, Math\.random, nextLv <= 1 \? game\.profile\.l1 : game\.profile\.l2\)/.test(renderSrc),
+  '「下一关」张数 / 层数 / 牌种数从下一关当前档位读取');
+ok(!/下一关：\s*\d+\s*张/.test(renderSrc), 'render.js 里不存在硬编码的「下一关：N 张」文案');
+ok(/push\('replay'[\s\S]{0,200}重玩本关/.test(renderSrc), '普通胜利面板提供「重玩本关」按钮');
+ok(!/240 张|15 层·|16 种 · 15 层/.test(renderSrc), 'render.js 界面文案无旧版固定张数 / 层数');
+ok(/case 'restart':\s*\n\s*case 'replay':/.test(mainSrc), 'main.js 中 restart / replay 共用同一分支');
+ok((mainSrc.match(/game\.startNewRun\(Math\.random\)/g) || []).length === 2,
+  'case \'start\' 与 case \'restart\'/\'replay\' 毕业路径都调用 startNewRun()');
+ok(/if \(game\.graduated\)/.test(mainSrc) && /game\.startLevel\(game\.level\)/.test(mainSrc),
+  '非毕业状态仍从第 2 关继续（3.4）');
+ok(/game\.profile\.l1 = rollProfile\(1, Math\.random, game\.profile\.l1\)/.test(mainSrc)
+  && /game\.profile\.l2 = rollProfile\(2, Math\.random, game\.profile\.l2\)/.test(mainSrc),
+  'boot() 在 applySave 之后对 l1 / l2 都重抽，各自 ≠ 存档里的 p1 / p2');
+ok(/persist\(true\)/.test(mainSrc) && /makeSaveData\(game\)/.test(mainSrc),
+  '抽取后立即 persist(true)，存档由 makeSaveData 统一构造');
+ok(/syncDesktopSave\(\(raw\) => applySave\(raw, true\)\)/.test(mainSrc),
+  '桌面异步存档以 preserveProfile=true 读入，不覆盖 boot 抽好的档位');
+ok(/q\.has\('lv'\)/.test(mainSrc), '保留 ?lv= 调试参数');
+ok(/console\.info\(`\[mah\] level=/.test(engineSrc) && /profileId=/.test(engineSrc) && /seed=/.test(engineSrc),
+  'engine 每局 console.info 打印 level / profileId / seed');
+ok(/generateProfileLayout\(s, profile\)/.test(read('src/game/generator.js')),
+  'generateLevel 带 profile 时走档位驱动布局');
+ok(/pickPoolSeed\(lv, profile \? profile\.id : null\)/.test(read('src/game/generator.js')),
+  'generateLevel 不传 seed 时只从当前档位池抽');
+ok(/SEED_POOL\['L2-' \+ profileId\]|SEED_POOL\[key\]/.test(read('src/game/seed_pool.js')),
+  'pickPoolSeed 按 L2-<id> 分库取值');
+ok(/p1: game\.profile\.l1/.test(read('src/game/save_data.js'))
+  && /p2: game\.profile\.l2/.test(read('src/game/save_data.js'))
+  && /game\.graduated \? 1 : game\.level/.test(read('src/game/save_data.js')),
+  'save_data.js：毕业写 level=1、best 保持、p1/p2 写入');
+ok(!/^\s*\d+\s*张\s*·|下一关：\s*\d+/.test(dom), 'ES5 降级视图无硬编码张数 / 层数文案');
 
 line('\n============================================================================');
 line(` 断言：通过 ${pass} 项，失败 ${fail} 项`);
 line('============================================================================');
+if (fail) {
+  line(' 说明：失败项按规格 5.2 的字面阈值判定，未放宽阈值、未改测试凑数。');
+  line('       5.1 要求「池内每个种子至少一条强策略可通关」，5.2 同时要求「通关率 Wilson 上界 ≤3%」，');
+  line('       在证书可解性设计（槽位峰值 ≤6、沿剥离顺序必然可通关）下两者互为矛盾；');
+  line('       真实通关率与上界已逐档打印在 [11]，请据此决定是调整阈值还是调整难度模型。');
+}
 if (fail) process.exit(1);
