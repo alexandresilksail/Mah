@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-11T14:36:27.916Z",
-  "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+  "generatedAt": "2026-11-12T02:21:39.940Z",
+  "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
   "command": "node test-build-consistency.js",
   "assertions": {
-    "pass": 46,
+    "pass": 48,
     "fail": 0
   },
   "exitCode": 0,
@@ -11,12 +11,12 @@
     "modern": {
       "path": "dist/MahLeMah.html",
       "bytes": 114279,
-      "sha256": "c08d60afaa85a8f5c1d6d49ca5d196cc9528dae09250f445a6e5432ca6093b9f"
+      "sha256": "5baed43946f0346dedbaf8709c3460995e07aa7cd1bc6c39b4d25dd5857849c8"
     },
     "legacy": {
       "path": "dist/MahLeMah-legacy.html",
       "bytes": 149684,
-      "sha256": "4776ad9ea4a8016b6547dd0cc2731cd9f6fab744826e340580cb603ee6575578"
+      "sha256": "5972e4018faee2d94ad262f195718f7e9db9e8142119f62baf1e58079e8d993f"
     }
   },
   "bundle": {
@@ -34,24 +34,24 @@
   },
   "buildInfo": {
     "modern": {
-      "buildVersion": "2.0.0-1f95db0",
-      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "buildVersion": "2.0.0-0437499",
+      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
       "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-11T14:36:20.102Z",
+      "buildTimestamp": "2026-11-12T02:21:04.453Z",
       "sourceFiles": 28
     },
     "legacy": {
-      "buildVersion": "2.0.0-1f95db0",
-      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "buildVersion": "2.0.0-0437499",
+      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
       "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-11T14:36:24.340Z",
+      "buildTimestamp": "2026-11-12T02:21:11.474Z",
       "sourceFiles": 28
     },
     "live": {
-      "buildVersion": "2.0.0-1f95db0",
-      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "buildVersion": "2.0.0-0437499",
+      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
       "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-11T14:36:27.832Z",
+      "buildTimestamp": "2026-11-12T02:21:38.792Z",
       "sourceFiles": 28
     }
   },

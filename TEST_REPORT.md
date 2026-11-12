@@ -161,3 +161,74 @@ montecarlo 83.80% / search 84.75%。
   已用 esbuild 内存打包验证构建链可用，但未写入 `dist/`。
 - **未重新运行 `npm run test:release`**（12000 局发布压力测试，属冻结版历史报告）。
 - 因 `node test.js` 以 `EXIT=1` 结束，`npm test` 的第二段 `test_render.mjs` 由本会话单独运行并通过。
+
+---
+
+## 7. 双关卡随机生成机制重构验证（2026-11-12，本轮真实运行）
+
+本节是当前源码（提交 `0437499`）的真实结果。§6 是 2026-11-11 那一轮的历史记录，保留不改。
+
+### 7.1 `node test.js`
+
+- **命令**：`node test.js`（默认 400 局/档/机器人）
+- **结果**：**1337 项通过 / 11 项失败 / EXIT=1**
+- **耗时**：机器人仿真段 749.0 s（`[11]`），几何验收段 7.3 s（`[10]`）
+- **完整原始输出**：`reports/TEST_OUTPUT_FINAL_FULL.txt`（149 行，含全部 `✗` 明细）
+
+本轮新增 / 更新的节区全部通过：
+
+- `[13]` 界面文案与源码一致性（张数 / 层数 / 牌型数均读实际牌局，无硬编码）
+- `[14]` 统一生成入口 / 布局签名 / 最近三局差异化（真实调用 `createNewGame()` 生成 17 局，
+  四种 `generationReason` 各覆盖，两关各 6 局 + 5 局交叉验证）
+- `[8b]` Rust 白名单更新为 11 键（`v/level/best/sound/sfxVol/music/musicVol/p1/p2/level1RecentGames/level2RecentGames`）
+  并带历史数组逐字段校验
+
+### 7.2 11 项失败仍然只有一类
+
+与 §6.4 同源，仍是规格 5.1 与 5.2 数学互斥导致的 Wilson 上界断言：
+
+| 失败项 | 实测 | 阈值 |
+|---|---|---|
+| L2-0 … L2-9 每档通关率 95% Wilson 上界 | 58.31% – 72.80% | ≤ 3% |
+| 全档合计通关率 95% Wilson 上界 | 68.14%（13498 / 20000） | ≤ 1% |
+
+阈值、机器人定义、随机源均未改动，也没有跳过或挑选种子。逐档数字见
+`reports/TEST_OUTPUT_FINAL_FULL.txt` 第 67–107 行。
+
+### 7.3 200 局压力测试（`node test-random-generation.js`）
+
+- **5053 项断言通过 / 0 失败 / EXIT=0**，耗时 6.90 s
+- 202 个 gameId 全部唯一，生成失败 0 次，总重试 235 次，平均 24.79 ms/局
+- 两关滚动窗口「牌数重复 / 主签名重复 / 几何签名重复」**全部为 0**
+- 报告：`reports/random-generation-report.json` / `.md` / `-output.txt`
+
+### 7.4 构建一致性（`node test-build-consistency.js`）
+
+- **48 项断言通过 / 0 失败 / EXIT=0**
+- 现代版 bundle 112,147 B、legacy 业务段 119,342 B，均与现场打包**逐字节相同**
+- `sourceHash=864943bcb18854b6…` 与现场对 `src/` 28 个文件重算结果一致
+- 报告：`reports/build-consistency-report.json` / `.md` / `-output.txt`
+
+### 7.5 浏览器实测（`node tools/browser_smoke.mjs`）
+
+- Edge `157.0.4341.42`，CDP 真实加载 `dist/MahLeMah.html` 与 `dist/MahLeMah-legacy.html`
+- 每页生成 4 局，四种 `generationReason` 各 1 次，`tileCountCheck / layoutCheck /
+  difficultyCheck / historyCheck` 全 PASS，`exceptions=0`，`allPassed=true`
+- 报告：`reports/browser-smoke-report.json`
+
+### 7.6 本轮未执行项
+
+- **Windows 真机安装 / 卸载测试未执行**：本轮未重建 NSIS Setup、Portable zip、桌面 exe，
+  `dist/` 中的 exe 产物仍是 2026-11-10 冻结版；因此不做安装/卸载回归，也不声明通过。
+- `npm run test:release`（12000 局发布压力测试）未重跑，`reports/DIFFICULTY.md` 仍是冻结版历史数据
+  （仅做过期数字标注，未伪造新结果）。
+
+### 7.7 汇总
+
+| 测试 | 结果 | 退出码 |
+|---|---|---|
+| `node test.js` | 1337 通过 / **11 失败**（上一轮阈值冲突） | 1 |
+| `node tools/test_render.mjs` | 27 场景通过 | 0 |
+| `node test-random-generation.js` | 5053 通过 / 0 失败 | 0 |
+| `node test-build-consistency.js` | 48 通过 / 0 失败 | 0 |
+| `node tools/browser_smoke.mjs` | 2 页 × 4 局，全 PASS | 0 |

@@ -123,8 +123,10 @@ ok(modernBuild && /^[0-9a-f]{40}$/.test(String(modernBuild.gitCommit)),
 let commitExists = false;
 let commitIsAncestor = false;
 try {
-  execSync(`git cat-file -e ${modernBuild.gitCommit}^{commit}`, { cwd: root, stdio: 'ignore' });
-  commitExists = true;
+  // 用 cat-file -t 而不是 -e ...^{commit}：Windows 下 execSync 走 cmd.exe，`^` 是转义符
+  const type = execSync(`git cat-file -t ${modernBuild.gitCommit}`, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString().trim();
+  commitExists = type === 'commit';
   execSync(`git merge-base --is-ancestor ${modernBuild.gitCommit} ${head}`, { cwd: root, stdio: 'ignore' });
   commitIsAncestor = true;
 } catch (e) { /* 保持 false */ }

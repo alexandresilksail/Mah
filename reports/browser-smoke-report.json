@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T14:36:50.122Z",
+  "generatedAt": "2026-11-12T02:22:19.637Z",
   "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   "executed": true,
   "pages": [
@@ -9,22 +9,22 @@
       "url": "file:///D:/Users/Administrator/WorkBuddy/2026-11-02-18-41-41/mah-le-mah/dist/MahLeMah.html?dev=1",
       "value": {
         "build": {
-          "buildVersion": "2.0.0-1f95db0",
-          "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+          "buildVersion": "2.0.0-0437499",
+          "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
           "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-          "buildTimestamp": "2026-11-11T14:36:20.102Z",
+          "buildTimestamp": "2026-11-12T02:21:04.453Z",
           "sourceFiles": 28
         },
         "rounds": [
           {
-            "gameId": "g1-mwc82zjy-1-17el6kl-application_restart",
+            "gameId": "g1-mwcxa96w-1-1giwk8h-application_restart",
             "level": 1,
-            "difficultyId": 3,
-            "seed": 1733715632,
-            "totalTiles": 48,
-            "tileTypeCount": 16,
-            "layoutSignature": "9d5e03d6b617003efa3ae63220b9b94d9d4196559665a6aed96fb920981c00e3",
-            "geometrySignature": "25d5c950c190936f5ef13b464b0d114af3dce922cf780b3a0d4b36f32c53784c",
+            "difficultyId": 2,
+            "seed": 2311762795,
+            "totalTiles": 36,
+            "tileTypeCount": 12,
+            "layoutSignature": "fab43b4a65fe1139299d8cc1585591644bd5c80a8a7297af4539f991eaa34877",
+            "geometrySignature": "6b10f2e782d431a1def007a95183d38ec0850d91da7606da3e5b98944b0857d1",
             "generationReason": "application_restart",
             "checks": {
               "tileCountCheck": "PASS",
@@ -33,17 +33,17 @@
               "historyCheck": "PASS"
             },
             "historyCount": 1,
-            "cardsOnBoard": 48
+            "cardsOnBoard": 36
           },
           {
-            "gameId": "g1-mwc82zk5-2-r1cxnj-title_screen_restart",
+            "gameId": "g1-mwcxa973-2-ux6p92-title_screen_restart",
             "level": 1,
-            "difficultyId": 1,
-            "seed": 26668326,
-            "totalTiles": 30,
-            "tileTypeCount": 10,
-            "layoutSignature": "04eb9671d0fe7119d2ca2aaef42a427746f3c11d7bd5fffd85ae7293a02b9e2e",
-            "geometrySignature": "b6d81ade91cde2746f17302166302a95a4568d66145aa6b37a687818ce4917af",
+            "difficultyId": 3,
+            "seed": 3810724814,
+            "totalTiles": 48,
+            "tileTypeCount": 16,
+            "layoutSignature": "931e19a504ba78acec2365e4312b8a4758b1bc849df4f40a05cb56c845cfe40c",
+            "geometrySignature": "25d5c950c190936f5ef13b464b0d114af3dce922cf780b3a0d4b36f32c53784c",
             "generationReason": "title_screen_restart",
             "checks": {
               "tileCountCheck": "PASS",
@@ -52,17 +52,17 @@
               "historyCheck": "PASS"
             },
             "historyCount": 2,
-            "cardsOnBoard": 30
+            "cardsOnBoard": 48
           },
           {
-            "gameId": "g1-mwc82zk9-3-xlumog-failure_restart",
+            "gameId": "g1-mwcxa977-3-1slfmfa-failure_restart",
             "level": 1,
-            "difficultyId": 2,
-            "seed": 802628198,
-            "totalTiles": 36,
-            "tileTypeCount": 12,
-            "layoutSignature": "7c032081003d6775a24e99793ad5e6cbc5692cd2a5c534af4b5a84f9504e732c",
-            "geometrySignature": "6b10f2e782d431a1def007a95183d38ec0850d91da7606da3e5b98944b0857d1",
+            "difficultyId": 1,
+            "seed": 243507256,
+            "totalTiles": 30,
+            "tileTypeCount": 10,
+            "layoutSignature": "b63aeb21cf8f5af528bb6d34e59eaf5d55085acf5a37b78aa53bb6d31d43e57f",
+            "geometrySignature": "b6d81ade91cde2746f17302166302a95a4568d66145aa6b37a687818ce4917af",
             "generationReason": "failure_restart",
             "checks": {
               "tileCountCheck": "PASS",
@@ -71,16 +71,16 @@
               "historyCheck": "PASS"
             },
             "historyCount": 3,
-            "cardsOnBoard": 36
+            "cardsOnBoard": 30
           },
           {
-            "gameId": "g1-mwc82zke-4-11wy6yx-new_game",
+            "gameId": "g1-mwcxa97h-4-1f7z7n-new_game",
             "level": 1,
             "difficultyId": 0,
-            "seed": 2558907675,
+            "seed": 2723015129,
             "totalTiles": 24,
             "tileTypeCount": 8,
-            "layoutSignature": "f571c8549d32298df202cb69d90d8f2ad53913fc9654bbc4e249da5367381637",
+            "layoutSignature": "84bade640be6ba040ef386d6ff73e673ecdf0488e5b7a349da6f0f97a280d31b",
             "geometrySignature": "811ba9f7a60c7a3ec1659593afbf8d15c094f290d14f812949406fb9d9e10d6c",
             "generationReason": "new_game",
             "checks": {
@@ -95,7 +95,7 @@
         ],
         "errors": [],
         "devPanelPresent": true,
-        "devPanelText": "=== MahLeMah 开发调试面板（真实运行数据）===\ngameId = g1-mwc82zke-4-11wy6yx-new_game\nbuildVersion = 2.0.0-1f95db0\ngitCommit = 1f95db08e60c74c21a0aa8dff85877e61e55f9f4\nsourceHash = 864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b\nlevel = 1\ndifficultyId = 0\nseed = 2558907675\ntotalTiles = 24\ntileTypeCount = 8\nlayerCount = 2\nlayoutSignature = f571c8549d32298df202cb69d90d8f2ad53913fc9654bbc4e249da536",
+        "devPanelText": "=== MahLeMah 开发调试面板（真实运行数据）===\ngameId = g1-mwcxa97h-4-1f7z7n-new_game\nbuildVersion = 2.0.0-0437499\ngitCommit = 04374993a51d29cec465d596de0a6d0e92199856\nsourceHash = 864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b\nlevel = 1\ndifficultyId = 0\nseed = 2723015129\ntotalTiles = 24\ntileTypeCount = 8\nlayerCount = 2\nlayoutSignature = 84bade640be6ba040ef386d6ff73e673ecdf0488e5b7a349da6f0f97a2",
         "canvasPresent": true
       },
       "exceptions": [],
@@ -113,61 +113,23 @@
       "url": "file:///D:/Users/Administrator/WorkBuddy/2026-11-02-18-41-41/mah-le-mah/dist/MahLeMah-legacy.html?dev=1",
       "value": {
         "build": {
-          "buildVersion": "2.0.0-1f95db0",
-          "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+          "buildVersion": "2.0.0-0437499",
+          "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
           "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-          "buildTimestamp": "2026-11-11T14:36:24.340Z",
+          "buildTimestamp": "2026-11-12T02:21:11.474Z",
           "sourceFiles": 28
         },
         "rounds": [
           {
-            "gameId": "g1-mwc831ns-1-1q6bbsz-application_restart",
-            "level": 1,
-            "difficultyId": 3,
-            "seed": 3979280540,
-            "totalTiles": 48,
-            "tileTypeCount": 16,
-            "layoutSignature": "d071d2c3b512778de25666550dfd80a5f08ede33fce49e0c9a15a08bc684112a",
-            "geometrySignature": "25d5c950c190936f5ef13b464b0d114af3dce922cf780b3a0d4b36f32c53784c",
-            "generationReason": "application_restart",
-            "checks": {
-              "tileCountCheck": "PASS",
-              "layoutCheck": "PASS",
-              "difficultyCheck": "PASS",
-              "historyCheck": "PASS"
-            },
-            "historyCount": 3,
-            "cardsOnBoard": 48
-          },
-          {
-            "gameId": "g1-mwc831o0-2-1upd8zo-title_screen_restart",
-            "level": 1,
-            "difficultyId": 1,
-            "seed": 1326584096,
-            "totalTiles": 30,
-            "tileTypeCount": 10,
-            "layoutSignature": "86d0f90ea6a0e5ccded9498a87a5931d58783701cc4938130297cae9248dcc53",
-            "geometrySignature": "b6d81ade91cde2746f17302166302a95a4568d66145aa6b37a687818ce4917af",
-            "generationReason": "title_screen_restart",
-            "checks": {
-              "tileCountCheck": "PASS",
-              "layoutCheck": "PASS",
-              "difficultyCheck": "PASS",
-              "historyCheck": "PASS"
-            },
-            "historyCount": 3,
-            "cardsOnBoard": 30
-          },
-          {
-            "gameId": "g1-mwc831o5-3-64beph-failure_restart",
+            "gameId": "g1-mwcxabb6-1-1kexkyg-application_restart",
             "level": 1,
             "difficultyId": 2,
-            "seed": 1087102650,
+            "seed": 4184733415,
             "totalTiles": 36,
             "tileTypeCount": 12,
-            "layoutSignature": "fe10bc503aa3ed24895fa99fd6029f972fbe058f13f6091394cc738e1187ab07",
+            "layoutSignature": "082b115f0dbaabfadfb7f74e95b9f96a45e7719680ecf587f6cf7a0af3c7c42b",
             "geometrySignature": "6b10f2e782d431a1def007a95183d38ec0850d91da7606da3e5b98944b0857d1",
-            "generationReason": "failure_restart",
+            "generationReason": "application_restart",
             "checks": {
               "tileCountCheck": "PASS",
               "layoutCheck": "PASS",
@@ -178,13 +140,51 @@
             "cardsOnBoard": 36
           },
           {
-            "gameId": "g1-mwc831o6-4-1oz0k1s-new_game",
+            "gameId": "g1-mwcxabbd-2-2lqrzv-title_screen_restart",
+            "level": 1,
+            "difficultyId": 3,
+            "seed": 40496752,
+            "totalTiles": 48,
+            "tileTypeCount": 16,
+            "layoutSignature": "72db2ec8af567941d900e01130519ce3129d91f48901905f0f3a251d1434d289",
+            "geometrySignature": "25d5c950c190936f5ef13b464b0d114af3dce922cf780b3a0d4b36f32c53784c",
+            "generationReason": "title_screen_restart",
+            "checks": {
+              "tileCountCheck": "PASS",
+              "layoutCheck": "PASS",
+              "difficultyCheck": "PASS",
+              "historyCheck": "PASS"
+            },
+            "historyCount": 3,
+            "cardsOnBoard": 48
+          },
+          {
+            "gameId": "g1-mwcxabbg-3-xppxg1-failure_restart",
+            "level": 1,
+            "difficultyId": 1,
+            "seed": 4176200377,
+            "totalTiles": 30,
+            "tileTypeCount": 10,
+            "layoutSignature": "64b4aac2bffe36bf52ff8ada3123c8306ff6c2080f1d6f4723cd56474681dbe2",
+            "geometrySignature": "b6d81ade91cde2746f17302166302a95a4568d66145aa6b37a687818ce4917af",
+            "generationReason": "failure_restart",
+            "checks": {
+              "tileCountCheck": "PASS",
+              "layoutCheck": "PASS",
+              "difficultyCheck": "PASS",
+              "historyCheck": "PASS"
+            },
+            "historyCount": 3,
+            "cardsOnBoard": 30
+          },
+          {
+            "gameId": "g1-mwcxabbl-4-1eac3dz-new_game",
             "level": 1,
             "difficultyId": 0,
-            "seed": 1481990769,
+            "seed": 1596380926,
             "totalTiles": 24,
             "tileTypeCount": 8,
-            "layoutSignature": "77bac64b62ffb5773d43a47afd2f1bb7dde72301255100c439d19b647a18a5a2",
+            "layoutSignature": "88ca7cd4a99b1b1826865cf482b652407a9c7364b15eda6ee4d486c747ee9dce",
             "geometrySignature": "811ba9f7a60c7a3ec1659593afbf8d15c094f290d14f812949406fb9d9e10d6c",
             "generationReason": "new_game",
             "checks": {
@@ -199,7 +199,7 @@
         ],
         "errors": [],
         "devPanelPresent": true,
-        "devPanelText": "=== MahLeMah 开发调试面板（真实运行数据）===\ngameId = g1-mwc831o6-4-1oz0k1s-new_game\nbuildVersion = 2.0.0-1f95db0\ngitCommit = 1f95db08e60c74c21a0aa8dff85877e61e55f9f4\nsourceHash = 864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b\nlevel = 1\ndifficultyId = 0\nseed = 1481990769\ntotalTiles = 24\ntileTypeCount = 8\nlayerCount = 2\nlayoutSignature = 77bac64b62ffb5773d43a47afd2f1bb7dde72301255100c439d19b647",
+        "devPanelText": "=== MahLeMah 开发调试面板（真实运行数据）===\ngameId = g1-mwcxabbl-4-1eac3dz-new_game\nbuildVersion = 2.0.0-0437499\ngitCommit = 04374993a51d29cec465d596de0a6d0e92199856\nsourceHash = 864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b\nlevel = 1\ndifficultyId = 0\nseed = 1596380926\ntotalTiles = 24\ntileTypeCount = 8\nlayerCount = 2\nlayoutSignature = 88ca7cd4a99b1b1826865cf482b652407a9c7364b15eda6ee4d486c74",
         "canvasPresent": true
       },
       "exceptions": [],

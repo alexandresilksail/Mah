@@ -2,17 +2,17 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-11T14:36:27.916Z
-- Git commit：`1f95db08e60c74c21a0aa8dff85877e61e55f9f4`
-- 断言：通过 **46**，失败 **0**
+- 运行时间：2026-11-12T02:21:39.940Z
+- Git commit：`04374993a51d29cec465d596de0a6d0e92199856`
+- 断言：通过 **48**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
 ## 产物
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 114279 | `c08d60afaa85a8f5c1d6d49ca5d196cc9528dae09250f445a6e5432ca6093b9f` |
-| dist/MahLeMah-legacy.html | 149684 | `4776ad9ea4a8016b6547dd0cc2731cd9f6fab744826e340580cb603ee6575578` |
+| dist/MahLeMah.html | 114279 | `5baed43946f0346dedbaf8709c3460995e07aa7cd1bc6c39b4d25dd5857849c8` |
+| dist/MahLeMah-legacy.html | 149684 | `5972e4018faee2d94ad262f195718f7e9db9e8142119f62baf1e58079e8d993f` |
 
 ## bundle 逐字节比对
 
@@ -25,8 +25,8 @@
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-1f95db0 | 2.0.0-1f95db0 | 2.0.0-1f95db0 |
-| gitCommit | 1f95db08e60c74c21a0aa8dff85877e61e55f9f4 | 1f95db08e60c74c21a0aa8dff85877e61e55f9f4 | 1f95db08e60c74c21a0aa8dff85877e61e55f9f4 |
+| buildVersion | 2.0.0-0437499 | 2.0.0-0437499 | 2.0.0-0437499 |
+| gitCommit | 04374993a51d29cec465d596de0a6d0e92199856 | 04374993a51d29cec465d596de0a6d0e92199856 | 04374993a51d29cec465d596de0a6d0e92199856 |
 | sourceHash | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` |
 | sourceFiles | 28 | 28 | 28 |
 
