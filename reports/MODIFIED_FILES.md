@@ -2,7 +2,7 @@
 
 **项目**：MahLeMah（`mah-le-mah/`）
 **日期**：2026-11-12
-**本轮提交**：`__COMMIT__`（完整哈希 `__COMMIT_FULL__`），已推送 `origin/main`
+**本轮提交**：`dcf9f6e`（完整哈希 `dcf9f6e9d8715e4faef921714b24669d01e2a9ed`），已推送 `origin/main`
 **口径**：仅修改与四项问题直接相关的代码；不做全项目审计，不重构无关模块，不改变核心玩法。
 **上一轮基线**：`cb43412`（随机生成重构收尾）
 
@@ -122,4 +122,4 @@
 | Rust `cargo check` / `cargo build` | **未运行** |
 | 桌面版 / Windows 安装版真机音乐播放 | **未运行** |
 
-本轮提交：`__COMMIT__`（`__COMMIT_FULL__`）。
+本轮提交：`dcf9f6e`（`dcf9f6e9d8715e4faef921714b24669d01e2a9ed`）。

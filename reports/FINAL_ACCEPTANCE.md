@@ -4,7 +4,7 @@
 **范围**：只修改与四项问题直接相关的代码；不做全项目审计，不重构无关模块，不改变核心玩法。
 **四项问题**：① 已上传并分配好场景的背景音乐无法播放 ② 第一关整体布局偏上 ③ 第一关反复重开布局重复 ④ 第二关反复重开布局始终相同或高度相似。
 **流程**：先审计 → 再修改 → 再测试 → 再构建 → 最后验收。
-**本轮提交**：`__COMMIT__`（功能 + 测试 + 产物 + 报告），完整哈希 `__COMMIT_FULL__`，已推送 `origin/main`。
+**本轮提交**：`dcf9f6e`（功能 + 测试 + 产物 + 报告），完整哈希 `dcf9f6e9d8715e4faef921714b24669d01e2a9ed`，已推送 `origin/main`。
 
 ---
 
@@ -218,4 +218,4 @@ node tools/browser_smoke.mjs             # Edge 冒烟 allPassed=true
 node tools/build_web.mjs && node tools/build_legacy.mjs   # 重建 4 个 HTML
 ```
 
-修改文件清单见 `reports/MODIFIED_FILES.md`；本轮提交 `__COMMIT__`（`__COMMIT_FULL__`）。
+修改文件清单见 `reports/MODIFIED_FILES.md`；本轮提交 `dcf9f6e`（`dcf9f6e9d8715e4faef921714b24669d01e2a9ed`）。
