@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-12T04:29:04.508Z
-- Git commit：`9912743ca5990f48f74d66cc548774b2c385f1ff`
+- 运行时间：2026-11-12T13:00:06.621Z
+- Git commit：`a9339dec3a5b363adfcd94507213c17c541668c7`
 - 断言：通过 **48**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -25,8 +25,8 @@
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-9912743 | 2.0.0-9912743 | 2.0.0-9912743 |
-| gitCommit | 9912743ca5990f48f74d66cc548774b2c385f1ff | 9912743ca5990f48f74d66cc548774b2c385f1ff | 9912743ca5990f48f74d66cc548774b2c385f1ff |
+| buildVersion | 2.0.0-9912743 | 2.0.0-9912743 | 2.0.0-a9339de |
+| gitCommit | 9912743ca5990f48f74d66cc548774b2c385f1ff | 9912743ca5990f48f74d66cc548774b2c385f1ff | a9339dec3a5b363adfcd94507213c17c541668c7 |
 | sourceHash | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` |
 | sourceFiles | 32 | 32 | 32 |
 
