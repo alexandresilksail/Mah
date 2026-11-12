@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-12T02:25:27.140Z
-- Git commit：`dfb28a87b5c57d7c7e1db038439fd1cd19f80b84`
+- 运行时间：2026-11-12T04:21:58.958Z
+- Git commit：`f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d`
 - 断言：通过 **48**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -11,24 +11,24 @@
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 114279 | `5baed43946f0346dedbaf8709c3460995e07aa7cd1bc6c39b4d25dd5857849c8` |
-| dist/MahLeMah-legacy.html | 149684 | `5972e4018faee2d94ad262f195718f7e9db9e8142119f62baf1e58079e8d993f` |
+| dist/MahLeMah.html | 134302 | `5b683891a56e79e27dc0f383f7d8559ecdf58e1d2461f8b73ed4ac4c018967c1` |
+| dist/MahLeMah-legacy.html | 168373 | `cca372e4d99ea3791dfa6b716e115f5f18c5c56601763f1efe6fd40653a6cd3b` |
 
 ## bundle 逐字节比对
 
 | 版本 | HTML 内嵌字节 | 现场打包字节 | 相同 |
 |---|---:|---:|---|
-| 现代版 | 112147 | 112147 | PASS |
-| legacy | 119342 | 119342 | PASS |
+| 现代版 | 132170 | 132170 | PASS |
+| legacy | 138031 | 138031 | PASS |
 
 ## 构建元信息
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-0437499 | 2.0.0-0437499 | 2.0.0-dfb28a8 |
-| gitCommit | 04374993a51d29cec465d596de0a6d0e92199856 | 04374993a51d29cec465d596de0a6d0e92199856 | dfb28a87b5c57d7c7e1db038439fd1cd19f80b84 |
-| sourceHash | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` | `864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b` |
-| sourceFiles | 28 | 28 | 28 |
+| buildVersion | 2.0.0-f5a578e | 2.0.0-f5a578e | 2.0.0-f5a578e |
+| gitCommit | f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d | f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d | f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d |
+| sourceHash | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` |
+| sourceFiles | 32 | 32 | 32 |
 
 > 两个 HTML 的 buildTimestamp 允许相差数秒（两次独立构建），其余字段必须完全一致。
 

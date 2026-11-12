@@ -251,6 +251,8 @@ export function simulateRobot(levelData, rng, opt = {}) {
   const total = state.cards.length;
   const maxSteps = o.maxSteps || 20000;
   const track = !!o.track;
+  const wantPath = !!o.path;
+  const path = [];
   const slotHist = [0, 0, 0, 0, 0, 0, 0, 0];
   let hangPeak = 0;
   let slotSum = 0;
@@ -292,6 +294,7 @@ export function simulateRobot(levelData, rng, opt = {}) {
     state.alive -= 1;
     state.slot.push(pick);
     state.steps++;
+    if (wantPath) path.push(pick.id);
     slotSum += state.slot.length;
     if (track) {
       slotHist[Math.min(7, state.slot.length)]++;
@@ -330,6 +333,7 @@ export function simulateRobot(levelData, rng, opt = {}) {
       propsUsed: 0,
     };
     if (track) { res.slotHist = slotHist; res.hangPeak = hangPeak; }
+    if (wantPath) { res.path = win ? path.slice() : null; }
     return res;
   }
 }

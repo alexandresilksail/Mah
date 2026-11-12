@@ -135,9 +135,11 @@ export class Game {
     this.uninstallAsk = false;
     this.settingsAsk = false;
     this._pausedBeforeSettings = false;
-    // 最终版只保留音效：soundOn / sfxVol 由 main.js 同步到 Sound 并持久化。
-    // 旧档中的 music / musicVol 字段已废弃，读入时忽略。
+    // 音效与背景音乐各自独立：soundOn / sfxVol 同步到 Sound，
+    // musicOn / musicVol / musicMap 同步到 MusicPlayer（第 4.5 节复用这两个存档字段）。
     this.sfxVol = 1;
+    this.musicOn = true;
+    this.musicVol = 0.6;
     this.pendingMatch = null; // { due, dueClock, types } —— 200ms 延迟消除
     this.resolving = false; // 防止重复触发
     this.clock = 0; // 帧累加的游戏时钟（毫秒），让无 DOM 的模拟也能推进延迟消除

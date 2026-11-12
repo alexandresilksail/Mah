@@ -3,7 +3,8 @@
  *
  * 三个签名各自独立、可复算：
  *  · geometrySignature  : 坐标 / 层级 / 区域 / z 全序 / 遮挡关系 / 可操作区，
- *                          与洗牌完全无关。同一档位换 seed → 该签名必须相同。
+ *                          与洗牌完全无关。**几何由 seed 程序化生成**，同档位换
+ *                          seed 必须得到不同几何（这正是本轮第 1 节的前提）。
  *  · distributionSignature : 与布局相关的牌型分布（每种牌型张数 + 沿 z 全序的
  *                          牌型序列）。只换花色排列会改它，不改几何。
  *  · layoutSignature    : SHA-256(geometrySignature + distributionSignature)，
@@ -12,6 +13,9 @@
  * 差异化判定同时检查 layoutSignature 与 geometrySignature：
  * 这样即使牌型排列变了（layoutSignature 变化），只要位置/层级/遮挡结构没变，
  * 仍会被 geometrySignature 判为「同一布局」而拒绝（需求 4.3 的显式禁止项）。
+ * 第 2.2 节再补一个**数值相似度** layoutSimilarity(a,b) ∈ [0,1]：
+ * 签名只回答「是否完全相同」，相似度回答「有多像」，用于「五局内 layout 不能
+ * 相同」的阈值判定（sim ≥ 0.60 视为重复）。
  *
  * 稳定性保证：
  *  · 只读取白名单字段，显式构造字符串，不受对象属性顺序影响；
@@ -186,3 +190,87 @@ export function signatureTuple(sig) {
     tileCount: sig.tileCount,
   };
 }
+
+/* ==================== 布局相似度（第 2.2 节） ==================== */
+
+/** 一张牌占的格子键（半格晶格坐标，忽略层号） */
+function cellKey(c) {
+  return num(c.x) + ',' + num(c.y);
+}
+
+/**
+ * 把牌组拆成「每层占位格集合 + 整体轮廓占位格集合」。
+ * @returns {{layers: object[], silhouette: object, cells: number}}
+ */
+export function layoutShape(cards) {
+  var list = cards || [];
+  var layers = [];
+  var silhouette = {};
+  var cells = 0;
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    var li = num(c.layer);
+    var k = cellKey(c);
+    if (!layers[li]) layers[li] = {};
+    if (!layers[li][k]) { layers[li][k] = 1; cells++; }
+    silhouette[k] = 1;
+  }
+  return { layers: layers, silhouette: silhouette, cells: cells };
+}
+
+/** Jaccard：交集 / 并集；两边都空返回 0（调用方负责是否忽略） */
+function jaccard(a, b) {
+  var inter = 0;
+  var uni = 0;
+  var k;
+  for (k in a) {
+    if (!Object.prototype.hasOwnProperty.call(a, k)) continue;
+    uni++;
+    if (b[k]) inter++;
+  }
+  for (k in b) {
+    if (!Object.prototype.hasOwnProperty.call(b, k)) continue;
+    if (!a[k]) uni++;
+  }
+  if (!uni) return 0;
+  return inter / uni;
+}
+
+/**
+ * 布局相似度 sim ∈ [0,1]（纯函数，无副作用）。
+ *
+ *   sim = 0.5 × 各层占位格 Jaccard 的平均（两层都为空的层忽略，层按顶部对齐）
+ *       + 0.5 × 整体轮廓 Jaccard（所有牌占位格的并集，忽略层号）
+ *
+ * 「层按顶部对齐」= 按 layer 索引一一对应（layer 0 对 layer 0、1 对 1 …），
+ * 索引超出对方层数的层，对面视为空集（该层 Jaccard 记 0）。
+ * 入参可以是牌组数组，也可以是 { cards: [...] }（generateLevel 的返回值）。
+ */
+export function layoutSimilarity(a, b) {
+  var cardsA = a && a.cards ? a.cards : a;
+  var cardsB = b && b.cards ? b.cards : b;
+  if (!cardsA || !cardsB) return 0;
+  var A = layoutShape(cardsA);
+  var B = layoutShape(cardsB);
+  var n = A.layers.length > B.layers.length ? A.layers.length : B.layers.length;
+  var sum = 0;
+  var used = 0;
+  for (var i = 0; i < n; i++) {
+    var la = A.layers[i] || {};
+    var lb = B.layers[i] || {};
+    var ea = false;
+    var eb = false;
+    var k;
+    for (k in la) if (Object.prototype.hasOwnProperty.call(la, k)) { ea = true; break; }
+    for (k in lb) if (Object.prototype.hasOwnProperty.call(lb, k)) { eb = true; break; }
+    if (!ea && !eb) continue;
+    sum += jaccard(la, lb);
+    used++;
+  }
+  var layerSim = used ? sum / used : 0;
+  var silhouetteSim = jaccard(A.silhouette, B.silhouette);
+  return 0.5 * layerSim + 0.5 * silhouetteSim;
+}
+
+/** 判定阈值：sim ≥ 该值即视为「重复布局」（第 2.3 节） */
+export const SIMILARITY_THRESHOLD = 0.6;

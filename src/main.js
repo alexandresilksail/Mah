@@ -16,6 +16,10 @@ import { makeSaveData, applySaveToGame } from './game/save_data.js';
 import { createNewGame } from './game/new_game.js';
 import { historyFor } from './game/recent_games.js';
 import { readBuildInfo } from './game/build_info.js';
+import { MusicPlayer } from './game/music_player.js';
+import { sceneOf } from './game/music_match.js';
+import { detectMusicStore } from './game/music_store.js';
+import { openMusicPanel } from './game/music_ui.js';
 
 const canvas = document.getElementById('game');
 const stage = document.getElementById('stage');
@@ -31,6 +35,14 @@ const domView = hasCanvas ? null :
 
 const sound = new Sound();
 const game = new Game(sound);
+
+/* ---------------- 背景音乐（第 4 节，全部由用户导入） ----------------
+ * store：桌面版走 Rust 的 4 个命令，网页版走 IndexedDB，ES5 兼容版不可用。
+ * 不可用时 game.musicAvailable=false，设置面板不显示音乐入口（第 4.4 节）。 */
+const musicStore = detectMusicStore(typeof window !== 'undefined' ? window : null);
+const musicPlayer = new MusicPlayer({ store: musicStore });
+game.musicAvailable = !!musicStore.available;
+let lastScene = '';
 
 /* ---------------- 自适应缩放（720x1280 居中） ---------------- */
 let dpr = 1;
@@ -127,6 +139,22 @@ function persist(force = false) {
 function applyAudioSettings() {
   sound.setEnabled(game.soundOn);
   sound.setVolume(game.sfxVol);
+  // 音乐与音效是两条独立链路：音乐用 <audio>，音效用 Web Audio，
+  // 点音效永远不会被音乐加载 / 淡入拖慢（第 4.5 节）。
+  musicPlayer.setEnabled(game.musicOn !== false);
+  musicPlayer.setVolume(typeof game.musicVol === 'number' ? game.musicVol : 0.6);
+  musicPlayer.setMap((game.saveState && game.saveState.musicMap) || {});
+  lastScene = '';
+  syncMusic();
+}
+
+/** 每帧调用：场景变了才切曲，避免重复加载 */
+function syncMusic() {
+  if (!game.musicAvailable) return;
+  const sc = sceneOf(game);
+  if (sc === lastScene) return;
+  lastScene = sc;
+  musicPlayer.playScene(sc);
 }
 
 /* ---------------- 开发调试面板（正式版默认隐藏） ----------------
@@ -188,17 +216,19 @@ function updateDevPanel(meta) {
   for (const f of fields) appendLine(devPanel, f[0] + ' = ' + f[1]);
   appendLine(devPanel, '--- 检查 ---');
   const c = meta.checks;
-  appendLine(devPanel, '牌数检查     : ' + c.tileCountCheck);
+  appendLine(devPanel, '相似度最大值 : ' + c.similarityMax + '（阈值 ' + meta.similarityThreshold + '）');
   appendLine(devPanel, '布局检查     : ' + c.layoutCheck);
+  appendLine(devPanel, '几何检查     : ' + c.geometryCheck);
   appendLine(devPanel, '难度档位检查 : ' + c.difficultyCheck);
   appendLine(devPanel, '历史记录保存 : ' + c.historyCheck);
-  appendLine(devPanel, '--- previousThreeChecks（本关最近三局）---');
-  const list = meta.previousThreeChecks || [];
+  appendLine(devPanel, '--- 本关最近 ' + meta.historyLimit + ' 局（similarity 为与本局的真实相似度）---');
+  const list = meta.previousRecentChecks || meta.previousThreeChecks || [];
   if (!list.length) appendLine(devPanel, '(本关暂无历史)');
   for (let i = 0; i < list.length; i++) {
     const r = list[i];
-    appendLine(devPanel, '  [' + (i + 1) + '] ' + r.totalTiles + ' 张 · 牌数=' + r.tileCountCheck +
-      ' / 布局=' + r.layoutCheck + ' · ' + String(r.layoutSignature).slice(0, 12) + ' · ' + r.gameId);
+    appendLine(devPanel, '  [' + (i + 1) + '] ' + r.totalTiles + ' 张 · sim=' + r.similarity +
+      ' / 相似=' + r.simCheck + ' / 几何=' + r.geometryCheck +
+      ' · ' + String(r.layoutSignature).slice(0, 12) + ' · ' + r.gameId);
   }
   appendLine(devPanel, '--- 当前持久化历史 ---');
   appendLine(devPanel, 'L1 = ' + historyFor(game.saveState, 1).length +
@@ -291,6 +321,32 @@ function handleButton(id) {
       game.sfxVol = Math.min(1, Math.round((game.sfxVol + 0.1) * 100) / 100);
       sound.setVolume(game.sfxVol);
       persist(true);
+      break;
+    case 'set-music':
+      game.musicOn = !(game.musicOn !== false);
+      musicPlayer.setEnabled(game.musicOn);
+      persist(true);
+      break;
+    case 'set-music-minus':
+      game.musicVol = Math.max(0, Math.round(((game.musicVol || 0.6) - 0.1) * 100) / 100);
+      musicPlayer.setVolume(game.musicVol);
+      persist(true);
+      break;
+    case 'set-music-plus':
+      game.musicVol = Math.min(1, Math.round(((game.musicVol || 0.6) + 0.1) * 100) / 100);
+      musicPlayer.setVolume(game.musicVol);
+      persist(true);
+      break;
+    case 'music-open':
+      if (game.musicAvailable) {
+        openMusicPanel({
+          game: game,
+          player: musicPlayer,
+          store: musicStore,
+          persist: persist,
+          onClose: function () { lastScene = ''; syncMusic(); },
+        });
+      }
       break;
     case 'menu':
       game.paused = !game.paused;
@@ -468,6 +524,7 @@ function frame(now) {
   }
 
   const ui = R.getUI(game);
+  syncMusic();
 
   if (domView) {
     // 无 Canvas：DOM 渲染器只重画离散状态变化，悬停只改边框

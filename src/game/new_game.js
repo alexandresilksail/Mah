@@ -5,25 +5,30 @@
  * 进入下一关 / 开始新一轮 / 键盘 r / ?lv= 调试）都必须调用这里。
  * 禁止任何入口再自行拼 generateLevel + 档位 + seed。
  *
- * 流程严格按需求：识别关卡 → 读本关最近三局 → 选合法档位 → 新 seed →
- * 生成牌局 → 实际总牌数 → 布局签名 → 与本关最近三局对比 → 重复则重生成 →
+ * 流程（本轮第 2 节口径）：识别关卡 → 读本关最近 5 局 → 选合法档位（≠ 上一局）→
+ * 新 seed → 生成牌局 → 计算签名 → **与最近 5 局算 layoutSimilarity** →
+ * sim ≥ 0.60 或 geometrySignature 完全相同即视为重复，换 seed 重生成 →
  * 完整校验 → 唯一 gameId → 保存历史 → 返回游戏实例。
+ *
+ * 几何现在由 seed 程序化生成（第 1 节），所以「同一档位换 seed 几何不变」的
+ * 旧假设被彻底删除：不再有按 (level,difficultyId) 缓存几何签名的预筛逻辑，
+ * 判定完全基于**真实生成结果**。
  *
  * 重试上限 50 次；仍不合格抛 GenerationFailureError，绝不自动接受重复牌局。
  */
 import { profilesFor, profileFor, rollProfile, LEVEL_COUNT } from './config.js';
 import { generateLevel, validateLevel, verify } from './generator.js';
 import { pickPoolSeed } from './seed_pool.js';
-import { calculateLayoutSignature } from './layout_signature.js';
+import { calculateLayoutSignature, layoutSimilarity, SIMILARITY_THRESHOLD } from './layout_signature.js';
 import {
   GENERATION_REASONS, previousFrom, appendHistory, makeGameId,
-  checkAgainstRecent, historyFor,
+  checkAgainstRecent, historyFor, HISTORY_LIMIT,
 } from './recent_games.js';
 import { sameLayerOverlapCount, isHalfLattice } from './layout.js';
 import { readBuildInfo } from './build_info.js';
 
 export const MAX_ATTEMPTS = 50;
-export const HISTORY_LIMIT = 3;
+export { HISTORY_LIMIT };
 
 function indexOf(arr, v) {
   for (var i = 0; i < arr.length; i++) if (arr[i] === v) return i;
@@ -67,45 +72,38 @@ GenerationFailureError.prototype.toString = function () {
 };
 
 /**
- * 同一档位的几何签名与 seed 无关（layout_profiles.js 只用 profile 决定形状）。
- * 这里按 (level, difficultyId) 缓存一次，供「确定性兜底」预筛合法档位，
- * 避免 50 次重试靠运气。缓存的是**实际生成结果**，不是凭空推测的坐标。
+ * 历史记录里只有签名与 seed，没有牌面坐标；但几何现在**完全由 seed 决定**
+ * （第 1 节），所以可以按 (level, difficultyId, seed) 精确重放出一模一样的牌面，
+ * 用来算 layoutSimilarity。结果按「关卡|档位|seed」缓存，避免 50 次重试里
+ * 反复重放同一批历史牌局。
+ *
+ * 只缓存牌面数组，不缓存 data 对象（data 里有 _graph 等大结构，且会被
+ * 后续流程当「本局」使用）。
  */
-var geoCache = {};
-function geometryOfProfile(level, id) {
-  var key = level + '-' + id;
-  if (geoCache[key]) return geoCache[key];
-  var d = generateLevel(level, (0x5eed0000 + id * 7919) >>> 0, { profile: id });
-  var sig = calculateLayoutSignature(d);
-  var v = {
-    totalTiles: d.cards.length,
-    geometrySignature: sig.geometrySignature,
-  };
-  geoCache[key] = v;
-  return v;
+var layoutCache = {};
+var layoutCacheSize = 0;
+var LAYOUT_CACHE_MAX = 128;
+
+function layoutOfRecord(record) {
+  var key = record.level + '|' + record.difficultyId + '|' + record.seed;
+  if (Object.prototype.hasOwnProperty.call(layoutCache, key)) return layoutCache[key];
+  var cards = null;
+  try {
+    var d = generateLevel(record.level, record.seed, { profile: record.difficultyId });
+    if (d && d.cards && d.cards.length === record.totalTiles) cards = d.cards;
+  } catch (e) {
+    cards = null; // 重放失败（例如档位表已变）→ 该条历史不参与相似度判定
+  }
+  if (layoutCacheSize > LAYOUT_CACHE_MAX) { layoutCache = {}; layoutCacheSize = 0; }
+  layoutCache[key] = cards;
+  layoutCacheSize++;
+  return cards;
 }
 
-/** 与最近三局都不冲突的档位集合（牌数 + 几何 + 当前档位三重预筛） */
-function legalProfileIds(level, recent, current, prev) {
-  var usedTiles = prev.previousTileCounts.slice();
-  var usedGeom = prev.previousGeometries.slice();
-  var list = profilesFor(level);
-  var out = [];
-  var fallback = [];
-  for (var i = 0; i < list.length; i++) {
-    var id = list[i].id;
-    var g = geometryOfProfile(level, id);
-    if (indexOf(usedTiles, g.totalTiles) >= 0) continue;
-    if (indexOf(usedGeom, g.geometrySignature) >= 0) continue;
-    fallback.push(id);
-    if (id !== current) out.push(id);
-  }
-  if (out.length) return out;
-  if (fallback.length) return fallback;
-  // 极端（配置全部被历史占满）：返回全档位，让真实签名检查决定，不放宽任何判定
-  var all = [];
-  for (var j = 0; j < list.length; j++) all.push(list[j].id);
-  return all;
+/** 仅供测试：清空重放缓存 */
+export function clearLayoutCache() {
+  layoutCache = {};
+  layoutCacheSize = 0;
 }
 
 var locked = false;
@@ -187,12 +185,13 @@ function createNewGameInner(opts) {
       // 前段：按权重随机重抽，排除当前档位
       difficultyId = rollProfile(level, rand, current);
     } else {
-      // 后段：确定性兜底，从「与最近三局不冲突」的合法档位集合里抽，
-      // 避免 L1 只有 4 档时纯随机把 50 次机会浪费掉（不是放宽判定）
-      var legal = legalProfileIds(level, recent, current, prev);
-      var r2 = rand();
-      if (!(r2 >= 0) || r2 >= 1) r2 = 0;
-      difficultyId = legal[Math.min(legal.length - 1, Math.floor(r2 * legal.length))];
+      // 后段：确定性轮换所有「≠ 上一局档位」的档位，避免 L1 只有 4 档时
+      // 纯随机把 50 次机会浪费掉（只换搜索顺序，不放宽任何判定）
+      var pool = profilesFor(level);
+      var ring = [];
+      for (var pi = 0; pi < pool.length; pi++) if (pool[pi].id !== current) ring.push(pool[pi].id);
+      if (!ring.length) { for (var pj = 0; pj < pool.length; pj++) ring.push(pool[pj].id); }
+      difficultyId = ring[attempts % ring.length];
     }
 
     var profile = profileFor(level, difficultyId);
@@ -225,23 +224,55 @@ function createNewGameInner(opts) {
       seed: seed,
       gameId: '',
     });
-    // 显式传入的排除集合同样生效（真实判定，不是摆设）
-    if (indexOf(prev.previousTileCounts, totalTiles) >= 0) checks.tileCountDifferent = false;
-    if (indexOf(prev.previousSignatures, sig.layoutSignature) >= 0) checks.layoutDifferent = false;
-    if (indexOf(prev.previousGeometries, sig.geometrySignature) >= 0) checks.geometryDifferent = false;
-    if (indexOf(prev.previousSeeds, seed) >= 0) checks.seedFresh = false;
-    checks.difficultyValid = difficultyValid;
 
-    if (!checks.tileCountDifferent || !checks.layoutDifferent ||
-        !checks.geometryDifferent || !checks.seedFresh || !difficultyValid) {
+    /**
+     * 第 2.3 节：新牌局与本关最近 5 局任意一局
+     *   sim ≥ 0.60  → 重复
+     *   geometrySignature 完全相同 → 重复
+     * 两者任一命中都必须换 seed 重生成，不得自动接受。
+     */
+    var recentChecks = [];
+    var maxSim = 0;
+    var dupGeometry = false;
+    var dupIndex = -1;
+    for (var ri = 0; ri < recent.length; ri++) {
+      var rec = recent[ri];
+      var replay = layoutOfRecord(rec);
+      var sim = replay ? layoutSimilarity(data.cards, replay) : 0;
+      var sameGeom = rec.geometrySignature === sig.geometrySignature;
+      if (sameGeom) dupGeometry = true;
+      if (sim > maxSim) maxSim = sim;
+      if (sim >= SIMILARITY_THRESHOLD && dupIndex < 0) dupIndex = ri;
+      recentChecks.push({
+        gameId: rec.gameId,
+        difficultyId: rec.difficultyId,
+        totalTiles: rec.totalTiles,
+        layoutSignature: rec.layoutSignature,
+        geometrySignature: rec.geometrySignature,
+        similarity: Math.round(sim * 1000) / 1000,
+        similar: sim >= SIMILARITY_THRESHOLD,
+        sameGeometry: sameGeom,
+        replayOk: !!replay,
+      });
+    }
+    checks.similarityMax = Math.round(maxSim * 1000) / 1000;
+    checks.layoutDifferent = maxSim < SIMILARITY_THRESHOLD;
+    checks.geometryDifferent = !dupGeometry;
+    checks.difficultyValid = difficultyValid;
+    // 显式传入的排除集合同样生效（真实判定，不是摆设）
+    if (indexOf(prev.previousSignatures, sig.layoutSignature) >= 0) checks.layoutDifferent = false;
+    if (indexOf(prev.previousSeeds, seed) >= 0) checks.seedFresh = false;
+
+    if (!checks.layoutDifferent || !checks.geometryDifferent ||
+        !checks.seedFresh || !difficultyValid) {
       failures.push({
         attempt: attempts, difficultyId: difficultyId, seed: seed,
         totalTiles: totalTiles, layoutSignature: sig.layoutSignature,
         geometrySignature: sig.geometrySignature,
+        similarityMax: checks.similarityMax,
         reason: 'RECENT_CONFLICT',
         failedChecks: compact([
-          !checks.tileCountDifferent ? 'TILE_COUNT' : '',
-          !checks.layoutDifferent ? 'LAYOUT_SIGNATURE' : '',
+          !checks.layoutDifferent ? 'LAYOUT_SIMILARITY' : '',
           !checks.geometryDifferent ? 'GEOMETRY_SIGNATURE' : '',
           !checks.seedFresh ? 'SEED' : '',
           !difficultyValid ? 'DIFFICULTY' : '',
@@ -253,7 +284,11 @@ function createNewGameInner(opts) {
     // 完整校验：注册表 / 三消 / 遮挡 / 几何 / 证书 / 可操作性
     var validation = validateLevel(data);
     var verifyOk = false;
-    try { verifyOk = !!verify(data); } catch (e) { verifyOk = false; }
+    try {
+      // 第 3.2 节：第二关整池均匀洗牌后极难有完整解，verify() 只对
+      // 「必须有解」的关卡（第一关）作为门槛；第二关如实记录 solvable。
+      verifyOk = data.requireSolution === false ? true : !!verify(data);
+    } catch (e) { verifyOk = false; }
     var geometryOk = sameLayerOverlapCount(data.cards) === 0 && !!isHalfLattice(data.cards);
     var playableOk = data.visible > 0 && sig.playableCount > 0;
     if (!validation.ok || !verifyOk || !geometryOk || !playableOk) {
@@ -296,16 +331,18 @@ function createNewGameInner(opts) {
       continue;
     }
 
-    var previousThreeChecks = [];
-    for (var i = 0; i < recent.length; i++) {
-      previousThreeChecks.push({
-        gameId: recent[i].gameId,
-        totalTiles: recent[i].totalTiles,
-        layoutSignature: recent[i].layoutSignature,
-        geometrySignature: recent[i].geometrySignature,
-        tileCountCheck: recent[i].totalTiles !== totalTiles ? 'PASS' : 'FAIL',
-        layoutCheck: recent[i].layoutSignature !== sig.layoutSignature &&
-          recent[i].geometrySignature !== sig.geometrySignature ? 'PASS' : 'FAIL',
+    var previousRecentChecks = [];
+    for (var i = 0; i < recentChecks.length; i++) {
+      var rc = recentChecks[i];
+      previousRecentChecks.push({
+        gameId: rc.gameId,
+        difficultyId: rc.difficultyId,
+        totalTiles: rc.totalTiles,
+        layoutSignature: rc.layoutSignature,
+        geometrySignature: rc.geometrySignature,
+        similarity: rc.similarity,
+        simCheck: rc.similar && rc.replayOk ? 'FAIL' : 'PASS',
+        geometryCheck: rc.sameGeometry ? 'FAIL' : 'PASS',
       });
     }
 
@@ -326,10 +363,16 @@ function createNewGameInner(opts) {
       distributionSignature: sig.distributionSignature,
       generatedAt: generatedAt,
       generationReason: reason,
-      previousThreeChecks: previousThreeChecks,
+      historyLimit: HISTORY_LIMIT,
+      similarityThreshold: SIMILARITY_THRESHOLD,
+      similarityMax: checks.similarityMax,
+      previousRecentChecks: previousRecentChecks,
+      // 兼容旧调试面板字段名（内容已改为最多 HISTORY_LIMIT 条）
+      previousThreeChecks: previousRecentChecks,
       checks: {
-        tileCountCheck: checks.tileCountDifferent ? 'PASS' : 'FAIL',
-        layoutCheck: (checks.layoutDifferent && checks.geometryDifferent) ? 'PASS' : 'FAIL',
+        similarityMax: checks.similarityMax,
+        layoutCheck: checks.layoutDifferent ? 'PASS' : 'FAIL',
+        geometryCheck: checks.geometryDifferent ? 'PASS' : 'FAIL',
         difficultyCheck: difficultyValid ? 'PASS' : 'FAIL',
         historyCheck: historySaved ? 'PASS' : 'FAIL',
       },

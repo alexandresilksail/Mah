@@ -1,214 +1,156 @@
-# MahLeMah 完整代码审计报告（第一阶段）
+# 代码审计报告（本轮 · 改前快照）
 
-> 审计时间：2026-11-11 22:1x GMT+8
-> 审计方式：读取磁盘真实文件 + esbuild 重新打包比对 + 关键字/常量交叉检查。
-> **没有**仅凭「HTML 能打开」判断一致性。
-> 本文件为「修复前」快照；修复后的差异见文末 §7（最终验收时补全）。
+**审计时间**：2026-11-12
+**审计对象**：`mah-le-mah/` 工作区（基线提交 `f5a578e858ac`）
+**审计方式**：逐文件读源码 + `grep` 关键字交叉检查 + 真实运行探测脚本（`.probe/`，交付前已删除）+ 跑 `node test.js` 取实测红灯
+**原则**：先审计 → 再修改 → 再测试 → 再构建 → 最后验收。本文件记录**改前**发现的问题与改后结果，不含静态推断的「应该没问题」。
 
----
-
-## 1. 基本信息
-
-| 项 | 值 |
-|---|---|
-| 项目版本 | `2.0.0`（`package.json` / `src/game/config.js` 的 `VERSION`） |
-| 审计基线 commit | `1f95db08e60c74c21a0aa8dff85877e61e55f9f4` (`1f95db0`) |
-| 分支 / 远端 | `main` / `git@github.com:alexandresilksail/Mah.git` |
-| 工作区状态 | 干净（`git status --short` 为空，已推送） |
-| 上次构建产物时间 | 2026-11-10 20:35（两个 HTML） |
-| 上次源码修改时间 | 2026-11-11 21:11（动态档位系统） |
-
-### 1.1 关键文件 SHA256（修复前）
-
-| 文件 | 大小 | SHA256 |
-|---|---:|---|
-| `dist/MahLeMah.html` | 84,283 | `56df003a44b049e1ae693ff9eeb4186f6e3ac48ca3fd1d4f46a99cb42b9ed6bc` |
-| `dist/index.html` | 84,283 | `56df003a44b049e1ae693ff9eeb4186f6e3ac48ca3fd1d4f46a99cb42b9ed6bc` |
-| `dist/Mah了个Mah.html` | 84,283 | `56df003a44b049e1ae693ff9eeb4186f6e3ac48ca3fd1d4f46a99cb42b9ed6bc` |
-| `dist/MahLeMah-legacy.html` | 118,830 | `deb3d7f604bec13eecce4f29dc94e8b8fdf8a2ed62a3da662b32b8b832623443` |
-| `src/main.js` | — | `09bc8b553656388f84235f27a50f69069dae2308ab3bbf85fc9b7cc7a51ee868` |
-| `src/game/config.js` | — | `f4a9418967b895f9c14e17cfa4dd37de1a79472c5d45c515eebf680c479d494a` |
-| `src/game/generator.js` | — | `147691fcb0f93fd918ef9b16bf5e1844faa91693ebafb9af0e51560961763d89` |
-| `src/game/engine.js` | — | `d409a32f6d6eb71fa869d586c68ad8e0adb79bc54013ed34e6788c8556541ed1` |
-| `src/game/layout_profiles.js` | — | `82c0f986508e2c34ef418af7d681a83323fa0bad715803f1067f24d76174cb44` |
-| `src/game/seed_pool.js` | — | `0c54e334ecfd35cff9c2f573996eb223e44a0624a6b552bfe35d54d46ad0cd16` |
-| `src/game/save_data.js` | — | `81c47d6d0f74878565fec2429c670b307f9c708f446ad4b631b437f813e1b740` |
-| `test.js` | 54,374 | `f9e405f472db5132ff30b1e8b71f0faa7eb6be98dda97d10bca4b2a61624054e` |
-| `package.json` | 1,097 | `5b1c64b9e48bf24cd031377cff4796ae9683bee58a9588f444bd33f9ee5b1a5f` |
-
-### 1.2 文件清单（按子系统）
-
-- 入口 / 模板：`src/main.js`、`src/index.html`、`src/styles.css`、`src/legacy.css`、`src/compat.es5.js`
-- 游戏核心：`src/game/{config,engine,generator,layout,layout_templates,layout_profiles,rng,seed_pool,tile_types,tiles,robots,render,draw,logo,audio,store,save_data,dom_view.es5}.js`
-- 桌面：`src-tauri/src/main.rs`、`src-tauri/tauri.conf.json`、`src-tauri/capabilities/`
-- 构建：`tools/{build_web,build_legacy,build_portable,build_nsis,make_release,test_render,tune_pool,gen_profiles,stress_release,tune,test_logic,art_preview}.mjs`、`tools/make_installer.nsi`、`tools/gen_icon.py`、`tools/make_release.py`
-- 测试：`test.js`、`tools/test_render.mjs`、`tools/stress_release.mjs`
-- 产物：`dist/MahLeMah.html`（= `index.html` = `Mah了个Mah.html`）、`dist/MahLeMah-legacy.html`、`dist/MahLeMah-Portable-v2.0.0.zip`、`dist/MahLeMah-Setup-v2.0.0.exe`、`dist/SHA256SUMS.txt`
-- 文档：`README.md`、`RELEASE_NOTES.md`、`DELIVERY.md`、`TEST_REPORT.md`、`SECURITY_AUDIT.md`、`reports/DIFFICULTY.md`、`reports/TEST_OUTPUT_DYNAMIC_PROFILES.txt`
-- **`CHANGELOG.md` 不存在**（本轮需新建）
+> 上一轮（第一阶段）的审计报告已随提交 `f5a578e` 归档在 git 历史里；本文件是本轮的改前快照 + 改后对照。
 
 ---
 
-## 2. 两个 HTML 与 `src/` 的一致性报告（修复前）
+## 1. 审计结论摘要
 
-比对方法：用 `tools/build_web.mjs` 完全相同的 esbuild 参数
-（`bundle:true, format:iife, target:es2020, minify:true, legalComments:none, charset:utf8`）
-现场重新打包 `src/main.js`，取 `dist/MahLeMah.html` 里唯一的 `<script>` 内容做逐字节比对。
-
-| 检查项 | 结果 |
-|---|---|
-| 现代版内嵌 JS 字节数 | 82,461 |
-| 当前 `src/` 重新打包 JS 字节数 | 92,825 |
-| 内嵌 JS sha256（前 16） | `9d602382a3867eb8` |
-| 当前源码打包 sha256（前 16） | `377f096b94e4c579` |
-| **逐字节相同** | **否** |
-| legacy 内嵌 script 段 | 3 段（compat 15,021 / dom_view 13,666 / 业务 88,832 字节） |
-
-关键字/常量交叉检查（`modernHTML` = `dist/MahLeMah.html`，`legacyHTML` = `dist/MahLeMah-legacy.html`，`src` = 现场打包）：
-
-| 标记 | modernHTML | legacyHTML | 当前 src | 结论 |
-|---|---|---|---|---|
-| `profileId` | ✗ | ✗ | ✓ | 两 HTML 均无档位系统 |
-| `groupsPerType` | ✗ | ✗ | ✓ | 两 HTML 无档位花色配额 |
-| `L2-0`（分档 seed 池键） | ✗ | ✗ | ✓ | 两 HTML 用旧版单一 seed 池 |
-| `p1` / `p2` | ✗ | ✗ | ✓ | 两 HTML 无档位存档字段 |
-| `开始新一轮` / `重玩本关` | ✗ | ✗ | ✓ | 两 HTML 无新 UI 分支 |
-| `rollProfile` / `LEVEL2_PROFILES` | ✗ | ✗ | （压缩后符号被改名） | 一致地缺失 |
-| `240` | 9 处 | 11 处 | 存在 | 两 HTML 仍是「第 2 关 240 张」旧规格 |
-| `calculateLayoutSignature` / `createNewGame` / `level1RecentGames` / `difficultyId` | ✗ | ✗ | ✗ | 本轮要求的功能全部不存在 |
-
-> 注：`LEVEL2_PROFILES` / `rollProfile` 在压缩产物里会被改名，因此单独用符号名判断不可靠；
-> 但 `profileId` / `groupsPerType` / `L2-0` / `p1` / `开始新一轮` 是字符串与对象键，压缩不改其内容，
-> 它们集体缺失是「HTML 为 11-10 冻结版」的确凿证据，再加上逐字节 bundle 比对不等，结论确定。
+| # | 位置 | 改前问题 | 严重度 | 处理 |
+|---|---|---|---:|---|
+| A1 | `src/game/layout_profiles.js` | 存在 `void rng`；几何完全由档位常量决定，seed 只用来挑偏移；`test.js` 甚至断言「同档位换 seed 几何签名必须相同」 | 高（与第 1.1 节直接冲突） | 删除该假设，几何改为 seed 程序化生成 |
+| A2 | `layout_profiles.js` 主堆 | 固定 6 列 × 3 行网格；无宽度包络、无边缘缺口、无层中心随机游走 | 高 | 重写为「每层 seed 生长的连通团块」+ 三段包络 |
+| A3 | `layout_profiles.js` 盲盒 | 旧版是 8 张全局层（`globalLayers = layers + 8`），不是「左右各 2 条共 44 张」 | 高 | 重写为 4 条链 × 44 张，队首朝上 |
+| A4 | `layout_profiles.js` 第一关 | 走固定静态模板，形状不随 seed 变化 | 高 | 改为 seed 生成 5–7 列紧凑堆 |
+| A5 | `src/game/recent_games.js` / `new_game.js` | `HISTORY_LIMIT = 3`；重复判定只看「牌数 / 签名」，没有相似度概念 | 高 | 改 5；新增 `layoutSimilarity(a,b)`，`sim ≥ 0.60` 判重复 |
+| A6 | `src/game/generator.js` | 存在按 order / 证书 / 波次 / 三带（`BAND_RATIOS`）分配花色的逻辑 | 高（第 3.2 节要求删除） | 删除，改为整池 Fisher–Yates |
+| A7 | `test.js [11]` | 第二关各档机器人通关率 **66%–72%**（阈值 ≤3%），红灯 | 高 | 重建种子池 + 整池洗牌后转绿（实测 0/20000） |
+| A8 | 全项目 | 完全没有背景音乐能力（存档无音乐字段、Rust 无音乐命令、UI 无入口） | 高（第 4 节整节） | 新增 5 个前端模块 + 4 个 Rust 命令 + 存档 v4 |
+| A9 | `src-tauri/src/main.rs` | `SAVE_FIELDS: [&str; 11]`；存档版本校验只允许 `1\|2\|3`，而前端已是 v4 | 中（真实不一致） | 扩到 12 键（`musicMap`）；版本放宽到 `1..=4` |
+| A10 | `src/game/layout.js` | 仍导出 `generateLayout / generateEasyLayout / planForSeed / layoutReport / templateFor` 等静态模板接口，已无人调用 | 中 | 裁剪为纯几何原语；删除 `layout_templates.js` |
 
 ---
 
-## 3. 十个审计问题的回答（修复前）
+## 2. 逐条证据
 
-| # | 问题 | 回答 | 证据 |
-|---|---|---|---|
-| 1 | 两个 HTML 是否为当前 `src/` 构建生成的产物？ | **否** | 产物 11-10 20:35，源码 11-11 21:11；现场打包 92,825 B ≠ 内嵌 82,461 B；哈希不同 |
-| 2 | 两个 HTML 是否包含过期 JavaScript？ | **是** | 内嵌 82,461 B 旧 bundle；不含 `profileId`/`p1`/`p2`/`L2-0`/新 UI 文案 |
-| 3 | 两个 HTML 的游戏生成算法是否一致？ | **是，但都是旧版** | 两者都由同一 `src/main.js` 在 11-10 构建；互相一致，与当前源码不一致 |
-| 4 | 两个 HTML 的难度档位是否一致？ | **是，但都是旧版固定规格** | 两者都含 `240` 旧规格；均无 10 档 L2 / 4 档 L1 表 |
-| 5 | 两个 HTML 的随机数生成机制是否一致？ | **是（同源）** | 共用 `rng.js` 的 mulberry32；但都缺分档 seed 池 |
-| 6 | 两个 HTML 的重新开局机制是否一致？ | **是，但都是旧版各自实现** | 旧版 `case 'start'` / `case 'restart'` / `case 'replay'` / 键盘 `r` 各自直接调 `game.startLevel()`，无统一入口 |
-| 7 | 是否存在 HTML 内嵌代码与 `src/` 脱节？ | **是，严重** | bundle 哈希不等，见 §2 |
-| 8 | 是否存在旧版本配置覆盖新版配置？ | **是（在 HTML 里）** | HTML 内嵌 `LEVEL_SPEC` 的 L1 48 张 / L2 240 张固定规格覆盖一切；源码里 `LEVEL_SPEC` 仅作为「不传档位」的兼容路径保留，`levelParams(level, rand, profileId)` 才读档位 |
-| 9 | 是否存在存档恢复导致重新开局仍用旧牌局？ | **部分：无牌面存档，但档位被旧值覆盖** | `store.js` 只存 `level/best/sound/sfxVol/p1/p2`，**不存牌面**，所以不会恢复旧牌局；但 `boot()` 里 `applySave(loadSave())` 会先读回 `p1/p2`，再 `rollProfile` 重抽；`case 'start'` 在非毕业分支直接 `game.startLevel(game.level)`，**不走重抽、不换档位、不做差异化**，属于「复用当前档位」 |
-| 10 | 是否存在随机种子变化但牌数和实际布局仍重复？ | **是，且是设计使然** | `layout_profiles.js:107-109`：`const s = seed ^ ...; const rng = makeRng(s); void rng;` —— 布局形状完全由 `profile` 决定，seed 只影响发牌序列。因此同一档位下换 seed，牌数、坐标、层级、遮挡结构完全相同 |
+### A1 · `void rng` 与「几何由档位确定」
 
-补充发现（审计中额外识别）：
+改前 `layout_profiles.js` 的关键写法（示意）：
 
-- **档位牌数碰撞**：L2 档 id 3 与 id 7 都是 `27 层 / mainCount 268 / queue 44 / 312 张`，且 `layerPlanFor()` 与 `queueZones()` 输入相同 → 几何完全相同，仅 `types` 与 `groupsPerType` 不同（16 种 vs 14 种）。即 10 个档位只有 **9 种牌数 / 9 种几何**。
-- **L1 恰好 4 种牌数**：24 / 30 / 36 / 48，对应 4 种几何。滚动窗口「最近三局不同」要求连续 4 局覆盖全部 4 档，随机抽取必须用重试保证。
-- **无 `generationReason`、无 `gameId`、无布局签名、无历史记录**。
-- **无 `CHANGELOG.md`**。
-- **测试有效性**：`test.js` 共 198 处 `ok(...)`，未发现 `|| true`、`ok(true, ...)`、`resolveSlot(...) === 0 || ... || true` 一类恒真断言；但测试只覆盖 `engine.restartLevel()` / `startNewRun()` 的档位变化，**没有覆盖 main.js 的三种真实重开入口，也没有覆盖任何「最近三局差异化」逻辑**（功能尚不存在）。
+```js
+function generateProfileLayout(seed, profile) {
+  const rng = makeRng(seed >>> 0);
+  void rng;                    // ← seed 被显式丢弃
+  const cols = profile.cols;   // ← 列数来自档位常量
+  // ...
+}
+```
 
----
+后果：同一档位换 seed，出来的坐标只差一个固定偏移，几何部分完全相同。`test.js` 当时把这条当成**正确行为**断言：
 
-## 4. 真实档位配置（从 `src/game/config.js` 读取，非凭空编造）
+```js
+ok(a.geometrySignature === b.geometrySignature,
+  `L${lv} 同档位换 seed 的几何签名相同（不能把 seed 当布局）`);
+```
 
-### 第一关 `LEVEL1_PROFILES`（4 档，权重各 0.25）
+改后：`buildOnce(rngSeed, profile)` 全程用 `rng` 生长坐标；`test.js` 反向断言「同档位换 seed 几何必须不同」，并要求 30 个 seed 至少 25 种不同几何（实测 L2 每档 30/30、L1 最少 29/30）。
 
-| difficultyId | 层数 | 牌型数 | 主堆 | 队列 | **总牌数** | 组数 |
-|---:|---:|---:|---:|---:|---:|---:|
-| 0 | 2 | 8 | 24 | 0 | **24** | 8 |
-| 1 | 3 | 10 | 30 | 0 | **30** | 10 |
-| 2 | 3 | 12 | 36 | 0 | **36** | 12 |
-| 3 | 3 | 16 | 48 | 0 | **48** | 16 |
+### A2 · 主堆固定 6×3 网格
 
-牌数范围 **24–48**，共 **4** 个不同值（恰好满足最近三局滚动窗口的最低要求 4）。
+改前主堆是 `for (row = 0; row < 3; row++) for (col = 0; col < 6; col++)` 的均匀网格，实测：
 
-### 第二关 `LEVEL2_PROFILES`（10 档，权重 0.70 大盘 + 0.30 轻量）
+- 包围盒宽 396px（< 规格要求 560px）；
+- 顶部 / 中段 / 核心三段没有宽度差（沙漏轮廓不存在）；
+- 边缘没有 8–15% 缺口。
 
-| difficultyId | 层数 | 牌型数 | 主堆 | 队列 | **总牌数** | 组数 | kind |
-|---:|---:|---:|---:|---:|---:|---:|---|
-| 0 | 28 | 15 | 277 | 44 | **321** | 107 | large（原作基准） |
-| 1 | 24 | 13 | 238 | 44 | **282** | 94 | large |
-| 2 | 26 | 14 | 256 | 44 | **300** | 100 | large |
-| 3 | 27 | 16 | 268 | 44 | **312** | 104 | large |
-| 4 | 23 | 13 | 229 | 44 | **273** | 91 | large |
-| 5 | 25 | 13 | 247 | 44 | **291** | 97 | large |
-| 6 | 22 | 13 | 217 | 44 | **261** | 87 | large |
-| 7 | 27 | 14 | 268 | 44 | **312** | 104 | large ← 与 id3 碰撞 |
-| 8 | 15 | 15 | 148 | 44 | **192** | 64 | lite |
-| 9 | 20 | 15 | 211 | 44 | **255** | 85 | lite |
+改后实测（30 seed × 10 档）：包围盒最小 660×616；顶部 3–5 列、中段 8–10 列、核心 4–5 列 × ≤4 行；每层张数严格等于 `layerPlanFor(profile)`；同层零重叠；主堆单连通。
 
-牌数范围 **192–321**，共 **9** 个不同值（id3 / id7 同为 312）。
+> 中途踩到的真实缺陷：中段用中心偏置的 `growBlob` 生长，8–10 列网格实测只占 6–9 列（偏置把边缘列饿死）。修复方式是给中段单独写 `buildBand()`：先铺满一整行，余量从中心向两侧补到另一行，保持 4 邻接连通。
 
-### 配置冲突判定（第六阶段）
+### A3 · 盲盒不是 44 张
 
-> 「最近三局牌数不同」= 连续 4 局需要 4 个互不相同的牌数。
-> L1 有 4 个 → **刚好够用，无冲突**；L2 有 9 个 → **足够，无冲突**。
-> 因此**不需要**、也**不允许**通过增删牌来扩展档位；本轮保留全部 14 个合法档位原样。
-> 唯一需要报告的是 id3/id7 的牌数与几何碰撞：由统一生成入口把两者视为「同一牌数 + 同一几何」而拒绝连续出现。
+改前 `describeProfileLayout().globalLayers === profile.layers + 8` —— 盲盒只有 8 张、且是全局层。
 
----
+改后：`QUEUE_SHAPE` 四条链（左竖 7 / 右竖 7 / 左横 15 / 右横 15 = 44 张），随档位按 `queueCount / 44` 缩放；`describeProfileLayout().globalLayers === profile.layers + 44`。
 
-## 5. 问题清单与严重程度
+> 中途踩到的真实缺陷：四条链最初共用同一个 `jx/jy` 全局偏移，某些偏移下左横链与右横链相接，导致一条链的队首被另一条压住 —— 30 个 seed 里有 16–24 个出现「某条链队首不可点」。修复：每条链独立 `dy` 候选（竖链只能向上、左横只能向上、右横只能向下），删除全局偏移。改后 `queueBad = 0`。
 
-| ID | 问题 | 严重度 | 影响 |
-|---|---|---|---|
-| P0-1 | 两个 HTML 内嵌旧 bundle，与当前 `src/` 完全脱节 | **致命** | 用户拿到的网页版没有动态档位/存档字段/新 UI；打开正常 ≠ 一致 |
-| P0-2 | 没有统一新牌局生成入口，`start` / `restart` / `replay` / `next` / 键盘 `r` 各自直接调 `startLevel` | **致命** | 无法保证三种重开走同一规则 |
-| P0-3 | 没有最近三局历史，更没有按关卡隔离；无持久化 | **致命** | 核心需求完全缺失 |
-| P0-4 | 没有布局签名；seed 变化不改变几何（审计问题 10） | **致命** | 无法判断「实际布局」是否不同 |
-| P1-1 | `case 'start'` 非毕业分支不重抽档位、不换 seed、不做差异化 | 高 | 标题页重新开始可能复用上一局档位 |
-| P1-2 | 无 `generationReason` / `gameId` / `generatedAt` / 调试面板 | 高 | 无法复现与审计 |
-| P1-3 | Rust 白名单只有 9 键，无法保存历史；存档 `v:2` | 高 | 桌面端历史无法持久化 |
-| P1-4 | 无 `CHANGELOG.md`；文档里仍有未标注的旧牌数（README L261/L376、RELEASE_NOTES L125、reports/DIFFICULTY.md L25） | 中 | 文档与源码不符 |
-| P2-1 | `LEVEL2_PROFILES` id3 / id7 牌数与几何完全碰撞 | 中 | 档位表有效多样性只有 9 |
-| P2-2 | 无 `test-random-generation.js` / `test-build-consistency.js`；无 200 局报告 | 中 | 无法验收 |
-| P2-3 | 存档 `applySave` 会覆盖刚抽好的档位（当前已用 `preserveProfile` 兜底异步路径，但同步路径仍读回 p1/p2） | 中 | 启动档位来自旧存档 |
-| P3-1 | `nextLevelPreview()` 仍返回无档位的旧固定规格 | 低 | 标题页预览潜在硬编码 |
+### A4 · 第一关是静态模板
 
----
+改前第一关走 `layout_templates.js` 的固定坐标。改后按 seed 生成：列数 5–7、每层团块随机生长、层间纵向 150px 保证可点张数、横向中心放开到整幅牌桌（原 280–380 会让同档位相似度均值达 0.646）。
 
-## 6. 现有安全边界（第十二阶段核对，修复前）
+> 中途踩到的真实缺陷：L1 层间纵向游走过大时，整堆会裂成 2 个互不相接的团块（实测 L1-1 档 27/60、L1-2 档 6/60）。修复：第一关也做候选筛选，由同一 seed 派生候选、优先取整堆单连通的。改后 240 个样本全部单连通。
 
-| 项 | 状态 |
-|---|---|
-| 存档大小上限 | `MAX_SAVE_BYTES = 64 * 1024`，本轮不放宽 |
-| JSON 格式验证 | `serde_json::from_str` + 必须为对象 |
-| 字段白名单 | 9 键，未知字段拒绝 |
-| 路径访问限制 | 固定 `<exe 同级>/MahLeMah_Data/save.json`，前端不能指定路径 |
-| 原子写入 | `save.json.tmp` → `write_all` → `sync_all` → `rename` |
-| 错误处理 | 损坏存档 `load_state` 返回空串，不进游戏 |
-| 版本号 | 只允许 `v ∈ {1,2}` |
-| 前端删除/系统命令 | 已彻底移除 |
+### A5 · 只有「最近三局」
+
+改前 `HISTORY_LIMIT = 3`，判定维度是「牌数不同于最近三局 / 布局签名不同于最近三局」。
+
+改后 `HISTORY_LIMIT = 5`（两处常量抽成同一份 `recent_games.js` 导出），新增纯函数：
+
+```
+sim = 0.5 × 各层占位格 Jaccard 的平均（两层都空的层忽略，层按顶部对齐）
+    + 0.5 × 整体轮廓 Jaccard（所有牌占位格并集，忽略层号）
+```
+
+`createNewGame` 对最近 5 局逐条算 `sim`，`sim ≥ 0.60` 或 `geometrySignature` 完全相同即换 seed 重生成，最多 50 次，超限抛 `GenerationFailureError`（不自动接受）。
+
+### A6 · 发牌里还留着 order / 证书 / 波次 / 三带
+
+改前 `generator.js` 有 `buildFunnelSequence / pickGroupType / fillBatches / scrambleSequence`，以及 `BAND_RATIOS`、`regionBias` 等按「段」分配花色的逻辑，目的是人为保证有解。
+
+改后：整池 Fisher–Yates 洗牌，仅保留开局约束（L2 开局可点 ≥10 种花色、≥3 种各 ≥3 张）。`test.js` 增加了静态断言，源码里再出现上述任一标识符即失败。
+
+### A7 · 难度验收红灯
+
+改前 `node test.js [11]`：第二关各档机器人通关率 **66%–72%**，阈值 ≤3%。原因有两个：种子池是在旧几何（`buildBand` 与队列修复之前）上生成的；发牌仍带「保解」逻辑，牌局对机器人过于友好。
+
+改后：`node tools/tune_pool.mjs 400 40` 重建池（10 档全部 40/40，总缺口 0），入池条件加上「5 种机器人合计通关 = 0」。正式 `node test.js [11]` 实测 20000 局 **0 通关**，Wilson 95% 上界 0.02%（阈值 ≤1%）。
+
+### A8 · 没有背景音乐
+
+改前全项目 `grep -i music` 只在存档里命中一条「music 字段已废弃」的注释。第 4 节需要的 6 场景、文件名匹配、确认流程、存储、播放、UI 全部缺失。
+
+改后新增 5 个模块（见 `MODIFIED_FILES.md` §1），`test.js` 新增 `[15]–[18]` 四节共 100+ 断言，`[8c]` 断言生产包内零内嵌音频。
+
+### A9 · 存档白名单与版本
+
+改前 `SAVE_FIELDS: [&str; 11]`，没有 `musicMap`；版本校验写死 `v != 1 && v != 2 && v != 3` —— 而前端 `SAVE_VERSION` 已升到 4，两边冲突（这是本轮改前就存在的**真实不一致**）。
+
+改后：`SAVE_FIELDS: [&str; 12]`；`v ∈ {1,2,3,4}`；新增 4 个音乐命令与 `musicMap` 校验（场景名只允许 6 个固定值、文件名走同一净化规则、整体 ≤4KB）。
+
+### A10 · 静态模板接口残留
+
+改前 `layout.js` 仍导出 `generateLayout / generateEasyLayout / planForSeed / layoutReport / templateFor`，`layout_templates.js` 390 行仍在仓库里，但已无调用方。
+
+改后：`layout_templates.js` 删除；`layout.js` 只留 `overlapArea / isBlocked / hasSupport / isHalfLattice / buildBlockerGraph / countComponents / sameLayerOverlapCount / crossOcclusionStats / regionStats / pressureStats / peelOrder / LAYER_OFFSETS`；`test.js` 同步删除相关符号。
 
 ---
 
-## 7. 修复前后差异报告
+## 3. 改前改后对照
 
-### 7.1 修复前
-
-见 §2 / §3 / §5。一句话：**源码有动态档位，网页产物停留在冻结版；无差异化机制、无历史、无签名、无统一入口、无调试面板、无对应测试与报告。**
-
-### 7.2 修复后（2026-11-11，全部有真实运行证据）
-
-| 维度 | 修复前 | 修复后 |
+| 指标 | 改前 | 改后（实测） |
 |---|---|---|
-| 现代版 HTML | 84,283 B，内嵌 JS 82,461 B（11-10 冻结版） | **114,279 B**，内嵌 JS **112,147 B**，与现场打包逐字节相同 |
-| 现代版 SHA256 | `56df003a44b049e1a…` | `c08d60afaa85a8f5c1d6d49ca5d196cc9528dae09250f445a6e5432ca6093b9f` |
-| legacy HTML | 118,830 B，业务段 88,832 B（11-10 冻结版） | **149,684 B**，业务段 **119,342 B**，与现场 Babel+压缩产物逐字节相同 |
-| legacy SHA256 | `deb3d7f604bec13e…` | `4776ad9ea4a8016b6547dd0cc2731cd9f6fab744826e340580cb603ee6575578` |
-| 构建元信息 | 无 | 注入 `buildVersion=2.0.0-1f95db0`、`gitCommit`、`sourceHash=864943bcb18854b6…`、`buildTimestamp`、`sourceFiles` |
-| 统一生成入口 | 无，5 处各自直接调 `startLevel` | `createNewGame()` 唯一入口；`main.js` 的 `start`/`restart`/`replay`/`next`/键盘 `r`/`?lv=` 全部走 `newGame()` |
-| 最近三局历史 | 无 | `level1RecentGames` / `level2RecentGames`，存档 `v:3`，Rust 白名单 11 键，≤3 条并逐字段校验 |
-| 布局签名 | 无 | `calculateLayoutSignature()`（几何 / 分布 / 主签名三个 SHA-256），纯 ES5 实现三端一致 |
-| 调试面板 | 无 | `?dev=1`，正式版隐藏，真实 `game.meta` + 四项 PASS-FAIL；Edge CDP 实测两个 HTML 均渲染 |
-| 200 局测试 | 无 | `test-random-generation.js`：**5053 通过 / 0 失败 / EXIT=0**，两关各 100 局，滚动窗口重复 0 次 |
-| 构建一致性测试 | 无 | `test-build-consistency.js`：**46 通过 / 0 失败 / EXIT=0**，逐字节比对而非大小/版本号 |
-| 浏览器实测 | 无本轮记录 | Edge `157.0.4341.42` CDP 真实打开两个 HTML 各生成 4 局，`allPassed=true`，零 JS 异常 |
-| 存档版本 | `v:2`（9 字段） | `v:3`（11 字段），64 KB 上限 / 原子写入 / 白名单均未放宽 |
+| 同档位换 seed 的几何 | 完全相同 | 不同（L2 每档 30/30 种，L1 最少 29/30 种） |
+| 第二关主堆包围盒 | 396 × 264 | 最小 660 × 616 |
+| 主堆列数分布 | 固定 6 列 × 3 行 | 顶部 3–5 / 中段 8–10 / 核心 4–5 列 × ≤4 行 |
+| 盲盒张数 | 8（全局层） | 44（4 条链） |
+| 盲盒队首可点 | 16–24/30 个 seed 出现「被别条链压住」 | 0/30 |
+| 第一关整体连通 | 27/60、6/60 出现裂成 2 块 | 0/240 |
+| 历史窗口 | 3 | 5 |
+| 重复判定 | 牌数 / 签名 | `layoutSimilarity ≥ 0.60` 或几何签名相同 |
+| 发牌 | order + 证书 + 波次 + 三带 | 整池 Fisher–Yates |
+| 第二关机器人通关率 | 66%–72% | 0.00%（20000 局，Wilson 上界 0.02%） |
+| 第一关 greedy 通关率 | — | 97.5%–100%（每档 400 局） |
+| 存档 | v3 / 11 键 | v4 / 12 键（含 `musicMap`） |
+| 背景音乐 | 无 | 6 场景 + 用户导入 + 文件名匹配 + 600ms 交叉淡化 |
+| `node test.js` | 红灯（`[11]` 等） | **585 通过 / 0 失败 / EXIT=0** |
 
-**修复过的真实缺陷（测试中发现并定位）**：应用重启后 `game.profile` 是构造默认值，
-与「上一局档位」不一致，导致唯一合法档位被误判为重复而耗尽 50 次重试。
-已改为以本关历史最后一局的 `difficultyId` 作为当前档位依据；200 局测试与浏览器实测均复验通过。
+---
 
-**仍未通过 / 未执行**：`node test.js` 的 11 项 Wilson 上界断言（规格 5.1/5.2 数学互斥，
-阈值未放宽）；桌面 exe / Portable zip / NSIS Setup 未重建；Windows 真机安装卸载测试本轮未执行。
-详见 `reports/FINAL_ACCEPTANCE.md`。
+## 4. 审计过程中发现的测试自身问题（已一并修正）
+
+「不许放宽阈值」不等于「不许修正过时断言」。以下 5 处是**测试写错了**，不是产品指标不达标，逐条说明修正依据：
+
+| 位置 | 问题 | 依据 |
+|---|---|---|
+| `test.js [3b]` | 断言「L1 30 个 seed 必须 30 种几何」 | 规格 2.4 原文是「至少 25 种」。第一关加了连通性候选筛选后出现真实几何重合（29/30），按规格口径改为 ≥25 并打印实际值 |
+| `test.js [19]` 显示精度 | `toFixed(3)` 把 0.59937 显示成 `0.600`，看起来像踩线 | 改为 4 位小数；断言仍是 `< 0.60`，未改 |
+| `test-random-generation.js` | 第 85 行断言「同档位换 seed 几何签名相同」 | 与第 1.1 节直接冲突，改为「必须不同」 |
+| `test-random-generation.js` | 第 122 行对第二关调 `verify(d)` | 第二关 `requireSolution=false`，`verify` 必然 false；改为只对 L1 要求 verify |
+| `test-random-generation.js` | 「配置被占满」用 `previousTileCounts` 造冲突 | 牌数差异化已不在规格内，该排除项不再参与判定；改用「把全部分档池 seed 声明为已用」真实触发 `seedFresh=false` |
+| `tools/browser_smoke.mjs` | 断言 `tileCountCheck`、要求「最近三局牌数不同」 | 这两条已作废；改为 `similarityMax < 0.60` + 几何签名不重复 + 档位轮换 |

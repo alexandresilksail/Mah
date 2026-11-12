@@ -215,13 +215,25 @@ let passed = 0;
 for (const p of result.pages) {
   const v = p.value || {};
   const rounds = v.rounds || [];
+  /**
+   * 第 2.3 / 2.4 节口径（本轮）：不再要求「牌数不同」（档位轮换后牌数必然重号），
+   * 改为真实的三条：
+   *   · 与本关最近 5 局的 layoutSimilarity 全部 < 0.60（页面里 meta.similarityMax 已算好）；
+   *   · geometrySignature 不与窗口内任何一局相同；
+   *   · 档位 ≠ 上一局档位。
+   */
   const okRounds = rounds.length === 4 && rounds.every((r) =>
     r.totalTiles > 0 && /^[0-9a-f]{64}$/.test(r.layoutSignature) &&
-    r.cardsOnBoard === r.totalTiles && r.checks.tileCountCheck === 'PASS' &&
-    r.checks.layoutCheck === 'PASS' && r.checks.historyCheck === 'PASS');
+    r.cardsOnBoard === r.totalTiles &&
+    r.checks.layoutCheck === 'PASS' && r.checks.geometryCheck === 'PASS' &&
+    r.checks.difficultyCheck === 'PASS' && r.checks.historyCheck === 'PASS' &&
+    typeof r.checks.similarityMax === 'number' && r.checks.similarityMax < 0.60);
   const okDiff = rounds.every((r, i) => {
-    const w = rounds.slice(Math.max(0, i - 3), i);
-    return w.every((x) => x.totalTiles !== r.totalTiles && x.geometrySignature !== r.geometrySignature);
+    const w = rounds.slice(Math.max(0, i - 4), i);
+    const prev = i > 0 ? rounds[i - 1] : null;
+    const noSameGeom = w.every((x) => x.geometrySignature !== r.geometrySignature);
+    const diffFromPrev = !prev || prev.difficultyId !== r.difficultyId;
+    return noSameGeom && diffFromPrev;
   });
   const okBuild = !!v.build && !!v.build.sourceHash && !!v.build.gitCommit;
   const okPanel = !!v.devPanelPresent;

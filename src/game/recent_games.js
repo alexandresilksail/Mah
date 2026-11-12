@@ -1,14 +1,16 @@
 /**
- * 最近三局历史（第四阶段 4.4 / 第十二阶段）。
+ * 最近五局历史（第四阶段 4.4 / 第十二阶段 / 本轮第 2.1 节）。
  *
  * 硬规则：
  *  · level1RecentGames / level2RecentGames **完全隔离**，一关绝不读另一关的历史；
- *  · 每关只保留最近 3 条，字段白名单化，损坏记录静默丢弃而非让游戏崩溃；
+ *  · 每关只保留最近 5 条（HISTORY_LIMIT = 5，全项目唯一常量，
+ *    new_game.js 从这里 import 并再导出，不再各自写一份数字）；
+ *  · 字段白名单化，损坏记录静默丢弃而非让游戏崩溃；
  *  · 全部是纯函数，读写都不碰 DOM / localStorage，方便 Node 做真实往返测试；
  *  · 存档整体一次性替换写入（localStorage.setItem / Rust 原子 rename），
  *    不存在「历史半写入」——要么整份存档生效，要么整份不生效。
  */
-export const HISTORY_LIMIT = 3;
+export const HISTORY_LIMIT = 5;
 
 export const GENERATION_REASONS = [
   'application_restart',
@@ -63,7 +65,7 @@ export function sanitizeRecord(raw) {
   return out;
 }
 
-/** 任意输入 → 至多 3 条合法记录（保留最新三条，顺序 = 由旧到新） */
+/** 任意输入 → 至多 HISTORY_LIMIT 条合法记录（保留最新，顺序 = 由旧到新） */
 export function sanitizeHistory(raw) {
   if (!isArray(raw)) return [];
   var out = [];
@@ -127,7 +129,7 @@ export function makeGameId(level, reason, rand) {
     idCounter.toString(36) + '-' + hex + '-' + reason;
 }
 
-/** 最近三局差异化检查（真实数据，不使用固定值） */
+/** 最近五局差异化检查（真实数据，不使用固定值） */
 export function checkAgainstRecent(recent, candidate) {
   var tileList = [], sigList = [], geoList = [], seedList = [], idList = [];
   for (var i = 0; i < recent.length; i++) {

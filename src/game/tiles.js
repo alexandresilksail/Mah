@@ -168,9 +168,13 @@ export function drawTile(ctx, x, y, w, h, typeId, opt = {}) {
   ctx.shadowBlur = SHADOW_BLUR;
   ctx.shadowOffsetX = SHADOW_DX;
   ctx.shadowOffsetY = SHADOW_DY;
-  const sprite = spriteFor(ctx, typeId, w, h, dimLevel, playable, selected);
-  if (sprite) ctx.drawImage(sprite, x, y, w, h);
-  else paintTile(ctx, x, y, w, h, type, dimAlphaOf(dimLevel), playable, selected);
+  if (opt.back) {
+    paintBack(ctx, x, y, w, h, dimLevel, playable);
+  } else {
+    const sprite = spriteFor(ctx, typeId, w, h, dimLevel, playable, selected);
+    if (sprite) ctx.drawImage(sprite, x, y, w, h);
+    else paintTile(ctx, x, y, w, h, type, dimAlphaOf(dimLevel), playable, selected);
+  }
   ctx.restore();
 
   if (glow > 0) {
@@ -203,6 +207,80 @@ export function drawTileShadow(ctx, x, y, w, h, alpha = 0.55, depth = 0) {
     ctx.fill();
     ctx.restore();
   }
+}
+
+/* ---------------- 牌背（盲盒队列里未翻开的那几张，第 1.3 节） ---------------- */
+
+/**
+ * 牌背：不泄露花色，只画统一的青灰底 + 回纹边 + 中心小花。
+ * 被压得越深越暗（dimAlpha 与牌面同规则），可点的那张（队首）在翻开前
+ * 仍画牌背，所以 `playable` 只加一圈浅色描边表示「这张能点」。
+ */
+function paintBack(ctx, x, y, w, h, dimLevel, playable) {
+  const rad = w * 0.14;
+  const thick = Math.max(4, Math.round(h * 0.06));
+  const fh = h - thick;
+  const rim = '#3E6E6A';
+  const face = '#E8F1EC';
+  const inset = Math.max(3.4, w * 0.07);
+  ctx.save();
+
+  // 厚度边
+  ctx.fillStyle = rim;
+  rr(ctx, x, y + thick, w, fh, rad);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  rr(ctx, x + 2, y + thick - 1, w - 4, 3, 2);
+  ctx.fill();
+
+  // 牌背底
+  const g = ctx.createLinearGradient(x, y, x + w, y + fh);
+  g.addColorStop(0, '#F4FAF6');
+  g.addColorStop(1, face);
+  ctx.fillStyle = g;
+  rr(ctx, x, y, w, fh, rad);
+  ctx.fill();
+
+  // 回纹边框（两道）
+  ctx.strokeStyle = rim;
+  ctx.lineWidth = Math.max(2, w * 0.032);
+  rr(ctx, x + inset, y + inset, w - inset * 2, fh - inset * 2, Math.max(2, rad - inset * 0.5));
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.55;
+  rr(ctx, x + inset * 1.9, y + inset * 1.9, w - inset * 3.8, fh - inset * 3.8, Math.max(2, rad * 0.6));
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // 中心对称小花（四瓣 + 圆心），完全不带花色信息
+  const cx = x + w / 2;
+  const cy = y + fh / 2;
+  const r = Math.min(w, fh) * 0.13;
+  ctx.fillStyle = rim;
+  ctx.globalAlpha = 0.85;
+  for (let k = 0; k < 4; k++) {
+    const a = (Math.PI / 2) * k + Math.PI / 4;
+    circle(ctx, cx + Math.cos(a) * r, cy + Math.sin(a) * r, r * 0.52);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  circle(ctx, cx, cy, r * 0.42);
+  ctx.fill();
+
+  // 压深着色（与牌面同一规则：0.45 + 0.05/层，上限 0.62）
+  const dimAlpha = dimLevel > 0 ? Math.min(0.62, 0.45 + 0.05 * (dimLevel - 1)) : 0;
+  if (dimAlpha > 0) {
+    ctx.fillStyle = 'rgba(28, 22, 16, ' + dimAlpha.toFixed(2) + ')';
+    rr(ctx, x, y + thick, w, fh, rad);
+    ctx.fill();
+  }
+  if (playable) {
+    ctx.strokeStyle = 'rgba(255, 248, 220, 0.95)';
+    ctx.lineWidth = 2.4;
+    rr(ctx, x + 1, y + 1, w - 2, fh + thick - 2, rad);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 /* ---------------- 牌体 ---------------- */

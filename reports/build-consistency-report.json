@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-12T02:25:27.140Z",
-  "gitCommit": "dfb28a87b5c57d7c7e1db038439fd1cd19f80b84",
+  "generatedAt": "2026-11-12T04:21:58.958Z",
+  "gitCommit": "f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d",
   "command": "node test-build-consistency.js",
   "assertions": {
     "pass": 48,
@@ -10,49 +10,49 @@
   "files": {
     "modern": {
       "path": "dist/MahLeMah.html",
-      "bytes": 114279,
-      "sha256": "5baed43946f0346dedbaf8709c3460995e07aa7cd1bc6c39b4d25dd5857849c8"
+      "bytes": 134302,
+      "sha256": "5b683891a56e79e27dc0f383f7d8559ecdf58e1d2461f8b73ed4ac4c018967c1"
     },
     "legacy": {
       "path": "dist/MahLeMah-legacy.html",
-      "bytes": 149684,
-      "sha256": "5972e4018faee2d94ad262f195718f7e9db9e8142119f62baf1e58079e8d993f"
+      "bytes": 168373,
+      "sha256": "cca372e4d99ea3791dfa6b716e115f5f18c5c56601763f1efe6fd40653a6cd3b"
     }
   },
   "bundle": {
     "modern": {
-      "bytes": 112147,
-      "sha256": "487e96c9968752cbc54b65da51c9045fb82f2b01ba46b5138a98757cf4b82ba0",
+      "bytes": 132170,
+      "sha256": "301eacd3bc20bdc37a32b9387427fed36d79f6f31c6adcb62989b1f85fb5cf44",
       "identical": true
     },
     "legacy": {
-      "bytes": 119342,
-      "sha256": "c3088fbbfa3fa6a0331009f1e6bc08504495bfbabf3ce6a6a4eb85eb7b30d971",
+      "bytes": 138031,
+      "sha256": "3ff261fd48a94c54addd77c776f356d630b252f75645cec3d64c563a65e16847",
       "identical": true,
       "minified": true
     }
   },
   "buildInfo": {
     "modern": {
-      "buildVersion": "2.0.0-0437499",
-      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
-      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-12T02:21:04.453Z",
-      "sourceFiles": 28
+      "buildVersion": "2.0.0-f5a578e",
+      "gitCommit": "f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d",
+      "sourceHash": "578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef",
+      "buildTimestamp": "2026-11-12T04:21:47.494Z",
+      "sourceFiles": 32
     },
     "legacy": {
-      "buildVersion": "2.0.0-0437499",
-      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
-      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-12T02:21:11.474Z",
-      "sourceFiles": 28
+      "buildVersion": "2.0.0-f5a578e",
+      "gitCommit": "f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d",
+      "sourceHash": "578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef",
+      "buildTimestamp": "2026-11-12T04:21:50.484Z",
+      "sourceFiles": 32
     },
     "live": {
-      "buildVersion": "2.0.0-dfb28a8",
-      "gitCommit": "dfb28a87b5c57d7c7e1db038439fd1cd19f80b84",
-      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-12T02:25:26.763Z",
-      "sourceFiles": 28
+      "buildVersion": "2.0.0-f5a578e",
+      "gitCommit": "f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d",
+      "sourceHash": "578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef",
+      "buildTimestamp": "2026-11-12T04:21:58.719Z",
+      "sourceFiles": 32
     }
   },
   "markers": {

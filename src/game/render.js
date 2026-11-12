@@ -40,13 +40,21 @@ export function getUI(game) {
     return { buttons };
   }
 
-  // 最终版：设置面板只保留音效（生产包不含背景音乐）
+  // 设置面板：音效 + 背景音乐（音乐来自用户导入；ES5 兼容版没有入口）
   if (game.settingsAsk) {
-    push('set-sfx', 300, 512, 110, 52, game.soundOn ? '开' : '关', {
+    push('set-sfx', 300, 500, 110, 52, game.soundOn ? '开' : '关', {
       kind: game.soundOn ? 'primary' : 'ghost', size: 22,
     });
-    push('set-sfx-minus', 438, 512, 52, 52, '−', { kind: 'ghost', size: 28 });
-    push('set-sfx-plus', 586, 512, 52, 52, '＋', { kind: 'ghost', size: 24 });
+    push('set-sfx-minus', 438, 500, 52, 52, '−', { kind: 'ghost', size: 28 });
+    push('set-sfx-plus', 586, 500, 52, 52, '＋', { kind: 'ghost', size: 24 });
+    if (game.musicAvailable) {
+      push('set-music', 300, 596, 110, 52, game.musicOn !== false ? '开' : '关', {
+        kind: game.musicOn !== false ? 'primary' : 'ghost', size: 22,
+      });
+      push('set-music-minus', 438, 596, 52, 52, '−', { kind: 'ghost', size: 28 });
+      push('set-music-plus', 586, 596, 52, 52, '＋', { kind: 'ghost', size: 24 });
+      push('music-open', W / 2 - 150, 668, 300, 56, '导入 / 管理背景音乐…', { kind: 'ghost', size: 19 });
+    }
     push('settings-close', W / 2 - 130, 800, 260, 64, '关闭', { kind: 'primary', size: 26 });
     return { buttons };
   }
@@ -581,6 +589,8 @@ function paintBoard(ctx, game, alive, now) {
       playable: !c.blocked,
       scale,
       alpha,
+      // 第 1.3 节：盲盒队列里除队首外一律显示牌背；队首被点走后下一张自动翻开
+      back: c.seg === 'queue' && c.blocked,
     });
   }
 }
@@ -852,16 +862,16 @@ export function drawTitleScreen(ctx, game, ui, t) {
   } else if (game.best > 1) {
     text(ctx, '已通关第 1 关 · 卡在第 2 关', W / 2, 808, { size: 19, fill: C.gold, weight: '700' });
   }
-  // 首次交互前提示点击解锁音效（自动播放策略）；本版本不含背景音乐。
+  // 首次交互前提示点击解锁音效（自动播放策略）；
+  // 背景音乐只能由用户导入（第 4 节），所以标题页只提示「可在设置里导入」。
   if (!game.audioUnlocked) {
     const a = 0.5 + 0.4 * Math.sin((t || 0) / 420);
     text(ctx, '点击任意处开启音效', W / 2, 842, {
       size: 20, fill: C.gold, weight: '700', alpha: a,
     });
   } else {
-    text(ctx, '本版本仅保留音效 · 无背景音乐', W / 2, 842, {
-      size: 17, fill: C.textFaint,
-    });
+    text(ctx, game.musicAvailable ? '背景音乐可在设置里导入并使用' : '本版本仅保留音效 · 无背景音乐',
+      W / 2, 842, { size: 17, fill: C.textFaint });
   }
   if (!game.uninstallAsk && !game.settingsAsk) drawButtons(ctx, ui, game);
   drawIcons(ctx, game, ui);
@@ -984,25 +994,26 @@ function volumeBar(ctx, x, y, w, h, v) {
 
 export function drawSettingsPanel(ctx, game, ui) {
   if (!game.settingsAsk) return;
-  panel(ctx, 80, 360, W - 160, 560);
-  text(ctx, '声音设置', W / 2, 420, { size: 32, weight: '800', fill: C.orange });
-  text(ctx, '本版本仅保留音效 · 不提供背景音乐', W / 2, 458, { size: 16, fill: C.textDim });
+  panel(ctx, 80, 340, W - 160, 600);
+  text(ctx, '声音设置', W / 2, 396, { size: 32, weight: '800', fill: C.orange });
+  text(ctx, '音效与背景音乐互相独立 · 音乐只能来自你导入的文件', W / 2, 432, { size: 16, fill: C.textDim });
 
-  text(ctx, '音效', 130, 546, { size: 22, weight: '700', fill: C.text });
-  text(ctx, '音量', 424, 546, { size: 15, fill: C.textFaint });
-  volumeBar(ctx, 494, 528, 88, 14, game.sfxVol);
+  text(ctx, '音效', 130, 534, { size: 22, weight: '700', fill: C.text });
+  text(ctx, '音量', 424, 534, { size: 15, fill: C.textFaint });
+  volumeBar(ctx, 494, 516, 88, 14, game.sfxVol);
 
-  text(ctx, '点击 / 消除 / 道具 / 胜负均有轻巧的反馈音', W / 2, 618, {
-    size: 17, fill: C.textDim,
-  });
-  text(ctx, '音效开关与音量随时可调 · 设置自动保存', W / 2, 688, {
-    size: 16, fill: C.gold, weight: '700',
-  });
+  if (game.musicAvailable) {
+    text(ctx, '音乐', 130, 630, { size: 22, weight: '700', fill: C.text });
+    text(ctx, '音量', 424, 630, { size: 15, fill: C.textFaint });
+    volumeBar(ctx, 494, 612, 88, 14, game.musicVol === undefined ? 0.6 : game.musicVol);
+    text(ctx, '没导入音乐时完全静音 · 不入包任何音频', W / 2, 744, { size: 16, fill: C.textDim });
+  } else {
+    text(ctx, '当前版本不支持背景音乐（兼容模式）', W / 2, 630, { size: 16, fill: C.textFaint });
+  }
 
   drawButtons(ctx, ui, game);
 
-  text(ctx, '首次点击后才开启音效（浏览器自动播放策略）', W / 2, 762, { size: 15, fill: C.textFaint });
-  text(ctx, '全部 Web Audio 实时合成 · 零音频文件', W / 2, 894, { size: 14, fill: C.textFaint });
+  text(ctx, '首次点击后才开启音频（浏览器自动播放策略）', W / 2, 868, { size: 15, fill: C.textFaint });
 }
 
 /* ==================== 特效 ==================== */
