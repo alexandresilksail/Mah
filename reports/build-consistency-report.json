@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-12T02:21:39.940Z",
-  "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
+  "generatedAt": "2026-11-12T02:25:27.140Z",
+  "gitCommit": "dfb28a87b5c57d7c7e1db038439fd1cd19f80b84",
   "command": "node test-build-consistency.js",
   "assertions": {
     "pass": 48,
@@ -48,10 +48,10 @@
       "sourceFiles": 28
     },
     "live": {
-      "buildVersion": "2.0.0-0437499",
-      "gitCommit": "04374993a51d29cec465d596de0a6d0e92199856",
+      "buildVersion": "2.0.0-dfb28a8",
+      "gitCommit": "dfb28a87b5c57d7c7e1db038439fd1cd19f80b84",
       "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
-      "buildTimestamp": "2026-11-12T02:21:38.792Z",
+      "buildTimestamp": "2026-11-12T02:25:26.763Z",
       "sourceFiles": 28
     }
   },
