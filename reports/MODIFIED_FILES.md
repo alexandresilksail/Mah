@@ -2,7 +2,7 @@
 
 **项目**：MahLeMah（`mah-le-mah/`）
 **日期**：2026-11-12
-**上一提交**：`f5a578e858ac1acfad42d3adc3c01d9d1eb27f3d`
+**本轮提交**：`9912743ca599`
 **本轮口径**：① 布局重做（几何由 seed 生成、五局内布局不同）② 难度验收转绿 ③ 用户导入背景音乐 + 按文件名匹配场景
 
 ---
@@ -56,12 +56,12 @@
 
 | 文件 | 字节 | SHA-256 |
 |---|---:|---|
-| `dist/MahLeMah.html` | 134,302 | `5b683891a56e79e27dc0f383f7d8559ecdf58e1d2461f8b73ed4ac4c018967c1` |
+| `dist/MahLeMah.html` | 134,302 | `fa9fd96930a4ec48b9b2b6c8db2cb7b3b3d6cf364c5f7b01ae7edf0b3f3a2a2c` |
 | `dist/Mah了个Mah.html` | 134,302 | 同上（同内容副本） |
 | `dist/index.html` | 134,302 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 168,373 | `cca372e4d99ea3791dfa6b716e115f5f18c5c56601763f1efe6fd40653a6cd3b` |
+| `dist/MahLeMah-legacy.html` | 168,373 | `15f8cdc4368d8447ac17947bb6f1379345cd6ffc4b6130dd53550f2e6d9cce52` |
 
-`buildVersion=2.0.0-f5a578e` · `sourceHash=578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` · 参与哈希源文件 32 个。
+`buildVersion=2.0.0-9912743` · `sourceHash=578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` · 参与哈希源文件 32 个。
 
 ## 6. 报告
 
