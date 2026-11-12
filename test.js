@@ -53,6 +53,15 @@ import { Game, slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine
 import { makeRng } from './src/game/rng.js';
 import { SEED_POOL, POOL_META, pickPoolSeed } from './src/game/seed_pool.js';
 import { makeSaveData, applySaveToGame } from './src/game/save_data.js';
+import { sha256Hex } from './src/game/sha256.js';
+import { calculateLayoutSignature, SIGNATURE_ALGORITHM } from './src/game/layout_signature.js';
+import { createNewGame, GenerationFailureError, MAX_ATTEMPTS } from './src/game/new_game.js';
+import {
+  HISTORY_LIMIT, GENERATION_REASONS, sanitizeHistory, sanitizeRecord,
+  historyFor, checkAgainstRecent,
+} from './src/game/recent_games.js';
+import { readBuildInfo } from './src/game/build_info.js';
+import { createHash } from 'node:crypto';
 
 let pass = 0;
 let fail = 0;
@@ -453,16 +462,24 @@ line('\n[8b] Rust 存档加固 / p1-p2 白名单 / 生产音频配置（仅音�
 ok(/MAX_SAVE_BYTES[^=]*=\s*(64\s*\*\s*1024|65536)/.test(rust), 'save_state 设置 64 KB 大小上限');
 ok(/serde_json::from_str/.test(rust) && /serde_json\s*=/.test(read('src-tauri/Cargo.toml')),
   'save_state 用 serde_json 做 JSON 合法性校验');
-ok(/SAVE_FIELDS/.test(rust) && ['"v"', '"level"', '"best"', '"sound"', '"sfxVol"', '"music"', '"musicVol"', '"p1"', '"p2"'].every((f) => rust.indexOf(f) >= 0),
-  'SAVE_FIELDS 白名单 9 个字段：v/level/best/sound/sfxVol/music/musicVol/p1/p2');
-ok(/const SAVE_FIELDS:\s*\[&str;\s*9\]/.test(rust), 'SAVE_FIELDS 数组长度声明为 9');
+ok(/SAVE_FIELDS/.test(rust) && ['"v"', '"level"', '"best"', '"sound"', '"sfxVol"', '"music"', '"musicVol"', '"p1"', '"p2"', '"level1RecentGames"', '"level2RecentGames"'].every((f) => rust.indexOf(f) >= 0),
+  'SAVE_FIELDS 白名单 11 个字段：含新增的两关历史');
+ok(/const SAVE_FIELDS:\s*\[&str;\s*11\]/.test(rust), 'SAVE_FIELDS 数组长度声明为 11');
+ok(/RECORD_FIELDS:\s*\[&str;\s*12\]/.test(rust) && /GENERATION_REASONS:\s*\[&str;\s*4\]/.test(rust),
+  'Rust 定义历史记录字段白名单与 4 种 generationReason');
+ok(/fn validate_history_field/.test(rust) && /HISTORY_LIMIT:\s*usize = 3/.test(rust)
+  && /最多 \{HISTORY_LIMIT\}|最多 3 条/.test(rust),
+  'Rust 对两关历史做 ≤3 条、字段完整、签名格式等校验');
+ok(/validate_history_field\(obj, "level1RecentGames"\)/.test(rust)
+  && /validate_history_field\(obj, "level2RecentGames"\)/.test(rust),
+  'Rust 分别校验 level1RecentGames / level2RecentGames（关卡隔离）');
 ok(/for key in \["p1", "p2"\]/.test(rust) && /if let Some\(val\) = obj\.get\(key\)/.test(rust)
   && /as_i64\(\)/.test(rust) && /\(0\.\.=63\)\.contains\(&n\)/.test(rust),
   'Rust 对 p1/p2 做「存在才校验」+ 整数 + 0..=63 范围校验，旧档缺字段不判非法');
 ok(/validate_save_json/.test(rust) && /fn save_state\(data: String\)/.test(rust),
   'save_state 先校验后写入，且不接受任何路径参数');
 ok(/save\.json\.tmp/.test(rust) && /fs::rename/.test(rust), 'save_state 保持原子写入（tmp + rename）');
-ok(/v != 1 && v != 2|版本/.test(rust), 'save_state 校验存档版本号');
+ok(/v != 1 && v != 2 && v != 3/.test(rust), 'save_state 校验存档版本 v ∈ {1,2,3}（v3 含两关历史，旧档仍兼容）');
 {
   // 语义复刻：把 Rust 的 p1/p2 校验规则在 JS 里跑一遍真实边界值
   const rustP = (raw) => {
@@ -847,10 +864,22 @@ ok(!/下一关：\s*\d+\s*张/.test(renderSrc), 'render.js 里不存在硬编码
 ok(/push\('replay'[\s\S]{0,200}重玩本关/.test(renderSrc), '普通胜利面板提供「重玩本关」按钮');
 ok(!/240 张|15 层·|16 种 · 15 层/.test(renderSrc), 'render.js 界面文案无旧版固定张数 / 层数');
 ok(/case 'restart':\s*\n\s*case 'replay':/.test(mainSrc), 'main.js 中 restart / replay 共用同一分支');
-ok((mainSrc.match(/game\.startNewRun\(Math\.random\)/g) || []).length === 2,
-  'case \'start\' 与 case \'restart\'/\'replay\' 毕业路径都调用 startNewRun()');
-ok(/if \(game\.graduated\)/.test(mainSrc) && /game\.startLevel\(game\.level\)/.test(mainSrc),
-  '非毕业状态仍从第 2 关继续（3.4）');
+// 本轮：三种重新开局操作全部收敛到 createNewGame()，不再各自实现随机生成
+ok(!/game\.(startNewRun|restartLevel|startLevel)\(/.test(mainSrc),
+  'main.js 所有新开局入口都不再直接调用旧版各自实现的生成方法');
+ok(/function newGame\([\s\S]*?createNewGame\(\{/.test(mainSrc),
+  'main.js 唯一的新局包装真实调用 createNewGame()');
+ok(/case 'start':[\s\S]{0,600}?newGame\(game\.level, reason\)/.test(mainSrc),
+  '应用重启后开始 / 标题页重新开始走统一入口');
+ok(/case 'restart':[\s\S]{0,700}?newGame\(lv, reason\)/.test(mainSrc),
+  '失败重开 / 暂停重开 / 重玩本关走统一入口');
+ok(/case 'next':[\s\S]{0,200}?newGame\(/.test(mainSrc), '进入下一关走统一入口');
+ok(/newGame\(game\.level, 'title_screen_restart'\)/.test(mainSrc), '键盘 r 重开走统一入口');
+for (const r of GENERATION_REASONS) {
+  ok(mainSrc.indexOf("'" + r + "'") >= 0, `main.js 明确区分 generationReason=${r}`);
+}
+ok(/applySave\(loadSave\(\)\)/.test(mainSrc) && /game\.level, reason\)/.test(mainSrc),
+  '未通关退出后仍按存档 level 继续（3.4），但新局由统一入口生成');
 ok(/game\.profile\.l1 = rollProfile\(1, Math\.random, game\.profile\.l1\)/.test(mainSrc)
   && /game\.profile\.l2 = rollProfile\(2, Math\.random, game\.profile\.l2\)/.test(mainSrc),
   'boot() 在 applySave 之后对 l1 / l2 都重抽，各自 ≠ 存档里的 p1 / p2');
@@ -872,6 +901,127 @@ ok(/p1: game\.profile\.l1/.test(read('src/game/save_data.js'))
   && /game\.graduated \? 1 : game\.level/.test(read('src/game/save_data.js')),
   'save_data.js：毕业写 level=1、best 保持、p1/p2 写入');
 ok(!/^\s*\d+\s*张\s*·|下一关：\s*\d+/.test(dom), 'ES5 降级视图无硬编码张数 / 层数文案');
+
+/* ---------------- [14] 统一生成入口 / 布局签名 / 最近三局（真实运行） ---------------- */
+line('\n[14] 统一生成入口 / 布局签名 / 最近三局差异化（真实运行）');
+{
+  // SHA-256 与 node:crypto 对照（不是"函数可调用"式断言）
+  const cases = ['', 'abc', 'MahLeMah', '0:1:2|3:4:5', '中文测试', 'x'.repeat(1000)];
+  let shaOk = true;
+  for (const s of cases) {
+    if (sha256Hex(s) !== createHash('sha256').update(s, 'utf8').digest('hex')) shaOk = false;
+  }
+  ok(shaOk, '同步 SHA-256 与 node:crypto 在 6 组输入上逐字节一致');
+
+  // 布局签名：同档位换 seed 不能冒充不同布局
+  for (const lv of [1, 2]) {
+    const d0 = generateLevel(lv, 1111, { profile: 0 });
+    const d1 = generateLevel(lv, 2222, { profile: 0 });
+    const d2 = generateLevel(lv, 1111, { profile: 1 });
+    const s0 = calculateLayoutSignature(d0);
+    const s1 = calculateLayoutSignature(d1);
+    const s2 = calculateLayoutSignature(d2);
+    ok(s0.geometrySignature === s1.geometrySignature,
+      `L${lv} 同档位不同 seed 的几何签名相同（seed 不等于布局）`);
+    ok(s0.geometrySignature !== s2.geometrySignature && s0.layoutSignature !== s2.layoutSignature,
+      `L${lv} 不同档位的实际布局签名不同`);
+    ok(s0.algorithm === SIGNATURE_ALGORITHM && s0.layoutSignature.length === 64,
+      `L${lv} 布局签名是 64 位 SHA-256`);
+    ok(calculateLayoutSignature(d0).layoutSignature === s0.layoutSignature,
+      `L${lv} 相同牌局数据复算得到相同签名`);
+    ok(s0.tileCount === d0.cards.length && s0.playableCount === d0.visible,
+      `L${lv} 签名返回的牌数 / 可点牌数与实际牌局一致`);
+  }
+
+  ok(MAX_ATTEMPTS === 50 && HISTORY_LIMIT === 3 && GENERATION_REASONS.length === 4,
+    '重试上限 50 / 历史窗口 3 / 4 种 generationReason');
+  ok(sanitizeRecord({ gameId: 'x' }) === null && sanitizeRecord(null) === null,
+    '损坏的历史记录被丢弃而不是抛异常');
+  ok(sanitizeHistory([null, 1, 'x']).length === 0, '脏历史数组安全降级为空');
+  ok(historyFor({ level1RecentGames: [{ gameId: 'bad' }] }, 2).length === 0,
+    'L2 不读取 L1 的历史（关卡隔离）');
+  {
+    const recent = [
+      { totalTiles: 24, layoutSignature: 'a'.repeat(64), geometrySignature: 'b'.repeat(64), seed: 1, gameId: 'g1' },
+    ];
+    const c = checkAgainstRecent(recent, {
+      totalTiles: 30, layoutSignature: 'c'.repeat(64), geometrySignature: 'd'.repeat(64), seed: 2, gameId: 'g2',
+    });
+    ok(c.tileCountDifferent && c.layoutDifferent && c.geometryDifferent && c.seedFresh,
+      'checkAgainstRecent 对不重复候选返回全 PASS');
+    const c2 = checkAgainstRecent(recent, {
+      totalTiles: 24, layoutSignature: 'a'.repeat(64), geometrySignature: 'b'.repeat(64), seed: 1, gameId: 'g1',
+    });
+    ok(!c2.tileCountDifferent && !c2.layoutDifferent && !c2.geometryDifferent && !c2.seedFresh,
+      'checkAgainstRecent 对牌数/布局/seed 全重复的候选如实返回 FAIL');
+  }
+
+  // 统一入口：两关各自连续 6 局，滚动窗口同时检查牌数与几何
+  for (const lv of [1, 2]) {
+    const g = new Game(null);
+    let save = { level1RecentGames: [], level2RecentGames: [] };
+    let allOk = true;
+    for (let i = 0; i < 6; i++) {
+      const before = historyFor(save, lv);
+      let r;
+      try {
+        r = createNewGame({
+          level: lv, generationReason: GENERATION_REASONS[i % 4],
+          game: g, save, rand: Math.random,
+        });
+      } catch (e) {
+        allOk = false;
+        break;
+      }
+      if (before.some((x) => x.totalTiles === r.record.totalTiles) ||
+          before.some((x) => x.layoutSignature === r.record.layoutSignature) ||
+          before.some((x) => x.geometrySignature === r.record.geometrySignature)) allOk = false;
+      if (!validateLevel(r.data).ok || !verify(r.data)) allOk = false;
+      if (r.game.meta.gameId !== r.record.gameId || r.meta.checks.tileCountCheck !== 'PASS' ||
+          r.meta.checks.layoutCheck !== 'PASS' || r.meta.checks.historyCheck !== 'PASS') allOk = false;
+      if (historyFor(r.nextSave, lv).length > HISTORY_LIMIT) allOk = false;
+      save = r.nextSave;
+    }
+    ok(allOk, `L${lv} 连续 6 局统一入口：牌数 + 布局 + 几何均与最近三局不同，且全部通过校验`);
+  }
+
+  // 50 次上限失败路径：明确报错，绝不自动接受重复牌局
+  {
+    const g = new Game(null);
+    const tiles = LEVEL1_PROFILES.map((p) => p.mainCount + p.queueCount);
+    let threw = false;
+    try {
+      createNewGame({
+        level: 1, generationReason: 'new_game', game: g,
+        save: { level1RecentGames: [] }, previousTileCounts: tiles,
+        maxAttempts: 3, rand: Math.random,
+      });
+    } catch (e) {
+      threw = e instanceof GenerationFailureError;
+      ok(threw && e.detail.reason === 'MAX_ATTEMPTS_EXCEEDED' && e.detail.failures.length === 3,
+        '配置被占满时抛 GenerationFailureError 并逐次记录失败原因');
+    }
+    ok(threw, '生成失败时不自动接受重复牌局');
+  }
+
+  // 存档 v3 / 历史字段 / 调试元信息
+  {
+    const g = new Game(null);
+    let save = { level1RecentGames: [], level2RecentGames: [] };
+    for (let i = 0; i < 5; i++) {
+      const r = createNewGame({ level: 1, generationReason: 'new_game', game: g, save, rand: Math.random });
+      save = r.nextSave;
+    }
+    g.saveState = save;
+    const d = makeSaveData(g);
+    ok(d.v === 3 && d.level1RecentGames.length === 3 && d.level2RecentGames.length === 0,
+      '存档 v3 只持久化每关最近三局元数据，两关隔离');
+    ok(JSON.stringify(d).length < 4096, '存档体积有上界（不无限制增长）');
+    const b = readBuildInfo();
+    ok(!!b.buildVersion && !!b.gitCommit && !!b.sourceHash,
+      'build_info 提供 buildVersion / gitCommit / sourceHash（HTML 由构建脚本注入真实值）');
+  }
+}
 
 line('\n============================================================================');
 line(` 断言：通过 ${pass} 项，失败 ${fail} 项`);

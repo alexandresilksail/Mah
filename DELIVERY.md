@@ -1,8 +1,40 @@
-# 交付说明 · v2.0.0 最终生产版（16 牌型 / 双关卡模板 / 六机器人 / 仅音效 / 双 Windows 产物）
+# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 仅音效 / 双 Windows 产物）+ 2026-11-11 随机生成重构
 
-> 本文件是本轮交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
-> 所有「旧版」信息（24 张第一关、222 张第二关、8/15 种牌型、葫芦单堆、200 局机器人报告、
-> 游戏内自删除卸载）已**全部移除**，详见正文与 `RELEASE_NOTES.md` 的变更记录。
+> 本文件是交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
+> **牌数口径**：旧版的「第一关固定 24 张 / 第二关 222 张、8/15 种牌型、葫芦单堆」是
+> 历史数据。当前源码第 1 关有 4 个合法档位（24 / 30 / 36 / 48 张），
+> 第 2 关有 10 个合法档位（192–321 张）；222 张从未出现在当前配置中。
+> 「游戏内自删除卸载」已彻底移除。详见 `RELEASE_NOTES.md` / `CHANGELOG.md`。
+
+---
+
+## 0. 2026-11-11 本轮增量交付（随机生成系统重构）
+
+| 类别 | 文件 | 说明 |
+|---|---|---|
+| 统一生成模块 | `src/game/new_game.js` | `createNewGame()`，50 次重试上限、明确失败错误 |
+| 历史模块 | `src/game/recent_games.js` | 两关独立最近三局、白名单、损坏容错 |
+| 签名模块 | `src/game/layout_signature.js` / `sha256.js` | 几何 / 分布 / 主签名，纯 ES5 同步 SHA-256 |
+| 调试面板 | `src/main.js` | `?dev=1`，正式版隐藏，全部真实运行数据 |
+| 构建元信息 | `src/game/build_info.js` / `tools/bundle_shared.mjs` | 注入 buildVersion / gitCommit / sourceHash / buildTimestamp |
+| 网页产物 | `dist/MahLeMah.html` / `dist/MahLeMah-legacy.html` | 由当前 `src/` 重新构建（另含 `index.html`、`Mah了个Mah.html` 同内容副本） |
+| 自动化测试 | `test-random-generation.js` / `test-build-consistency.js` / `tools/browser_smoke.mjs` | 200 局 / 一致性 / 真实浏览器 |
+| 报告 | `reports/random-generation-report.{json,md}`、`reports/build-consistency-report.{json,md}`、`reports/browser-smoke-report.json`、`reports/CODE_AUDIT.md`、`reports/FINAL_ACCEPTANCE.md`、`reports/MODIFIED_FILES.md` | 全部由真实运行生成 |
+| 文档 | `README.md` / `CHANGELOG.md` / `DELIVERY.md` / `RELEASE_NOTES.md` / `TEST_REPORT.md` | 与当前源码、实际测试报告同步 |
+
+**真实运行结果（详见各报告）**
+
+- `node test-random-generation.js`：两关各 100 局，**5053 项断言通过 / 0 失败 / EXIT=0**。
+- `node test-build-consistency.js`：**46 项断言通过 / 0 失败 / EXIT=0**，两个 HTML 内嵌 bundle 与 `src/` 逐字节相同。
+- `node tools/browser_smoke.mjs`：Edge `157.0.4341.42` 真实打开两个 HTML 各生成 4 局，
+  `allPassed=true`，零 JS 异常；调试面板与构建注入信息均已验证。
+- `node tools/test_render.mjs`：27 个渲染场景全部通过。
+- `node test.js`：本轮新增 `[14]` 节与 `[13]` / `[8b]` 更新断言全部通过；
+  **11 项 Wilson 上界断言仍失败**（规格 5.1/5.2 数学互斥，按「不许放宽阈值」原样保留）。
+
+**未执行 / 未重建（如实说明）**：桌面 exe、Portable zip、NSIS Setup 仍是 2026-11-10
+冻结产物，本轮未重建；Windows 真机安装 / 卸载测试未对本轮代码重新执行；
+`npm run test:release`（12000 局）本轮未重跑。
 
 ---
 
@@ -92,7 +124,7 @@
   旧档中的 `music` / `musicVol` 读入时忽略，Rust 白名单仍保留两键以兼容旧档。
 - 首次 `pointerdown` / `keydown` 才创建 AudioContext（自动播放策略合规）；
   全链路 `try/catch`，AudioContext 不可用只是无声，不影响游戏。
-- **验收**：`npm test` 1012 项断言全过（含「生产源码零 BGM 模块」「四个生产 HTML 零 BGM 标记」
+- **验收（2026-11-10 冻结版历史结果，非当前源码）**：`npm test` 1012 项断言全过（含「生产源码零 BGM 模块」「四个生产 HTML 零 BGM 标记」
   「音效运行时自建 ctx 并真实发声」）；headless Edge 真机实测启动后 AudioContext 数 0、
   定时器数 0、`window.__mah` 无 music 实例，点击后仅 1 个 AudioContext + 1 个音效振荡器。
 - 网页版体积随之下降：`MahLeMah.html` 109.7 KB → **82.3 KB**，
@@ -132,10 +164,13 @@
 
 ```bash
 npm install                                  # 安装开发依赖
-npm test                                     # 1012 项断言 + 27 个渲染场景冒烟
-npm run build:web && npm run build:legacy    # 两个单文件网页版
-npm run build                                # Portable zip + NSIS exe
-npm run test:release                         # 每关 1000 seed × 6 机器人 = 12000 局 → reports/DIFFICULTY.md
+npm test                                     # node test.js + 27 个渲染场景冒烟（当前 11 项 Wilson 断言失败，见 TEST_REPORT.md §6）
+node test-random-generation.js               # 两关各 100 局 → reports/random-generation-report.{json,md}
+node test-build-consistency.js               # 两个 HTML ↔ src 逐字节一致性 → reports/build-consistency-report.{json,md}
+node tools/browser_smoke.mjs                 # Edge CDP 真实浏览器 → reports/browser-smoke-report.json
+npm run build:all                            # 从当前 src 重建两个单文件网页版
+npm run build                                # Portable zip + NSIS exe（本轮未执行）
+npm run test:release                         # 每关 1000 seed × 6 机器人 = 12000 局（本轮未执行）
 npm run release                              # dist/SHA256SUMS.txt
 ```
 

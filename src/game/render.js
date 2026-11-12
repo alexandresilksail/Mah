@@ -375,7 +375,15 @@ export function drawHUD(ctx, game, ui) {
   }
   ctx.restore();
 
-  text(ctx, `剩 ${game.remaining()} 张`, W / 2, 140, {
+  // 第 2.5 / 十一阶段：所有张数 / 牌型数 / 层数文案都从**当前实际牌局**读取，
+  // 不写死任何历史版本的固定规格。
+  const totalTiles = game.cards.length;
+  const kindSet = {};
+  for (let i = 0; i < game.cards.length; i++) kindSet[game.cards[i].type] = 1;
+  let kindCount = 0;
+  for (const k in kindSet) if (Object.prototype.hasOwnProperty.call(kindSet, k)) kindCount++;
+  const layerCount = (game.layersMeta && game.layersMeta.length) || 0;
+  text(ctx, `剩 ${game.remaining()} / ${totalTiles} 张 · ${kindCount} 种 · ${layerCount} 层`, W / 2, 140, {
     size: 15,
     weight: '600',
     fill: C.textFaint,

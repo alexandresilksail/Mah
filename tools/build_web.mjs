@@ -10,29 +10,19 @@
  *
  * 产物体积约 60–70 KB，不含任何外部请求、图片、字体或音频文件。
  */
-import { build } from 'esbuild';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { computeBuildInfo, buildInfoScriptTag, bundleModern } from './bundle_shared.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const p = (...s) => path.join(root, ...s);
 
 const OUT_NAME = 'Mah了个Mah.html';
 
-/* ---------- 1. 打包 JS ---------- */
-const result = await build({
-  entryPoints: [p('src/main.js')],
-  bundle: true,
-  format: 'iife',
-  target: ['es2020'],
-  minify: true,
-  legalComments: 'none',
-  write: false,
-  charset: 'utf8',
-});
-
-const js = result.outputFiles[0].text;
+/* ---------- 1. 打包 JS（与一致性测试共用同一函数） ---------- */
+const js = await bundleModern(root);
+const build = computeBuildInfo(root);
 
 /* ---------- 2. 内联 CSS / HTML ---------- */
 const css = await readFile(p('src/styles.css'), 'utf8');
@@ -44,11 +34,11 @@ const html = await readFile(p('src/index.html'), 'utf8');
 const out = html
   .replace(
     /\s*<link rel="stylesheet" href="styles\.css" \/>/,
-    () => `\n  <style>\n${css.trim()}\n  </style>`
+    () => `\n${buildInfoScriptTag(build)}\n  <style>\n${css.trim()}\n  </style>`
   )
   .replace(
     /\s*<script type="module" src="main\.js"><\/script>/,
-    () => `\n  <script>\n${js.trim()}\n  </script>`
+    () => `\n  <script id="mah-bundle">\n${js}\n  </script>`
   );
 
 if (out.includes('styles.css') || out.includes('main.js')) {
@@ -91,3 +81,4 @@ await writeFile(p('dist/Play-MahLeMah.cmd'), LAUNCHER, 'latin1');
 const kb = (Buffer.byteLength(out, 'utf8') / 1024).toFixed(1);
 console.log(`✔ dist/${OUT_NAME}  (${kb} KB，单文件，零外部依赖)`);
 console.log('✔ dist/Play-MahLeMah.cmd  (双击后用 Edge/Chrome 的无边框窗口打开)');
+console.log(`  buildVersion=${build.buildVersion} sourceHash=${build.sourceHash.slice(0, 16)} gitCommit=${build.gitCommit.slice(0, 12)}`);

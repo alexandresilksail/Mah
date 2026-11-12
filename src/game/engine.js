@@ -142,6 +142,10 @@ export class Game {
     this.resolving = false; // 防止重复触发
     this.clock = 0; // 帧累加的游戏时钟（毫秒），让无 DOM 的模拟也能推进延迟消除
     this.solution = null;
+    // 统一生成入口写入的真实运行数据（调试面板 / 自动化测试读取）
+    this.meta = null;
+    // 运行时存档快照（createNewGame 用它读本关最近三局；main.js persist 时同步）
+    this.saveState = null;
   }
 
   /* -------------------- 生命周期 -------------------- */
@@ -154,8 +158,22 @@ export class Game {
     const lv = Math.min(LEVEL_COUNT, Math.max(1, level | 0));
     const pid = lv <= 1 ? this.profile.l1 : this.profile.l2;
     const data = generateLevel(lv, seed === undefined ? undefined : seed, { profile: pid });
+    // 兼容旧调用（test.js 的历史断言 / 旧工具）：仍走 generateLevel，
+    // 但安装逻辑只有 installLevelData 一份，UI 的新开局全部由 createNewGame 调用它。
+    this.installLevelData(data, null);
+  }
+
+  /**
+   * 统一生成入口 createNewGame() 的落地点：把**已经生成并校验过**的牌局
+   * 一次性装进 Game，不再二次生成，也不再重抽 seed / 档位。
+   * meta 携带 gameId / 布局签名 / 最近三局检查等调试面板所需的真实运行数据。
+   */
+  installLevelData(data, meta) {
+    const lv = Math.min(LEVEL_COUNT, Math.max(1, data.params.level | 0));
+    const pid = data.profileId;
     if (typeof console !== 'undefined' && console.info) {
-      console.info(`[mah] level=${lv} profileId=${pid} seed=${data.seed}`);
+      console.info(`[mah] level=${lv} profileId=${pid} seed=${data.seed}` +
+        (meta ? ` gameId=${meta.gameId} reason=${meta.generationReason} tiles=${meta.totalTiles} sig=${meta.layoutSignature.slice(0, 12)}` : ''));
     }
     this.cards = data.cards;
     this.layersMeta = data.layers || [];
@@ -184,6 +202,7 @@ export class Game {
     this._topPool = null;
     this.maxZ = this.cards.reduce((m, c) => Math.max(m, c.z), 0);
     this.levelStartAt = nowMs();
+    this.meta = meta || null;
     this.refresh(true);
   }
 

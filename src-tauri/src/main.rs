@@ -29,12 +29,27 @@ use std::path::{Path, PathBuf};
 /// 与 exe 同级的数据目录名（对外承诺的唯一落点）
 const DATA_DIR: &str = "MahLeMah_Data";
 
-/// 存档大小上限：64 KB（存档只有几个进度/音量字段，远小于该上限）
+/// 存档大小上限：64 KB（每关只存最近 3 条元数据，远小于该上限；本轮不放宽）
 const MAX_SAVE_BYTES: usize = 64 * 1024;
 
 /// 存档 JSON 字段白名单：出现任何未知字段一律拒绝
-/// p1 / p2 = 两关当前档位 id（本轮修订新增）；旧存档缺这两个字段时按缺省处理，不判非法。
-const SAVE_FIELDS: [&str; 9] = ["v", "level", "best", "sound", "sfxVol", "music", "musicVol", "p1", "p2"];
+/// p1 / p2 = 两关当前档位 id；level1RecentGames / level2RecentGames = 各关最近三局历史。
+/// 旧存档（v1/v2）缺这些字段时按缺省处理，不判非法。
+const SAVE_FIELDS: [&str; 11] = [
+    "v", "level", "best", "sound", "sfxVol", "music", "musicVol", "p1", "p2",
+    "level1RecentGames", "level2RecentGames",
+];
+
+/// 单条历史记录的字段白名单（与 src/game/recent_games.js 的 RECORD_FIELDS 一一对应）
+const RECORD_FIELDS: [&str; 12] = [
+    "gameId", "level", "difficultyId", "seed", "totalTiles", "tileTypeCount",
+    "layoutSignature", "geometrySignature", "distributionSignature",
+    "generatedAt", "generationReason", "validationResult",
+];
+const GENERATION_REASONS: [&str; 4] = [
+    "application_restart", "title_screen_restart", "failure_restart", "new_game",
+];
+const HISTORY_LIMIT: usize = 3;
 
 fn exe_path() -> Result<PathBuf, String> {
     std::env::current_exe().map_err(|e| format!("无法定位程序路径: {e}"))
@@ -58,12 +73,95 @@ pub fn data_dir() -> Result<PathBuf, String> {
 /* IPC 命令                                                            */
 /* ------------------------------------------------------------------ */
 
+/// 最近三局历史校验：
+///  · 必须是数组、最多 3 条（防止存档无限制膨胀）；
+///  · 每条记录的字段必须在白名单内，且 12 个字段全部存在（拒绝半写入记录）；
+///  · 字符串长度、签名格式、整数范围、reason 枚举、校验结果严格检查；
+///  · 损坏记录一律拒绝整份存档，绝不让非法布局数据进入游戏。
+fn validate_history_field(
+    obj: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Result<(), String> {
+    let arr = match obj.get(key) {
+        Some(v) => v.as_array().ok_or_else(|| format!("{key} 必须是数组"))?,
+        None => return Ok(()), // 旧存档无历史字段：合法
+    };
+    if arr.len() > HISTORY_LIMIT {
+        return Err(format!("{key} 最多 {HISTORY_LIMIT} 条，实际 {}", arr.len()));
+    }
+    for (i, rec) in arr.iter().enumerate() {
+        let r = rec
+            .as_object()
+            .ok_or_else(|| format!("{key}[{i}] 必须是对象"))?;
+        for k in r.keys() {
+            if !RECORD_FIELDS.contains(&k.as_str()) {
+                return Err(format!("{key}[{i}] 包含未知字段: {k}"));
+            }
+        }
+        for f in RECORD_FIELDS {
+            if !r.contains_key(f) {
+                return Err(format!("{key}[{i}] 缺少字段 {f}（疑似半写入）"));
+            }
+        }
+        let game_id = r["gameId"]
+            .as_str()
+            .ok_or_else(|| format!("{key}[{i}].gameId 必须是字符串"))?;
+        if game_id.is_empty() || game_id.len() > 128 {
+            return Err(format!("{key}[{i}].gameId 长度非法"));
+        }
+        for f in ["layoutSignature", "geometrySignature", "distributionSignature"] {
+            let s = r[f]
+                .as_str()
+                .ok_or_else(|| format!("{key}[{i}].{f} 必须是字符串"))?;
+            let hex = s.len() == 64
+                && s.bytes().all(|b| b.is_ascii_digit() || (b'a' <= b && b <= b'f'));
+            if !hex {
+                return Err(format!("{key}[{i}].{f} 不是 64 位小写 SHA-256"));
+            }
+        }
+        for (f, lo, hi) in [
+            ("level", 1i64, 2i64),
+            ("difficultyId", 0, 63),
+            ("seed", 0, 4_294_967_295),
+            ("totalTiles", 1, 10_000),
+            ("tileTypeCount", 0, 16),
+        ] {
+            let n = r[f]
+                .as_i64()
+                .ok_or_else(|| format!("{key}[{i}].{f} 必须是整数"))?;
+            if !(lo..=hi).contains(&n) {
+                return Err(format!("{key}[{i}].{f} 超出范围 {lo}..{hi}: {n}"));
+            }
+        }
+        let generated = r["generatedAt"]
+            .as_str()
+            .ok_or_else(|| format!("{key}[{i}].generatedAt 必须是字符串"))?;
+        if generated.is_empty() || generated.len() > 64 {
+            return Err(format!("{key}[{i}].generatedAt 长度非法"));
+        }
+        let reason = r["generationReason"]
+            .as_str()
+            .ok_or_else(|| format!("{key}[{i}].generationReason 必须是字符串"))?;
+        if !GENERATION_REASONS.contains(&reason) {
+            return Err(format!("{key}[{i}].generationReason 非法: {reason}"));
+        }
+        let result = r["validationResult"]
+            .as_str()
+            .ok_or_else(|| format!("{key}[{i}].validationResult 必须是字符串"))?;
+        if result != "PASS" && result != "FAIL" {
+            return Err(format!("{key}[{i}].validationResult 非法: {result}"));
+        }
+    }
+    Ok(())
+}
+
 /// 存档 JSON 严格校验：
 ///   1. 大小 ≤ 64 KB；
 ///   2. 必须是合法 JSON 对象；
 ///   3. 字段白名单（未知字段直接拒绝）；
-///   4. 版本号 v ∈ {1, 2}（v1 = 旧档兼容，v2 = 当前格式）；
-///   5. 各字段类型 / 数值范围严格检查，任何异常数据一律拒绝。
+///   4. 版本号 v ∈ {1, 2, 3}（v1/v2 = 旧档兼容，v3 = 含最近三局历史）；
+///   5. 各字段类型 / 数值范围严格检查，任何异常数据一律拒绝；
+///   6. 两关历史各自独立校验，最多 3 条、字段完整、签名格式合法。
 fn validate_save_json(data: &str) -> Result<(), String> {
     if data.len() > MAX_SAVE_BYTES {
         return Err(format!("存档过大：{} 字节 > 上限 {MAX_SAVE_BYTES}", data.len()));
@@ -86,7 +184,7 @@ fn validate_save_json(data: &str) -> Result<(), String> {
         _ => None,
     }
     .ok_or_else(|| "存档缺少合法的版本号 v".to_string())?;
-    if v != 1 && v != 2 {
+    if v != 1 && v != 2 && v != 3 {
         return Err(format!("不支持的存档版本: {v}"));
     }
 
@@ -129,6 +227,10 @@ fn validate_save_json(data: &str) -> Result<(), String> {
             }
         }
     }
+
+    // 两关历史：独立校验，损坏 / 半写入 / 超量一律拒绝
+    validate_history_field(obj, "level1RecentGames")?;
+    validate_history_field(obj, "level2RecentGames")?;
     Ok(())
 }
 

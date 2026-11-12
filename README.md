@@ -3,8 +3,27 @@
 > 一款原创的「堆叠卡牌三消」休闲小游戏：点击未被遮挡的麻将牌收入底部槽位，三张相同自动消除。
 > Tauri 2 + 原生 HTML/CSS/JS + Canvas，全部美术与音效都由代码实时生成。
 > **最终生产版只提供音效，不含背景音乐**（2026-11-10 起）。
-> **本轮修订加入动态档位**：每次启动、每次「重开本关」、通关最后一关后继续玩，
-> 层数与牌种类都会重新抽取。改动在源码与测试层，`dist/` 仍为 2026-11-10 冻结产物。
+> **2026-11-11 随机生成系统重构**：动态档位 + 每关独立「最近三局」差异化约束 +
+> 统一生成入口 `createNewGame()` + 基于实际几何的 SHA-256 布局签名 + 开发调试面板。
+> `dist/MahLeMah.html` 与 `dist/MahLeMah-legacy.html` 已由当前 `src/` 重新构建，
+> 一致性由 `node test-build-consistency.js` 逐字节验证。
+
+---
+
+## 0.1 本轮升级速览（2026-11-11）
+
+| 要求 | 实现 | 证据 |
+|---|---|---|
+| 每次新开局牌数与布局都不同于本关最近三局 | `createNewGame()` 生成后真实计算总牌数与布局签名，冲突即重试（上限 50 次） | `test-random-generation.js` 两关各 100 局 |
+| 不允许换 seed 就当作换布局 | 几何签名只纳入坐标 / 层级 / 区域 / 遮挡 / 可操作区，与洗牌无关 | `layout_signature.js` + `test.js [14]` |
+| 三种重新开局统一入口 | `case 'start'` / `'restart'|'replay'` / `'next'` / 键盘 `r` / `?lv=` 全部走 `newGame()` → `createNewGame()` | `test-build-consistency.js` + 200 局报告的入口审计 |
+| 重启后历史不丢 | 存档 `v:3` 新增 `level1RecentGames` / `level2RecentGames`，每关最多 3 条 | 200 局测试中的磁盘往返重启模拟 + 浏览器实测 |
+| 两个 HTML 与源码一致 | 构建脚本与一致性检查共用 `tools/bundle_shared.mjs`，逐字节比对内嵌 bundle | `reports/build-consistency-report.md` |
+| 调试面板真实数据 | `?dev=1` 显示 gameId / 签名 / 四项 PASS-FAIL / 最近三局 | Edge CDP 实测两个 HTML |
+
+> **牌数口径澄清**：旧文档里的「第一关 24 张 / 第二关 222 张」是历史版本数据。
+> 当前源码中 `24` 只是第 1 关 4 个合法档位之一（`24 / 30 / 36 / 48`）；
+> `222` 从未出现在当前配置中。第 2 关实际牌数范围是 `192–321`（10 档，9 个不同值）。
 
 ---
 
@@ -15,14 +34,20 @@
 > 实际游玩的层数、牌种类、张数一律由当前档位决定。
 
 `game.profile = { l1, l2 }` 保存两关当前档位 id。`rollProfile(level, rand, current)`
-按权重抽取且结果必定 ≠ 当前档位；三处抽取时机：
+按权重抽取且结果必定 ≠ 当前档位。
 
-1. `boot()`：读入存档后两关都重抽，各自 ≠ 存档里的 `p1` / `p2`，随即 `persist(true)`；
-2. 「重开本关」（暂停菜单 / 失败面板 / 普通胜利面板共用）：只重抽当前关并换 seed；
-3. 通关最后一关后继续玩：`startNewRun()` 两关都重抽 → 回第 1 关 → 写存档。
+**本轮（2026-11-11）起，所有 UI 新开局统一由 `createNewGame()` 负责抽档位、抽 seed、
+生成牌局、计算签名、对比最近三局、校验并写历史**；`main.js` 里的
+`case 'start'` / `case 'restart'|'replay'` / `case 'next'` / 键盘 `r` / `?lv=`
+都只调用同一个 `newGame()` 包装，不再各自实现随机生成。`boot()` 仍在读入存档后
+对两关各重抽一次（≠ 存档里的 `p1`/`p2`），作为「应用重启」路径的初始档位。
 
-`config.RETRY_KEEPS_PROFILE = false`；改为 `true` 时第 2 项保持档位、只换 seed。
-每局开始打印 `[mah] level=… profileId=… seed=…` 便于复现。
+`generationReason` 明确区分 `application_restart` / `title_screen_restart` /
+`failure_restart` / `new_game`；每局开始打印
+`[mah] level=… profileId=… seed=… gameId=… reason=… tiles=… sig=…`。
+
+`config.RETRY_KEEPS_PROFILE = false` 仍保留为兼容开关（只影响 `engine.restartLevel()`
+这条兼容 API，UI 入口一律走统一规则）。
 
 ### 第 2 关档位表（`LEVEL2_PROFILES`，10 个预设；队列固定 44 张）
 
@@ -60,18 +85,93 @@
 
 ### 存档字段与 seed 池
 
-- 存档 `v:2` 新增整数 **`p1` / `p2`**（两关当前档位 id）；最后一关通关那一刻就写
-  `level=1`、`best` 保持 2（修复「通关后从第 2 关开始」）。
-- `src-tauri/src/main.rs` 的 `SAVE_FIELDS` 扩为 9 个字段，新增 `p1` / `p2`
-  且校验为 `0..=63` 的整数；旧存档缺这两个字段按缺省处理，不判非法。
+- 存档当前版本 **`v:3`**：`v/level/best/sound/sfxVol/p1/p2` +
+  `level1RecentGames` / `level2RecentGames`（每关最多 3 条元数据）。
+  最后一关通关那一刻就写 `level=1`、`best` 保持 2（修复「通关后从第 2 关开始」）。
+- `src-tauri/src/main.rs` 的 `SAVE_FIELDS` 扩为 **11 个字段**，新增两关历史并做
+  「数组 ≤3 条 / 12 字段完整 / 签名 64 位小写 SHA-256 / 整数范围 / reason 枚举」校验；
+  旧存档（v1/v2）缺这些字段按缺省处理，不判非法；64 KB 上限、JSON 校验、
+  字段白名单、固定路径、原子写入（`tmp → sync_all → rename`）全部保留、未放宽。
 - seed 池按档位分库 `SEED_POOL['L2-<id>']`（`src/game/seed_pool.js`），
   运行时只从当前档位的池里抽；由 `node tools/tune_pool.mjs 200 40` 离线生成。
 
 ---
 
+## 0.3 最近三局差异化 / 布局签名 / 调试面板（本轮核心）
+
+### 两关独立历史
+
+`level1RecentGames` 与 `level2RecentGames` 各自维护最近 3 局，绝不互相读取。
+每条记录含 `gameId / level / difficultyId / seed / totalTiles / tileTypeCount /
+layoutSignature / geometrySignature / distributionSignature / generatedAt /
+generationReason / validationResult`。历史只存元数据、不存牌面，存档体积有上界。
+
+**滚动窗口规则**：新局的总牌数、布局签名、几何签名都必须 ≠ 本关最近三局中任意一局。
+不要求 200 局全局牌数唯一。L1 恰好 4 个牌数（24/30/36/48）刚好够连续 4 局互不重复；
+L2 有 9 个不同牌数（id 3 与 id 7 同为 312 且几何相同，被统一入口视为同一布局而拒绝连续出现）。
+配置数量足够，**没有**为了凑数增删任何牌，也没有扩展档位。
+
+### 统一生成流程 `createNewGame()`（`src/game/new_game.js`）
+
+识别关卡 → 读本关最近三局 → 选合法档位（加权、排除当前）→ 生成新 seed
+（L2 从该档位自己的 seed 池抽）→ 生成实际牌局 → 计算总牌数与布局签名 →
+与本关最近三局对比 → 冲突则重试 → `validateLevel` / `verify` / 半格晶格 /
+同层零重叠 / 可点牌校验 → 生成唯一 `gameId` → 写历史 → 返回游戏实例。
+**上限 50 次**，仍不合格抛 `GenerationFailureError`（带逐次失败原因），
+绝不自动接受重复牌局。
+
+### 布局签名（`src/game/layout_signature.js`）
+
+`calculateLayoutSignature()` 从**实际牌局数据**计算，不从 seed 推导。
+`sha256.js` 是纯 ES5 同步 SHA-256，现代版 / legacy / Node 三处结果一致。
+
+| 签名 | 纳入内容 | 用途 |
+|---|---|---|
+| `geometrySignature` | 每张牌标准化坐标 / 层级 / 区域 / z 全序、遮挡关系、可操作区与被遮挡区、层结构与区域结构 | **布局差异化的硬判定**；同档位换 seed 必相同 |
+| `distributionSignature` | 每种牌型张数 + 沿 z 全序的牌型序列 | 独立记录，不冒充几何变化 |
+| `layoutSignature` | SHA-256(geometry + distribution) | 主签名，满足「纳入布局相关牌型分布信息」 |
+
+差异化判定同时检查 `layoutSignature` 与 `geometrySignature`：即使只换花色排列
+（主签名变了），只要位置 / 层级 / 遮挡结构没变，仍判为同一布局而拒绝。
+
+### 三种重新开局
+
+| 入口 | generationReason | 行为 |
+|---|---|---|
+| 应用重启后第一次点开始 | `application_restart` | 读回存档历史 → 生成全新 gameId / 档位 / seed / 布局 |
+| 返回标题再次点开始 | `title_screen_restart` | 同上；毕业时按 `new_game` 从第 1 关开始 |
+| 失败面板重开 / 暂停重开 / 重玩本关 | `failure_restart`（失败）/ `title_screen_restart` | 同上，绝不恢复初始牌面 |
+
+当前版本**不保存牌面**，因此没有「Continue 恢复未完成牌局」入口；暂停菜单的
+「继续游戏」只是解除暂停。自动读回旧存档不会把「开始新局」变成恢复旧局。
+
+### 开发调试面板
+
+`?dev=1`（或 `window.__MAH_DEV__ = true`）显示，**正式版默认隐藏**。
+字段全部来自 `game.meta` 真实运行数据：gameId / buildVersion / gitCommit / sourceHash /
+level / difficultyId / seed / totalTiles / tileTypeCount / layerCount / layoutSignature /
+geometrySignature / distributionSignature / generatedAt / generationReason /
+previousThreeChecks / attempts / retries，以及四项
+「牌数检查 / 布局检查 / 难度档位检查 / 历史记录保存」PASS-FAIL。
+构建时注入 `buildVersion / gitCommit / sourceHash / buildTimestamp / sourceFiles`。
+
+### 200 局测试与构建一致性
+
+- `node test-random-generation.js` → 两关各 100 局，报告
+  `reports/random-generation-report.json` / `.md` / `-output.txt`（含逐局 200 条记录）。
+- `node test-build-consistency.js` → 42+ 项断言，报告
+  `reports/build-consistency-report.json` / `.md` / `-output.txt`。
+- `node tools/browser_smoke.mjs` → Edge CDP 真实浏览器打开两个 HTML 各生成 4 局，
+  报告 `reports/browser-smoke-report.json`。
+- 两个 HTML 由 `npm run build:all` 从当前 `src/` 构建；`tools/bundle_shared.mjs`
+  是构建脚本与一致性检查**共同**使用的唯一打包实现，检查方式是内嵌 bundle
+  逐字节比对，不依赖文件大小或版本号。
+
+---
+
 ## 0. 直接开玩（网页版，推荐）
 
-`dist/Mah了个Mah.html` 是**单个 HTML 文件**（约 82 KB，零外部依赖）；同目录还有
+`dist/Mah了个Mah.html` 是**单个 HTML 文件**（约 112 KB，零外部依赖）；同目录还有
 `Play-MahLeMah.cmd`——双击后会用 Edge/Chrome 的**无边框窗口**（`--app` 模式）打开游戏，
 观感接近桌面程序，不需要安装任何东西。
 
@@ -170,7 +270,9 @@ mah-le-mah/
 │       ├── render.js             # 界面绘制 + 设置面板 + 音效图标
 │       ├── audio.js              # Web Audio 合成音效（独立开关/音量；生产版唯一音频模块）
 │       └── dom_view.es5.js       # 无 Canvas 时的 DOM 降级渲染器
-├── test.js                       # Node 纯逻辑验证（npm test，1012 项断言）
+├── test.js                       # Node 纯逻辑验证（当前 11 项 Wilson 断言失败，见 TEST_REPORT.md）
+├── test-random-generation.js     # 两关各 100 局压力测试
+├── test-build-consistency.js     # 两个 HTML 与 src 逐字节一致性检查
 ├── src-tauri/
 │   ├── Cargo.toml                # release 体积优化 + serde_json（存档校验）
 │   ├── tauri.conf.json           # bundle.targets=["nsis"]；最小权限
@@ -254,12 +356,20 @@ L1 每种 3 张（16×3=48）；L2 各类型组数不同（共 80 组 ×3 = 240�
 
 ### 4.1 布局模板系统（`src/game/layout_templates.js`）
 
+> **历史数据标注**：本节的 `L1_TUTORIAL 48 张 / L2_MULTI_ZONE 240 张` 是
+> **无档位兼容路径**（`levelParams(level)` 不传 `profileId`）的旧版静态模板，
+> 仅供旧工具与旧存档回放使用，**不是当前实际游玩的牌数**。
+> 当前实际牌局由 `src/game/layout_profiles.js` 按档位生成
+> （L1 `24/30/36/48` 张、L2 `192–321` 张，见 §0.2）。
+
 两关由**明确的模板数据**驱动，不靠手写坐标散落各处：
 
-- **L1_TUTORIAL**：单区域 `core`，3 层 `[21,15,12]`，紧凑金字塔，无跨区域遮挡；
-- **L2_MULTI_ZONE**：4 区域 `core[45,39,33,27,21,9,6]`（7 层）+ `sideLeft[4,4,4]` +
+- **L1_TUTORIAL**（旧静态模板）：单区域 `core`，3 层 `[21,15,12]`，紧凑金字塔，无跨区域遮挡；
+- **L2_MULTI_ZONE**（旧静态模板）：4 区域 `core[45,39,33,27,21,9,6]`（7 层）+ `sideLeft[4,4,4]` +
   `sideRight[4,4,4]` + `reserve[18,18]`，共 240 张；区域在坐标上互相咬合，
   主堆外沿被两侧条压住、底沿被保留区压住，上层消除后逐层暴露下层。
+- **当前档位路径**：`generateProfileLayout(seed, profile)` 按 `layerPlanFor(profile)`
+  生成主堆 + 44 张盲盒队列，L1 为单区域紧凑堆，L2 为主堆 + `sideLeft/sideRight/reserve`。
 
 **校验与归一职责分离（测试有效性核心）**：
 
@@ -370,10 +480,14 @@ L1 贪心 98.7% 通关，L2 贪心 72.7% / 前瞻 91.2% 通关，random 在两�
 
 ## 7. 验收清单
 
-**结构断言（`node test.js`，失败即 `process.exit(1)`，实测 1012 项全过）**
+**结构断言（`node test.js`，失败即 `process.exit(1)`；当前真实结果见 `TEST_REPORT.md` / `reports/TEST_OUTPUT_DYNAMIC_PROFILES.txt`）**
+> 2026-11-10 冻结版曾实测 1012 项全过；当前源码新增分档难度验收后，
+> 有 **11 项 Wilson 上界断言因规格 5.1 与 5.2 数学互斥而失败**，按「不许放宽阈值」如实保留，
+> 详见 `TEST_REPORT.md §6`。本轮新增的 `[14]` 节（统一入口 / 签名 / 最近三局）全部通过。
 - [x] 16 种牌型注册表：ID/名称/配色三元组唯一，`validateRegistry()` 通过
-- [x] 第 1 关 48 张 / 单区域 3 层 / 16 种各 3 张
-- [x] 第 2 关 240 张 / 4 区域 / 16 种（组数不同，共 80 组 ×3）
+- [x] 第 1 关 4 个档位（24/30/36/48 张）、第 2 关 10 个档位（192–321 张），全部按档位配额三消
+- [x] 每关最近三局牌数 / 布局签名 / 几何签名差异化（`test-random-generation.js` 200 局）
+- [x] 两个 HTML 与 `src/` 内嵌 bundle 逐字节一致（`test-build-consistency.js`）
 - [x] 两关模板 `validateTemplate` 严格校验通过（无静默修正）
 - [x] 模板反例全部被拒：非法坐标 / 容量不足 / 长度不一致 / 层号重复 / 漏声明交叉遮挡
 - [x] 同层相交面积恒为 0；坐标落半格晶格整数倍；零随机抖动；连通分量 = 1

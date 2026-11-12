@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-11-11T14:36:27.916Z",
+  "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+  "command": "node test-build-consistency.js",
+  "assertions": {
+    "pass": 46,
+    "fail": 0
+  },
+  "exitCode": 0,
+  "files": {
+    "modern": {
+      "path": "dist/MahLeMah.html",
+      "bytes": 114279,
+      "sha256": "c08d60afaa85a8f5c1d6d49ca5d196cc9528dae09250f445a6e5432ca6093b9f"
+    },
+    "legacy": {
+      "path": "dist/MahLeMah-legacy.html",
+      "bytes": 149684,
+      "sha256": "4776ad9ea4a8016b6547dd0cc2731cd9f6fab744826e340580cb603ee6575578"
+    }
+  },
+  "bundle": {
+    "modern": {
+      "bytes": 112147,
+      "sha256": "487e96c9968752cbc54b65da51c9045fb82f2b01ba46b5138a98757cf4b82ba0",
+      "identical": true
+    },
+    "legacy": {
+      "bytes": 119342,
+      "sha256": "c3088fbbfa3fa6a0331009f1e6bc08504495bfbabf3ce6a6a4eb85eb7b30d971",
+      "identical": true,
+      "minified": true
+    }
+  },
+  "buildInfo": {
+    "modern": {
+      "buildVersion": "2.0.0-1f95db0",
+      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
+      "buildTimestamp": "2026-11-11T14:36:20.102Z",
+      "sourceFiles": 28
+    },
+    "legacy": {
+      "buildVersion": "2.0.0-1f95db0",
+      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
+      "buildTimestamp": "2026-11-11T14:36:24.340Z",
+      "sourceFiles": 28
+    },
+    "live": {
+      "buildVersion": "2.0.0-1f95db0",
+      "gitCommit": "1f95db08e60c74c21a0aa8dff85877e61e55f9f4",
+      "sourceHash": "864943bcb18854b67fb2d330ef693b436ab5cb167a74ba6fc1c5061587cb280b",
+      "buildTimestamp": "2026-11-11T14:36:27.832Z",
+      "sourceFiles": 28
+    }
+  },
+  "markers": {
+    "MAH-LAYOUT-SIG-v1/SHA-256": {
+      "modern": true,
+      "legacy": true
+    },
+    "MAH-GEOM-v1/SHA-256": {
+      "modern": true,
+      "legacy": true
+    },
+    "MAH-DIST-v1/SHA-256": {
+      "modern": true,
+      "legacy": true
+    },
+    "application_restart": {
+      "modern": true,
+      "legacy": true
+    },
+    "title_screen_restart": {
+      "modern": true,
+      "legacy": true
+    },
+    "failure_restart": {
+      "modern": true,
+      "legacy": true
+    },
+    "level1RecentGames": {
+      "modern": true,
+      "legacy": true
+    },
+    "level2RecentGames": {
+      "modern": true,
+      "legacy": true
+    },
+    "mah-dev-panel": {
+      "modern": true,
+      "legacy": true
+    },
+    "createNewGame": {
+      "modern": true,
+      "legacy": true
+    },
+    "GenerationFailureError": {
+      "modern": true,
+      "legacy": true
+    }
+  },
+  "uniqueProfileTotals": [
+    24,
+    30,
+    36,
+    48,
+    321,
+    282,
+    300,
+    312,
+    273,
+    291,
+    261,
+    192,
+    255
+  ],
+  "method": "逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断"
+}

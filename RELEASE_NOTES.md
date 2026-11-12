@@ -1,5 +1,44 @@
 # Mah 了个 Mah · 发布日志
 
+## 2026-11-11 · 随机生成系统重构 / 最近三局差异化 / 双 HTML 重建
+
+> 产品版本号仍为 `2.0.0`。本轮**已从当前 `src/` 重新构建两个单文件 HTML**
+> （`dist/MahLeMah.html` 111.6 KB、`dist/MahLeMah-legacy.html` 146.2 KB）；
+> 桌面 exe / Portable zip / NSIS Setup 仍是 2026-11-10 冻结产物，**未重建**。
+
+### 变更
+- 新增统一新牌局入口 `createNewGame()`：选档位 → 新 seed → 生成 → 计算实际牌数与
+  布局签名 → 与本关最近三局对比 → 冲突重试（≤50 次）→ 完整校验 → 唯一 gameId → 写历史。
+  50 次仍不合格抛 `GenerationFailureError`，绝不自动接受重复牌局。
+- 新增两关独立历史 `level1RecentGames` / `level2RecentGames`（存档 `v:3`，每关最多 3 条），
+  Rust 白名单 9 → 11 键并做历史字段 / 长度 / 签名格式 / 枚举校验，原有安全边界未放宽。
+- 新增基于实际几何的 SHA-256 布局签名（几何 / 分布 / 主签名三元组）；同档位换 seed
+  的几何签名必须相同，杜绝「换 seed 就当作换布局」。
+- 三种重新开局（应用重启 / 标题页重开 / 失败重开）与 `next`、键盘 `r`、`?lv=`
+  全部收敛到 `newGame()` → `createNewGame()`；`generationReason` 明确区分 4 种。
+- 新增 `?dev=1` 开发调试面板（正式版隐藏），显示 gameId / 构建信息 / 签名 /
+  `previousThreeChecks` 与四项 PASS-FAIL，全部来自真实运行数据。
+- 两个 HTML 由 `tools/bundle_shared.mjs`（构建与一致性检查共用）重建，注入
+  `buildVersion / gitCommit / sourceHash / buildTimestamp / sourceFiles`。
+- 新增 `test-random-generation.js`（两关各 100 局）、`test-build-consistency.js`、
+  `tools/browser_smoke.mjs`（Edge CDP 真实浏览器）与对应报告；`test.js` 增补 `[14]` 节。
+
+### 真实测试
+| 命令 | 结果 |
+|---|---|
+| `node test-random-generation.js` | 5053 通过 / 0 失败 / EXIT=0 |
+| `node test-build-consistency.js` | 46 通过 / 0 失败 / EXIT=0 |
+| `node tools/browser_smoke.mjs` | Edge 157，两页各 4 局，allPassed=true，零异常 |
+| `node tools/test_render.mjs` | 27 场景通过 |
+| `node test.js` | 新增断言全通过；11 项 Wilson 上界断言因规格 5.1/5.2 互斥仍失败（未放宽） |
+
+### 审计结论
+修复前 `dist/MahLeMah.html` 内嵌 JS 为 82,461 B 的 11-10 冻结版，与当前源码打包
+92,825 B 不一致；`legacy` 同样过期。修复后两者内嵌 bundle 与现场打包逐字节相同。
+完整审计见 `reports/CODE_AUDIT.md`，最终验收见 `reports/FINAL_ACCEPTANCE.md`。
+
+---
+
 ## 本轮修订 —— 动态档位系统（源码层修订，未重新发版）
 
 > 产品版本号仍为 `2.0.0`；`dist/` 下的网页版 / Portable zip / NSIS Setup 仍是
@@ -117,6 +156,10 @@
 - README / DELIVERY 音乐章节同步为 v2.2.0 真实状态。
 
 ## v2.0.0 —— 玩法层重构 + 原创音乐 + 双 Windows 产物（2026-11-10）
+
+> **历史版本数据标注**：本节出现的「第 1 关 48 张 / 第 2 关 240 张」是当时的
+> 无档位静态模板规格，已不是当前实际游玩的牌数。当前档位与牌数见 `README.md §0.2`。
+> 本节仅作为历史变更记录保留，不代表当前源码。
 
 ### 玩法与结构
 - **16 种牌型唯一注册表**（`tile_types.js`）：原创符号集（幺鸡/红中/青發/蓝框/金筒/三筒/双竹/五竹/梅花/兰花/金菊/锦鲤/弯月/朝阳/祥云/星芒），稳定 ID、唯一名称、独立配色；两关完全一致。

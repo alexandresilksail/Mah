@@ -13,6 +13,9 @@ import {
 } from './game/store.js';
 import { generateLevel, verify } from './game/generator.js';
 import { makeSaveData, applySaveToGame } from './game/save_data.js';
+import { createNewGame } from './game/new_game.js';
+import { historyFor } from './game/recent_games.js';
+import { readBuildInfo } from './game/build_info.js';
 
 const canvas = document.getElementById('game');
 const stage = document.getElementById('stage');
@@ -126,27 +129,137 @@ function applyAudioSettings() {
   sound.setVolume(game.sfxVol);
 }
 
+/* ---------------- 开发调试面板（正式版默认隐藏） ----------------
+ * 只在 ?dev=1 或 window.__MAH_DEV__ 时创建；所有字段都来自真实运行数据
+ * （game.meta），没有任何固定模拟值。用 DOM 而非 Canvas，legacy 兼容版
+ * 与现代版看到的是同一份数据。 */
+let devPanel = null;
+let lastPanelGameId = '';
+
+function ensureDevPanel() {
+  if (devPanel) return devPanel;
+  const q = new URLSearchParams(location.search);
+  const on = q.get('dev') === '1' || window.__MAH_DEV__ === true;
+  if (!on || !document.body) return null;
+  const el = document.createElement('div');
+  el.id = 'mah-dev-panel';
+  el.setAttribute('data-mah-dev', '1');
+  el.style.cssText = [
+    'position:fixed', 'left:8px', 'top:8px', 'z-index:9999',
+    'max-width:420px', 'max-height:92vh', 'overflow:auto',
+    'background:#fffaf0', 'color:#3a2a18', 'border:1px solid #d79b33',
+    'border-radius:8px', 'padding:10px 12px',
+    'font:12px/1.55 Consolas,Monaco,monospace',
+    'box-shadow:0 6px 20px rgba(0,0,0,.25)', 'white-space:pre-wrap',
+  ].join(';');
+  document.body.appendChild(el);
+  devPanel = el;
+  return devPanel;
+}
+
+function appendLine(node, s) {
+  const row = document.createElement('div');
+  row.appendChild(document.createTextNode(s));
+  node.appendChild(row);
+}
+
+function updateDevPanel(meta) {
+  if (!devPanel) return;
+  while (devPanel.firstChild) devPanel.removeChild(devPanel.firstChild);
+  if (!meta) {
+    appendLine(devPanel, '[MahLeMah DEV] 等待新牌局…（本面板仅 ?dev=1 显示）');
+    const b = readBuildInfo();
+    appendLine(devPanel, 'buildVersion=' + b.buildVersion + ' gitCommit=' + b.gitCommit);
+    appendLine(devPanel, 'sourceHash=' + b.sourceHash + ' buildTimestamp=' + b.buildTimestamp);
+    return;
+  }
+  appendLine(devPanel, '=== MahLeMah 开发调试面板（真实运行数据）===');
+  const fields = [
+    ['gameId', meta.gameId], ['buildVersion', meta.buildVersion],
+    ['gitCommit', meta.gitCommit], ['sourceHash', meta.sourceHash],
+    ['level', meta.level], ['difficultyId', meta.difficultyId],
+    ['seed', meta.seed], ['totalTiles', meta.totalTiles],
+    ['tileTypeCount', meta.tileTypeCount], ['layerCount', meta.layerCount],
+    ['layoutSignature', meta.layoutSignature], ['geometrySignature', meta.geometrySignature],
+    ['distributionSignature', meta.distributionSignature],
+    ['generatedAt', meta.generatedAt], ['generationReason', meta.generationReason],
+    ['attempts', meta.attempts], ['retries', meta.retries],
+  ];
+  for (const f of fields) appendLine(devPanel, f[0] + ' = ' + f[1]);
+  appendLine(devPanel, '--- 检查 ---');
+  const c = meta.checks;
+  appendLine(devPanel, '牌数检查     : ' + c.tileCountCheck);
+  appendLine(devPanel, '布局检查     : ' + c.layoutCheck);
+  appendLine(devPanel, '难度档位检查 : ' + c.difficultyCheck);
+  appendLine(devPanel, '历史记录保存 : ' + c.historyCheck);
+  appendLine(devPanel, '--- previousThreeChecks（本关最近三局）---');
+  const list = meta.previousThreeChecks || [];
+  if (!list.length) appendLine(devPanel, '(本关暂无历史)');
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    appendLine(devPanel, '  [' + (i + 1) + '] ' + r.totalTiles + ' 张 · 牌数=' + r.tileCountCheck +
+      ' / 布局=' + r.layoutCheck + ' · ' + String(r.layoutSignature).slice(0, 12) + ' · ' + r.gameId);
+  }
+  appendLine(devPanel, '--- 当前持久化历史 ---');
+  appendLine(devPanel, 'L1 = ' + historyFor(game.saveState, 1).length +
+    ' 条 / L2 = ' + historyFor(game.saveState, 2).length + ' 条');
+}
+
 /**
- * 第 2.3 ②：重开本关（暂停菜单「重新开始」/ 失败面板「重开」/ 普通胜利面板
- * 「重玩」共用同一分支）。RETRY_KEEPS_PROFILE=false 时只重抽当前关档位
- * （结果 ≠ 当前档位）并换 seed；=true 时保持档位、只换 seed。
- * 抽取后立即 persist(true) 写入 p1/p2，保证下次启动的「上次档位」是最新值。
+ * 全项目唯一的新牌局包装：所有 UI 入口（应用重启后开始 / 标题页重开 /
+ * 失败重开 / 进入下一关 / 毕业再玩 / 键盘 r / ?lv=）都只走这里。
+ * createNewGame 内部完成档位重选、seed、签名、最近三局差异化与完整校验；
+ * 50 次仍不合格时抛明确错误，绝不退化成「复用上一局」。
  */
-function restartLevel() {
-  game.restartLevel(Math.random); // 档位开关与 seed 重抽由 engine 统一处理
+let saveState = {};
+let firstStart = true;
+
+function newGame(level, generationReason) {
+  let result;
+  try {
+    result = createNewGame({
+      level,
+      generationReason,
+      game,
+      save: game.saveState || saveState || {},
+      rand: Math.random,
+    });
+  } catch (e) {
+    // 明确的生成失败：保留当前牌局，不自动接受重复布局，也不伪造成功
+    console.error('[mah] createNewGame 失败', e && e.name, e && e.message, e && e.detail);
+    if (devPanel) {
+      appendLine(devPanel, '=== 生成失败 ===');
+      appendLine(devPanel, String(e && e.message));
+      appendLine(devPanel, 'attempts=' + (e && e.detail && e.detail.attempts));
+      appendLine(devPanel, 'reason=' + (e && e.detail && e.detail.reason));
+    }
+    return null;
+  }
+  game.saveState = result.nextSave;
+  saveState = result.nextSave;
   persist(true);
+  if (devPanel) {
+    lastPanelGameId = result.meta.gameId;
+    updateDevPanel(result.meta);
+  }
+  return result;
 }
 
 function handleButton(id) {
   if (id !== 'sound') sound.click();
   switch (id) {
     case 'start':
-      // 第 3.3 节：毕业后回标题再点「开始新一轮」= 从第 1 关开始且档位全新
-      if (game.graduated) {
-        game.startNewRun(Math.random);
-        persist(true);
-      } else {
-        game.startLevel(game.level);
+      // 三种重新开局入口 A/B 共用 createNewGame：
+      //  · 应用重启后第一次开始 → application_restart
+      //  · 之后从标题页再开始   → title_screen_restart
+      //  · 毕业后「开始新一轮」 → new_game（存档 level 已写 1）
+      // 绝不因为读回旧存档而复用档位 / seed / 布局。
+      {
+        const reason = firstStart
+          ? 'application_restart'
+          : (game.graduated ? 'new_game' : 'title_screen_restart');
+        firstStart = false;
+        newGame(game.level, reason);
       }
       break;
     case 'sound':
@@ -187,18 +300,18 @@ function handleButton(id) {
       break;
     case 'restart':
     case 'replay':
-      // 第 3.2 节：毕业面板的「再玩一次」走 startNewRun()；
-      // 非毕业状态走 2.3 ② 的重开本关。
-      if (game.graduated) {
-        game.startNewRun(Math.random);
-        persist(true);
-      } else {
-        restartLevel();
+      // 三种重新开局入口 C：失败面板 / 暂停菜单 / 普通胜利「重玩」/ 毕业「再玩一次」
+      // 全部走同一个 createNewGame，差异化规则与 A、B 完全一致。
+      {
+        const lv = game.graduated ? 1 : game.level;
+        const reason = game.status === 'lose'
+          ? 'failure_restart'
+          : (game.graduated ? 'new_game' : 'title_screen_restart');
+        newGame(lv, reason);
       }
       break;
     case 'next':
-      game.startLevel(game.level + 1);
-      persist(true);
+      newGame(Math.min(LEVEL_COUNT, game.level + 1), 'new_game');
       break;
     case 'home':
       game.paused = false;
@@ -321,7 +434,7 @@ on(window, 'keydown', (e) => {
   if (k === 'Escape' || k === 'Esc') {
     if (game.screen === 'play') game.paused = !game.paused;
   } else if (k === 'r' || k === 'R') {
-    if (game.screen === 'play') game.startLevel(game.level);
+    if (game.screen === 'play') newGame(game.level, 'title_screen_restart');
   } else if (k === '1') {
     game.useShuffle();
   } else if (k === '2') {
@@ -380,6 +493,11 @@ function frame(now) {
   if (ctx && game.settingsAsk) R.drawSettingsPanel(ctx, game, ui);
 
   if (game.screen === 'play' && game.status === 'win') persist(true);
+  // 调试面板跟随真实 meta 变化刷新（不是每帧重画）
+  if (devPanel && game.meta && game.meta.gameId !== lastPanelGameId) {
+    lastPanelGameId = game.meta.gameId;
+    updateDevPanel(game.meta);
+  }
 
   raf(frame);
 }
@@ -421,12 +539,21 @@ function boot() {
   }
 
   // 供自动化验证与调试使用（IE COM 测试脚本会读它）
-  window.__mah = { game, sound, R, hasCanvas, domView };
+  window.__mah = {
+    game, sound, R, hasCanvas, domView,
+    createNewGame, newGame,
+    getSaveState: () => game.saveState || saveState,
+    getDevPanel: () => devPanel,
+  };
+
+  ensureDevPanel();
+  updateDevPanel(game.meta);
 
   // 开发调试：?lv=2 直接进第 2 关；?pick=N 先点 N 张可点的牌（用来看槽位动画）
   const q = new URLSearchParams(location.search);
   if (q.has('lv')) {
-    game.startLevel(Math.max(1, parseInt(q.get('lv'), 10) || 1));
+    firstStart = false;
+    newGame(Math.max(1, parseInt(q.get('lv'), 10) || 1), 'new_game');
   }
   if (q.has('pick')) {
     const n = Math.max(0, parseInt(q.get('pick'), 10) || 0);
