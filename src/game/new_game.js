@@ -5,16 +5,19 @@
  * 进入下一关 / 开始新一轮 / 键盘 r / ?lv= 调试）都必须调用这里。
  * 禁止任何入口再自行拼 generateLevel + 档位 + seed。
  *
- * 流程（本轮第 2 节口径）：识别关卡 → 读本关最近 5 局 → 选合法档位（≠ 上一局）→
- * 新 seed → 生成牌局 → 计算签名 → **与最近 5 局算 layoutSimilarity** →
- * sim ≥ 0.60 或 geometrySignature 完全相同即视为重复，换 seed 重生成 →
+ * 流程（本轮「双关卡最近三局」口径）：识别关卡 → 读本关最近 3 局 →
+ * 选合法档位（≠ 上一局，且牌数不与最近 3 局冲突）→ 新 seed → 生成真实牌局 →
+ * 计算基于坐标/层级/牌面位置/遮挡关系的布局签名 → 与最近 3 局同时比较
+ * **总牌数 / 布局签名 / 几何相似度（layoutSimilarity）** → 任一不合格换 seed →
  * 完整校验 → 唯一 gameId → 保存历史 → 返回游戏实例。
+ * 不把「seed 不同」当成布局不同；所有判定都基于真实生成结果。
  *
  * 几何现在由 seed 程序化生成（第 1 节），所以「同一档位换 seed 几何不变」的
  * 旧假设被彻底删除：不再有按 (level,difficultyId) 缓存几何签名的预筛逻辑，
  * 判定完全基于**真实生成结果**。
  *
- * 重试上限 50 次；仍不合格抛 GenerationFailureError，绝不自动接受重复牌局。
+ * 重试上限 50 次；仍不合格抛 GenerationFailureError（含 CONFIG_CONFLICT 诊断），
+ * 绝不自动接受重复牌局，也不增删牌来伪造牌数差异。
  */
 import { profilesFor, profileFor, rollProfile, LEVEL_COUNT } from './config.js';
 import { generateLevel, validateLevel, verify } from './generator.js';
@@ -58,6 +61,25 @@ function isoNow() {
 function compact(arr) {
   var out = [];
   for (var i = 0; i < arr.length; i++) if (arr[i]) out.push(arr[i]);
+  return out;
+}
+
+/**
+ * 「合法档位」= 档位 ≠ 上一局，且该档位的**真实总牌数**不与最近三局任一局相同。
+ * 只用于决定搜索顺序（先试能通过的档位），绝不用来放宽后面的判定。
+ * 返回空数组 = 配置冲突（现有档位的牌数种类不足以撑起三局差异化），
+ * 调用方会如实报告，不会去增删牌数伪造差异。
+ */
+function legalDifficultyIds(level, current, bannedTiles) {
+  var pool = profilesFor(level);
+  var out = [];
+  for (var i = 0; i < pool.length; i++) {
+    var p = pool[i];
+    if (p.id === current) continue;
+    var tiles = p.mainCount + p.queueCount;
+    if (indexOf(bannedTiles, tiles) >= 0) continue;
+    out.push(p.id);
+  }
   return out;
 }
 
@@ -178,19 +200,38 @@ function createNewGameInner(opts) {
   var attempts = 0;
   var failures = [];
 
+  // 最近三局（含测试显式注入的排除集合）里已经被占用的牌数
+  var bannedTiles = [];
+  for (var bi = 0; bi < prev.previousTileCounts.length; bi++) {
+    if (indexOf(bannedTiles, prev.previousTileCounts[bi]) < 0) bannedTiles.push(prev.previousTileCounts[bi]);
+  }
+  for (var br = 0; br < recent.length; br++) {
+    if (indexOf(bannedTiles, recent[br].totalTiles) < 0) bannedTiles.push(recent[br].totalTiles);
+  }
+  var legalRing = legalDifficultyIds(level, current, bannedTiles);
+  var configConflict = legalRing.length === 0;
+  var rotation = [];
+  {
+    var pool = profilesFor(level);
+    for (var pi = 0; pi < pool.length; pi++) if (pool[pi].id !== current) rotation.push(pool[pi].id);
+    if (!rotation.length) for (var pj = 0; pj < pool.length; pj++) rotation.push(pool[pj].id);
+  }
+
   while (attempts < maxAttempts) {
     attempts++;
     var difficultyId;
-    if (attempts <= 12) {
-      // 前段：按权重随机重抽，排除当前档位
+    if (attempts <= 8) {
+      // 前段：按权重随机重抽；若抽到的档位牌数与最近三局冲突，改从合法档位里挑
       difficultyId = rollProfile(level, rand, current);
+      if (legalRing.length && indexOf(legalRing, difficultyId) < 0) {
+        var rr = rand();
+        if (!(rr >= 0) || rr >= 1) rr = 0;
+        difficultyId = legalRing[Math.floor(rr * legalRing.length) % legalRing.length];
+      }
     } else {
-      // 后段：确定性轮换所有「≠ 上一局档位」的档位，避免 L1 只有 4 档时
-      // 纯随机把 50 次机会浪费掉（只换搜索顺序，不放宽任何判定）
-      var pool = profilesFor(level);
-      var ring = [];
-      for (var pi = 0; pi < pool.length; pi++) if (pool[pi].id !== current) ring.push(pool[pi].id);
-      if (!ring.length) { for (var pj = 0; pj < pool.length; pj++) ring.push(pool[pj].id); }
+      // 后段：确定性轮换合法档位，避免 L1 只有 4 档时纯随机把 50 次机会浪费掉
+      // （只换搜索顺序，不放宽任何判定）
+      var ring = legalRing.length ? legalRing : rotation;
       difficultyId = ring[attempts % ring.length];
     }
 
@@ -226,10 +267,13 @@ function createNewGameInner(opts) {
     });
 
     /**
-     * 第 2.3 节：新牌局与本关最近 5 局任意一局
-     *   sim ≥ 0.60  → 重复
-     *   geometrySignature 完全相同 → 重复
-     * 两者任一命中都必须换 seed 重生成，不得自动接受。
+     * 本轮规格：新牌局与本关最近 3 局逐局比较
+     *   · 总牌数相同           → 不合格
+     *   · layoutSignature 相同 → 不合格
+     *   · sim ≥ 0.60           → 几何高度相似，不合格
+     *   · geometrySignature 相同 → 不合格
+     * 相似度用历史记录的 (level, difficultyId, seed) 重放出的**真实牌面**计算，
+     * 绝不把「seed 不同」直接当成布局不同。
      */
     var recentChecks = [];
     var maxSim = 0;
@@ -256,26 +300,34 @@ function createNewGameInner(opts) {
       });
     }
     checks.similarityMax = Math.round(maxSim * 1000) / 1000;
-    checks.layoutDifferent = maxSim < SIMILARITY_THRESHOLD;
-    checks.geometryDifferent = !dupGeometry;
+    checks.similarityDifferent = maxSim < SIMILARITY_THRESHOLD;
+    checks.geometrySignatureDifferent = !dupGeometry;
     checks.difficultyValid = difficultyValid;
+    checks.configConflict = configConflict;
     // 显式传入的排除集合同样生效（真实判定，不是摆设）
     if (indexOf(prev.previousSignatures, sig.layoutSignature) >= 0) checks.layoutDifferent = false;
     if (indexOf(prev.previousSeeds, seed) >= 0) checks.seedFresh = false;
+    if (indexOf(prev.previousTileCounts, totalTiles) >= 0) checks.tileCountDifferent = false;
+    if (indexOf(prev.previousGeometries, sig.geometrySignature) >= 0) checks.geometryDifferent = false;
 
-    if (!checks.layoutDifferent || !checks.geometryDifferent ||
-        !checks.seedFresh || !difficultyValid) {
+    if (!checks.tileCountDifferent || !checks.layoutDifferent ||
+        !checks.similarityDifferent || !checks.geometrySignatureDifferent ||
+        !checks.geometryDifferent || !checks.seedFresh || !difficultyValid) {
       failures.push({
         attempt: attempts, difficultyId: difficultyId, seed: seed,
         totalTiles: totalTiles, layoutSignature: sig.layoutSignature,
         geometrySignature: sig.geometrySignature,
         similarityMax: checks.similarityMax,
-        reason: 'RECENT_CONFLICT',
+        configConflict: configConflict,
+        reason: configConflict ? 'CONFIG_CONFLICT' : 'RECENT_CONFLICT',
         failedChecks: compact([
-          !checks.layoutDifferent ? 'LAYOUT_SIMILARITY' : '',
-          !checks.geometryDifferent ? 'GEOMETRY_SIGNATURE' : '',
+          !checks.tileCountDifferent ? 'TILE_COUNT' : '',
+          !checks.layoutDifferent ? 'LAYOUT_SIGNATURE' : '',
+          !checks.similarityDifferent ? 'GEOMETRY_SIMILARITY' : '',
+          !checks.geometrySignatureDifferent ? 'GEOMETRY_SIGNATURE' : '',
           !checks.seedFresh ? 'SEED' : '',
           !difficultyValid ? 'DIFFICULTY' : '',
+          configConflict ? 'CONFIG_CONFLICT' : '',
         ]),
       });
       continue;
@@ -371,8 +423,9 @@ function createNewGameInner(opts) {
       previousThreeChecks: previousRecentChecks,
       checks: {
         similarityMax: checks.similarityMax,
+        tileCountCheck: checks.tileCountDifferent ? 'PASS' : 'FAIL',
         layoutCheck: checks.layoutDifferent ? 'PASS' : 'FAIL',
-        geometryCheck: checks.geometryDifferent ? 'PASS' : 'FAIL',
+        geometryCheck: (checks.similarityDifferent && checks.geometrySignatureDifferent) ? 'PASS' : 'FAIL',
         difficultyCheck: difficultyValid ? 'PASS' : 'FAIL',
         historyCheck: historySaved ? 'PASS' : 'FAIL',
       },
@@ -406,12 +459,16 @@ function createNewGameInner(opts) {
   }
 
   throw new GenerationFailureError(
-    '第 ' + level + ' 关连续 ' + attempts + ' 次未能生成满足「牌数 + 布局差异化」的合法牌局',
+    '第 ' + level + ' 关连续 ' + attempts + ' 次未能生成满足「最近三局牌数 / 布局签名 / 几何相似度」的合法牌局' +
+      (configConflict ? '（配置冲突：现有合法档位的牌数种类不足以撑起三局差异化，未伪造牌数）' : ''),
     {
-      reason: 'MAX_ATTEMPTS_EXCEEDED',
+      reason: configConflict ? 'CONFIG_CONFLICT' : 'MAX_ATTEMPTS_EXCEEDED',
       level: level,
       generationReason: reason,
       attempts: attempts,
+      configConflict: configConflict,
+      legalDifficultyIds: legalRing,
+      bannedTileCounts: bannedTiles,
       recent: recent,
       previousTileCounts: prev.previousTileCounts,
       previousSignatures: prev.previousSignatures,

@@ -26,7 +26,7 @@
  */
 import {
   TILE_W, TILE_H, LATTICE_X, LATTICE_Y, OVERLAP_THRESHOLD, TILE_AREA,
-  BOARD_BAND, layerPlanFor,
+  BOARD_BAND, BOARD_CY, layerPlanFor,
 } from './config.js';
 import { makeRng } from './rng.js';
 import { countComponents } from './layout.js';
@@ -357,6 +357,37 @@ export function countVisible(cards) {
 
 /* ==================== 单次构建 ==================== */
 
+/**
+ * 第一关视觉重心校正：按**实际生成的牌面包围盒**与牌桌可视区动态求纵向位置。
+ *
+ * 不是「给所有牌加一个固定偏移」：每局的包围盒高度、团块上下留白都不同，
+ * 这里先量出真实 minY / maxY，再按 (bandH - stackH)/2 求目标顶边，差值吸附到
+ * 半格晶格；上下都受 BOARD_BAND 安全边距 clamp。因为用的是逻辑坐标里的
+ * BOARD_BAND 比例，画布在不同屏幕尺寸 / 缩放比下整体缩放时重心比例不变。
+ *
+ * 整体平移不改变任何层内相对关系，因此三层结构、遮挡图、牌型与开局可点数
+ * 全部保持不变；只把视觉重心从旧的 240 一带抬到牌桌中心 BOARD_CY。
+ */
+function centerStackVertically(cards) {
+  if (!cards || !cards.length) return 0;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i].y < minY) minY = cards[i].y;
+    if (cards[i].y + TILE_H > maxY) maxY = cards[i].y + TILE_H;
+  }
+  const stackH = maxY - minY;
+  const bandH = BOARD_BAND.bottom - BOARD_BAND.top;
+  const targetTop = BOARD_BAND.top + (bandH - stackH) / 2;
+  let shift = Math.round((targetTop - minY) / LATTICE_Y) * LATTICE_Y;
+  const lo = Math.ceil((BOARD_BAND.top - minY) / LATTICE_Y) * LATTICE_Y;
+  const hi = Math.floor((BOARD_BAND.bottom - maxY) / LATTICE_Y) * LATTICE_Y;
+  if (lo <= hi) shift = clamp(shift, lo, hi);
+  else shift = Math.round(((lo + hi) / 2) / LATTICE_Y) * LATTICE_Y;
+  if (shift) for (let i = 0; i < cards.length; i++) cards[i].y += shift;
+  return shift;
+}
+
 function buildOnce(rngSeed, profile) {
   const rng = makeRng(rngSeed >>> 0);
   const plan = layerPlanFor(profile);
@@ -379,8 +410,10 @@ function buildOnce(rngSeed, profile) {
       region: 'core',
       segment: () => 'l1',
       envelope: { l1: { colsLo: 5, colsHi: 7, rowsMax: 4 } },
-      topCy: 240,
-      botCy: 240 + 150 * (N - 1),
+      // 层中心围绕牌桌可视区中心 BOARD_CY 展开：跨度仍是 150px/层（保住
+      // 遮挡规则与开局可点张数），但整体不再钉在屏幕上方。
+      topCy: BOARD_CY - 150 * (N - 1) / 2,
+      botCy: BOARD_CY + 150 * (N - 1) / 2,
       yMin: Y_MIN,
       yMax: Y_MAX,
       // 第 2 节「五局内布局不能相同」：第一关牌少，若把横向中心钉在 280–380，
@@ -399,6 +432,8 @@ function buildOnce(rngSeed, profile) {
       pinRight: -1,
       offsets: [[0, 1], [1, 0], [1, 1]],
     });
+    // 生成后再按本局真实包围盒做一次动态居中（不是固定 Y 偏移）
+    centerStackVertically(out);
   } else {
     const n1 = Math.max(1, Math.round(N * 0.25));
     const n2 = Math.max(1, Math.round(N * 0.36));

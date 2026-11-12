@@ -8,7 +8,8 @@
  *   2. 把 styles.css 内联成 <style>；
  *   3. 把脚本内联成 <script>，产出一个可直接双击、离线运行的 HTML。
  *
- * 产物体积约 60–70 KB，不含任何外部请求、图片、字体或音频文件。
+ * 产物内联 CSS / JS 与 5 首内置背景音乐（data URI），无任何外部请求；
+ * 音乐来自 src/game/music_manifest.js，离线双击即可播放。
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';

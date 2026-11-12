@@ -20,6 +20,9 @@ import { MusicPlayer } from './game/music_player.js';
 import { sceneOf } from './game/music_match.js';
 import { detectMusicStore } from './game/music_store.js';
 import { openMusicPanel } from './game/music_ui.js';
+import {
+  BUILTIN_MUSIC_MAP, BUILTIN_MUSIC_SRC, mergeMusicMap,
+} from './game/music_manifest.js';
 
 const canvas = document.getElementById('game');
 const stage = document.getElementById('stage');
@@ -36,13 +39,26 @@ const domView = hasCanvas ? null :
 const sound = new Sound();
 const game = new Game(sound);
 
-/* ---------------- 背景音乐（第 4 节，全部由用户导入） ----------------
- * store：桌面版走 Rust 的 4 个命令，网页版走 IndexedDB，ES5 兼容版不可用。
- * 不可用时 game.musicAvailable=false，设置面板不显示音乐入口（第 4.4 节）。 */
+/* ---------------- 背景音乐（内置资源 + 用户导入叠加） ----------------
+ * 内置 5 首以 data URI 打进所有产物（music_manifest.js），不依赖文件路径、
+ * 不依赖 Rust 命令，因此网页版 / 独立 HTML / legacy / Tauri 都能发声。
+ * musicStore 只负责「用户后来额外导入」的曲目；不可用时只隐藏导入按钮，
+ * 不影响内置音乐播放。 */
 const musicStore = detectMusicStore(typeof window !== 'undefined' ? window : null);
-const musicPlayer = new MusicPlayer({ store: musicStore });
-game.musicAvailable = !!musicStore.available;
+const musicPlayer = new MusicPlayer({
+  store: musicStore,
+  builtin: { map: BUILTIN_MUSIC_MAP, src: BUILTIN_MUSIC_SRC },
+  enabled: game.musicOn !== false,
+  volume: typeof game.musicVol === 'number' ? game.musicVol : 0.6,
+});
+game.musicBuiltin = true;
+game.musicAvailable = !!musicStore.available; // 仅代表「导入 / 管理」功能可用
 let lastScene = '';
+/* 真机播放验证与调试面板读取真实播放状态（currentTime / paused / 实例数） */
+if (typeof window !== 'undefined') {
+  window.__MAH_MUSIC_STATUS__ = function () { return musicPlayer.status(); };
+  window.__MAH_MUSIC_PLAYER__ = musicPlayer;
+}
 
 /* ---------------- 自适应缩放（720x1280 居中） ---------------- */
 let dpr = 1;
@@ -143,14 +159,19 @@ function applyAudioSettings() {
   // 点音效永远不会被音乐加载 / 淡入拖慢（第 4.5 节）。
   musicPlayer.setEnabled(game.musicOn !== false);
   musicPlayer.setVolume(typeof game.musicVol === 'number' ? game.musicVol : 0.6);
-  musicPlayer.setMap((game.saveState && game.saveState.musicMap) || {});
+  // 内置曲目永远在，用户导入的曲目只追加（mergeMusicMap 不会删除任何内置资源）
+  musicPlayer.setMap(mergeMusicMap((game.saveState && game.saveState.musicMap) || {}));
   lastScene = '';
   syncMusic();
 }
 
-/** 每帧调用：场景变了才切曲，避免重复加载 */
+/**
+ * 每帧调用：场景变了才切曲。首次点击前 playScene() 只记录 pendingScene，
+ * unlock() 之后自动开始，之后所有切换都自动跟随。
+ * 暂停：现有配置里没有 pause 场景，沿用当前关卡曲目（不误切回标题曲）。
+ */
 function syncMusic() {
-  if (!game.musicAvailable) return;
+  if (game.paused && lastScene) return;
   const sc = sceneOf(game);
   if (sc === lastScene) return;
   lastScene = sc;
@@ -214,13 +235,21 @@ function updateDevPanel(meta) {
     ['attempts', meta.attempts], ['retries', meta.retries],
   ];
   for (const f of fields) appendLine(devPanel, f[0] + ' = ' + f[1]);
-  appendLine(devPanel, '--- 检查 ---');
+  appendLine(devPanel, '--- 最近 ' + meta.historyLimit + ' 局检查 ---');
   const c = meta.checks;
-  appendLine(devPanel, '相似度最大值 : ' + c.similarityMax + '（阈值 ' + meta.similarityThreshold + '）');
-  appendLine(devPanel, '布局检查     : ' + c.layoutCheck);
-  appendLine(devPanel, '几何检查     : ' + c.geometryCheck);
-  appendLine(devPanel, '难度档位检查 : ' + c.difficultyCheck);
-  appendLine(devPanel, '历史记录保存 : ' + c.historyCheck);
+  appendLine(devPanel, '最近三局牌数检查   : ' + (c.tileCountCheck || 'N/A'));
+  appendLine(devPanel, '最近三局布局检查   : ' + (c.layoutCheck || 'N/A'));
+  appendLine(devPanel, '几何相似度检查     : ' + (c.geometryCheck || 'N/A') +
+    '（最大 sim ' + c.similarityMax + ' / 阈值 ' + meta.similarityThreshold + '）');
+  appendLine(devPanel, '难度档位检查       : ' + c.difficultyCheck);
+  appendLine(devPanel, '历史记录保存       : ' + c.historyCheck);
+  appendLine(devPanel, '--- 背景音乐播放状态 ---');
+  const ms = musicPlayer.status();
+  appendLine(devPanel, '状态=' + (ms.playing ? 'PLAYING' : 'STOPPED') +
+    ' · 场景=' + ms.scene + ' · 曲目=' + (ms.track || '（无）'));
+  appendLine(devPanel, '解锁=' + ms.unlocked + ' · 音量=' + ms.volume +
+    ' · 实例数=' + ms.instances + ' · 进度=' + ms.currentTime.toFixed(2) + 's');
+  if (ms.lastError) appendLine(devPanel, '错误=' + ms.lastError);
   appendLine(devPanel, '--- 本关最近 ' + meta.historyLimit + ' 局（similarity 为与本局的真实相似度）---');
   const list = meta.previousRecentChecks || meta.previousThreeChecks || [];
   if (!list.length) appendLine(devPanel, '(本关暂无历史)');
@@ -472,6 +501,8 @@ on(window, 'orientationchange', () => setTimeout(fit, 120));
  * 也能通过 document 级的一次性监听解锁音效，避免「点了却没声」。 */
 function onceUnlock() {
   unlockAudio();
+  // 浏览器自动播放策略：首次用户手势同时解锁背景音乐，之后按场景自动播放 / 切换
+  musicPlayer.unlock();
   if (typeof document !== 'undefined' && document.removeEventListener) {
     document.removeEventListener('pointerdown', onceUnlock);
     document.removeEventListener('keydown', onceUnlock);

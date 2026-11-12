@@ -1,87 +1,125 @@
-# 修改文件清单（本轮）
+# 修改文件清单（背景音乐集成 + 双关卡布局修复）
 
 **项目**：MahLeMah（`mah-le-mah/`）
 **日期**：2026-11-12
-**本轮提交**：`9912743ca599`（功能+测试）、`a9339dec3a5b`（重建产物+报告同步），均已推送 `origin/main`；之后仅有文档修订提交
-**本轮口径**：① 布局重做（几何由 seed 生成、五局内布局不同）② 难度验收转绿 ③ 用户导入背景音乐 + 按文件名匹配场景
+**本轮提交**：`__COMMIT__`（完整哈希 `__COMMIT_FULL__`），已推送 `origin/main`
+**口径**：仅修改与四项问题直接相关的代码；不做全项目审计，不重构无关模块，不改变核心玩法。
+**上一轮基线**：`cb43412`（随机生成重构收尾）
 
 ---
 
-## 1. 新增源码（5）
+## 1. 新增文件（20）
 
-| 文件 | 行数 | 职责 |
+### 1.1 音乐资源（5，二进制，未替换 / 未转码 / 未删除）
+
+| 文件 | 字节 | 场景 |
 |---|---:|---|
-| `src/game/music_match.js` | 178 | 纯函数 `matchScene(fileName) → {scene, matchedKeyword, confidence}`；`sceneOf(game)` 覆盖 6 种场景；`SCENES` / `SCENE_LABELS` / `isScene` |
-| `src/game/music_flow.js` | 246 | 「先确认场景再匹配」五步状态机：`select → scenes → match → confirm → applied`；`addFiles / confirmScenes / beginConfirm / setTarget / ignoreFile / applyFlow / cancelFlow / summarize` |
-| `src/game/music_store.js` | 332 | 音乐文件存储抽象：`tauriStore`（invoke 4 个命令）/ `webStore`（IndexedDB，无则退回内存）/ `none`；文件名净化 `sanitizeMusicName`、映射表清洗 `sanitizeMusicMap`、`filterImportable` |
-| `src/game/music_player.js` | 222 | `MusicPlayer`：双 `HTMLAudioElement` 交叉淡化（`FADE_MS = 600`），与音效的 `AudioContext` 完全隔离；同场景多首随机且不连续重复；`dispose()` 释放 blob URL |
-| `src/game/music_ui.js` | 428 | 「背景音乐」面板 UI：开关 / 音量 / 导入 / 管理匹配 / 每场景当前曲目 / 清除全部；中文文案；ES5 版不显示入口 |
+| `src/assets/music/标题场景音乐.wav` | 2,168,492 | title |
+| `src/assets/music/第一关场景音乐.wav` | 1,675,628 | level1 |
+| `src/assets/music/第二关场景音乐.wav` | 1,440,044 | level2 |
+| `src/assets/music/过关场景音乐.wav` | 708,908 | win |
+| `src/assets/music/失败场景音乐.wav` | 1,316,588 | lose |
 
-## 2. 删除（1）
+合计 **7,309,660 B**，sha256 `b0a6b8026d1aadf06302d61995aeda9ede21977c8970d66c3da84c62e8e17d10`。5 个文件此前只在开发机桌面，本轮首次纳入仓库与产物。
 
-| 文件 | 原因 |
+### 1.2 源码 / 构建脚本（3）
+
+| 文件 | 大小 | 职责 |
+|---|---:|---|
+| `src/game/music_manifest.js` | 9,748,754 B | 5 首 wav 的 `data:audio/wav;base64,` 清单 + `BUILTIN_MUSIC_MAP`（6 场景）+ `BUILTIN_MUSIC_SRC` + `mergeMusicMap()` + 资源指纹。所有运行版本共用同一份 |
+| `tools/gen_music_manifest.mjs` | — | 读 `src/assets/music/*.wav`，复用现有 `matchScene()`，只接受 `confidence==='exact'`，`ambiguous`/`none` 直接抛错不自动指派 |
+| `tools/music_real_playback.mjs` | — | Edge headless + CDP + 真实鼠标事件，读 `__MAH_MUSIC_STATUS__()` 验证 `currentTime>0` 且随时间前进；幂等追加报告章节 |
+
+### 1.3 新测试（2）
+
+| 文件 | 结果 |
 |---|---|
-| `src/game/layout_templates.js`（390 行） | 第 1.1 节：静态模板路径已无人调用，几何改为 seed 程序化生成。`git status` 显示 `D` |
+| `test-layout-position.js` | 35/0；L1 4 档 × 40 seed 的动态包围盒居中、缩放不变性、L2 几何回归 |
+| `test-music-playback.js` | 69/0；播放链路单测 + 4 版本集成 + 5 首载荷与 manifest 逐字节一致 |
 
-## 3. 重写 / 大改（7）
+### 1.4 新报告（10）
+
+`reports/FINAL_RERUN_ALL.txt`、`TEST_LAYOUT_POSITION.txt`、`TEST_MUSIC_PLAYBACK.txt`、`layout-position-report.{json,md}`、`music-playback-report.{json,md}`、`music-real-playback-report.json`、`music-real-playback-output.txt`。
+
+---
+
+## 2. 修改的源码（10）
 
 | 文件 | 改动要点 |
 |---|---|
-| `src/game/layout_profiles.js` | 几何彻底 seed 化：删除 `void rng` 与「几何由档位确定」；第二关主堆 = 每层 seed 生长的连通团块（`growBlob`）+ 中段专用 `buildBand`（整行铺满，保证 8–10 列）；盲盒队列 4 条链 44 张，每条链独立 `dy` 候选（修掉「四条链互相压死」）；第一关按 seed 生成 5–7 列紧凑堆，并新增「整堆单连通」候选筛选（修掉 L1 偶尔裂成 2 块） |
-| `src/game/generator.js` | 发牌改为**整池 Fisher–Yates**，删除 order / 证书 / 波次 / 三带 / regionBias 分配；`baseCard` 增加 `seg / chain / chainIndex / chainLen`；第一关新增「几何 × 发牌」双重重采 + 32 次 greedy 探测；第二关 `requireSolution = false`、`bands = null`、`scramble = null` |
-| `src/game/new_game.js` | `HISTORY_LIMIT` 改 5；新增 `layoutOfRecord()` 按 `(level, difficultyId, seed)` 重放历史牌面（缓存上限 128）算 `layoutSimilarity`；`sim ≥ 0.60` 或 `geometrySignature` 相同即判重复；后段档位确定性轮换；`MAX_ATTEMPTS = 50` 不变 |
-| `test.js` | 整体重写为 19 节（约 1732 行）：常量 / 16 牌型 / L2 30×10 几何契约 / L1 几何 / `layoutSimilarity` / Fisher–Yates 静态检查 / 种子池 / 引擎 / 档位表 / 静态验收 / Rust 白名单 / 零内置音频 / 生成耗时 / 池内结构 / 机器人难度 / L1 greedy / rollProfile+存档 / 文案 / 统一入口+五局差异化 / 五局滑窗统计 / `matchScene` 表驱动 / 音乐确认流程 / `sceneOf` / 文件名净化+播放器 |
-| `test-random-generation.js` | 整体重写为 200 局/关口径：五局滑窗 `sim < 0.60`（用**真实牌面**两两计算）、`geometrySignature` 不重复、档位轮换、同档位 30 seed ≥25 种几何、seed 可精确重放、失败重试统计；输出 JSON/MD/原始输出 |
-| `tools/tune_pool.mjs` | 入池门槛改为「该 seed 上 5 种机器人（greedy/noisy/lookahead/montecarlo/search）合计通关 = 0」；几何门槛改为主堆单连通（队列是独立区域） |
-| `tools/browser_smoke.mjs` | 差异化判定更新为第 2.3 节口径：`similarityMax < 0.60` + `geometrySignature` 不重复 + 档位轮换（删掉已作废的「牌数必须不同」） |
+| `src/game/music_player.js` | 整体重写：导出 `MusicPlayer` 与 `MusicManager` 别名；内置 data URI 优先、用户 store 仅回落；首次手势前不建/播 audio，`unlock()` 后按 `pendingScene` 自动播放；删掉双槽交叉淡化改为严格单实例；`setEnabled/setMuted/setVolume` 独立于音效；`onerror` / `play().catch` / `NO_SOURCE` 全捕获；`status()` 暴露真实播放状态 |
+| `src/main.js` | 引入 `BUILTIN_MUSIC_MAP / BUILTIN_MUSIC_SRC / mergeMusicMap` 初始化播放器；`game.musicBuiltin = true`；暴露 `__MAH_MUSIC_STATUS__` / `__MAH_MUSIC_PLAYER__`；`applyAudioSettings()` 合并映射；`syncMusic()` 不再因 store 不可用早退、暂停沿用当前曲；`onceUnlock()` 增加 `musicPlayer.unlock()`；调试面板补三项 PASS/FAIL 与音乐状态 |
+| `src/game/render.js` | 音乐开关/音量显示条件改为 `musicBuiltin || musicAvailable`；导入按钮仍只在 store 可用时出现；标题页与设置面板文案改为「内置曲目按场景自动切换」 |
+| `src/game/layout_profiles.js` | L1 `topCy/botCy` 围绕 `BOARD_CY` 展开；新增 `centerStackVertically()` 按本局真实包围盒动态居中、吸附半格晶格、受 `BOARD_BAND` 安全边距 clamp；保留三层结构、牌型、遮挡与单连通 |
+| `src/game/recent_games.js` | `HISTORY_LIMIT: 5 → 3`，注释与 `sanitizeHistory/appendHistory/checkAgainstRecent` 同步 |
+| `src/game/new_game.js` | 三重差异化判定（牌数 / 布局签名 / 几何相似度）真正生效，修复旧实现把 `layoutDifferent` 覆盖成相似度判定的缺陷；`legalDifficultyIds()` 合法档位预筛；`CONFIG_CONFLICT` 明确失败；`MAX_ATTEMPTS=50`；`meta.checks` 新增 `tileCountCheck / layoutCheck / geometryCheck`；不增删牌 |
+| `src-tauri/src/main.rs` | 仅 `HISTORY_LIMIT: usize = 5 → 3` 与注释同步；上一轮 `SAVE_FIELDS` 12 字段 / v4 / 4 个音乐命令保持不变（本轮无新增存档字段） |
+| `src-tauri/tauri.conf.json` | CSP `media-src 'none'` → `media-src 'self' data: blob:`（旧配置会拦住所有音频） |
+| `tools/build_web.mjs` | 构建说明改为「内联 5 首内置音乐，离线可播」 |
+| `tools/browser_smoke.mjs` | 差异化判定改为最近三局窗口：牌数 / 布局签名 / 几何签名均不重复、档位 ≠ 上一局、`tileCountCheck === 'PASS'` |
 
-## 4. 小改（8）
+---
+
+## 3. 修改的既有测试（4）
 
 | 文件 | 改动要点 |
 |---|---|
-| `src/game/layout.js` | 裁剪为纯几何原语，删除 `generateLayout / generateEasyLayout / planForSeed / layoutReport / templateFor` |
-| `src/game/layout_signature.js` | 新增 `layoutShape / cellKey / jaccard / layoutSimilarity`、`SIMILARITY_THRESHOLD = 0.6` |
-| `src/game/recent_games.js` | `HISTORY_LIMIT: 3 → 5`，注释与 `sanitizeHistory / appendHistory / checkAgainstRecent` 同步 |
-| `src/game/robots.js` | `simulateRobot` 新增 `opt.path`，通关时返回真实点击顺序（第一关当证书用） |
-| `src/game/save_data.js` | `SAVE_VERSION: 3 → 4`；新增 `music / musicVol / musicMap`；旧档缺字段可读入 |
-| `src/game/engine.js` | 恢复 `musicOn / musicVol` 运行时字段 |
-| `src/game/render.js` | 盲盒牌背：`back: c.seg === 'queue' && c.blocked`；设置面板加音乐开关 / 音量 / 「导入 / 管理背景音乐…」；ES5 兼容模式隐藏并用中文说明 |
-| `src/game/tiles.js` | 新增 `paintBack()`（青灰底 + 双回纹边框 + 中心四瓣花），压深着色与牌面同规则 |
-| `src/game/seed_pool.js` | 全面重生成：10 档 × 40 seed，`POOL_META` 记录机器人闸门统计 |
-| `src/main.js` | 接入 `MusicPlayer / sceneOf / detectMusicStore / openMusicPanel`；`applyAudioSettings` 同步 `setEnabled/setVolume/setMap`；`syncMusic()` 按场景切歌 |
-| `src-tauri/src/main.rs` | `SAVE_FIELDS: [&str; 12]`（新增 `musicMap`）；`HISTORY_LIMIT: usize = 5`；新增 `list_music / import_music / read_music / delete_music`；文件名净化 / 映射表校验 / 扩展名白名单 / ≤20MB / ≤24 首 / 临时文件 + 原子重命名；存档版本放宽到 v∈{1,2,3,4} |
-| `dist/*.html` | 由当前 `src/` 重建（见下） |
+| `test.js` | `[8c]` 改为「内置音乐进入全部产物」：5 首与 wav 原文件逐字节比对、4 个 HTML 各 5 段载荷、无外链/无开发机路径；`[18]` 重写播放器行为（解锁 / 单实例 / 音量 / 失败处理）；`[19]` 改为每关 100 局最近三局差异化；`[14]` 比较窗口改为最近 `HISTORY_LIMIT` 局；Rust 静态断言改为 `HISTORY_LIMIT: usize = 3`。最终 **616/0** |
+| `test-random-generation.js` | `PER_LEVEL=100`、`HISTORY_LIMIT===3`；逐局校验牌数 / 签名 / 几何与最近三局均不同、`meta.checks` 三项 PASS、seed 合法且不重复；重启模拟后仍不同；报告标题改「双关卡各 100 局」。最终 **7285/0** |
+| `test-build-consistency.js` | 新增 `[6] 内置背景音乐在所有正式产物中一致`：4 个 HTML 的 5 段载荷 / 文件名 / `__MAH_MUSIC_STATUS__` / `graduated` / 无外链，加 manifest 与 CSP 检查。最终 **71/0** |
+| `test-music-playback.js` | 新建（见 §1.3）；版本集成表用真实字节数，并把未断言的诊断字段改成「5 首载荷与 manifest 逐字节一致」硬断言 |
 
-## 5. 构建产物
+---
+
+## 4. 构建产物（4，全部重建并内嵌音乐）
 
 | 文件 | 字节 | SHA-256 |
 |---|---:|---|
-| `dist/MahLeMah.html` | 134,302 | `fa9fd96930a4ec48b9b2b6c8db2cb7b3b3d6cf364c5f7b01ae7edf0b3f3a2a2c` |
-| `dist/Mah了个Mah.html` | 134,302 | 同上（同内容副本） |
-| `dist/index.html` | 134,302 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 168,373 | `15f8cdc4368d8447ac17947bb6f1379345cd6ffc4b6130dd53550f2e6d9cce52` |
+| `dist/MahLeMah.html` | 9,885,845 | `5ab697cd761c15808f212051ad587fe6fe8bb3d1f4f5e8b9b113eb02b0d2797f` |
+| `dist/index.html` | 9,885,845 | 同上（同内容副本） |
+| `dist/Mah了个Mah.html` | 9,885,845 | 同上（同内容副本） |
+| `dist/MahLeMah-legacy.html` | 9,919,967 | `6dfec65af7ee49acdf7c0f8c0697c9bca2c3fd10e64987110ac877a36a10dc5c` |
 
-`buildVersion=2.0.0-9912743` · `sourceHash=578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` · 参与哈希源文件 32 个。
+`buildVersion=2.0.0-cb43412` · `sourceHash=7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576` · 参与哈希源文件 33 个。构建元信息记录构建时 HEAD，本轮新提交不回写（自指循环）；`test-build-consistency.js` 实时重算 `src/` 哈希比对，71/0 通过。
 
-## 6. 报告
+---
+
+## 5. 更新的文档 / 报告（3 + 10）
 
 | 文件 | 说明 |
 |---|---|
-| `reports/CODE_AUDIT.md` | 本轮审计：改前的 7 个不符合项与处理结果 |
-| `reports/FINAL_ACCEPTANCE.md` | 最终验收：逐条对规格 1–6 节给证据 |
-| `reports/MODIFIED_FILES.md` | 本文件 |
-| `reports/TEST_OUTPUT_FINAL_FULL.txt` | `node test.js` 完整原始输出（585 通过 / 0 失败 / EXIT=0） |
-| `reports/TEST_RANDOM_OUTPUT_FINAL.txt` | `node test-random-generation.js` 完整原始输出（12881 通过 / 0 失败 / EXIT=0） |
-| `reports/random-generation-report.{json,md}` | 400 局逐局数据 + 滑窗相似度 + 几何多样性 |
-| `reports/random-generation-output.txt` | 同上脚本的控制台输出 |
-| `reports/build-consistency-report.{json,md}` / `build-consistency-output.txt` | 两个 HTML ↔ `src/` 逐字节一致性（48 项通过） |
-| `reports/browser-smoke-report.json` | Edge 157 真实浏览器实测（两页各 4 局、0 异常、allPassed=true） |
-| `reports/CARGO_CHECK_OUTPUT.txt` | Rust `cargo check` 尝试的真实输出（见验收报告「未执行项」） |
+| `README.md` | 顶部标注「2026-11-12 起内置 5 首用户背景音乐」；第 5 章改为「音效与内置背景音乐」；文件树加入 `music_manifest.js`；新增本轮测试命令与桌面版未重建说明 |
+| `CHANGELOG.md` | 新增「2026-11-12 · 内置背景音乐集成 / 第一关布局居中 / 双关卡最近三局差异化」，记录真实测试数与未运行项 |
+| `DELIVERY.md` | 新增 `## 0. 2026-11-12 本轮增量`，旧随机生成章节改名 `0.1`；明确安装产物未重建 |
+| `reports/FINAL_ACCEPTANCE.md` | 本轮最终验收，逐条对应规格第八节，含完整未运行项 |
+| `reports/TEST_OUTPUT_FINAL_FULL.txt` 等 9 份 | 由最终一次合并回归 `reports/FINAL_RERUN_ALL.txt` 拆分，与各 JSON/MD 报告一一对应 |
 
-## 7. 刻意未改动
+---
+
+## 6. 刻意未改动 / 未重建
 
 | 文件 | 原因 |
 |---|---|
-| `src/game/config.js` | 档位表 / `layerPlanFor` 基准曲线本轮未变（规格只要求几何由 seed 决定，档位仍决定层数/牌数/牌种数）。其中 `LEVEL_SPEC / LEVEL_MIX / BAND_RATIOS / FUNNEL` 已是历史兼容常量，仍被 `tools/tune.mjs`、`tools/stress_release.mjs` 引用，未删除 |
-| `tools/tune.mjs` / `tools/stress_release.mjs` | 旧调参/发布脚本，不在本轮测试链路内；`stress_release.mjs` 仍假设第二关有证书，属于**已知过时脚本**，本轮未修（如实记录） |
-| `dist/*.exe` / `*.zip` / `SHA256SUMS.txt` | 桌面安装包本轮未重建（本机无 MSVC / NSIS 环境），保持原冻结产物 |
+| `dist/MahLeMah-Setup-v2.0.0.exe`、`MahLeMah-Portable-v2.0.0.zip`、`SHA256SUMS.txt` | 本机 Rust build script 执行被系统拒绝（`os error 5`），桌面产物**未重建**，仍是旧冻结版本，不含本轮音乐与布局修复 |
+| `src/game/generator.js`、`layout.js`、`engine.js`、`config.js`、`tiles.js`、`seed_pool.js` | 核心玩法 / 发牌 / 难度池与本轮四项问题无关，未改动 |
+| `src/game/music_flow.js`、`music_store.js`、`music_ui.js`、`music_match.js`、`save_data.js` | 上传与场景分配功能按要求**不重新开发**，本轮只调用现有 `matchScene()`；无新增存档字段 |
+| `.probe/` | 本轮临时脚本目录，交付前已清理 |
+| `tools/tune.mjs`、`tools/stress_release.mjs` | 旧调参/发布脚本，不在本轮测试链路内（已知过时，如实记录） |
+
+---
+
+## 7. 真实运行汇总
+
+| 命令 | 结果 |
+|---|---|
+| `node test.js` | 616 / 0 / EXIT=0 |
+| `node test-random-generation.js` | 7285 / 0 / EXIT=0（双关各 100 局） |
+| `node test-layout-position.js` | 35 / 0 / EXIT=0 |
+| `node test-music-playback.js` | 69 / 0 / EXIT=0 |
+| `node test-build-consistency.js` | 71 / 0 / EXIT=0 |
+| `node tools/music_real_playback.mjs` | 54 / 54 / EXIT=0（网页版、独立 HTML 版、legacy 版真机播放） |
+| `node tools/browser_smoke.mjs` | `allPassed=true`，Edg/157.0.4341.46 |
+| Rust `cargo check` / `cargo build` | **未运行** |
+| 桌面版 / Windows 安装版真机音乐播放 | **未运行** |
+
+本轮提交：`__COMMIT__`（`__COMMIT_FULL__`）。

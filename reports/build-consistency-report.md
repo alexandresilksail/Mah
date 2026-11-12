@@ -2,33 +2,33 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-12T13:00:06.621Z
-- Git commit：`a9339dec3a5b363adfcd94507213c17c541668c7`
-- 断言：通过 **48**，失败 **0**
+- 运行时间：2026-11-12T14:00:49.089Z
+- Git commit：`cb43412f6f7bca753833448d5823a1f9aad56cda`
+- 断言：通过 **71**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
 ## 产物
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 134302 | `fa9fd96930a4ec48b9b2b6c8db2cb7b3b3d6cf364c5f7b01ae7edf0b3f3a2a2c` |
-| dist/MahLeMah-legacy.html | 168373 | `15f8cdc4368d8447ac17947bb6f1379345cd6ffc4b6130dd53550f2e6d9cce52` |
+| dist/MahLeMah.html | 9885845 | `5ab697cd761c15808f212051ad587fe6fe8bb3d1f4f5e8b9b113eb02b0d2797f` |
+| dist/MahLeMah-legacy.html | 9919967 | `6dfec65af7ee49acdf7c0f8c0697c9bca2c3fd10e64987110ac877a36a10dc5c` |
 
 ## bundle 逐字节比对
 
 | 版本 | HTML 内嵌字节 | 现场打包字节 | 相同 |
 |---|---:|---:|---|
-| 现代版 | 132170 | 132170 | PASS |
-| legacy | 138031 | 138031 | PASS |
+| 现代版 | 9883713 | 9883713 | PASS |
+| legacy | 9889625 | 9889625 | PASS |
 
 ## 构建元信息
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-9912743 | 2.0.0-9912743 | 2.0.0-a9339de |
-| gitCommit | 9912743ca5990f48f74d66cc548774b2c385f1ff | 9912743ca5990f48f74d66cc548774b2c385f1ff | a9339dec3a5b363adfcd94507213c17c541668c7 |
-| sourceHash | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` | `578f26e42009e56bbe186e13597799ed30811719e6a3d1922afd19fe35647aef` |
-| sourceFiles | 32 | 32 | 32 |
+| buildVersion | 2.0.0-cb43412 | 2.0.0-cb43412 | 2.0.0-cb43412 |
+| gitCommit | cb43412f6f7bca753833448d5823a1f9aad56cda | cb43412f6f7bca753833448d5823a1f9aad56cda | cb43412f6f7bca753833448d5823a1f9aad56cda |
+| sourceHash | `7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576` | `7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576` | `7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576` |
+| sourceFiles | 33 | 33 | 33 |
 
 > 两个 HTML 的 buildTimestamp 允许相差数秒（两次独立构建），其余字段必须完全一致。
 

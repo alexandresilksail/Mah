@@ -1,0 +1,418 @@
+{
+  "generatedAt": "2026-11-12T14:00:43.265Z",
+  "resource": {
+    "files": [
+      "失败场景音乐.wav",
+      "标题场景音乐.wav",
+      "第一关场景音乐.wav",
+      "第二关场景音乐.wav",
+      "过关场景音乐.wav"
+    ],
+    "bytes": 7309660,
+    "hash": "b0a6b8026d1aadf06302d61995aeda9ede21977c8970d66c3da84c62e8e17d10"
+  },
+  "summary": {
+    "pass": 69,
+    "fail": 0,
+    "failures": []
+  },
+  "checks": [
+    {
+      "group": "resource",
+      "label": "内置 5 首用户音乐（未替换 / 未删除）",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "6 个固定场景，所有版本共用同一份映射",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "失败场景音乐.wav 内嵌载荷与原 wav 逐字节一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "标题场景音乐.wav 内嵌载荷与原 wav 逐字节一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "第一关场景音乐.wav 内嵌载荷与原 wav 逐字节一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "第二关场景音乐.wav 内嵌载荷与原 wav 逐字节一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "过关场景音乐.wav 内嵌载荷与原 wav 逐字节一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "title/level1/level2/win/lose 各 1 首，graduated 留空静音",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "内嵌 data URI 完整，总 7309660 B，指纹 b0a6b8026d1a",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "MusicManager 与播放器是同一个类（不存在第二个实例）",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "切场景淡入 600ms",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "失败场景音乐.wav 用现有 matchScene 规则命中 lose，与映射一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "标题场景音乐.wav 用现有 matchScene 规则命中 title，与映射一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "第一关场景音乐.wav 用现有 matchScene 规则命中 level1，与映射一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "第二关场景音乐.wav 用现有 matchScene 规则命中 level2，与映射一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "过关场景音乐.wav 用现有 matchScene 规则命中 win，与映射一致",
+      "pass": true
+    },
+    {
+      "group": "resource",
+      "label": "用户导入只追加合法场景，内置曲目不被替换 / 删除",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "首次点击前不创建 / 不播放（自动播放限制）",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "首次用户手势完成音频解锁",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "解锁后自动加载标题曲（内置 data URI，不依赖路径 / 网络 / Rust 命令）",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "真实状态：正在播放、恰好 1 个实例、曲目正确",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "单曲循环",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "音量独立可调（volume×0.9）",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "静音独立于音效",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "标题 / 第一关 / 第二关 / 胜利 / 失败 / 返回标题 按配置自动切曲",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "切场景全程只有 1 个 audio 实例，禁止多实例同时播放",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "场景切换计数真实递增（6）",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "未配置曲目的场景静音且无异常",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "关闭音乐立即停止",
+      "pass": true
+    },
+    {
+      "group": "playback",
+      "label": "重新开启按当前场景恢复",
+      "pass": true
+    },
+    {
+      "group": "failure",
+      "label": "play() 被拒绝时记录错误并降级，不抛异常到游戏",
+      "pass": true
+    },
+    {
+      "group": "failure",
+      "label": "加载 / 解码错误被捕获并记录",
+      "pass": true
+    },
+    {
+      "group": "failure",
+      "label": "缺源场景仍返回可处理状态",
+      "pass": true
+    },
+    {
+      "group": "failure",
+      "label": "缺源被记录为 NO_SOURCE 并静音降级",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "标题页 → title",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "第一关 → level1",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "第二关 → level2",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "胜利 → win",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "失败 → lose",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "全部通关 → graduated",
+      "pass": true
+    },
+    {
+      "group": "scene",
+      "label": "返回标题页 → title",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 产物存在（9885845 字节）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 内嵌 5 首完整音乐载荷（实测 5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 5 首载荷与 manifest 逐字节一致（实测 5/5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 场景映射与其余版本一致",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 带首次点击解锁与播放状态观测链路",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "网页版 不引用外部音频路径 / 开发机路径",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 产物存在（9885845 字节）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 内嵌 5 首完整音乐载荷（实测 5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 5 首载荷与 manifest 逐字节一致（实测 5/5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 场景映射与其余版本一致",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 带首次点击解锁与播放状态观测链路",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "独立 HTML 版 不引用外部音频路径 / 开发机路径",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 产物存在（9885845 字节）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 内嵌 5 首完整音乐载荷（实测 5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 5 首载荷与 manifest 逐字节一致（实测 5/5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 场景映射与其余版本一致",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 带首次点击解锁与播放状态观测链路",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "中文名副本 不引用外部音频路径 / 开发机路径",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 产物存在（9919967 字节）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 内嵌 5 首完整音乐载荷（实测 5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 5 首载荷与 manifest 逐字节一致（实测 5/5）",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 场景映射与其余版本一致",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 带首次点击解锁与播放状态观测链路",
+      "pass": true
+    },
+    {
+      "group": "version",
+      "label": "ES5 legacy 版 不引用外部音频路径 / 开发机路径",
+      "pass": true
+    },
+    {
+      "group": "desktop",
+      "label": "桌面版前端 src/ 直接 import 同一份 manifest 并做首次点击解锁",
+      "pass": true
+    },
+    {
+      "group": "desktop",
+      "label": "桌面版前端资源与网页版同源（同一 manifest 文件）",
+      "pass": true
+    },
+    {
+      "group": "desktop",
+      "label": "Tauri CSP 放行 media-src data:/blob:（旧版 media-src none 会拦住所有音频）",
+      "pass": true
+    },
+    {
+      "group": "desktop",
+      "label": "桌面版前端目录配置存在",
+      "pass": true
+    }
+  ],
+  "versions": [
+    {
+      "name": "网页版",
+      "file": "dist/index.html",
+      "bytes": 9885845,
+      "payloads": 5,
+      "exactHits": 5,
+      "payloadOk": true,
+      "namesOk": true,
+      "unlockOk": true,
+      "noPath": true
+    },
+    {
+      "name": "独立 HTML 版",
+      "file": "dist/MahLeMah.html",
+      "bytes": 9885845,
+      "payloads": 5,
+      "exactHits": 5,
+      "payloadOk": true,
+      "namesOk": true,
+      "unlockOk": true,
+      "noPath": true
+    },
+    {
+      "name": "中文名副本",
+      "file": "dist/Mah了个Mah.html",
+      "bytes": 9885845,
+      "payloads": 5,
+      "exactHits": 5,
+      "payloadOk": true,
+      "namesOk": true,
+      "unlockOk": true,
+      "noPath": true
+    },
+    {
+      "name": "ES5 legacy 版",
+      "file": "dist/MahLeMah-legacy.html",
+      "bytes": 9919967,
+      "payloads": 5,
+      "exactHits": 5,
+      "payloadOk": true,
+      "namesOk": true,
+      "unlockOk": true,
+      "noPath": true
+    },
+    {
+      "name": "桌面版前端（静态集成检查）",
+      "file": "src/main.js + tauri.conf.json",
+      "static": true
+    }
+  ],
+  "realPlayback": "本文件为模拟音频的自动化测试；真实播放见 tools/music_real_playback.mjs 的输出"
+}

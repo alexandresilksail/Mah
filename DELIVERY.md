@@ -1,4 +1,4 @@
-# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 仅音效 / 双 Windows 产物）+ 2026-11-12 随机生成重构
+# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 内置背景音乐 / 双 Windows 产物）+ 2026-11-12 本轮增量
 
 > 本文件是交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
 > **牌数口径**：旧版的「第一关固定 24 张 / 第二关 222 张、8/15 种牌型、葫芦单堆」是
@@ -8,7 +8,26 @@
 
 ---
 
-## 0. 2026-11-12 本轮增量交付（随机生成系统重构）
+## 0. 2026-11-12 本轮增量（音乐集成 + 布局修复）
+
+| 类别 | 文件 | 说明 |
+|---|---|---|
+| 音乐资源 | `src/assets/music/*.wav`（5 首） | 用户原有音频，未替换 / 删除 |
+| 音乐清单 | `src/game/music_manifest.js` + `tools/gen_music_manifest.mjs` | data URI 内嵌，6 场景统一映射，所有产物同源 |
+| 播放链路 | `src/game/music_player.js` / `src/main.js` / `src/game/render.js` | 首次点击解锁、单实例、自动切场景、失败降级、音量与音效隔离 |
+| 桌面配置 | `src-tauri/tauri.conf.json` | `media-src` 放行 `data:` / `blob:` |
+| 布局 | `src/game/layout_profiles.js` | 第一关按真实包围盒动态居中（重心 550–572 / 中心 557） |
+| 差异化 | `src/game/recent_games.js` / `new_game.js` / `src-tauri/src/main.rs` | `HISTORY_LIMIT=3`，牌数 + 签名 + 几何相似度三重判定 |
+| 产物 | `dist/MahLeMah.html`、`index.html`、`Mah了个Mah.html`、`MahLeMah-legacy.html` | 全部重建，各内嵌 5 首音乐；逐字节一致性 71/0 |
+| 新测试 | `test-layout-position.js`、`test-music-playback.js`、`tools/music_real_playback.mjs` | 布局 35/0、音乐 69/0、Edge 真机播放 54/54 |
+| 报告 | `reports/layout-position-report.*`、`music-playback-report.*`、`music-real-playback-report.json`、`random-generation-report.*`、`build-consistency-report.*` | 全部由真实运行生成 |
+
+**未运行（如实标注）**：桌面版 / Windows 安装版 exe 因本机 Rust build script 执行被系统
+拒绝（`os error 5`）未重建，其音乐真机播放未验证；旧 exe 不含本轮音乐功能。
+
+---
+
+## 0.1 2026-11-11 增量（随机生成系统重构，历史）
 
 | 类别 | 文件 | 说明 |
 |---|---|---|

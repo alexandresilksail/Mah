@@ -192,6 +192,39 @@ ok((modernBundle || '').indexOf('level1RecentGames') >= 0 &&
   (modernBundle || '').indexOf('level2RecentGames') >= 0,
   '现代版含两关独立历史机制');
 
+line('\n[6] 内置背景音乐在所有正式产物中一致（本轮新增）');
+const musicNames = [
+  '标题场景音乐.wav', '第一关场景音乐.wav', '第二关场景音乐.wav',
+  '过关场景音乐.wav', '失败场景音乐.wav',
+];
+const musicVersions = [
+  ['dist/MahLeMah.html', modernHtml],
+  ['dist/MahLeMah-legacy.html', legacyHtml],
+  ['dist/index.html', readFileSync(join(root, 'dist/index.html'), 'utf8')],
+  ['dist/Mah了个Mah.html', readFileSync(join(root, 'dist/Mah了个Mah.html'), 'utf8')],
+];
+const musicRows = [];
+for (const [f, h] of musicVersions) {
+  const payloads = (h.match(/data:audio\/wav;base64,/g) || []).length;
+  const namesOk = musicNames.every((n) => h.indexOf(n) >= 0);
+  const unlockOk = h.indexOf('__MAH_MUSIC_STATUS__') >= 0;
+  ok(payloads >= 5, `${f} 内嵌 5 首完整音乐载荷（实测 ${payloads}）`);
+  ok(namesOk, `${f} 场景映射的 5 个文件名与其余版本一致`);
+  ok(unlockOk, `${f} 含首次点击解锁与真实播放状态观测链路`);
+  ok(h.indexOf('graduated') >= 0, `${f} 含完整的 6 场景映射（含 graduated）`);
+  ok(!/src\s*=\s*["'][^"']+\.(mp3|ogg|wav)/.test(h), `${f} 没有外部音频 src（离线可播）`);
+  musicRows.push({ file: f, payloads, namesOk, unlockOk, bytes: Buffer.byteLength(h, 'utf8') });
+}
+{
+  const mf = readFileSync(join(root, 'src/game/music_manifest.js'), 'utf8');
+  const conf = readFileSync(join(root, 'src-tauri/tauri.conf.json'), 'utf8');
+  const htmlJs = readFileSync(join(root, 'src/main.js'), 'utf8');
+  ok(mf.indexOf('data:audio/wav;base64,') >= 0 && mf.length > 1000000,
+    `src/game/music_manifest.js 是真正内嵌音频的源码（${mf.length} B）`);
+  ok(htmlJs.indexOf('music_manifest.js') >= 0, 'main.js 引用同一份 manifest（桌面版前端同源）');
+  ok(/media-src[^;]*data:[^;]*blob:/.test(conf), 'Tauri CSP 放行 data:/blob: 音频（旧 media-src none 会拦住播放）');
+}
+
 const report = {
   generatedAt: new Date().toISOString(),
   gitCommit: head,

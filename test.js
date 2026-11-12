@@ -1,7 +1,7 @@
 /**
  * MahLeMah v2.0.0 可执行验证（Node 运行，不依赖 DOM）：node test.js / npm run test:sim
  *
- * 本轮（布局 seed 化 + 五局差异化 + 难度验收 + 用户导入背景音乐）覆盖：
+ * 本轮（内置背景音乐 + 第一关布局居中 + 双关卡最近三局差异化）覆盖：
  *   [1]  单一常量源 / 版本号 / 几何常量 / 本轮规格常量
  *   [2]  16 种牌型唯一注册表
  *   [3]  seed 驱动布局：第二关沙漏主堆 + 四条盲盒链（30 seed × 10 档位）
@@ -13,19 +13,19 @@
  *   [7]  两关静态档位表 / 层张数插值 / levelParams（第 1、2.5 节）
  *   [8]  视觉 / 兼容版 / Tauri 最小权限 / 版本号
  *   [8b] Rust 存档加固 + p1/p2 + musicMap 白名单（第 4.4 节）
- *   [8c] 生产包零内置音频 / 仅音效 + 运行时音频回归
+ *   [8c] 内置背景音乐进入全部产物 / 音效链路独立 + 运行时音频回归
  *   [9]  运行时生成耗时
  *   [10] 分档关卡构造与几何验收（池内 seed）
  *   [11] 分档机器人难度验收（第 3.1 节）
  *   [11b] 第一关 greedy 通关率 ≥95%（第 1.4 节）
  *   [12] rollProfile / 重开 / 通关 / 存档
  *   [13] 界面文案与源码一致性
- *   [14] 统一入口 / 布局签名 / 五局差异化（真实运行）
+ *   [14] 统一入口 / 布局签名 / 最近三局差异化（真实运行）
  *   [15] matchScene 表驱动（≥40 用例，第 4.2 节）
  *   [16] 音乐确认流程状态机（第 4.3 节）
  *   [17] sceneOf 覆盖 6 种状态（第 4.1 节）
  *   [18] 文件名净化 / musicMap / MusicPlayer 行为（第 4.4 / 4.5 节）
- *   [19] 五局滑动窗口统计（每关 200 局，第 2.4 节）
+ *   [19] 最近三局差异化统计（每关 100 局）
  *
  * 硬断言失败累加到 fail，末尾 process.exit(1)。
  * 所有实测值来自本机真实运行；阈值按规格原文写死，不放宽、不改测试凑数。
@@ -174,7 +174,7 @@ function quantile(sorted, p) {
 }
 
 line('============================================================================');
-line(' MahLeMah v' + VERSION + ' 验证 · seed 驱动布局 / 五局差异化 / 六机器人难度 / 用户导入 BGM');
+line(' MahLeMah v' + VERSION + ' 验证 · 内置背景音乐 / 第一关布局居中 / 双关最近三局差异化 / 六机器人难度');
 line('============================================================================');
 line(' Node ' + process.version);
 
@@ -190,7 +190,7 @@ ok(LEVEL_COUNT === 2 && LEVEL_COUNT === LV_COUNT, '两关制');
 ok(BOARD_BAND.top === 196 && BOARD_BAND.bottom === 918 && BOARD_BAND.left === 20 && BOARD_BAND.right === 700,
   'BOARD_BAND = {196,918,20,700} 未改');
 // 第 2.1 / 2.2 / 1.3 节的规格常量
-ok(HISTORY_LIMIT === 5, `HISTORY_LIMIT = 5（实测 ${HISTORY_LIMIT}）`);
+ok(HISTORY_LIMIT === 3, `HISTORY_LIMIT = 3（实测 ${HISTORY_LIMIT}）`);
 ok(VISIBLE_MIN === 19 && VISIBLE_MAX === 25, '第二关开局可点区间 19–25');
 ok(SIMILARITY_THRESHOLD === 0.6, '布局相似度阈值 = 0.60');
 ok(QUEUE_SHAPE.length === 4 && QUEUE_SHAPE.reduce((a, q) => a + q.n, 0) === 44,
@@ -639,8 +639,8 @@ ok(/SAVE_FIELDS/.test(rust) && SAVE_KEYS.every((f) => rust.indexOf(f) >= 0),
 ok(/const SAVE_FIELDS:\s*\[&str;\s*12\]/.test(rust), 'SAVE_FIELDS 数组长度声明为 12');
 ok(/RECORD_FIELDS:\s*\[&str;\s*12\]/.test(rust) && /GENERATION_REASONS:\s*\[&str;\s*4\]/.test(rust),
   'Rust 定义历史记录字段白名单与 4 种 generationReason');
-ok(/fn validate_history_field/.test(rust) && /HISTORY_LIMIT:\s*usize = 5/.test(rust),
-  'Rust 对两关历史按 HISTORY_LIMIT = 5 校验（与前端同一常量值）');
+ok(/fn validate_history_field/.test(rust) && /HISTORY_LIMIT:\s*usize = 3/.test(rust),
+  'Rust 对两关历史按 HISTORY_LIMIT = 3 校验（与前端同一常量值）');
 ok(/validate_history_field\(obj, "level1RecentGames"\)/.test(rust)
   && /validate_history_field\(obj, "level2RecentGames"\)/.test(rust),
   'Rust 分别校验 level1RecentGames / level2RecentGames（关卡隔离）');
@@ -694,8 +694,8 @@ ok(/let tmp = dir\.join\(format!\(\"\{name\}\.tmp\"\)\)/.test(rust) && /fs::rena
   ok(rustP({ p1: 3 }), 'Rust 规则：只提供 p1 也合法（p2 缺省）');
 }
 
-/* ---- [8c] 生产包零内置音频 / 仅音效 ---- */
-line('\n[8c] 生产包零内置音频 / 音乐只能来自用户导入');
+/* ---- [8c] 内置背景音乐进入所有正式产物 ---- */
+line('\n[8c] 内置背景音乐资源 / 四个产物一致 / 音效链路独立');
 const audioSrc = read('src/game/audio.js');
 const mainSrc = read('src/main.js');
 const renderSrc = read('src/game/render.js');
@@ -703,46 +703,72 @@ const engineSrc = read('src/game/engine.js');
 const prodSrc = mainSrc + audioSrc + renderSrc + engineSrc + read('src/game/config.js');
 const bgmFiles = ['src/game/music.js', 'src/game/music_tracks.js', 'src/game/music_composer.js'];
 ok(bgmFiles.every((f) => !existsSync(ROOT + f)),
-  '生产源码目录已彻底移除内置 BGM 引擎 / 曲谱 / 作曲器（3 个文件均不存在）');
+  '生产源码目录没有旧的即兴作曲器 / 曲谱（3 个文件均不存在）');
 ok(/setEnabled/.test(audioSrc) && /setVolume/.test(audioSrc) && /new AC\(\)/.test(audioSrc),
   '音效引擎保留独立开关 / 音量，并自建唯一 AudioContext');
 ok(/sound\.ensure\(\)/.test(mainSrc) && /首次用户手势/.test(audioSrc),
   '音效遵守自动播放策略：首次用户手势后才创建 AudioContext');
-{
-  const audioExt = /\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i;
-  const skip = new Set(['node_modules', '.build', '.git', 'target-gnu', 'target', '.shots', '.workbuddy', '.probe', 'dist']);
-  const found = [];
-  const walk = (dir, depth) => {
-    if (depth > 4) return;
-    let entries = [];
-    try { entries = readdirSync(dir, { withFileTypes: true }); } catch (e) { return; }
-    for (const e of entries) {
-      if (skip.has(e.name)) continue;
-      const p = join(dir, e.name);
-      if (e.isDirectory()) walk(p, depth + 1);
-      else if (audioExt.test(e.name)) found.push(p);
-    }
-  };
-  walk(ROOT.replace(/\/[A-Za-z]:/, (m) => m.slice(1)).replace(/\/$/, ''), 0);
-  ok(found.length === 0, '工程不含任何内置音频文件（音乐只能由用户导入）' + (found.length ? '：' + found.join(',') : ''));
-}
 ok(!/new Audio\s*\(|new AudioBuffer/.test(audioSrc),
   '音效不加载任何音频文件对象（全部 Web Audio 实时合成）');
-ok(!/\.mp3|\.ogg|\.wav|base64,/.test(prodSrc),
-  '主程序 / 渲染 / 引擎 / 配置源码里没有任何音频文件路径或内嵌 base64 音频');
+{
+  const mf = await import(new URL('./src/game/music_manifest.js', import.meta.url).href);
+  const names = mf.BUILTIN_MUSIC_FILES;
+  ok(names.length === 5, `内置音乐资源 5 首（实测 ${names.length}）`);
+  ok(Object.keys(mf.BUILTIN_MUSIC_MAP).length === 6, '场景映射固定 6 个场景');
+  const expectMap = {
+    title: '标题场景音乐.wav', level1: '第一关场景音乐.wav', level2: '第二关场景音乐.wav',
+    win: '过关场景音乐.wav', lose: '失败场景音乐.wav',
+  };
+  let mapOk = true, srcOk = true, bytes = 0;
+  for (const sc of Object.keys(expectMap)) {
+    const list = mf.BUILTIN_MUSIC_MAP[sc] || [];
+    if (list.length !== 1 || list[0] !== expectMap[sc]) mapOk = false;
+  }
+  if ((mf.BUILTIN_MUSIC_MAP.graduated || []).length !== 0) mapOk = false;
+  for (const n of names) {
+    const src = mf.BUILTIN_MUSIC_SRC[n];
+    if (typeof src !== 'string' || src.indexOf('data:audio/wav;base64,') !== 0 || src.length < 1000) srcOk = false;
+    else bytes += Buffer.from(src.slice(src.indexOf(',') + 1), 'base64').length;
+    const disk = readFileSync(ROOT + 'src/assets/music/' + n);
+    ok(Buffer.from(src.slice(src.indexOf(',') + 1), 'base64').equals(disk),
+      n + ' 内嵌载荷与仓库原文件逐字节一致（未替换 / 未转码 / 未删除）');
+  }
+  ok(mapOk, '5 首分别唯一映射 title/level1/level2/win/lose，graduated 留空');
+  ok(srcOk, '每首都有完整内嵌 data URI（不依赖文件路径）');
+  ok(bytes === mf.MUSIC_RESOURCE_BYTES && mf.MUSIC_RESOURCE_HASH.length === 64,
+    `资源指纹与总字节自洽（${bytes} B / ${mf.MUSIC_RESOURCE_HASH.slice(0, 12)}）`);
+  const merged = mf.mergeMusicMap({ title: ['extra.mp3'] });
+  ok(merged.title.length === 2 && merged.title[0] === '标题场景音乐.wav',
+    '用户导入曲目只追加，不替换 / 删除内置资源');
+}
+ok(/musicPlayer\.unlock\(\)/.test(mainSrc) && /game\.musicBuiltin\s*=\s*true/.test(mainSrc),
+  '首次用户手势解锁背景音乐；内置音乐所有版本可用');
+ok(/mergeMusicMap\(/.test(mainSrc) && /musicPlayer\.setVolume\(/.test(mainSrc),
+  '音乐映射合并 / 音量独立于音效（音效走 sound.setVolume）');
+ok(prodSrc.indexOf('Administrator') < 0 && prodSrc.indexOf('src/assets/music/') < 0,
+  '主程序不引用开发机临时路径或资源目录路径');
 const distNames = ['dist/index.html', 'dist/MahLeMah.html', 'dist/Mah了个Mah.html', 'dist/MahLeMah-legacy.html'];
 const distHtml = distNames.filter((f) => existsSync(ROOT + f)).map((f) => read(f));
 ok(distHtml.length === 4, '四个生产网页版产物齐全（含 IE8 兼容版）');
-const BGM_MARKERS = ['原创即兴', '♪ 换一首', '♪ 本次即兴', 'musicBus', 'trackGain', 'composeLibrary', 'sessionSeed'];
+const BGM_MARKERS = ['原创即兴', '♪ 换一首', '♪ 本次即兴', 'musicBus', 'composeLibrary', 'sessionSeed'];
 for (let i = 0; i < distHtml.length; i++) {
-  const hits = BGM_MARKERS.filter((m) => distHtml[i].indexOf(m) >= 0);
-  ok(hits.length === 0, distNames[i] + ' 不含任何内置背景音乐代码' + (hits.length ? '（残留：' + hits.join(',') + '）' : ''));
-  ok(distHtml[i].indexOf('createOscillator') >= 0 && distHtml[i].indexOf('声音设置') >= 0,
+  const h = distHtml[i];
+  const hits = BGM_MARKERS.filter((m) => h.indexOf(m) >= 0);
+  ok(hits.length === 0, distNames[i] + ' 不含旧的即兴 BGM 引擎' + (hits.length ? '（残留：' + hits.join(',') + '）' : ''));
+  ok(h.indexOf('createOscillator') >= 0 && h.indexOf('声音设置') >= 0,
     distNames[i] + ' 保留音效合成与「声音设置」面板');
+  const payloads = (h.match(/data:audio\/wav;base64,/g) || []).length;
+  ok(payloads >= 5, distNames[i] + ' 内嵌 5 首完整音乐载荷（实测 ' + payloads + '）');
+  let namesOk = true;
+  for (const n of ['标题场景音乐.wav', '第一关场景音乐.wav', '第二关场景音乐.wav', '过关场景音乐.wav', '失败场景音乐.wav']) {
+    if (h.indexOf(n) < 0) namesOk = false;
+  }
+  ok(namesOk, distNames[i] + ' 场景映射与其余版本一致');
+  ok(!/src\s*=\s*["'][^"']+\.(mp3|ogg|wav)/.test(h) && !/Administrator\/Desktop/.test(h),
+    distNames[i] + ' 无外链音频 src / 无开发机路径');
 }
-ok(distHtml.every((h) => !/data:audio\/[a-z0-9]+;base64,[A-Za-z0-9+/=]{200,}/.test(h)
-  && !/src\s*=\s*["'][^"']+\.(mp3|ogg|wav)/.test(h)),
-  '四个产物都不内嵌任何音频资源（无 base64 音频载荷 / 无音频 src）');
+ok(distHtml.every((h) => /musicPlayer\.unlock|unlock\(\)/.test(h) || h.indexOf('__MAH_MUSIC_STATUS__') >= 0),
+  '四个产物都带音乐解锁与状态观测链路');
 
 /* [8c-2] 运行时音频回归 */
 {
@@ -1124,8 +1150,8 @@ ok(/导入 \/ 管理背景音乐/.test(renderSrc) && /清除全部音乐/.test(r
   '音乐面板文案为中文，且提供「导入 / 管理」与「清除全部音乐」');
 ok(/onClose/.test(mainSrc) && /syncMusic\(\)/.test(mainSrc), '面板关闭后立即按新映射恢复播放');
 
-/* ---------------- [14] 统一入口 / 签名 / 五局差异化 ---------------- */
-line('\n[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实运行）');
+/* ---------------- [14] 统一入口 / 签名 / 最近三局差异化 ---------------- */
+line('\n[14] 统一生成入口 / 布局签名 / 最近三局差异化（真实运行）');
 {
   const cases = ['', 'abc', 'MahLeMah', '0:1:2|3:4:5', '中文测试', 'x'.repeat(1000)];
   let shaOk = true;
@@ -1157,7 +1183,7 @@ line('\n[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实�
       `L${lv} 同档位不同 seed 几何不同（sim ${sameSim.toFixed(3)} < 1）`);
   }
 
-  ok(MAX_ATTEMPTS === 50 && HISTORY_LIMIT === 5 && GENERATION_REASONS.length === 4,
+  ok(MAX_ATTEMPTS === 50 && HISTORY_LIMIT === 3 && GENERATION_REASONS.length === 4,
     '重试上限 50 / 历史窗口 5 / 4 种 generationReason');
   ok(sanitizeRecord({ gameId: 'x' }) === null && sanitizeRecord(null) === null,
     '损坏的历史记录被丢弃而不是抛异常');
@@ -1183,7 +1209,7 @@ line('\n[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实�
       'previousFrom 返回本关历史与派生排除集');
   }
 
-  // 统一入口：两关各自连续 6 局，滑动窗口逐对检查 sim 与几何
+  // 统一入口：两关各自连续 6 局，按本轮规格只与「最近三局」逐对检查 sim 与几何
   for (const lv of [1, 2]) {
     const g = new Game(null);
     let save = { level1RecentGames: [], level2RecentGames: [] };
@@ -1204,7 +1230,7 @@ line('\n[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实�
         break;
       }
       boards.push(r.data.cards);
-      const prevBoards = boards.slice(0, -1);
+      const prevBoards = boards.slice(Math.max(0, boards.length - 1 - HISTORY_LIMIT), -1);
       const maxSim = prevBoards.length
         ? Math.max(...prevBoards.map((b) => layoutSimilarity(r.data.cards, b)))
         : 0;
@@ -1221,10 +1247,10 @@ line('\n[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实�
       if (historyFor(r.nextSave, lv).length > HISTORY_LIMIT) { allOk = false; detail.push('历史超出上限'); }
       save = r.nextSave;
     }
-    ok(allOk, `L${lv} 连续 6 局统一入口：与最近五局 sim < 0.60、几何不重复，且全部通过校验`
+    ok(allOk, `L${lv} 连续 6 局统一入口：与最近三局 sim < 0.60、几何不重复，且全部通过校验`
       + (detail.length ? '：' + detail.join('；') : ''));
     ok(historyFor(save, lv).length === Math.min(6, HISTORY_LIMIT),
-      `L${lv} 历史保留 ${HISTORY_LIMIT} 条（实测 ${historyFor(save, lv).length}）`);
+      `L${lv} 历史保留最近 ${HISTORY_LIMIT} 局（实测 ${historyFor(save, lv).length}）`);
   }
 
   // 50 次上限失败路径：明确报错，绝不自动接受重复牌局
@@ -1593,13 +1619,13 @@ line('\n[18] 文件名净化 / musicMap 清洗 / MusicPlayer 行为（第 4.4 / 
     ok(none.available === false && none.persistent === false, 'none 适配器明确不可用、不持久');
   }
 
-  // MusicPlayer 行为
+  // MusicPlayer 行为（内置音乐 + 自动播放解锁 + 单实例 + 失败处理）
   {
     const created = [];
     class FakeAudio {
       constructor() {
         this.volume = 1; this.paused = true; this.loop = false; this.src = '';
-        this.attr = {};
+        this.currentTime = 0; this.muted = false; this.attr = {};
         created.push(this);
       }
       setAttribute(k, v) { this.attr[k] = v; }
@@ -1608,63 +1634,74 @@ line('\n[18] 文件名净化 / musicMap 清洗 / MusicPlayer 行为（第 4.4 / 
       pause() { this.paused = true; }
       load() {}
     }
-    const urls = { 'a.mp3': 'blob:a', 'b.mp3': 'blob:b', '标题.wav': 'blob:c' };
-    const store = {
-      kind: 'web', available: true, persistent: true,
-      getUrl(name, cb) { cb(urls[name] || null); },
-    };
     globalThis.Audio = FakeAudio;
-    const p = new MusicPlayer({ store, fadeMs: 0, volume: 0.5 });
+    const builtin = {
+      map: { title: ['标题.wav'], level1: ['一关.wav'], win: ['过关.wav'] },
+      src: {
+        '标题.wav': 'data:audio/wav;base64,AAAA',
+        '一关.wav': 'data:audio/wav;base64,BBBB',
+        '过关.wav': 'data:audio/wav;base64,CCCC',
+      },
+    };
+    const p = new MusicPlayer({ builtin, fadeMs: 0, volume: 0.5 });
+    ok(p.filesFor('title').length === 1 && p.filesFor('graduated').length === 0,
+      '内置映射按场景生效，无曲目场景不播放');
     ok(p.playScene('title') === false && created.length === 0,
-      '没有任何导入音乐时完全静音（不创建 audio 元素）');
-    p.setMap({ title: ['a.mp3', 'b.mp3'] });
-    ok(p.playScene('title') === true && created.length === 1, '有音乐时才创建 audio 元素');
-    const el = created[0];
-    ok(el.loop === true && (el.src === 'blob:a' || el.src === 'blob:b'),
-      'audio 元素单曲循环且 src 来自 store');
-    ok(el.attr['data-track'] === (el.src === 'blob:a' ? 'a.mp3' : 'b.mp3'),
-      '记录当前曲目名（供面板显示）');
-    // 等淡入完成（fadeMs=0 → 首个 40ms tick 即到 100%）
-    await new Promise((r) => setTimeout(r, 120));
-    ok(Math.abs(el.volume - 0.45) < 1e-6, `淡入目标 = volume×0.9（实测 ${el.volume.toFixed(3)}）`);
-    // 同场景不重复挑同一首
-    let last = p.lastPick.title;
-    let repeat = 0;
-    for (let i = 0; i < 40; i++) {
-      const n = p.pick('title');
-      if (n === last) repeat++;
-      last = n;
-    }
-    ok(repeat === 0, `同一场景多首时不会连续重复（40 次抽到重复 ${repeat} 次）`);
-    // 切场景交叉淡化：旧曲被暂停并清空 src
-    p.setMap({ title: ['a.mp3'], win: ['b.mp3'] });
-    p.playScene('win');
-    await new Promise((r) => setTimeout(r, 120));
-    ok(el.paused === true && el.src === '', '切场景后旧曲淡出并被释放（pause + 清空 src）');
-    const el2 = created[created.length - 1];
-    ok(el2 !== el && el2.src === 'blob:b' && el2.loop === true, '新场景用另一个 audio 槽播放新曲');
-    // 关闭音乐
+      '首次用户手势前不创建 / 不播放 audio（自动播放限制）');
+    ok(p.unlock() === true, '首次点击完成背景音乐解锁');
+    await new Promise((r) => setTimeout(r, 20));
+    ok(created.length === 1 && created[0].src === builtin.src['标题.wav'],
+      '解锁后自动按标题场景加载内置 data URI（不依赖 store / 文件路径）');
+    ok(p.status().playing === true && p.status().instances === 1,
+      '真实播放状态：恰好 1 个实例在播');
+    ok(created[0].loop === true && Math.abs(created[0].volume - 0.45) < 1e-6,
+      '单曲循环 + 淡入目标 = volume×0.9（与音效音量互不干扰）');
+    p.setVolume(0.2);
+    ok(Math.abs(p.volume - 0.2) < 1e-6 && Math.abs(created[0].volume - 0.18) < 1e-6,
+      '音乐音量独立可调');
+    p.setMuted(true);
+    ok(created[0].muted === true, '音乐静音独立于音效');
+    p.setMuted(false);
+    p.playScene('level1');
+    await new Promise((r) => setTimeout(r, 20));
+    ok(created.length === 1 && created[0].src === builtin.src['一关.wav'],
+      '切场景复用同一个实例，旧曲立即停止');
+    ok(p.status().instances === 1 && p.status().scene === 'level1',
+      '任意时刻最多一个背景音乐实例（禁止多实例同时播放）');
+    p.setMap({ title: ['extra.mp3'] });
+    ok(p.filesFor('title').length === 2 && p.filesFor('title')[0] === '标题.wav',
+      '用户导入曲目只追加，不替换 / 删除内置资源');
     p.setEnabled(false);
-    ok(p.current() === null || p.current().paused === true, '关闭音乐后立即停止播放');
+    ok(p.status().playing === false && p.status().instances === 0, '关闭音乐立即停止播放');
     p.setEnabled(true);
-    ok(p.playScene('win') === true, '重新开启后按当前场景恢复播放');
-    p.stop();
-    ok(p.scene === null, 'stop() 清空场景状态');
+    ok(p.status().playing === true, '重新开启按当前场景恢复播放');
+    let rejectOnce = true;
+    FakeAudio.prototype.play = function () {
+      if (rejectOnce) { rejectOnce = false; return Promise.reject(new Error('NotAllowedError')); }
+      this.paused = false; return Promise.resolve();
+    };
+    const p2 = new MusicPlayer({ builtin, fadeMs: 0, volume: 0.5 });
+    p2.unlock();
+    p2.playScene('win', true);
+    await new Promise((r) => setTimeout(r, 30));
+    ok(p2.playErrors >= 1 && p2.lastError.indexOf('PLAY_REJECTED') >= 0,
+      'play() 被拒绝时记录错误并降级，不把异常抛进游戏');
+    p2.dispose();
     p.dispose();
     delete globalThis.Audio;
   }
 }
 
-/* ---------------- [19] 五局滑动窗口统计（每关 200 局） ---------------- */
-line('\n[19] 五局滑动窗口差异化统计（每关 200 局，第 2.4 节）');
+/* ---------------- [19] 最近三局差异化统计（每关 100 局） ---------------- */
+line('\n[19] 最近三局差异化统计（每关 100 局）');
 {
-  const NGAME = 200;
+  const NGAME = 100;
   const simsByLevel = {};
   for (const lv of [1, 2]) {
     const g = new Game(null);
     let save = { level1RecentGames: [], level2RecentGames: [] };
     const boards = [];
-    let retries = 0, genFail = 0, windowPairs = 0;
+    let retries = 0, genFail = 0, windowPairs = 0, tileBad = 0, sigBad = 0;
     const sims = [];
     let worst = 0, worstPair = null;
     const tStart = Date.now();
@@ -1685,8 +1722,16 @@ line('\n[19] 五局滑动窗口差异化统计（每关 200 局，第 2.4 节）
         }
         save = r.nextSave;
         retries += r.retries;
-        boards.push({ id: r.record.gameId, cards: r.data.cards });
-        // 最近 5 局滑窗：与窗口内其余各局两两比较
+        boards.push({
+          id: r.record.gameId, cards: r.data.cards,
+          tiles: r.data.cards.length, sig: r.signature.layoutSignature,
+        });
+        // 最近 3 局滑窗：牌数 / 布局签名 / 几何相似度三重比较
+        const cur = boards[boards.length - 1];
+        for (let w = Math.max(0, boards.length - 1 - HISTORY_LIMIT); w < boards.length - 1; w++) {
+          if (boards[w].tiles === cur.tiles) tileBad++;
+          if (boards[w].sig === cur.sig) sigBad++;
+        }
         const win = boards.slice(Math.max(0, boards.length - HISTORY_LIMIT));
         for (let a = 0; a < win.length; a++) {
           for (let b = a + 1; b < win.length; b++) {
@@ -1705,15 +1750,17 @@ line('\n[19] 五局滑动窗口差异化统计（每关 200 局，第 2.4 节）
     simsByLevel[lv] = { sims, mean, p95: quantile(sorted, 0.95), max: worst, retries, genFail, windowPairs };
     ok(genFail === 0, `L${lv} ${NGAME} 局全部生成成功（失败 ${genFail}）`);
     ok(windowPairs > 0 && worst < SIMILARITY_THRESHOLD,
-      `L${lv} 任意五局滑窗内两两 sim < 0.60（共 ${windowPairs} 对，最大 ${worst.toFixed(4)}）`);
-    ok(genFail === 0 && windowPairs >= (NGAME - HISTORY_LIMIT) * 10,
-      `L${lv} 窗口对数 ≥ ${(NGAME - HISTORY_LIMIT) * 10}（实测 ${windowPairs}）`);
+      `L${lv} 任意三局滑窗内两两 sim < 0.60（共 ${windowPairs} 对，最大 ${worst.toFixed(4)}）`);
+    ok(tileBad === 0, `L${lv} 每局总牌数与最近三局都不同（冲突 ${tileBad}）`);
+    ok(sigBad === 0, `L${lv} 每局布局签名与最近三局都不同（冲突 ${sigBad}）`);
+    ok(genFail === 0 && windowPairs >= (NGAME - HISTORY_LIMIT) * 3,
+      `L${lv} 窗口对数 ≥ ${(NGAME - HISTORY_LIMIT) * 3}（实测 ${windowPairs}）`);
     line(`   L${lv} ${NGAME} 局 · sim 均值 ${mean.toFixed(3)} · P95 ${quantile(sorted, 0.95).toFixed(3)}`
       + ` · 最大 ${worst.toFixed(4)} · 重试合计 ${retries} 次 · 窗口对 ${windowPairs}`
       + ` · 耗时 ${((Date.now() - tStart) / 1000).toFixed(1)}s`);
     if (worstPair) line(`      最大相似度出现在 ${worstPair[0]} / ${worstPair[1]}`);
   }
-  // 五局窗口邻接对（相邻两局）单独统计，供报告使用
+  // 三局窗口 P95 单独统计，供报告使用
   for (const lv of [1, 2]) {
     const s = simsByLevel[lv];
     ok(s.p95 < SIMILARITY_THRESHOLD, `L${lv} 滑窗 sim 的 P95 < 0.60（实测 ${s.p95.toFixed(4)}）`);

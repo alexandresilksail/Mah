@@ -2,11 +2,13 @@
 
 > 一款原创的「堆叠卡牌三消」休闲小游戏：点击未被遮挡的麻将牌收入底部槽位，三张相同自动消除。
 > Tauri 2 + 原生 HTML/CSS/JS + Canvas，全部美术与音效都由代码实时生成。
-> **最终生产版只提供音效，不含背景音乐**（2026-11-10 起）。
+> **2026-11-12 起内置 5 首用户背景音乐**（data URI 打进所有产物，离线可播；音效仍完全独立）。
 > **2026-11-11 随机生成系统重构**：动态档位 + 每关独立「最近三局」差异化约束 +
 > 统一生成入口 `createNewGame()` + 基于实际几何的 SHA-256 布局签名 + 开发调试面板。
 > `dist/MahLeMah.html` 与 `dist/MahLeMah-legacy.html` 已由当前 `src/` 重新构建，
 > 一致性由 `node test-build-consistency.js` 逐字节验证。
+> **2026-11-12 本轮**：背景音乐真正集成并真机验证播放、第一关布局按包围盒动态居中、
+> 双关卡最近三局「牌数 + 布局签名 + 几何相似度」三重差异化（历史窗口回到 3 局）。
 
 ---
 
@@ -127,7 +129,7 @@ L2 有 9 个不同牌数（id 3 与 id 7 同为 312 且几何相同，被统一�
 
 | 签名 | 纳入内容 | 用途 |
 |---|---|---|
-| `geometrySignature` | 每张牌标准化坐标 / 层级 / 区域 / z 全序、遮挡关系、可操作区与被遮挡区、层结构与区域结构 | **布局差异化的硬判定**；同档位换 seed 必相同 |
+| `geometrySignature` | 每张牌标准化坐标 / 层级 / 区域 / z 全序、遮挡关系、可操作区与被遮挡区、层结构与区域结构 | **布局差异化的硬判定**；几何由 seed 程序化生成，同档位换 seed 必不同 |
 | `distributionSignature` | 每种牌型张数 + 沿 z 全序的牌型序列 | 独立记录，不冒充几何变化 |
 | `layoutSignature` | SHA-256(geometry + distribution) | 主签名，满足「纳入布局相关牌型分布信息」 |
 
@@ -260,7 +262,7 @@ mah-le-mah/
 │   └── game/
 │       ├── config.js             # 单一常量源：66×88 / 半格晶格 / 槽位 / 遮挡阈值 / 按钮坐标
 │       ├── tile_types.js         # ★ v2.0.0：16 种牌型的唯一注册表（ID/名称/配色）
-│       ├── layout_templates.js    # ★ v2.0.0：两关独立布局模板 + 严格校验（validate/clamp 分离）
+│       ├── music_manifest.js      # ★ 本轮：内置 5 首音乐清单（data URI）+ 统一场景映射
 │       ├── layout.js             # 模板 → 牌坐标；几何遮挡判定；peelOrder
 │       ├── generator.js          # 漏斗发牌 / 可解性证书 / 六策略机器人模拟
 │       ├── seed_pool.js          # 离线验收 seed 池（L2 用）
@@ -354,7 +356,7 @@ cd src && python -m http.server 8765
 每种牌型在两关里 ID 与配色完全一致；缩小到手机尺寸靠「色相 + 图案形状」双重区分。
 L1 每种 3 张（16×3=48）；L2 各类型组数不同（共 80 组 ×3 = 240）。
 
-### 4.1 布局模板系统（`src/game/layout_templates.js`）
+### 4.1 布局由 seed 程序化生成（旧 `layout_templates.js` 已删除）
 
 > **历史数据标注**：本节的 `L1_TUTORIAL 48 张 / L2_MULTI_ZONE 240 张` 是
 > **无档位兼容路径**（`levelParams(level)` 不传 `profileId`）的旧版静态模板，
@@ -418,52 +420,59 @@ L1 贪心 98.7% 通关，L2 贪心 72.7% / 前瞻 91.2% 通关，random 在两�
 
 ---
 
-## 5. 音效系统（最终生产版：仅音效，无背景音乐）
+## 5. 音效与内置背景音乐（2026-11-12 起）
 
-**决定（2026-11-10）**：生产包取消全部背景音乐，只保留音效。音乐引擎
-（`music.js` / `music_tracks.js` / `music_composer.js`）已从生产源码中整体删除，
-网页版、桌面版、安装包都不会加载或播放任何 BGM；设置面板与标题页也不再出现音乐开关、
-音量条、「换一首」和曲目信息。项目至此冻结，不再迭代音频方向。
+音效与音乐是**两条完全独立的链路**：音效由 Web Audio API 实时合成、自建唯一
+AudioContext；音乐只用一个 `HTMLAudioElement`。点击音效不会被音乐加载 / 淡入拖慢，
+音量、开关、静音各自独立。
 
-全部音效由 Web Audio API **实时合成**，工程内零音频文件，不加载任何外部音频素材。
+### 内置音乐资源
 
-| 文件 | 职责 |
-|---|---|
-| `src/game/audio.js` | **唯一音频模块**：自建 AudioContext，合成点击 / 拾取 / 消除 / 道具 / 胜负反馈音 |
-| `src/main.js` | 首次用户手势解锁音效；音效开关与音量读写存档 |
-| `src/game/render.js` | 「声音设置」面板（音效开关 + 音量）、标题页音效提示 |
+| 场景 | 曲目 | 来源 |
+|---|---|---|
+| `title` 标题页 | 标题场景音乐.wav | 用户提供的 5 个 wav，原文件保留在 `src/assets/music/` |
+| `level1` 第一关 | 第一关场景音乐.wav | 同上 |
+| `level2` 第二关 | 第二关场景音乐.wav | 同上 |
+| `win` 胜利 | 过关场景音乐.wav | 同上 |
+| `lose` 失败 | 失败场景音乐.wav | 同上 |
+| `graduated` 全部通关 | （无内置曲目，静音） | 可后续导入 |
 
-### 音频链路与行为
+`tools/gen_music_manifest.mjs` 用**现有的** `matchScene()` 按文件名做 exact 匹配，
+生成 `src/game/music_manifest.js`：5 首 wav 以 `data:audio/wav;base64,` 内嵌，
+所有运行版本（网页版 `index.html`、独立 `MahLeMah.html`、中文名副本、
+`MahLeMah-legacy.html`、Tauri 的 `src/` 前端）共用同一份文件与同一份映射。
+产物不含外部音频 src、不依赖开发机路径、不发起网络请求；Tauri CSP 的
+`media-src` 已放行 `data:` / `blob:`（旧值 `none` 会拦住所有音频）。
+用户后来通过「导入 / 管理背景音乐」加入的曲目只追加，不替换 / 删除内置资源。
+
+### 播放链路
 
 ```
-首次 pointerdown / keydown
-  → Sound.ensure() 自建唯一 AudioContext
-  → master(0.10 × sfxVol) → 1600Hz 高通 → destination
+首次 pointerdown / keydown / touchstart
+  → Sound.ensure()（音效解锁）
+  → MusicPlayer.unlock()（音乐解锁）→ 自动按当前场景播放
+之后每帧 syncMusic()：sceneOf(game) 变化时 playScene(scene)
 ```
 
-- 音源集中在 1.8–4.2kHz、时长 20–110ms，做成轻巧的「tick / tap」反馈；
-- 音效独立开关 `soundOn` 与独立音量 `sfxVol`（0~1），设置写入存档 `sound` / `sfxVol`；
-- 全链路 `try/catch`：AudioContext 不可用只是无声，不会白屏；
-- 无 `setInterval` 调度器、无循环播放、无后台常驻音源。
-
-旧存档中的 `music` / `musicVol` 字段已废弃，读入时忽略；Rust 存档白名单仍保留这两个键，
-保证旧档不会被判为非法。
-
-### 为什么移除 BGM
-
-此前几版尝试了分层编曲、程序化即兴曲库、点击零干扰隔离，仍有「音乐质量不佳」「点击与
-音乐互相干扰」的反馈。最终决定**直接取消背景音乐**，只保留游戏中实际需要、且用户没有
-异议的点击 / 消除反馈音。这样既没有混音冲突，也不涉及任何第三方旋律的版权边界问题。
+- 首次点击前不创建、不播放 audio（遵守浏览器自动播放限制）；
+- `playScene()` 先停旧曲再起新曲，**任意时刻最多一个实例**，禁止双曲重叠；
+- 600ms 淡入、单曲循环；同场景多首随机且不连续重复；
+- 加载 / 解码 / `play()` 被拒绝全部捕获：记录 `lastError`，自动尝试同场景下一首，
+  整场失败才静音，不让异常冒泡进游戏；
+- 暂停：现有配置没有 `pause` 场景，沿用当前关卡曲目（不误切回标题曲）；
+- `window.__MAH_MUSIC_STATUS__()` 暴露真实播放状态（paused / currentTime / 实例数 /
+  当前曲目），供调试面板与真机验证读取。
 
 ### 验收
 
-`test.js` 的 `[8b] / [8c]` 逐项断言：生产源码目录不存在任何 BGM 模块、入口与渲染层无音乐
-引用与按钮、四个生产 HTML 均不含 BGM 标记且保留音效合成、音效自建唯一 AudioContext、
-`master → 高通 → destination` 链路正确、独立开关与音量生效、无任何循环定时器。
+- `node test-music-playback.js`：69 项模拟音频 + 四版本集成断言（含 5 首载荷与 manifest 逐字节一致）；
+- `node tools/music_real_playback.mjs`：**Edge 真实鼠标解锁 + `currentTime` 实测前进**，
+  网页版 / 独立 HTML 版 / ES5 legacy 版共 54/54 通过；
+- `test.js [8c]` 与 `test-build-consistency.js [6]` 检查 4 个产物的内嵌载荷、
+  场景映射一致性、无外链音频、资源指纹。
 
-真机（headless Edge）实测：启动后 `AudioContext` 创建数 **0**、`setInterval` 数 **0**、
-`window.__mah` 无 `music` 实例；点击「开始游戏」后仅创建 1 个 AudioContext、产生 1 个
-音效振荡器、仍无任何定时器，并正常进入游戏。
+> 桌面版 exe / Windows 安装版因本机 Rust 编译被系统策略拒绝（build script
+> `os error 5`）**未重建**，其真机播放**未运行**，见 `reports/FINAL_ACCEPTANCE.md`。
 
 ---
 

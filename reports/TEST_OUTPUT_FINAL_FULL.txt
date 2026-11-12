@@ -1,5 +1,5 @@
 ============================================================================
- MahLeMah v2.0.0 验证 · seed 驱动布局 / 五局差异化 / 六机器人难度 / 用户导入 BGM
+ MahLeMah v2.0.0 验证 · 内置背景音乐 / 第一关布局居中 / 双关最近三局差异化 / 六机器人难度
 ============================================================================
  Node v22.22.2
 
@@ -14,7 +14,7 @@
    L2 包围盒最小 660×616 · 可点 21~25 · 顶部 3~5 列 / 中段 8~10 列 / 核心 4~5 列 × ≤4 行
 
 [3b] 第一关 seed 驱动布局：紧凑堆 / 每层连通团块 / 列数 5–7 随机（30 seed × 4 档位）
-   L1 最大包围盒 528×528 · 可点 14~33（每层团块连通，整堆亦单连通）
+   L1 最大包围盒 528×616 · 可点 15~42（每层团块连通，整堆亦单连通）
 
 [3c] layoutSimilarity 纯函数（第 2.2 节）
 
@@ -43,12 +43,12 @@
 
 [8b] Rust 存档加固 / p1-p2 / musicMap 白名单 / 音乐命令
 
-[8c] 生产包零内置音频 / 音乐只能来自用户导入
+[8c] 内置背景音乐资源 / 四个产物一致 / 音效链路独立
 
 [9] 运行时生成耗时
-   L2 分档生成 20 次 · 平均 5.40 ms/局 · L1 平均 15.35 ms/局
-  ✓ L2 单局生成 < 400ms（实测 5.40ms）
-  ✓ L1 单局生成 < 400ms（实测 15.35ms，含几何 × 洗牌拒采样）
+   L2 分档生成 20 次 · 平均 5.75 ms/局 · L1 平均 5.50 ms/局
+  ✓ L2 单局生成 < 400ms（实测 5.75ms）
+  ✓ L1 单局生成 < 400ms（实测 5.50ms，含几何 × 洗牌拒采样）
 
 [10] 分档关卡构造与几何验收（10 个 L2 档位 × 40 个池内 seed + 4 个 L1 档位）
    L2-0 N=28 T=15 张=321 · 可点 22~25 · 压深 ≥7.95 · 链 ≥27 · 全局层 36
@@ -61,7 +61,7 @@
    L2-7 N=27 T=14 张=312 · 可点 22~25 · 压深 ≥7.66 · 链 ≥27 · 全局层 35
    L2-8 N=15 T=15 张=192 · 可点 21~25 · 压深 ≥4.20 · 链 ≥15 · 全局层 23
    L2-9 N=20 T=15 张=255 · 可点 22~25 · 压深 ≥5.61 · 链 ≥18 · 全局层 28
-   几何验收耗时 4.6s
+   几何验收耗时 4.2s
 
 [11] 分档机器人难度验收（每档 5 种机器人各 400 局，池内种子循环 10 轮）
    说明：greedy 单独用于第 1.4 节「4 个第一关档位 greedy ≥95%」，L2 的 5 种机器人取其余 5 种。
@@ -93,41 +93,41 @@
      montecarlo    4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
      search        4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
      合计 20000 局 · 通关 0 · 通关率 0.00% · 95% Wilson 上界 0.02% · 阈值 ≤1% ✓
-   机器人仿真耗时 128.8s
+   机器人仿真耗时 145.2s
 
 [11b] 4 个第一关档位 greedy 通关率 ≥95%（每档 400 局）
    L1-0 2 层 / 8 种 / 24 张 · greedy 100.00% (400/400)
    L1-1 3 层 / 10 种 / 30 张 · greedy 100.00% (400/400)
-   L1-2 3 层 / 12 种 / 36 张 · greedy 100.00% (400/400)
-   L1-3 3 层 / 16 种 / 48 张 · greedy 97.50% (390/400)
+   L1-2 3 层 / 12 种 / 36 张 · greedy 99.75% (399/400)
+   L1-3 3 层 / 16 种 / 48 张 · greedy 99.00% (396/400)
 
 [12] rollProfile / 100 次重开 / 通关流程 / 旧存档
    L2 100 次重开：档位变化 100/100 · seed 命中当前档位池 100/100
    开关 true：档位保持 100/100 · seed 变化 100/100
-   通关存档 {"v":4,"level":1,"best":2,"sound":true,"sfxVol":1,"music":true,"musicVol":0.6,"musicMap":{},"p1":0,"p2":0,"level1RecentGames":[],"level2RecentGames":[]} · startNewRun 档位 0/0 → 2/9
+   通关存档 {"v":4,"level":1,"best":2,"sound":true,"sfxVol":1,"music":true,"musicVol":0.6,"musicMap":{},"p1":0,"p2":0,"level1RecentGames":[],"level2RecentGames":[]} · startNewRun 档位 0/0 → 2/4
 
 [13] 界面文案与源码一致性
 
-[14] 统一生成入口 / 布局签名 / 最近五局差异化（真实运行）
-[mah] level=1 profileId=1 seed=3583110143 gameId=g1-mwd1j8jg-1-s52k0t-application_restart reason=application_restart tiles=30 sig=02c53d803ab7
-[mah] level=1 profileId=3 seed=1832683756 gameId=g1-mwd1j8mn-2-1diog2c-title_screen_restart reason=title_screen_restart tiles=48 sig=f47c0741f07d
-[mah] level=1 profileId=2 seed=3084516507 gameId=g1-mwd1j8q7-3-1a4rvmx-failure_restart reason=failure_restart tiles=36 sig=6425b9197801
-[mah] level=1 profileId=3 seed=1700608732 gameId=g1-mwd1j8qu-4-sjtg7q-new_game reason=new_game tiles=48 sig=edf216f1f019
-[mah] level=1 profileId=2 seed=2155418993 gameId=g1-mwd1j8rh-5-tfvgon-application_restart reason=application_restart tiles=36 sig=f09a3935c04f
-[mah] level=1 profileId=3 seed=2488091979 gameId=g1-mwd1j8tb-6-u1vgr7-title_screen_restart reason=title_screen_restart tiles=48 sig=92dda40a2ee8
-[mah] level=2 profileId=8 seed=1226340433 gameId=g2-mwd1j8tl-7-1a044nf-application_restart reason=application_restart tiles=192 sig=cbc07d9d6b1a
-[mah] level=2 profileId=1 seed=4056623907 gameId=g2-mwd1j8u4-8-1kb58yg-title_screen_restart reason=title_screen_restart tiles=282 sig=29221ec82a00
-[mah] level=2 profileId=4 seed=2475595039 gameId=g2-mwd1j8us-9-hvuvuj-failure_restart reason=failure_restart tiles=273 sig=12fe864103c0
-[mah] level=2 profileId=9 seed=3198646230 gameId=g2-mwd1j8vi-a-2drw9z-new_game reason=new_game tiles=255 sig=2067f30179fc
-[mah] level=2 profileId=0 seed=3724849645 gameId=g2-mwd1j8wj-b-16v86mf-application_restart reason=application_restart tiles=321 sig=18070898cf95
-[mah] level=2 profileId=5 seed=448786590 gameId=g2-mwd1j8xf-c-13wi7gg-title_screen_restart reason=title_screen_restart tiles=291 sig=45d8713e87d2
-[mah] level=1 profileId=3 seed=2350975057 gameId=g1-mwd1j8yl-e-y998ft-new_game reason=new_game tiles=48 sig=bf00cc35ac27
-[mah] level=1 profileId=0 seed=2481792245 gameId=g1-mwd1j8ze-f-x6kycd-new_game reason=new_game tiles=24 sig=4a34b17fb21c
-[mah] level=1 profileId=1 seed=341889821 gameId=g1-mwd1j8zj-g-1h9542n-new_game reason=new_game tiles=30 sig=7b40f4645cba
-[mah] level=1 profileId=3 seed=304759755 gameId=g1-mwd1j92g-h-1dvew6z-new_game reason=new_game tiles=48 sig=a059f784f81e
-[mah] level=1 profileId=2 seed=1267500761 gameId=g1-mwd1j950-i-1cb5e5p-new_game reason=new_game tiles=36 sig=893da7266c89
-[mah] level=1 profileId=0 seed=721078769 gameId=g1-mwd1j955-j-49day7-new_game reason=new_game tiles=24 sig=2a5d49214d05
-[mah] level=1 profileId=3 seed=507122413 gameId=g1-mwd1j997-k-b73rbg-new_game reason=new_game tiles=48 sig=bb51cb5733ff
+[14] 统一生成入口 / 布局签名 / 最近三局差异化（真实运行）
+[mah] level=1 profileId=1 seed=368301188 gameId=g1-mwdm7xzk-1-1opat0c-application_restart reason=application_restart tiles=30 sig=944f9102c8ab
+[mah] level=1 profileId=3 seed=2775674587 gameId=g1-mwdm7y05-2-1b0rvmc-title_screen_restart reason=title_screen_restart tiles=48 sig=a2ec458289c5
+[mah] level=1 profileId=0 seed=290517508 gameId=g1-mwdm7y0m-3-9buu9o-failure_restart reason=failure_restart tiles=24 sig=33bfd0afacaf
+[mah] level=1 profileId=2 seed=3783284472 gameId=g1-mwdm7y0u-4-a5eb9z-new_game reason=new_game tiles=36 sig=307be56b5437
+[mah] level=1 profileId=1 seed=187815967 gameId=g1-mwdm7y11-5-y7i5qj-application_restart reason=application_restart tiles=30 sig=81157446437a
+[mah] level=1 profileId=3 seed=2710463378 gameId=g1-mwdm7y1e-6-1ugford-title_screen_restart reason=title_screen_restart tiles=48 sig=c25e8a80bb27
+[mah] level=2 profileId=8 seed=1761543875 gameId=g2-mwdm7y1o-7-fm8f98-application_restart reason=application_restart tiles=192 sig=4b7f5ea2c7cd
+[mah] level=2 profileId=7 seed=450786596 gameId=g2-mwdm7y2e-8-2atvsh-title_screen_restart reason=title_screen_restart tiles=312 sig=4d110c279a57
+[mah] level=2 profileId=6 seed=3343572746 gameId=g2-mwdm7y34-9-s3cs3i-failure_restart reason=failure_restart tiles=261 sig=26883c35b198
+[mah] level=2 profileId=9 seed=304860077 gameId=g2-mwdm7y3s-a-wfgrji-new_game reason=new_game tiles=255 sig=6982c0d098e0
+[mah] level=2 profileId=5 seed=2568018909 gameId=g2-mwdm7y4k-b-14305nj-application_restart reason=application_restart tiles=291 sig=1e1cb75733d3
+[mah] level=2 profileId=8 seed=656215782 gameId=g2-mwdm7y59-c-zj6g22-title_screen_restart reason=title_screen_restart tiles=192 sig=9fa073a28f09
+[mah] level=1 profileId=2 seed=3396449990 gameId=g1-mwdm7y5x-e-pvzfw6-new_game reason=new_game tiles=36 sig=7daeb993913c
+[mah] level=1 profileId=0 seed=1780065920 gameId=g1-mwdm7y68-f-2bai2-new_game reason=new_game tiles=24 sig=0aac4fe321bf
+[mah] level=1 profileId=3 seed=4216785902 gameId=g1-mwdm7y70-g-ivkjli-new_game reason=new_game tiles=48 sig=350bab6b7aac
+[mah] level=1 profileId=1 seed=754071919 gameId=g1-mwdm7y7m-h-1nj36xd-new_game reason=new_game tiles=30 sig=9dfc798e4cc6
+[mah] level=1 profileId=2 seed=1825651910 gameId=g1-mwdm7y7v-i-li4dxt-new_game reason=new_game tiles=36 sig=1a2ef63d33d6
+[mah] level=1 profileId=0 seed=1565367903 gameId=g1-mwdm7y81-j-12j7fpr-new_game reason=new_game tiles=24 sig=fce700d42010
+[mah] level=1 profileId=3 seed=4129641049 gameId=g1-mwdm7y8n-k-1t29w04-new_game reason=new_game tiles=48 sig=5e706b529f60
 
 [15] matchScene 表驱动（第 4.2 节）
 
@@ -139,12 +139,12 @@
 
 [18] 文件名净化 / musicMap 清洗 / MusicPlayer 行为（第 4.4 / 4.5 节）
 
-[19] 五局滑动窗口差异化统计（每关 200 局，第 2.4 节）
-   L1 200 局 · sim 均值 0.395 · P95 0.572 · 最大 0.5998 · 重试合计 260 次 · 窗口对 1970 · 耗时 7.2s
-      最大相似度出现在 g1-mwd1j9ip-p-1xnohwh-application_restart / g1-mwd1j9jp-s-lrszum-new_game
-   L2 200 局 · sim 均值 0.396 · P95 0.539 · 最大 0.5978 · 重试合计 47 次 · 窗口对 1970 · 耗时 5.7s
-      最大相似度出现在 g2-mwd1jfid-6s-1f9hdps-new_game / g2-mwd1jfk6-6u-1saixn6-title_screen_restart
+[19] 最近三局差异化统计（每关 100 局）
+   L1 100 局 · sim 均值 0.261 · P95 0.522 · 最大 0.5956 · 重试合计 8 次 · 窗口对 295 · 耗时 1.2s
+      最大相似度出现在 g1-mwdm7yeq-s-1smz7y-new_game / g1-mwdm7yf2-t-1szhkpk-application_restart
+   L2 100 局 · sim 均值 0.385 · P95 0.523 · 最大 0.5775 · 重试合计 1 次 · 窗口对 295 · 耗时 2.6s
+      最大相似度出现在 g2-mwdm7zmb-3v-1wdzoa8-failure_restart / g2-mwdm7zn0-3w-b6vqne-new_game
 
 ============================================================================
- 断言：通过 585 项，失败 0 项
+ 断言：通过 616 项，失败 0 项
 ============================================================================

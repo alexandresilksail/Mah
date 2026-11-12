@@ -50,8 +50,8 @@ const RECORD_FIELDS: [&str; 12] = [
 const GENERATION_REASONS: [&str; 4] = [
     "application_restart", "title_screen_restart", "failure_restart", "new_game",
 ];
-/// 每关保留最近 5 局（第 2.1 节；与 src/game/recent_games.js 的 HISTORY_LIMIT 一致）
-const HISTORY_LIMIT: usize = 5;
+/// 每关保留最近 3 局（本轮规格；与 src/game/recent_games.js 的 HISTORY_LIMIT 一致）
+const HISTORY_LIMIT: usize = 3;
 
 /* ---- 背景音乐（第 4.4 节）白名单与上限，与 src/game/music_store.js 逐条对应 ---- */
 /// 固定 6 个场景，存档里的 musicMap 只允许这些 key

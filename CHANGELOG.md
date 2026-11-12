@@ -5,6 +5,40 @@
 
 ---
 
+## 2026-11-12 · 内置背景音乐集成 / 第一关布局居中 / 双关卡最近三局差异化
+
+### 新增
+
+- `src/assets/music/`（5 个用户 wav，未替换 / 未转码 / 未删除）与
+  `tools/gen_music_manifest.mjs`：生成 `src/game/music_manifest.js`，把音频以 data URI
+  内嵌并固定 6 场景映射；**所有产物共用同一份文件**。
+- `test-layout-position.js`、`test-music-playback.js`、
+  `tools/music_real_playback.mjs`（Edge 真机播放验证）。
+
+### 修复
+
+- 音乐播放链路：`MusicPlayer`（导出别名 `MusicManager`）改为内置资源优先，
+  首次用户手势 `unlock()` 后自动播放；切场景严格单实例（旧双槽交叉淡化会双曲重叠）；
+  加载 / 解码 / play 失败全部捕获降级；音量 / 静音 / 开关独立于音效；
+  `syncMusic()` 不再因 store 不可用而早退；Tauri CSP `media-src` 放行 `data:` / `blob:`。
+- 第一关布局偏上：`layout_profiles.js` 的层中心改为围绕 `BOARD_CY` 展开，
+  生成后按**本局真实包围盒**动态居中并吸附半格晶格；不是固定 Y 偏移，
+  三层结构 / 遮挡 / 可点数不变。实测 4 档重心 550–572（中心 557）。
+- 双关卡布局重复：`HISTORY_LIMIT` 回到 **3**；`createNewGame()` 现在同时要求
+  「总牌数 ≠ 最近三局」「布局签名 ≠ 最近三局」「几何相似度 < 0.60」，
+  并把「布局签名差异」真正纳入判定（旧实现被相似度赋值覆盖掉了）；
+  合法档位不足时抛 `CONFIG_CONFLICT`，不增删牌伪造差异。
+- 调试面板补「最近三局牌数 / 布局 / 几何相似度」三项 PASS-FAIL 与背景音乐播放状态。
+
+### 测试（真实运行）
+
+`node test.js` 全绿；`node test-random-generation.js` 双关各 100 局 7285/0；
+`node test-layout-position.js` 35/0；`node test-music-playback.js` 69/0；
+`node test-build-consistency.js` 71/0；Edge 真机音乐播放 54/54；
+浏览器冒烟 `allPassed=true`。桌面版 exe 未重建、真机播放**未运行**。
+
+---
+
 ## 2026-11-11 · 双关卡随机生成机制重构 / 最近三局差异化 / 双 HTML 一致性
 
 ### 新增
