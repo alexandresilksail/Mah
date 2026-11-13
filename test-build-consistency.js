@@ -225,7 +225,7 @@ for (const [f, h] of musicVersions) {
   ok(/media-src[^;]*data:[^;]*blob:/.test(conf), 'Tauri CSP 放行 data:/blob: 音频（旧 media-src none 会拦住播放）');
 }
 
-line('\n[7] 第二关 50 套模板与最近 10 局去重逻辑进入全部正式产物（本轮新增）');
+line('\n[7] 第二关 20 套模板与最近 10 局去重逻辑进入全部正式产物（本轮新增）');
 const l2Markers = [
   'MAH-L2-STRUCT-v1/SHA-256',
   'MAH-L2-CANON-v1/SHA-256',
@@ -248,14 +248,14 @@ for (const [f, h] of l2Versions) {
   }
   const ids = new Set(h.match(/L2-[A-Z]\d{2}/g) || []);
   idSets[f] = Array.from(ids).sort().join(',');
-  ok(ids.size === 50, `${f} 内嵌全部 50 个 templateId（实测 ${ids.size}）`);
+  ok(ids.size === 20, `${f} 内嵌全部 20 个 templateId（实测 ${ids.size}）`);
 }
 ok(new Set(Object.values(idSets)).size === 1,
-  '4 个正式 HTML 内嵌的 50 个 templateId 集合完全一致');
+  '4 个正式 HTML 内嵌的 20 个 templateId 集合完全一致');
 ok(readFileSync(join(root, 'dist/index.html'), 'utf8') === modernHtml &&
   readFileSync(join(root, 'dist/Mah了个Mah.html'), 'utf8') === modernHtml,
   '网页版 3 个 HTML 副本与 dist/MahLeMah.html 逐字节相同');
-ok(readFileSync(join(root, 'src/game/l2_templates.js'), 'utf8').indexOf('L2-C01') >= 0 &&
+ok(readFileSync(join(root, 'src/game/l2_templates.js'), 'utf8').indexOf('L2-P01') >= 0 &&
   readFileSync(join(root, 'src/game/l2_geometry.js'), 'utf8').indexOf('generateTemplateLayout') >= 0 &&
   readFileSync(join(root, 'src/game/l2_structure.js'), 'utf8').indexOf('canonicalGeometrySignature') >= 0 &&
   readFileSync(join(root, 'src/game/l2_recent.js'), 'utf8').indexOf('checkL2DualDedup') >= 0,
@@ -309,8 +309,8 @@ let md = `# HTML ↔ src 构建一致性报告\n\n` +
   Object.keys(markerResult).map((k) => `| \`${k}\` | ${markerResult[k].modern ? 'PASS' : 'FAIL'} | ${markerResult[k].legacy ? 'PASS' : 'FAIL'} |`).join('\n') +
   `\n\n真实档位的总牌数（运行时由 mainCount + queueCount 得出，从 config 读取）：${uniqueTotals.join(' / ')} 张；` +
   `其主堆张数常量 ${mainCounts.join(' / ')} 全部同时存在于两个 bundle（逐字节比对才是主判定）。\n\n` +
-  `## 第二关 50 套模板 / 双重去重一致性\n\n` +
-  `4 个正式 HTML 均内嵌 50 个唯一 \`templateId\`、结构签名算法、等价几何算法、` +
+  `## 第二关 20 套模板 / 双重去重一致性\n\n` +
+  `4 个正式 HTML 均内嵌 20 个唯一 \`templateId\`、结构签名算法、等价几何算法、` +
   `双重去重判定与模板池耗尽报错；网页版 3 个副本逐字节相同。\n\n` +
   '| 产物 | 模板 ID 数 | 关键标记 |\n|---|---:|---|\n' +
   l2Versions.map(([f, h]) => `| ${f} | ${(h.match(/L2-[A-Z]\\d{2}/g) || []).length ? new Set(h.match(/L2-[A-Z]\\d{2}/g) || []).size : 0} | ` +

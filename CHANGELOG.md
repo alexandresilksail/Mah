@@ -5,7 +5,58 @@
 
 ---
 
+## 2026-11-13 · 第二关改按「20 套指定全局形状」重做（显式轮廓掩膜）
+
+> 本版**取代**同日的「50 套参数化结构模板」版本。50 套版是参数化（zones / shapes /
+> trajectory）拼出来的差异；本版按用户逐一指定的 20 个**全局牌堆形状**，改为每套一份
+> 5 行 × 9 列**显式轮廓掩膜**，轮廓、区域分布、层级遮挡三方面都由掩膜直接决定。
+> 第一关与其余功能未动。
+
+### 修改
+
+- `src/game/l2_templates.js`：重写为 20 套模板（7 个形状族），每套带一份显式轮廓掩膜
+  （`#` 可落牌 / `@` 高密度 / `.` 禁止落牌），新增 `parseMask()` / `labelRegions()`
+  （4 邻域连通分量 → 区域标签 R1/R2/…）/ `maskBox()`，导出 `maskCells` /
+  `maskCellCount` / `maskRegion` / `maskRegionCount` / `maskBox`。
+  结构签名算法标签升级为 `MAH-L2-TPL-v2`。
+- `src/game/l2_geometry.js`：落牌改为**只在掩膜格内**进行。`capPerLayer` 取掩膜可落牌格数；
+  底层用 `pickCoverCells()`（每个连通区域至少 1 张 + 最远点铺开）保证上层有支撑；
+  其余层用 `pickMaskCells()`，打分 = 形状分（归一化到 [0,1]）× 0.58 + 层号确定性扰动 × 0.42
+  + 高密度加成 − 覆盖补偿 + 微随机；`biasFor()` 扩到 20 种生长轨迹；
+  `repairSupport()` 候选格只取自掩膜，绝不移出轮廓。
+- `test-l2-templates.js`：断言口径改为 20 套 / 7 族 / 5×9 掩膜 / 60 局 / 190 对；
+  新增「主堆落牌全部在掩膜格内」与「主堆覆盖掩膜全部连通区域」两项聚合断言。
+
+### 新增
+
+- `tools/l2_thumbnails.mjs`：为 20 套布局各真实生成一局，按真实 `x/y/layer` 画俯视缩略图，
+  输出 `reports/l2-thumbnails.html` / `.json`（Edge 截图 `.png`），供肉眼核对形状。
+
+### 测试（真实运行，最终态）
+
+`node test-l2-templates.js` **262/0**（20 套 × 3 组档位 = 60 局、190 对差异、
+掩膜覆盖与区域覆盖、等价几何识别、12 局五种重开入口）；`node test.js` **625/0**；
+`node test-random-generation.js` **7788/0**（双关各 100 局）；`node test-l1-frozen.js`
+**64/0**；`node test-layout-position.js` **35/0**；`node test-music-playback.js` **69/0**；
+`node test-build-consistency.js` **110/0**；`node tools/test_render.mjs` 27/27；
+`node tools/browser_smoke.mjs` `allPassed=true`；`node tools/music_real_playback.mjs` **54/54**。
+
+190 对两两结构 sim 最大 **0.4104**、主堆布局 sim 最大 **0.3560**，全部 < 0.60；
+主堆逐层占位格轮廓 20/20 种互不相同；连续 100 局任意连续 10 局模板零重复
+（见 `reports/l2-100-games.txt`）；4 个 HTML 产物重建后均内嵌 20 个 `templateId`。
+
+### 未运行（如实标注）
+
+- `cargo check` / `cargo build` **未运行成功**：本机缺 MSVC `link.exe`（Git Bash 下还被
+  GNU `link` 遮蔽），Rust 依赖 build script 无法链接。这是环境限制，不是源码编译错误。
+- 桌面版 exe / `Setup.exe` / `Portable.zip` / `SHA256SUMS.txt` **未用本版源码重建**；
+  桌面版真机音乐播放与真机安装**未运行**。
+
+---
+
 ## 2026-11-13 · 第二关 50 套布局模板 + 最近 10 局双重去重（第一关冻结）
+
+> 已被同日上一节「20 套指定全局形状」版本取代，保留为历史记录。
 
 ### 新增
 

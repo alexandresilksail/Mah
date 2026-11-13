@@ -241,7 +241,7 @@ function updateDevPanel(meta) {
     appendLine(devPanel, 'structureSignature = ' + meta.structureSignature);
     appendLine(devPanel, 'canonicalGeometrySignature = ' + meta.canonicalGeometrySignature);
     appendLine(devPanel, 'dedupAlgorithm = ' + meta.dedupAlgorithm);
-    appendLine(devPanel, 'availableTemplateCount = ' + meta.availableTemplateCount + ' / 50');
+    appendLine(devPanel, 'availableTemplateCount = ' + meta.availableTemplateCount + ' / 20');
   }
   appendLine(devPanel, '--- 最近 ' + meta.historyLimit + ' 局检查 ---');
   const c = meta.checks;

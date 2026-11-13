@@ -2,12 +2,12 @@
 
 > 本文件由 `node test-random-generation.js` **真实运行**自动生成，不是静态 PASS 模板。
 
-- 运行时间：2026-11-13T06:37:17.550Z
-- Git commit：`a4340d167ff6b185a0f59ee0ecda7d3901b82cf8`
+- 运行时间：2026-11-13T08:05:56.415Z
+- Git commit：`f17b73bce482fae522a43c1df8cd2ca6ebf51b34`
 - 断言：通过 **7788**，失败 **0**
-- 总耗时：13685 ms
+- 总耗时：11205 ms
 - 布局签名算法：`MAH-LAYOUT-SIG-v1/SHA-256`（SHA-256，浏览器与 Node 共用同一实现）
-- 历史窗口：L1 最近 3 局（冻结）/ L2 最近 10 局；第二关 50 套模板 + 模板级 / 几何级双重去重；重复阈值 sim ≥ 0.6；重试上限 50 次
+- 历史窗口：L1 最近 3 局（冻结）/ L2 最近 10 局；第二关 20 套模板 + 模板级 / 几何级双重去重；重复阈值 sim ≥ 0.6；重试上限 50 次
 
 ## 全局
 
@@ -17,16 +17,16 @@
 | gameId 唯一数 | 202 / 202 |
 | 布局签名总数 / 去重 | 200 / 200 |
 | 生成失败次数 | 0 |
-| 重试总次数 | 12 |
-| 平均单局生成耗时 | 29.54 ms |
+| 重试总次数 | 14 |
+| 平均单局生成耗时 | 23.74 ms |
 | 失败案例 | 0 |
 
 ## 滑动窗口相似度（L1 三局 / L2 十局）
 
 | 关卡 | 窗口对数 | 均值 | P95 | 最大值 | 阈值 | 判定 |
 |---|---|---|---|---|---|---|
-| L1 | 294 | 0.2450 | 0.4918 | 0.5845 | 0.6 | ✓ 全部 < 0.60 |
-| L2 | 945 | 0.1525 | 0.2402 | 0.4281 | 0.6 | ✓ 全部 < 0.60 |
+| L1 | 294 | 0.2480 | 0.4950 | 0.5841 | 0.6 | ✓ 全部 < 0.60 |
+| L2 | 945 | 0.2434 | 0.3607 | 0.4865 | 0.6 | ✓ 全部 < 0.60 |
 
 ## 同档位不同 seed 的几何多样性（第 2.4 节）
 
@@ -54,9 +54,9 @@
 
 | 项 | 值 |
 |---|---|
-| 耗时 | 1753 ms |
+| 耗时 | 1578 ms |
 | 牌数范围 | 24 – 48 |
-| 开局可点牌范围 | 15 – 39 |
+| 开局可点牌范围 | 15 – 40 |
 | 档位分布 | {"0":25,"1":25,"2":25,"3":25} |
 | 牌数分布 | {"24":25,"30":25,"36":25,"48":25} |
 | 牌型数分布 | {"8":25,"10":25,"12":25,"16":25} |
@@ -65,116 +65,116 @@
 | 最近 3 局总牌数重复 | 0 |
 | 最近 3 局布局签名重复 | 0 |
 | 最近 3 局几何签名重复 | 0 |
-| 重试次数（失败重试合计） | 7 |
+| 重试次数（失败重试合计） | 9 |
 | 生成失败次数 | 0 |
-| 滑窗 sim 均值 / P95 / 最大 | 0.2450 / 0.4918 / 0.5845 |
+| 滑窗 sim 均值 / P95 / 最大 | 0.2480 / 0.4950 / 0.5841 |
 | 重启模拟历史有效 | true |
-| 平均单局耗时 | 11.33 ms |
+| 平均单局耗时 | 10.28 ms |
 
 <details><summary>完整 100 局逐局记录</summary>
 
 | # | gameId | 档位 | seed | 牌数 | 牌型数 | 可点 | sim最大 | 布局签名(前12) | 几何签名(前12) | 原因 | 重试 | 耗时ms | 校验 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | g1-mweltohl-1-1dxq74h-application_restart | 1 | 2770536127 | 30 | 10 | 26 | 0 | a60060633017 | 7fd5e36b0ba1 | application_restart | 0 | 7 | PASS |
-| 2 | g1-mweltoib-2-gzdbsb-title_screen_restart | 3 | 4030693290 | 48 | 16 | 33 | 0.109 | 441475d8a628 | 7848f612fd71 | title_screen_restart | 0 | 17 | PASS |
-| 3 | g1-mweltoix-3-1mk0i62-failure_restart | 0 | 4076950352 | 24 | 8 | 16 | 0.372 | 06f82d3416fd | ae4d8517eea2 | failure_restart | 0 | 12 | PASS |
-| 4 | g1-mweltoj7-4-qvlb1f-new_game | 2 | 717176305 | 36 | 12 | 33 | 0.278 | 97a96de4c0cd | 19099ab9566b | new_game | 0 | 7 | PASS |
-| 5 | g1-mweltojh-5-u45ay6-application_restart | 1 | 3860098961 | 30 | 10 | 25 | 0.535 | baa781965b87 | 3fc25dc1bb94 | application_restart | 0 | 7 | PASS |
-| 6 | g1-mweltoju-6-7c02mu-title_screen_restart | 3 | 2257182226 | 48 | 16 | 36 | 0.339 | d29a2519a121 | 33f3949c81fa | title_screen_restart | 0 | 9 | PASS |
-| 7 | g1-mweltokb-7-1ir70x8-failure_restart | 0 | 2435832818 | 24 | 8 | 20 | 0.42 | 2241bddb1726 | f27be5966fc2 | failure_restart | 0 | 8 | PASS |
-| 8 | g1-mweltokk-8-2mdrx3-new_game | 2 | 1564041084 | 36 | 12 | 27 | 0.408 | c487995bc3d5 | 559f9bd12d77 | new_game | 0 | 6 | PASS |
-| 9 | g1-mweltol4-9-1v8l9q5-application_restart | 1 | 2126681165 | 30 | 10 | 21 | 0.491 | 7864951609bc | fef5e292bdda | application_restart | 0 | 12 | PASS |
-| 10 | g1-mweltolh-a-3beyi9-title_screen_restart | 3 | 4001953556 | 48 | 16 | 35 | 0.361 | f6d7479a6b6d | ecc9ed7fb769 | title_screen_restart | 0 | 11 | PASS |
-| 11 | g1-mweltolz-b-14wbv2-failure_restart | 0 | 4172231158 | 24 | 8 | 24 | 0.308 | ba034581bbb0 | 1ce5e494e40d | failure_restart | 0 | 9 | PASS |
-| 12 | g1-mweltom6-c-7qxzwx-new_game | 2 | 3541192102 | 36 | 12 | 32 | 0.462 | eda384138230 | fc912b4a2a02 | new_game | 0 | 6 | PASS |
-| 13 | g1-mweltomh-d-1wx390d-application_restart | 1 | 2642077735 | 30 | 10 | 27 | 0.539 | b08d0bdad830 | db1a4be4d7e1 | application_restart | 0 | 6 | PASS |
-| 14 | g1-mweltomu-e-dahuij-title_screen_restart | 3 | 521766674 | 48 | 16 | 39 | 0.505 | 3cb1e64190e7 | 8cae7c5ce930 | title_screen_restart | 0 | 9 | PASS |
-| 15 | g1-mwelton8-f-bpr949-failure_restart | 0 | 2769676130 | 24 | 8 | 19 | 0.395 | 08f9f83d7715 | 78d798ea3a35 | failure_restart | 0 | 7 | PASS |
-| 16 | g1-mweltong-g-1wvpfb4-new_game | 2 | 1691047809 | 36 | 12 | 32 | 0.211 | 4fd720ac2e6a | e06a86b1227b | new_game | 0 | 5 | PASS |
-| 17 | g1-mweltonr-h-1drvw64-application_restart | 1 | 3292719392 | 30 | 10 | 25 | 0.306 | ec5b0b380e3e | 13b631f87fbb | application_restart | 0 | 6 | PASS |
-| 18 | g1-mweltoo5-i-uleguh-title_screen_restart | 3 | 914831401 | 48 | 16 | 35 | 0.268 | 35d749ab4e7d | 38756dc4a1ad | title_screen_restart | 0 | 12 | PASS |
-| 19 | g1-mweltoom-j-1mqp4kg-failure_restart | 0 | 2975216973 | 24 | 8 | 20 | 0.273 | 0688dcb7e45f | fa5937a9f210 | failure_restart | 0 | 9 | PASS |
-| 20 | g1-mweltoov-k-cqsxjp-new_game | 2 | 3262968162 | 36 | 12 | 22 | 0.564 | 2114cd8bafbf | bf611861e658 | new_game | 0 | 6 | PASS |
-| 21 | g1-mweltop7-l-b4apph-application_restart | 1 | 399640519 | 30 | 10 | 26 | 0.493 | 93819ed2d5a8 | e036c030c82f | application_restart | 0 | 7 | PASS |
-| 22 | g1-mweltopj-m-16rax2v-title_screen_restart | 3 | 3714301428 | 48 | 16 | 31 | 0.348 | 9f91ec1699ad | f6e018d7b95c | title_screen_restart | 0 | 8 | PASS |
-| 23 | g1-mweltopy-n-1nw9wqc-failure_restart | 0 | 503317403 | 24 | 8 | 21 | 0.258 | e6062af7e14f | 89fa76921bc8 | failure_restart | 0 | 8 | PASS |
-| 24 | g1-mweltoq8-o-190wyj3-new_game | 2 | 2103900859 | 36 | 12 | 26 | 0.394 | 85aca9f8122f | 47a9ae2fae59 | new_game | 0 | 8 | PASS |
-| 25 | g1-mweltoqn-p-10mf8jj-application_restart | 1 | 486679040 | 30 | 10 | 21 | 0.308 | 2188ebb6ce34 | dfbe0dbca05f | application_restart | 0 | 9 | PASS |
-| 26 | g1-mweltoqz-q-t62ye3-title_screen_restart | 3 | 312110716 | 48 | 16 | 34 | 0.432 | fe0000b5e2a0 | f53eca0072ee | title_screen_restart | 0 | 9 | PASS |
-| 27 | g1-mweltorc-r-1vrxcl8-failure_restart | 0 | 2258435403 | 24 | 8 | 20 | 0.296 | 785dd1061af4 | da4709fc4ce9 | failure_restart | 0 | 7 | PASS |
-| 28 | g1-mweltorx-s-tsmsuw-new_game | 2 | 777711124 | 36 | 12 | 22 | 0.564 | 906c6d641841 | e1c98e6a858d | new_game | 0 | 18 | PASS |
-| 29 | g1-mweltosv-t-gfekpe-application_restart | 1 | 3162290706 | 30 | 10 | 25 | 0.457 | 5c217d278676 | f546be4c0f0e | application_restart | 0 | 20 | PASS |
-| 30 | g1-mweltoti-u-d1m7ag-title_screen_restart | 3 | 2920635820 | 48 | 16 | 35 | 0.439 | 2ddc6d084de5 | dab7afbb169f | title_screen_restart | 0 | 19 | PASS |
-| 31 | g1-mweltouh-v-1bpdkaw-failure_restart | 0 | 3532581811 | 24 | 8 | 20 | 0.493 | 4b7f7518c805 | 59bebcb1efb5 | failure_restart | 0 | 18 | PASS |
-| 32 | g1-mweltov2-w-1ocbnc5-new_game | 2 | 2540556116 | 36 | 12 | 22 | 0.425 | b835e78513fd | 23625c1d7862 | new_game | 1 | 18 | PASS |
-| 33 | g1-mweltovt-x-nvy70a-application_restart | 1 | 2433723931 | 30 | 10 | 20 | 0.395 | 970e68e04f17 | 89e60960e3b5 | application_restart | 1 | 16 | PASS |
-| 34 | g1-mweltowf-y-1nvj69e-title_screen_restart | 3 | 3785519161 | 48 | 16 | 34 | 0.462 | da9d1366288a | c9573185e44f | title_screen_restart | 0 | 19 | PASS |
-| 35 | g1-mweltoxf-z-3s04oh-failure_restart | 0 | 1308236131 | 24 | 8 | 15 | 0.143 | dffa0505961a | 583d6721dd07 | failure_restart | 0 | 19 | PASS |
-| 36 | g1-mweltoxr-10-u1htxb-new_game | 2 | 701312259 | 36 | 12 | 27 | 0.278 | a7e716d17c17 | c5bb64d9d9c7 | new_game | 0 | 7 | PASS |
-| 37 | g1-mweltoy2-11-of3lfn-application_restart | 1 | 2024149455 | 30 | 10 | 25 | 0.549 | c3ead4886d0e | 0275fe4e602f | application_restart | 0 | 7 | PASS |
-| 38 | g1-mweltoyi-12-1jzm36x-title_screen_restart | 3 | 1810907212 | 48 | 16 | 33 | 0.172 | 50f835b18a52 | 5e06c2f6efa7 | title_screen_restart | 0 | 14 | PASS |
-| 39 | g1-mweltoz6-13-113imxr-failure_restart | 0 | 2734571433 | 24 | 8 | 21 | 0.323 | 898c9ea4f929 | 78b8a836ffab | failure_restart | 0 | 12 | PASS |
-| 40 | g1-mweltoze-14-1l93khm-new_game | 2 | 841154598 | 36 | 12 | 27 | 0.394 | 95dd9b49d322 | abfa03d389b9 | new_game | 0 | 6 | PASS |
-| 41 | g1-mweltozp-15-ajryi9-application_restart | 1 | 3894385509 | 30 | 10 | 26 | 0.246 | e8197827d69d | 35455a48d26f | application_restart | 0 | 7 | PASS |
-| 42 | g1-mweltp04-16-1rbtphq-title_screen_restart | 3 | 2985997416 | 48 | 16 | 30 | 0.44 | be3af4f69a51 | c3494f128e88 | title_screen_restart | 0 | 12 | PASS |
-| 43 | g1-mweltp0o-17-1d515v7-failure_restart | 0 | 1618744524 | 24 | 8 | 21 | 0.459 | dc20e2be53c1 | 2e701aede963 | failure_restart | 0 | 10 | PASS |
-| 44 | g1-mweltp13-18-1s3daq7-new_game | 2 | 3612473864 | 36 | 12 | 27 | 0.44 | 6824194f2850 | c2c8e66d3be1 | new_game | 1 | 12 | PASS |
-| 45 | g1-mweltp1e-19-1tm08b8-application_restart | 1 | 3077571163 | 30 | 10 | 25 | 0.456 | b43d7ea1e512 | 1d9fb7cd74ab | application_restart | 0 | 6 | PASS |
-| 46 | g1-mweltp22-1a-qwrlxh-title_screen_restart | 3 | 2532911298 | 48 | 16 | 34 | 0.223 | e1121b83c306 | a68bcc22114f | title_screen_restart | 0 | 21 | PASS |
-| 47 | g1-mweltp32-1b-i0bhk1-failure_restart | 0 | 727294125 | 24 | 8 | 20 | 0.328 | 1f84128beeac | 1611552f4f78 | failure_restart | 0 | 20 | PASS |
-| 48 | g1-mweltp3d-1c-1nncghm-new_game | 2 | 329395708 | 36 | 12 | 27 | 0.205 | 5ce552ed7b0b | a647afdd1a24 | new_game | 0 | 8 | PASS |
-| 49 | g1-mweltp3u-1d-rin7gw-application_restart | 1 | 3938136193 | 30 | 10 | 23 | 0.385 | 40f6619d24a7 | 420ef050e896 | application_restart | 1 | 12 | PASS |
-| 50 | g1-mweltp4b-1e-1nlf4qb-title_screen_restart | 3 | 323462238 | 48 | 16 | 34 | 0.46 | 73ed50347c1b | eedcfe45a520 | title_screen_restart | 0 | 13 | PASS |
-| 51 | g1-mweltp53-1g-1jkpygf-failure_restart | 0 | 197579818 | 24 | 8 | 16 | 0.256 | 252da23afefb | 35ce402108c1 | failure_restart | 0 | 3 | PASS |
-| 52 | g1-mweltp5e-1h-1ffamia-new_game | 2 | 3533242162 | 36 | 12 | 26 | 0.435 | c19d838aed63 | dcb7718ae6e2 | new_game | 0 | 8 | PASS |
-| 53 | g1-mweltp5t-1i-f2gzkm-application_restart | 1 | 3996743331 | 30 | 10 | 25 | 0.421 | 4a4acd033ef5 | 49832a19fbcb | application_restart | 0 | 9 | PASS |
-| 54 | g1-mweltp6f-1j-1ftekxh-title_screen_restart | 3 | 3400085465 | 48 | 16 | 33 | 0.367 | c329e62e3fde | c41534c69e0b | title_screen_restart | 0 | 18 | PASS |
-| 55 | g1-mweltp7a-1k-1ewygev-failure_restart | 0 | 1324896669 | 24 | 8 | 20 | 0.307 | 4bfb081d4679 | 122e3650d54b | failure_restart | 0 | 16 | PASS |
-| 56 | g1-mweltp7l-1l-1fvvzn8-new_game | 2 | 1588712159 | 36 | 12 | 28 | 0.299 | 51765960d0a8 | 3952cc32d262 | new_game | 0 | 8 | PASS |
-| 57 | g1-mweltp7y-1m-17herxk-application_restart | 1 | 1631992337 | 30 | 10 | 26 | 0.425 | 864adf241bee | d6cd2952158c | application_restart | 0 | 8 | PASS |
-| 58 | g1-mweltp8c-1n-1auj1f3-title_screen_restart | 3 | 2581463186 | 48 | 16 | 28 | 0.357 | c05983d37108 | b2ca328e19b1 | title_screen_restart | 0 | 11 | PASS |
-| 59 | g1-mweltp8w-1o-d6kww7-failure_restart | 0 | 3585594413 | 24 | 8 | 17 | 0.34 | 4ddb5c45acbe | a1ed19f94898 | failure_restart | 0 | 10 | PASS |
-| 60 | g1-mweltp94-1p-8m69yx-new_game | 2 | 3760778064 | 36 | 12 | 31 | 0.269 | 4a7ee868b5f3 | dd94cd0389a3 | new_game | 0 | 6 | PASS |
-| 61 | g1-mweltp9e-1q-gpcxdz-application_restart | 1 | 4252768884 | 30 | 10 | 27 | 0.251 | 1ac8903bb0a7 | 1c4ad5fb529f | application_restart | 0 | 6 | PASS |
-| 62 | g1-mweltpa3-1r-5x49b3-title_screen_restart | 3 | 3008360051 | 48 | 16 | 34 | 0.426 | a63752ac3488 | 972e9560d6b8 | title_screen_restart | 0 | 22 | PASS |
-| 63 | g1-mweltpb7-1s-1lyjj7b-failure_restart | 0 | 4143015469 | 24 | 8 | 20 | 0.211 | 99fbed77fe5f | dd99b83985bd | failure_restart | 0 | 21 | PASS |
-| 64 | g1-mweltpbf-1t-cly7zq-new_game | 2 | 3921377138 | 36 | 12 | 27 | 0.438 | 2ff834b4e1a2 | 8829232af05e | new_game | 0 | 6 | PASS |
-| 65 | g1-mweltpbp-1u-1o3srjs-application_restart | 1 | 4003609332 | 30 | 10 | 26 | 0.364 | 01dc372b8fe6 | d2edf685345c | application_restart | 0 | 6 | PASS |
-| 66 | g1-mweltpc2-1v-1x0b4e5-title_screen_restart | 3 | 3741146647 | 48 | 16 | 35 | 0.184 | 7962676814ef | a2f05a4a1f78 | title_screen_restart | 0 | 9 | PASS |
-| 67 | g1-mweltpci-1w-f3f7tq-failure_restart | 0 | 2143220746 | 24 | 8 | 20 | 0.3 | 7694f5d8b93c | 1747c40fb397 | failure_restart | 0 | 9 | PASS |
-| 68 | g1-mweltpcu-1x-1j673oj-new_game | 2 | 1243062969 | 36 | 12 | 27 | 0.378 | f62dd9a2c1d8 | eab1b8366248 | new_game | 1 | 10 | PASS |
-| 69 | g1-mweltpd3-1y-1h7n28i-application_restart | 1 | 3738471216 | 30 | 10 | 25 | 0.342 | ecda1fd1cd2c | cfc02f403d14 | application_restart | 0 | 6 | PASS |
-| 70 | g1-mweltpdp-1z-yf9lrh-title_screen_restart | 3 | 4216883497 | 48 | 16 | 31 | 0.487 | 6b92802e5584 | be614a1ae4bf | title_screen_restart | 0 | 20 | PASS |
-| 71 | g1-mweltpen-20-19fnkh0-failure_restart | 0 | 3700009933 | 24 | 8 | 20 | 0.198 | 35ff62a6f775 | 2d9782782c56 | failure_restart | 0 | 18 | PASS |
-| 72 | g1-mweltpev-21-1p8intm-new_game | 2 | 3696709662 | 36 | 12 | 26 | 0.471 | 731ec88e2bfe | 84f9c3262825 | new_game | 0 | 5 | PASS |
-| 73 | g1-mweltpf5-22-1c323ik-application_restart | 1 | 37022687 | 30 | 10 | 26 | 0.38 | 495eb192be76 | 4b1d4918f4b3 | application_restart | 0 | 6 | PASS |
-| 74 | g1-mweltpfg-23-1qrejc7-title_screen_restart | 3 | 2696012078 | 48 | 16 | 32 | 0.372 | 8e43963e6532 | ab14959dc5a9 | title_screen_restart | 0 | 8 | PASS |
-| 75 | g1-mweltpfs-24-1fo4bg6-failure_restart | 0 | 2113126421 | 24 | 8 | 19 | 0.163 | 0d32857cf9a1 | a9aebe6f6e69 | failure_restart | 0 | 7 | PASS |
-| 76 | g1-mweltpg1-25-e7i5ga-new_game | 2 | 4094886396 | 36 | 12 | 32 | 0.499 | 2f13325d3772 | 5ee70aec8da3 | new_game | 0 | 6 | PASS |
-| 77 | g1-mweltpgb-26-ocoepd-application_restart | 1 | 1986067227 | 30 | 10 | 26 | 0.242 | 9e3e19361631 | 6f1766dab931 | application_restart | 0 | 6 | PASS |
-| 78 | g1-mweltpgo-27-zv0i69-title_screen_restart | 3 | 2115970200 | 48 | 16 | 33 | 0.583 | d513a577f991 | e7131caf8bed | title_screen_restart | 0 | 10 | PASS |
-| 79 | g1-mweltph5-28-zj3o2m-failure_restart | 0 | 2802850261 | 24 | 8 | 16 | 0.296 | a58d5b354135 | cc7147357e6a | failure_restart | 0 | 10 | PASS |
-| 80 | g1-mweltphd-29-1yaa9z8-new_game | 2 | 465704192 | 36 | 12 | 31 | 0.558 | 5831d32cf805 | fc7f5c1f8d9e | new_game | 0 | 5 | PASS |
-| 81 | g1-mweltphn-2a-1hmxn1j-application_restart | 1 | 1680911806 | 30 | 10 | 26 | 0.416 | 8b722aadc3f7 | 554a445b66d8 | application_restart | 0 | 6 | PASS |
-| 82 | g1-mweltpi0-2b-16qsaxq-title_screen_restart | 3 | 3200449166 | 48 | 16 | 39 | 0.266 | 0d46bb541cc2 | ebef109cd214 | title_screen_restart | 0 | 10 | PASS |
-| 83 | g1-mweltpil-2c-4kxz3z-failure_restart | 0 | 299629245 | 24 | 8 | 16 | 0.372 | 6bf502a31736 | 9ce1d1d38825 | failure_restart | 0 | 12 | PASS |
-| 84 | g1-mweltpjl-2d-msl20q-new_game | 2 | 1630541551 | 36 | 12 | 28 | 0.366 | 7af703ba488e | 10d3688a374b | new_game | 0 | 32 | PASS |
-| 85 | g1-mweltpl4-2e-hdixiz-application_restart | 1 | 3804727786 | 30 | 10 | 26 | 0.407 | ea4df7e34ef9 | c9811dc0f6af | application_restart | 0 | 29 | PASS |
-| 86 | g1-mweltplg-2f-d12acf-title_screen_restart | 3 | 3446765634 | 48 | 16 | 38 | 0.169 | 9fe81137d5d0 | 2e0844afa167 | title_screen_restart | 0 | 9 | PASS |
-| 87 | g1-mweltpls-2g-1kcbbuv-failure_restart | 0 | 2912642764 | 24 | 8 | 21 | 0.233 | ff0d16629c22 | ab81d94f326b | failure_restart | 0 | 7 | PASS |
-| 88 | g1-mweltpm1-2h-1sids5v-new_game | 2 | 4065439033 | 36 | 12 | 28 | 0.425 | 80b88cffbd29 | a758223d5305 | new_game | 0 | 6 | PASS |
-| 89 | g1-mweltpmc-2i-12igtn8-application_restart | 1 | 3729446498 | 30 | 10 | 25 | 0.363 | f57ca7e8bc26 | f16391fd2cb2 | application_restart | 0 | 6 | PASS |
-| 90 | g1-mweltpmo-2j-oqn2zo-title_screen_restart | 3 | 1164640850 | 48 | 16 | 38 | 0.124 | f279731e090a | e2dd9206253d | title_screen_restart | 0 | 9 | PASS |
-| 91 | g1-mweltpn3-2k-xweqvm-failure_restart | 0 | 1334464756 | 24 | 8 | 20 | 0.28 | 7eee2061f10d | 687f5189829a | failure_restart | 0 | 8 | PASS |
-| 92 | g1-mweltpnb-2l-1su98d8-new_game | 2 | 2629762475 | 36 | 12 | 27 | 0.497 | 1db3071df0d8 | 4a40af77df77 | new_game | 0 | 5 | PASS |
-| 93 | g1-mweltpnp-2m-vrh58k-application_restart | 1 | 2810310409 | 30 | 10 | 27 | 0.497 | 416bc7864788 | b94a9a2e2edb | application_restart | 1 | 10 | PASS |
-| 94 | g1-mweltpob-2n-zyu4ls-title_screen_restart | 3 | 3335007863 | 48 | 16 | 38 | 0.334 | 9aa424e7de4d | 118a5dd73fea | title_screen_restart | 0 | 19 | PASS |
-| 95 | g1-mweltppc-2o-10pxwcf-failure_restart | 0 | 1541136990 | 24 | 8 | 20 | 0.389 | 8a3d89f3467e | 637460d73722 | failure_restart | 1 | 20 | PASS |
-| 96 | g1-mweltppl-2p-1hoz8gg-new_game | 2 | 3214683479 | 36 | 12 | 32 | 0.262 | 65a7c597ac32 | d59f4c6f9053 | new_game | 0 | 6 | PASS |
-| 97 | g1-mweltppv-2q-dvqqco-application_restart | 1 | 3741102437 | 30 | 10 | 25 | 0.497 | 5847a66980ee | 8c31c765743b | application_restart | 0 | 6 | PASS |
-| 98 | g1-mweltpr9-2r-195zzkf-title_screen_restart | 3 | 1895636238 | 48 | 16 | 34 | 0.435 | c3d0c6483ec6 | a0fcd9574f42 | title_screen_restart | 0 | 48 | PASS |
-| 99 | g1-mweltptt-2s-9f68wx-failure_restart | 0 | 1268527551 | 24 | 8 | 24 | 0.584 | 702174baef66 | 6932c0689812 | failure_restart | 0 | 45 | PASS |
-| 100 | g1-mweltpu1-2t-li0i6o-new_game | 2 | 168755412 | 36 | 12 | 32 | 0.131 | ccc70f3fb26a | d0ec6fe48779 | new_game | 0 | 6 | PASS |
+| 1 | g1-mweozq50-1-ili0lt-application_restart | 2 | 2760842331 | 36 | 12 | 29 | 0 | 4d5f08726036 | 0c0fbe08aeef | application_restart | 0 | 6 | PASS |
+| 2 | g1-mweozq5h-2-dexhe5-title_screen_restart | 1 | 3165231772 | 30 | 10 | 27 | 0.132 | a3925b0dcf28 | 1b12f6b91c38 | title_screen_restart | 0 | 8 | PASS |
+| 3 | g1-mweozq5v-3-13jvjpk-failure_restart | 0 | 1110779182 | 24 | 8 | 20 | 0.277 | 903706d1a18e | 7094d0c5428a | failure_restart | 0 | 9 | PASS |
+| 4 | g1-mweozq6j-4-1kgz2xq-new_game | 3 | 3851959361 | 48 | 16 | 36 | 0.373 | 17a8c21f21e3 | 322ff08d6427 | new_game | 0 | 22 | PASS |
+| 5 | g1-mweozq7s-5-1fc90zp-application_restart | 2 | 811820506 | 36 | 12 | 27 | 0.44 | 78ca71a7ad8d | 6269259c3782 | application_restart | 0 | 26 | PASS |
+| 6 | g1-mweozq87-6-r83zr6-title_screen_restart | 1 | 198246636 | 30 | 10 | 25 | 0.467 | e597664a1992 | f36565350ac6 | title_screen_restart | 0 | 9 | PASS |
+| 7 | g1-mweozq8h-7-zbl6wq-failure_restart | 0 | 3766461914 | 24 | 8 | 24 | 0.304 | dce181ea9061 | ec217df50489 | failure_restart | 0 | 6 | PASS |
+| 8 | g1-mweozq8v-8-1pws4ji-new_game | 3 | 1024664252 | 48 | 16 | 31 | 0.525 | eb5ba41d0187 | 822b5a427a7d | new_game | 0 | 11 | PASS |
+| 9 | g1-mweozq99-9-2pghgv-application_restart | 2 | 2278088088 | 36 | 12 | 27 | 0.553 | d3f27f4830f0 | 50dcfd309fa9 | application_restart | 0 | 9 | PASS |
+| 10 | g1-mweozq9p-a-41mhgu-title_screen_restart | 1 | 595634750 | 30 | 10 | 25 | 0.456 | 44282a6828f3 | e7a00aa089f7 | title_screen_restart | 2 | 11 | PASS |
+| 11 | g1-mweozq9w-b-nn68mu-failure_restart | 0 | 3160761433 | 24 | 8 | 16 | 0.564 | b054e53e1726 | 7d2ee4b04e00 | failure_restart | 0 | 5 | PASS |
+| 12 | g1-mweozqaa-c-ukr9fa-new_game | 3 | 1987682591 | 48 | 16 | 34 | 0.482 | 7dc2d25f0c5e | 1acf60fd57fd | new_game | 0 | 12 | PASS |
+| 13 | g1-mweozqaz-d-837cam-application_restart | 2 | 577028861 | 36 | 12 | 26 | 0.564 | 7510ec555dbd | 53dcdb353aec | application_restart | 0 | 13 | PASS |
+| 14 | g1-mweozqb9-e-17d88ma-title_screen_restart | 1 | 1662268072 | 30 | 10 | 25 | 0.466 | 4afc3647a9f1 | b96416765a3a | title_screen_restart | 0 | 6 | PASS |
+| 15 | g1-mweozqbh-f-11or83v-failure_restart | 0 | 3443381909 | 24 | 8 | 15 | 0.519 | 9607537d7264 | b2ccc63c7eba | failure_restart | 0 | 5 | PASS |
+| 16 | g1-mweozqc7-g-159lhf3-new_game | 3 | 4073082225 | 48 | 16 | 40 | 0.297 | a542bb79931a | 2f2122f0557d | new_game | 0 | 24 | PASS |
+| 17 | g1-mweozqdq-h-1hqhw93-application_restart | 2 | 654680380 | 36 | 12 | 32 | 0.499 | 8e6288020469 | aec0b3170db4 | application_restart | 1 | 33 | PASS |
+| 18 | g1-mweozqe2-i-1hx24uk-title_screen_restart | 1 | 2319705896 | 30 | 10 | 27 | 0.493 | c9d8edeee145 | 7adb0fcb51e7 | title_screen_restart | 0 | 7 | PASS |
+| 19 | g1-mweozqeb-j-z14x1y-failure_restart | 0 | 2324492588 | 24 | 8 | 15 | 0.281 | 19dfa662716d | ead127d77aed | failure_restart | 0 | 6 | PASS |
+| 20 | g1-mweozqev-k-r16b6m-new_game | 3 | 3403529194 | 48 | 16 | 37 | 0.397 | 3060407e77dc | 007d732f70ef | new_game | 0 | 17 | PASS |
+| 21 | g1-mweozqfn-l-c9lc8c-application_restart | 2 | 247033010 | 36 | 12 | 26 | 0.319 | 8bb9b5df2620 | e042c1781dfb | application_restart | 1 | 17 | PASS |
+| 22 | g1-mweozqfw-m-1ko7jbg-title_screen_restart | 1 | 3091530749 | 30 | 10 | 26 | 0.416 | 0c22c6524bbc | 0a87ef0f7aa3 | title_screen_restart | 0 | 6 | PASS |
+| 23 | g1-mweozqg4-n-v7bwcg-failure_restart | 0 | 413322575 | 24 | 8 | 15 | 0.385 | 834f40232ba4 | ea77af896095 | failure_restart | 0 | 5 | PASS |
+| 24 | g1-mweozqgt-o-1q3dhih-new_game | 3 | 2911253515 | 48 | 16 | 33 | 0.175 | c0ee09c0dace | 01596a2c56c3 | new_game | 0 | 23 | PASS |
+| 25 | g1-mweozqi8-p-hed6o2-application_restart | 2 | 2235546926 | 36 | 12 | 32 | 0.281 | 3a59f416e7ca | 755184c5d9fc | application_restart | 0 | 27 | PASS |
+| 26 | g1-mweozqij-q-1g5c35a-title_screen_restart | 1 | 1265515014 | 30 | 10 | 26 | 0.43 | 56d05f6afca6 | 9c14aa14231c | title_screen_restart | 0 | 6 | PASS |
+| 27 | g1-mweozqir-r-1h5q2y9-failure_restart | 0 | 277072061 | 24 | 8 | 24 | 0.337 | 531f9fd87a1a | e7f88a922e07 | failure_restart | 0 | 5 | PASS |
+| 28 | g1-mweozqj5-s-boih6r-new_game | 3 | 3247351991 | 48 | 16 | 33 | 0.252 | 0174b1a580ce | 7db715724629 | new_game | 0 | 11 | PASS |
+| 29 | g1-mweozqjn-t-7mcang-application_restart | 2 | 1305989309 | 36 | 12 | 32 | 0.241 | c171ca48591a | 29a0034d8389 | application_restart | 0 | 10 | PASS |
+| 30 | g1-mweozqjw-u-u2rngf-title_screen_restart | 1 | 806418517 | 30 | 10 | 26 | 0.552 | 184921e99d5c | a30608944475 | title_screen_restart | 0 | 5 | PASS |
+| 31 | g1-mweozqk3-v-t1g3e8-failure_restart | 0 | 323758172 | 24 | 8 | 15 | 0.251 | 8f97499614d1 | ef54ded92b0f | failure_restart | 0 | 4 | PASS |
+| 32 | g1-mweozqke-w-9rxbqp-new_game | 3 | 1861597802 | 48 | 16 | 34 | 0.326 | f9d1aefa69e4 | 7390202381b7 | new_game | 0 | 8 | PASS |
+| 33 | g1-mweozqkt-x-1bpbeni-application_restart | 2 | 3784347620 | 36 | 12 | 26 | 0.408 | 07c4c23d6fb9 | 85a30f87f7a6 | application_restart | 0 | 10 | PASS |
+| 34 | g1-mweozql6-y-76pqrx-title_screen_restart | 1 | 4286135285 | 30 | 10 | 26 | 0.246 | fe8cdc2785f4 | 347c8be90d58 | title_screen_restart | 0 | 8 | PASS |
+| 35 | g1-mweozqle-z-wpgcwf-failure_restart | 0 | 1012187765 | 24 | 8 | 24 | 0.566 | c1dc14e07304 | 4c1a993d4e89 | failure_restart | 0 | 4 | PASS |
+| 36 | g1-mweozqls-10-vn1dy9-new_game | 3 | 2175991184 | 48 | 16 | 32 | 0.367 | 5ea077a1f3e8 | 78a86b6452c0 | new_game | 0 | 13 | PASS |
+| 37 | g1-mweozqmg-11-cptpr8-application_restart | 2 | 999607921 | 36 | 12 | 32 | 0.252 | eddc335e1f76 | a2d405c188eb | application_restart | 0 | 12 | PASS |
+| 38 | g1-mweozqmq-12-hbf5gi-title_screen_restart | 1 | 1261297444 | 30 | 10 | 26 | 0.264 | 104fb35eed84 | 59f8613a4add | title_screen_restart | 0 | 6 | PASS |
+| 39 | g1-mweozqmy-13-1lin9vc-failure_restart | 0 | 4185293414 | 24 | 8 | 16 | 0.385 | 6711a87f3bd0 | 585b2746617d | failure_restart | 0 | 5 | PASS |
+| 40 | g1-mweozqn8-14-1b27gcl-new_game | 3 | 4068942077 | 48 | 16 | 35 | 0.437 | 61f14d626a52 | 2cb3987f32a2 | new_game | 0 | 8 | PASS |
+| 41 | g1-mweozqnq-15-agj3f3-application_restart | 2 | 2438060627 | 36 | 12 | 32 | 0.437 | 597745e5b481 | 6001e282399a | application_restart | 0 | 11 | PASS |
+| 42 | g1-mweozqo1-16-57fqmg-title_screen_restart | 1 | 2285727379 | 30 | 10 | 25 | 0.191 | d94c63831011 | 23ed8f982ac4 | title_screen_restart | 0 | 7 | PASS |
+| 43 | g1-mweozqob-17-1qi57kf-failure_restart | 0 | 3136604342 | 24 | 8 | 16 | 0.203 | 2cb640231446 | 12068cf0b374 | failure_restart | 0 | 6 | PASS |
+| 44 | g1-mweozqoo-18-v0wdgs-new_game | 3 | 312227272 | 48 | 16 | 34 | 0.583 | e043237c7245 | e630dcead320 | new_game | 0 | 10 | PASS |
+| 45 | g1-mweozqpd-19-17r9t6q-application_restart | 2 | 3266537795 | 36 | 12 | 23 | 0.34 | a25e990afd01 | faef7f9b6b57 | application_restart | 2 | 18 | PASS |
+| 46 | g1-mweozqpp-1a-zrce5k-title_screen_restart | 1 | 2225926859 | 30 | 10 | 23 | 0.392 | 2f24d8321061 | 917e50d79d6d | title_screen_restart | 0 | 7 | PASS |
+| 47 | g1-mweozqpx-1b-1vozp7k-failure_restart | 0 | 3404951144 | 24 | 8 | 20 | 0.238 | f73792dc76d6 | 4ea0fa82713e | failure_restart | 0 | 5 | PASS |
+| 48 | g1-mweozqqc-1c-1sdyfuu-new_game | 3 | 2083012393 | 48 | 16 | 34 | 0.323 | a75609558cbd | c8999ea08eab | new_game | 0 | 12 | PASS |
+| 49 | g1-mweozqqz-1d-1wydksn-application_restart | 2 | 2792640288 | 36 | 12 | 26 | 0.296 | 0c4e60246a5c | 9f3228c0f4e2 | application_restart | 0 | 13 | PASS |
+| 50 | g1-mweozqra-1e-1q3o34a-title_screen_restart | 1 | 2066689467 | 30 | 10 | 21 | 0.299 | 68c55caae18d | bed08b1e16c3 | title_screen_restart | 0 | 7 | PASS |
+| 51 | g1-mweozqrl-1g-15o0kr2-failure_restart | 0 | 2164401690 | 24 | 8 | 20 | 0.246 | b00569306915 | 2bbcb02c657c | failure_restart | 0 | 2 | PASS |
+| 52 | g1-mweozqs5-1h-17p16d1-new_game | 3 | 64110421 | 48 | 16 | 29 | 0.5 | 39ffb70c51c7 | 80caa57c04e6 | new_game | 0 | 18 | PASS |
+| 53 | g1-mweozqt7-1i-17tja6g-application_restart | 2 | 3628772680 | 36 | 12 | 28 | 0.396 | 5b70f92e5fd5 | fdb8adfac4f6 | application_restart | 0 | 20 | PASS |
+| 54 | g1-mweozqth-1j-1isldia-title_screen_restart | 1 | 374301491 | 30 | 10 | 26 | 0.425 | 3b86af896c6e | e0153d2d94d0 | title_screen_restart | 0 | 6 | PASS |
+| 55 | g1-mweozqto-1k-1fqh0wy-failure_restart | 0 | 2899204343 | 24 | 8 | 20 | 0.493 | 33f1369fda18 | 732bf8fe6d6c | failure_restart | 0 | 4 | PASS |
+| 56 | g1-mweozqtx-1l-4w1z85-new_game | 3 | 2471909658 | 48 | 16 | 32 | 0.22 | c4ce36496e6a | abeb6ab2ab1a | new_game | 0 | 7 | PASS |
+| 57 | g1-mweozquc-1m-11n2wcs-application_restart | 2 | 2148944620 | 36 | 12 | 26 | 0.467 | d08a591545fd | 17551bb6ec3f | application_restart | 0 | 9 | PASS |
+| 58 | g1-mweozqul-1n-dndrlj-title_screen_restart | 1 | 3882239895 | 30 | 10 | 25 | 0.425 | f439bb5817f5 | 231179d44b72 | title_screen_restart | 0 | 5 | PASS |
+| 59 | g1-mweozqut-1o-jwdhex-failure_restart | 0 | 2398517601 | 24 | 8 | 24 | 0.218 | 3fa6bc3578d2 | 8b6e143a504b | failure_restart | 0 | 5 | PASS |
+| 60 | g1-mweozqvi-1p-k211p7-new_game | 3 | 1381791449 | 48 | 16 | 35 | 0.205 | 30b5fddef2b5 | 0f89402fa1f3 | new_game | 0 | 23 | PASS |
+| 61 | g1-mweozqwn-1q-ek610x-application_restart | 2 | 1846454705 | 36 | 12 | 28 | 0.297 | 7f13d33c53ec | 851a3f4df0d1 | application_restart | 0 | 23 | PASS |
+| 62 | g1-mweozqww-1r-6aioxj-title_screen_restart | 1 | 3347355366 | 30 | 10 | 25 | 0.399 | 4e194ff54388 | b4e354bbac94 | title_screen_restart | 0 | 6 | PASS |
+| 63 | g1-mweozqx3-1s-1f8nm62-failure_restart | 0 | 3077088955 | 24 | 8 | 15 | 0.449 | a7048f11da38 | 583d6721dd07 | failure_restart | 0 | 3 | PASS |
+| 64 | g1-mweozqxj-1t-1vnv4yp-new_game | 3 | 3600466591 | 48 | 16 | 35 | 0.127 | 3a581b7779a7 | dc3b73655762 | new_game | 0 | 15 | PASS |
+| 65 | g1-mweozqyh-1u-1odvxh8-application_restart | 2 | 1802175182 | 36 | 12 | 27 | 0.41 | 48a355c31a58 | 50e93eb95563 | application_restart | 0 | 20 | PASS |
+| 66 | g1-mweozqyv-1v-7lf107-title_screen_restart | 1 | 2017048633 | 30 | 10 | 25 | 0.496 | a19afeffa178 | d3cb544db6e1 | title_screen_restart | 0 | 8 | PASS |
+| 67 | g1-mweozqz4-1w-113khdy-failure_restart | 0 | 2157957725 | 24 | 8 | 19 | 0.269 | 692d010bd95c | fd29b7369558 | failure_restart | 0 | 5 | PASS |
+| 68 | g1-mweozqze-1x-sf4axf-new_game | 3 | 365240040 | 48 | 16 | 34 | 0.21 | 118ad7d79a47 | 38393a3afa9c | new_game | 0 | 9 | PASS |
+| 69 | g1-mweozqzr-1y-1otgmu1-application_restart | 2 | 2219804058 | 36 | 12 | 33 | 0.527 | 572afcf7518b | a3529c53598e | application_restart | 0 | 7 | PASS |
+| 70 | g1-mweozqzz-1z-sx9zn5-title_screen_restart | 1 | 3823229527 | 30 | 10 | 26 | 0.266 | 158e8dfcf271 | f532c1b54ec3 | title_screen_restart | 0 | 5 | PASS |
+| 71 | g1-mweozr06-20-ynvugt-failure_restart | 0 | 4104189020 | 24 | 8 | 20 | 0.495 | dfe97d4d0c69 | 7acd1e5b75b0 | failure_restart | 0 | 4 | PASS |
+| 72 | g1-mweozr0h-21-102085n-new_game | 3 | 1671408752 | 48 | 16 | 33 | 0.246 | 0029f8035a0b | 38265505d1b0 | new_game | 0 | 9 | PASS |
+| 73 | g1-mweozr12-22-1jicwb6-application_restart | 2 | 1867188104 | 36 | 12 | 27 | 0.366 | fea63b6eada5 | 6afa39c32aeb | application_restart | 0 | 13 | PASS |
+| 74 | g1-mweozr1b-23-5foe89-title_screen_restart | 1 | 1267443664 | 30 | 10 | 26 | 0.447 | c85b142a7b84 | be865fa9f8b5 | title_screen_restart | 0 | 5 | PASS |
+| 75 | g1-mweozr1i-24-xqo69t-failure_restart | 0 | 1480192942 | 24 | 8 | 16 | 0.318 | fde37bc5c50a | dc40a5506d48 | failure_restart | 0 | 4 | PASS |
+| 76 | g1-mweozr1v-25-fsdaei-new_game | 3 | 3738102607 | 48 | 16 | 35 | 0.164 | b085a69d6cc7 | cbff1bd2bda5 | new_game | 0 | 11 | PASS |
+| 77 | g1-mweozr2g-26-190ixvv-application_restart | 2 | 2373416153 | 36 | 12 | 31 | 0.485 | 0221e4aff922 | b08c5624af43 | application_restart | 0 | 12 | PASS |
+| 78 | g1-mweozr2q-27-9rkyz4-title_screen_restart | 1 | 4060821109 | 30 | 10 | 26 | 0.23 | cc0625dc3cf0 | 3c412e502d0a | title_screen_restart | 0 | 6 | PASS |
+| 79 | g1-mweozr2w-28-93li07-failure_restart | 0 | 2082640306 | 24 | 8 | 20 | 0.474 | 9a5f0664c20a | 537ff6a331e2 | failure_restart | 0 | 4 | PASS |
+| 80 | g1-mweozr39-29-1996iy7-new_game | 3 | 4017858384 | 48 | 16 | 35 | 0.405 | bd574905c4c7 | 3d0a43d99494 | new_game | 0 | 11 | PASS |
+| 81 | g1-mweozr3t-2a-ecwswg-application_restart | 2 | 2559248956 | 36 | 12 | 28 | 0.437 | 36bb5a7b81eb | 5efab7d2613b | application_restart | 0 | 12 | PASS |
+| 82 | g1-mweozr42-2b-1weiwkq-title_screen_restart | 1 | 452887080 | 30 | 10 | 30 | 0.282 | 652144e5bfb4 | 5045e0a6300a | title_screen_restart | 0 | 5 | PASS |
+| 83 | g1-mweozr48-2c-c8whqt-failure_restart | 0 | 3674504073 | 24 | 8 | 20 | 0.236 | c872286fc5dd | 9b94560450f3 | failure_restart | 0 | 4 | PASS |
+| 84 | g1-mweozr4m-2d-ahrtk2-new_game | 3 | 393580359 | 48 | 16 | 29 | 0.493 | 1cc9af5581e5 | c1c7e7837675 | new_game | 0 | 12 | PASS |
+| 85 | g1-mweozr5i-2e-dqgff3-application_restart | 2 | 460794013 | 36 | 12 | 27 | 0.514 | c12e369c288e | f7fdd2f8a965 | application_restart | 1 | 19 | PASS |
+| 86 | g1-mweozr5z-2f-isd8za-title_screen_restart | 1 | 2994175403 | 30 | 10 | 26 | 0.484 | 68fc9d6163ed | dc13fa634fa4 | title_screen_restart | 1 | 10 | PASS |
+| 87 | g1-mweozr67-2g-10az7v8-failure_restart | 0 | 380186742 | 24 | 8 | 24 | 0.215 | 8267933b0bfc | 8976cccc6f80 | failure_restart | 0 | 5 | PASS |
+| 88 | g1-mweozr72-2h-11rqxji-new_game | 3 | 3180755915 | 48 | 16 | 34 | 0.353 | c555924acac6 | 089102c801bb | new_game | 0 | 29 | PASS |
+| 89 | g1-mweozr8m-2i-1ez5vqr-application_restart | 2 | 3834171498 | 36 | 12 | 26 | 0.484 | fee8535e2f26 | f0e8ac12dbdd | application_restart | 0 | 25 | PASS |
+| 90 | g1-mweozr8y-2j-1091wcg-title_screen_restart | 1 | 2120554256 | 30 | 10 | 22 | 0.584 | e4b0e749a105 | 9373a6d120e0 | title_screen_restart | 1 | 9 | PASS |
+| 91 | g1-mweozr96-2k-10vvoc5-failure_restart | 0 | 3452348049 | 24 | 8 | 15 | 0.564 | ec25fe6409f2 | 3c31723ab78f | failure_restart | 0 | 5 | PASS |
+| 92 | g1-mweozr9j-2l-d5zgs-new_game | 3 | 1753755663 | 48 | 16 | 36 | 0.279 | a0abac565180 | d0fc65e5a072 | new_game | 0 | 11 | PASS |
+| 93 | g1-mweozra3-2m-1j870oo-application_restart | 2 | 2421185142 | 36 | 12 | 27 | 0.377 | 479343c90276 | bcaba28ac761 | application_restart | 0 | 12 | PASS |
+| 94 | g1-mweozrae-2n-dd3rmy-title_screen_restart | 1 | 4284796415 | 30 | 10 | 26 | 0.43 | cf0cc14e5889 | 39b78f020427 | title_screen_restart | 0 | 7 | PASS |
+| 95 | g1-mweozram-2o-18uza50-failure_restart | 0 | 363706077 | 24 | 8 | 20 | 0.451 | 6213c36aed61 | 31b81c5b7c22 | failure_restart | 0 | 5 | PASS |
+| 96 | g1-mweozrb1-2p-1d8nwsl-new_game | 3 | 4143774397 | 48 | 16 | 35 | 0.446 | aa59e32a64a1 | a5823f2fbda6 | new_game | 0 | 12 | PASS |
+| 97 | g1-mweozrbn-2q-z0vark-application_restart | 2 | 2886852862 | 36 | 12 | 26 | 0.35 | 449205d4dc2e | 5f1dab633888 | application_restart | 0 | 13 | PASS |
+| 98 | g1-mweozrc0-2r-1fmkujq-title_screen_restart | 1 | 472470392 | 30 | 10 | 30 | 0.484 | 16e33c0a4286 | 2fdf946ab22b | title_screen_restart | 0 | 7 | PASS |
+| 99 | g1-mweozrc6-2s-zdyffi-failure_restart | 0 | 777923052 | 24 | 8 | 20 | 0.414 | 0eaaaaf02159 | 49325255ffe1 | failure_restart | 0 | 4 | PASS |
+| 100 | g1-mweozrci-2t-dmk6xf-new_game | 3 | 959132891 | 48 | 16 | 33 | 0.346 | a5576b80fd53 | f80a7837622d | new_game | 0 | 9 | PASS |
 
 </details>
 
@@ -182,12 +182,12 @@
 
 | 项 | 值 |
 |---|---|
-| 耗时 | 7591 ms |
+| 耗时 | 5758 ms |
 | 牌数范围 | 192 – 321 |
 | 开局可点牌范围 | 19 – 25 |
-| 档位分布 | {"0":8,"1":7,"2":10,"3":7,"4":9,"5":12,"6":10,"7":12,"8":13,"9":12} |
-| 牌数分布 | {"192":13,"255":12,"261":10,"273":9,"282":7,"291":12,"300":10,"312":19,"321":8} |
-| 牌型数分布 | {"13":38,"14":22,"15":33,"16":7} |
+| 档位分布 | {"0":8,"1":11,"2":3,"3":9,"4":5,"5":11,"6":6,"7":7,"8":24,"9":16} |
+| 牌数分布 | {"192":24,"255":16,"261":6,"273":5,"282":11,"291":11,"300":3,"312":16,"321":8} |
+| 牌型数分布 | {"13":33,"14":10,"15":48,"16":9} |
 | 生成原因分布 | {"application_restart":25,"title_screen_restart":25,"failure_restart":25,"new_game":25} |
 | 布局签名去重 | 100 / 100 |
 | 最近 10 局模板 ID 重复 | 0 |
@@ -197,114 +197,114 @@
 | 最近 10 局几何签名重复 | 0 |
 | 重试次数（失败重试合计） | 5 |
 | 生成失败次数 | 0 |
-| 滑窗 sim 均值 / P95 / 最大 | 0.1525 / 0.2402 / 0.4281 |
+| 滑窗 sim 均值 / P95 / 最大 | 0.2434 / 0.3607 / 0.4865 |
 | 重启模拟历史有效 | true |
-| 平均单局耗时 | 47.75 ms |
+| 平均单局耗时 | 37.20 ms |
 
 <details><summary>完整 100 局逐局记录</summary>
 
 | # | gameId | 档位 | seed | 牌数 | 牌型数 | 可点 | sim最大 | 布局签名(前12) | 几何签名(前12) | 原因 | 重试 | 耗时ms | 校验 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | g2-mweltpv1-2u-frgbw0-application_restart | 8 | 1557114692 | 192 | 15 | 21 | 0 | 7dcc9796f330 | 988072991a5f | application_restart | 0 | 32 | PASS |
-| 2 | g2-mweltpwu-2v-1q1nsae-title_screen_restart | 0 | 3041719678 | 321 | 15 | 22 | 0.122 | 1b60f1dae7b9 | cb21bdf2934b | title_screen_restart | 0 | 53 | PASS |
-| 3 | g2-mweltpym-2w-10y940o-failure_restart | 8 | 1134916566 | 192 | 15 | 24 | 0.132 | de7abcd524a6 | 7c25b5faf380 | failure_restart | 0 | 34 | PASS |
-| 4 | g2-mweltq05-2x-1c446i9-new_game | 5 | 2089318125 | 291 | 13 | 19 | 0.209 | 0cd108b1ba38 | b682bcdaeeed | new_game | 0 | 41 | PASS |
-| 5 | g2-mweltq23-2y-1kjv2w-application_restart | 7 | 2957295832 | 312 | 14 | 21 | 0.21 | 84190dc86e15 | c03d24fa464e | application_restart | 0 | 41 | PASS |
-| 6 | g2-mweltq3w-2z-1h7ew3h-title_screen_restart | 6 | 1555114686 | 261 | 13 | 21 | 0.202 | 20f1db1a8d4c | 5ebd03183c8e | title_screen_restart | 0 | 36 | PASS |
-| 7 | g2-mweltq5q-30-11klefz-failure_restart | 5 | 1406188158 | 291 | 13 | 19 | 0.166 | ca5e6128c04d | 77b26a1eb355 | failure_restart | 0 | 45 | PASS |
-| 8 | g2-mweltq7w-31-1ii8fan-new_game | 8 | 2444673842 | 192 | 15 | 25 | 0.256 | c88b89aa4e26 | f4cf52f2c63b | new_game | 0 | 45 | PASS |
-| 9 | g2-mweltq9v-32-a2cmq6-application_restart | 7 | 4119126583 | 312 | 14 | 19 | 0.255 | f3e8475cc84f | d26f3a21ee27 | application_restart | 0 | 50 | PASS |
-| 10 | g2-mweltqbt-33-so3pd8-title_screen_restart | 9 | 9007027 | 255 | 15 | 22 | 0.176 | ef0298433b9c | 1679afdbed0e | title_screen_restart | 0 | 38 | PASS |
-| 11 | g2-mweltqds-34-1g4mgnn-failure_restart | 5 | 448786590 | 291 | 13 | 22 | 0.378 | 818065036c13 | d13e1a88673d | failure_restart | 0 | 49 | PASS |
-| 12 | g2-mweltqg0-35-1xf3udz-new_game | 8 | 1522193483 | 192 | 15 | 19 | 0.165 | 383722e64946 | 56bdfeec405c | new_game | 0 | 45 | PASS |
-| 13 | g2-mweltqi5-36-18g9qbp-application_restart | 9 | 2959295838 | 255 | 15 | 23 | 0.191 | 11233429ee5a | 2dc6dbfc46cc | application_restart | 0 | 54 | PASS |
-| 14 | g2-mweltqjo-37-14wjv1z-title_screen_restart | 8 | 2296747317 | 192 | 15 | 24 | 0.206 | bd445bb8205d | c33b6d82ea6c | title_screen_restart | 0 | 30 | PASS |
-| 15 | g2-mweltql6-38-19co592-failure_restart | 6 | 4209550447 | 261 | 13 | 19 | 0.249 | d52ca0f78b58 | 53996f4efd74 | failure_restart | 0 | 41 | PASS |
-| 16 | g2-mweltqn7-39-77jpev-new_game | 2 | 2177741983 | 300 | 14 | 20 | 0.174 | 18a2998cd8ef | 492482faab21 | new_game | 0 | 43 | PASS |
-| 17 | g2-mweltqpi-3a-k4s6sa-application_restart | 8 | 1317764300 | 192 | 15 | 25 | 0.191 | 7211705ab0bc | 557162e2c8f3 | application_restart | 1 | 60 | PASS |
-| 18 | g2-mweltqqv-3b-2w72ml-title_screen_restart | 5 | 392283932 | 291 | 13 | 23 | 0.175 | ec6b1fc75652 | 0d389d305036 | title_screen_restart | 0 | 34 | PASS |
-| 19 | g2-mweltqsn-3c-1gtd1lz-failure_restart | 6 | 3674347005 | 261 | 13 | 20 | 0.2 | f3c9cef48b81 | 21d7c0f35d47 | failure_restart | 0 | 38 | PASS |
-| 20 | g2-mweltqv4-3d-1tww4i6-new_game | 0 | 922487359 | 321 | 15 | 19 | 0.21 | 39061c841623 | 36dd88ab8e2c | new_game | 0 | 66 | PASS |
-| 21 | g2-mweltqyb-3e-82uvcd-application_restart | 2 | 3670346993 | 300 | 14 | 19 | 0.198 | d03ed0899938 | 73e795643002 | application_restart | 0 | 64 | PASS |
-| 22 | g2-mweltr0i-3f-1q4fkqe-title_screen_restart | 7 | 2034815473 | 312 | 14 | 21 | 0.201 | 98b41a6d08f7 | e070c5536c9d | title_screen_restart | 0 | 45 | PASS |
-| 23 | g2-mweltr7w-3g-l4nury-failure_restart | 3 | 2087318119 | 312 | 16 | 19 | 0.388 | 9e0d5ba28711 | fa4f9c098a63 | failure_restart | 1 | 235 | PASS |
-| 24 | g2-mweltrai-3h-s0j8gi-new_game | 7 | 7007021 | 312 | 14 | 20 | 0.355 | 8a40d3014542 | 34ab857a6500 | new_game | 0 | 53 | PASS |
-| 25 | g2-mweltrcd-3i-rjpj64-application_restart | 6 | 1224340427 | 261 | 13 | 21 | 0.233 | 164e37c4add2 | 1c124f93cc93 | application_restart | 0 | 38 | PASS |
-| 26 | g2-mweltre5-3j-domhxt-title_screen_restart | 4 | 2179741989 | 273 | 13 | 23 | 0.21 | e35a8c1bbdf3 | 3a354b3498da | title_screen_restart | 0 | 42 | PASS |
-| 27 | g2-mweltrfv-3k-1c7n75r-failure_restart | 8 | 3275730334 | 192 | 15 | 20 | 0.187 | 1994b0a04ec7 | 2084416a9163 | failure_restart | 0 | 33 | PASS |
-| 28 | g2-mweltrhl-3l-18okimq-new_game | 7 | 3971200058 | 312 | 14 | 21 | 0.247 | e410c063b527 | 8c8a7c6a1d5a | new_game | 0 | 48 | PASS |
-| 29 | g2-mweltrjn-3m-1m9gu3p-application_restart | 4 | 3672346999 | 273 | 13 | 24 | 0.17 | 8d7928bc5f40 | 65aaaaa837c5 | application_restart | 0 | 42 | PASS |
-| 30 | g2-mweltrlg-3n-1lozp4-title_screen_restart | 2 | 4114126568 | 300 | 14 | 23 | 0.221 | 7983369ef994 | 75224f25af22 | title_screen_restart | 0 | 43 | PASS |
-| 31 | g2-mweltrnr-3o-121jduh-failure_restart | 7 | 2478595048 | 312 | 14 | 19 | 0.233 | 2a2b1a07a3c0 | 49d330429421 | failure_restart | 0 | 50 | PASS |
-| 32 | g2-mweltrpp-3p-164n507-new_game | 1 | 2655442764 | 282 | 13 | 21 | 0.428 | 4e152ea6d521 | c4cac834d9ef | new_game | 0 | 39 | PASS |
-| 33 | g2-mweltrrb-3q-12l0h2v-application_restart | 8 | 1008571490 | 192 | 15 | 21 | 0.207 | f3f4f39827d6 | 2987b0a94294 | application_restart | 0 | 30 | PASS |
-| 34 | g2-mweltrso-3r-1fvpzui-title_screen_restart | 4 | 3580923132 | 273 | 13 | 22 | 0.188 | a79c47353758 | 71e0c526ba59 | title_screen_restart | 0 | 32 | PASS |
-| 35 | g2-mweltrub-3s-1yoeuo8-failure_restart | 9 | 783560861 | 255 | 15 | 19 | 0.241 | 4d8955cdd0fb | 2837800bfb55 | failure_restart | 0 | 39 | PASS |
-| 36 | g2-mweltrw7-3t-1k7qsmr-new_game | 6 | 1555114686 | 261 | 13 | 20 | 0.284 | 5a770bb6e8c6 | b6e96321e08f | new_game | 0 | 48 | PASS |
-| 37 | g2-mweltry4-3u-fsbnbs-application_restart | 0 | 3428996595 | 321 | 15 | 22 | 0.338 | 4839a7bfb82c | 6c8a1c4319f2 | application_restart | 0 | 43 | PASS |
-| 38 | g2-mwelts05-3v-1kq5mui-title_screen_restart | 2 | 2804369292 | 300 | 14 | 20 | 0.223 | 642f032ea6b6 | 8b5c62f00b5d | title_screen_restart | 0 | 44 | PASS |
-| 39 | g2-mwelts2d-3w-o2ve28-failure_restart | 4 | 539210454 | 273 | 13 | 20 | 0.222 | 2ce3c4476758 | e6533fa9d8e6 | failure_restart | 0 | 48 | PASS |
-| 40 | g2-mwelts4h-3x-1f30700-new_game | 6 | 2660442779 | 261 | 13 | 20 | 0.219 | 75891a2c58c4 | e37832542407 | new_game | 0 | 47 | PASS |
-| 41 | g2-mwelts6o-3y-hnr4c7-application_restart | 5 | 3821273527 | 291 | 13 | 24 | 0.167 | 0e064bc84adc | 47418f73ef1a | application_restart | 0 | 47 | PASS |
-| 42 | g2-mwelts8e-3z-k92q1e-title_screen_restart | 6 | 2569018912 | 261 | 13 | 20 | 0.336 | 3101adc36814 | c65a79136144 | title_screen_restart | 0 | 38 | PASS |
-| 43 | g2-mwelts9y-40-otfjkl-failure_restart | 8 | 2240244659 | 192 | 15 | 24 | 0.219 | 9001d80ec21b | 5fc487a1e489 | failure_restart | 0 | 31 | PASS |
-| 44 | g2-mweltsbj-41-1i42sfe-new_game | 1 | 57509661 | 282 | 13 | 20 | 0.216 | 794df546f185 | db9fbb8b8e80 | new_game | 0 | 41 | PASS |
-| 45 | g2-mweltseo-42-4yr3c5-application_restart | 3 | 298860059 | 312 | 16 | 19 | 0.282 | 9ee377bbe6ce | a9a6209f34b3 | application_restart | 0 | 86 | PASS |
-| 46 | g2-mweltsif-43-28brdn-title_screen_restart | 4 | 4116126574 | 273 | 13 | 20 | 0.177 | 227c51070770 | f069c790a375 | title_screen_restart | 0 | 68 | PASS |
-| 47 | g2-mweltsk6-44-1se71v8-failure_restart | 0 | 535210442 | 321 | 15 | 22 | 0.173 | 5a4150e526a5 | 35f6cfae4f20 | failure_restart | 0 | 42 | PASS |
-| 48 | g2-mweltsmh-45-k4dgmd-new_game | 5 | 300860065 | 291 | 13 | 21 | 0.174 | 7e2fb2e38b3d | 2471fb7a1993 | new_game | 0 | 53 | PASS |
-| 49 | g2-mweltsoj-46-xb0och-application_restart | 8 | 4141708035 | 192 | 15 | 19 | 0.16 | bc7d50b9bc95 | 731c8ca77f4d | application_restart | 0 | 36 | PASS |
-| 50 | g2-mweltsq0-47-sw961j-title_screen_restart | 1 | 388283920 | 282 | 13 | 21 | 0.168 | 03f43d85a39c | 10a3cfa30462 | title_screen_restart | 0 | 39 | PASS |
-| 51 | g2-mweltstf-49-2ndrjq-failure_restart | 6 | 4209550447 | 261 | 13 | 21 | 0.24 | 853fc2a50993 | ff85bc408117 | failure_restart | 0 | 32 | PASS |
-| 52 | g2-mweltswc-4a-157rz49-new_game | 0 | 147933525 | 321 | 15 | 19 | 0.263 | 5581157976d3 | 8bf90aa30776 | new_game | 0 | 81 | PASS |
-| 53 | g2-mweltszo-4b-1mj235d-application_restart | 9 | 1945391612 | 255 | 15 | 19 | 0.133 | 0c66079e93d5 | 56716f6357ac | application_restart | 0 | 62 | PASS |
-| 54 | g2-mweltt1f-4c-10s8hdy-title_screen_restart | 2 | 2712945425 | 300 | 14 | 21 | 0.202 | ccb696a64ef2 | cb6e47bd508e | title_screen_restart | 0 | 43 | PASS |
-| 55 | g2-mweltt4h-4d-196yicr-failure_restart | 0 | 3668346987 | 321 | 15 | 21 | 0.283 | bc275582e836 | c1a3d5dc525d | failure_restart | 1 | 81 | PASS |
-| 56 | g2-mweltt6h-4e-7sl5dp-new_game | 5 | 1793465075 | 291 | 13 | 20 | 0.264 | cecd1c585396 | d07b9a89503d | new_game | 0 | 43 | PASS |
-| 57 | g2-mweltt8f-4f-ai9zws-application_restart | 2 | 2177741983 | 300 | 14 | 25 | 0.352 | 0f7314a0e613 | f8dc5b8915b5 | application_restart | 0 | 44 | PASS |
-| 58 | g2-mwelttab-4g-1o983gp-title_screen_restart | 4 | 2714945431 | 273 | 13 | 19 | 0.188 | 0162d4c081fb | 3bea357c5bf1 | title_screen_restart | 0 | 40 | PASS |
-| 59 | g2-mwelttdr-4h-1lw4brr-failure_restart | 6 | 393283935 | 261 | 13 | 23 | 0.338 | acfb32b66177 | a0c8283d138d | failure_restart | 1 | 102 | PASS |
-| 60 | g2-mwelttfp-4i-qnj81c-new_game | 3 | 3007009 | 312 | 16 | 24 | 0.212 | 4051cfb80e18 | 292d35070629 | new_game | 0 | 45 | PASS |
-| 61 | g2-mweltthh-4j-l7o7d6-application_restart | 9 | 304860077 | 255 | 15 | 22 | 0.184 | a9b221d5a0c7 | f1c924053741 | application_restart | 0 | 34 | PASS |
-| 62 | g2-mwelttjc-4k-1h2f6u1-title_screen_restart | 3 | 2474595036 | 312 | 16 | 25 | 0.269 | 688720e0f213 | 47f763dcd6fb | title_screen_restart | 0 | 44 | PASS |
-| 63 | g2-mwelttkz-4l-10pjuzd-failure_restart | 8 | 1557114692 | 192 | 15 | 19 | 0.197 | 2d70f0f41252 | 463499f53f48 | failure_restart | 0 | 26 | PASS |
-| 64 | g2-mwelttme-4m-kxo1ou-new_game | 1 | 3965200040 | 282 | 13 | 22 | 0.224 | 5a59a646625b | 94f76b3f9b5e | new_game | 0 | 36 | PASS |
-| 65 | g2-mwelttoh-4n-v0qh0q-application_restart | 7 | 1943391606 | 312 | 14 | 20 | 0.358 | d12009d3b19c | 6310eb00dc71 | application_restart | 0 | 47 | PASS |
-| 66 | g2-mwelttqu-4o-ubkipz-title_screen_restart | 5 | 1554114683 | 291 | 13 | 23 | 0.258 | d7c9b62f3932 | 5325b817bf77 | title_screen_restart | 0 | 52 | PASS |
-| 67 | g2-mwelttt0-4p-de2n39-failure_restart | 2 | 2325668508 | 300 | 14 | 22 | 0.123 | ff58dbe2d299 | 615312ac991b | failure_restart | 0 | 47 | PASS |
-| 68 | g2-mwelttuy-4q-py4o2x-new_game | 7 | 929487380 | 312 | 14 | 20 | 0.286 | fcc9d740e166 | 0943849254cc | new_game | 0 | 42 | PASS |
-| 69 | g2-mwelttwy-4r-s52m2y-application_restart | 2 | 4114126568 | 300 | 14 | 19 | 0.216 | d8ce268a49c6 | 46d68a1041de | application_restart | 0 | 45 | PASS |
-| 70 | g2-mwelttzf-4s-bvrmbt-title_screen_restart | 9 | 1945391612 | 255 | 15 | 19 | 0.312 | 7dbd33095d79 | a102341c8e88 | title_screen_restart | 0 | 58 | PASS |
-| 71 | g2-mweltu20-4t-gsn38r-failure_restart | 8 | 1008571490 | 192 | 15 | 19 | 0.151 | 70f6f84c9335 | 73456fa17064 | failure_restart | 0 | 52 | PASS |
-| 72 | g2-mweltu3w-4u-18vsriw-new_game | 7 | 3731849666 | 312 | 14 | 20 | 0.24 | 3c8339ff64a3 | b6836e434312 | new_game | 0 | 46 | PASS |
-| 73 | g2-mweltu5l-4v-2d0ke7-application_restart | 9 | 452786602 | 255 | 15 | 19 | 0.16 | d649441a81ed | 847a4d35ed67 | application_restart | 0 | 31 | PASS |
-| 74 | g2-mweltu79-4w-11h80l0-title_screen_restart | 7 | 2330668523 | 312 | 14 | 22 | 0.213 | 29551f74d125 | 70ca9e964791 | title_screen_restart | 0 | 40 | PASS |
-| 75 | g2-mweltu9d-4x-1qepeyn-failure_restart | 2 | 3487499259 | 300 | 14 | 21 | 0.277 | 39ed4f8614a4 | 07ac034679dd | failure_restart | 0 | 47 | PASS |
-| 76 | g2-mweltuba-4y-1nsjhlx-new_game | 4 | 2179741989 | 273 | 13 | 20 | 0.259 | 384dd38ac216 | 8e7d86255e0c | new_game | 0 | 40 | PASS |
-| 77 | g2-mweltud4-4z-1l1xx75-application_restart | 5 | 3673347002 | 291 | 13 | 23 | 0.177 | 8e116af2a784 | 0d1dddb9a27b | application_restart | 0 | 42 | PASS |
-| 78 | g2-mweltuf3-50-895biu-title_screen_restart | 3 | 2030815461 | 312 | 16 | 24 | 0.246 | 496c49f6e111 | 02894eec8181 | title_screen_restart | 0 | 46 | PASS |
-| 79 | g2-mweltuhb-51-15c0pnq-failure_restart | 9 | 3346572755 | 255 | 15 | 20 | 0.21 | e3daaac9d1d5 | 941c24316d01 | failure_restart | 0 | 51 | PASS |
-| 80 | g2-mweltujs-52-fqmc2z-new_game | 1 | 4204550432 | 282 | 13 | 23 | 0.225 | b12f23d5c719 | 10aadd4044ba | new_game | 0 | 53 | PASS |
-| 81 | g2-mweltult-53-l5tekr-application_restart | 3 | 3579923129 | 312 | 16 | 22 | 0.225 | e79d7f531d28 | 3f8c209ae145 | application_restart | 0 | 46 | PASS |
-| 82 | g2-mweltuno-54-1ohg4k-title_screen_restart | 4 | 2954295823 | 273 | 13 | 21 | 0.242 | c0ea1cfe8e30 | f982a01f4143 | title_screen_restart | 0 | 40 | PASS |
-| 83 | g2-mweltupx-55-imna2g-failure_restart | 9 | 3107222363 | 255 | 15 | 20 | 0.201 | 7ccd65e6a54c | d4132c75f5c3 | failure_restart | 0 | 57 | PASS |
-| 84 | g2-mweltusr-56-f60wx6-new_game | 1 | 2803369289 | 282 | 13 | 24 | 0.283 | b8efab3b5ba9 | 3964cf850e34 | new_game | 0 | 61 | PASS |
-| 85 | g2-mweltuuq-57-cm5xoh-application_restart | 7 | 154933546 | 312 | 14 | 23 | 0.318 | 5c1a6e612062 | ddf35b5e0b28 | application_restart | 0 | 41 | PASS |
-| 86 | g2-mweltuwu-58-1fc2ruh-title_screen_restart | 0 | 1013911226 | 321 | 15 | 20 | 0.205 | 6526790d313d | 51c536d75f67 | title_screen_restart | 0 | 48 | PASS |
-| 87 | g2-mweltuzh-59-1smkzuf-failure_restart | 2 | 833063498 | 300 | 14 | 19 | 0.24 | c62f517b0bbe | 90374021146f | failure_restart | 0 | 58 | PASS |
-| 88 | g2-mweltv22-5a-1gmnck9-new_game | 7 | 929487380 | 312 | 14 | 19 | 0.226 | ba0f10d76ae9 | 6e9d9abdb2e6 | new_game | 0 | 55 | PASS |
-| 89 | g2-mweltv49-5b-1mc0ps0-application_restart | 5 | 392283932 | 291 | 13 | 19 | 0.188 | 1cc793d1cdb1 | 6e33ae182e1b | application_restart | 0 | 46 | PASS |
-| 90 | g2-mweltv5u-5c-7nzjqy-title_screen_restart | 8 | 3789352327 | 192 | 15 | 19 | 0.125 | 3502c59127eb | 107844b0ae7b | title_screen_restart | 0 | 31 | PASS |
-| 91 | g2-mweltv7l-5d-4tsk1j-failure_restart | 0 | 683136967 | 321 | 15 | 21 | 0.242 | dd673971a391 | d8ec763f101a | failure_restart | 0 | 45 | PASS |
-| 92 | g2-mweltvaf-5e-vtsmvb-new_game | 5 | 836063507 | 291 | 13 | 25 | 0.231 | a3d672bd51eb | 39e65a35ed10 | new_game | 1 | 74 | PASS |
-| 93 | g2-mweltvcc-5f-1fai8xw-application_restart | 4 | 4059623916 | 273 | 13 | 19 | 0.267 | 399a8ad3a6c1 | a83f37b7adc6 | application_restart | 0 | 42 | PASS |
-| 94 | g2-mweltveh-5g-1wz2feo-title_screen_restart | 3 | 2566018903 | 312 | 16 | 20 | 0.269 | ea498f3bd2c8 | e890984e64aa | title_screen_restart | 0 | 48 | PASS |
-| 95 | g2-mweltvgd-5h-euwgqb-failure_restart | 9 | 692136994 | 255 | 15 | 22 | 0.208 | 292bc86a283d | 6cf35dea6f6f | failure_restart | 0 | 38 | PASS |
-| 96 | g2-mweltvhx-5i-1efjief-new_game | 6 | 1942391603 | 261 | 13 | 21 | 0.206 | 600fa72f3df3 | 4ebec94bff0b | new_game | 0 | 34 | PASS |
-| 97 | g2-mweltvj9-5j-17u1rgs-application_restart | 9 | 1706041220 | 255 | 15 | 23 | 0.188 | aa7204580e0b | 35c3c29c3cb6 | application_restart | 0 | 29 | PASS |
-| 98 | g2-mweltvks-5k-3mjzho-title_screen_restart | 1 | 2028815455 | 282 | 13 | 24 | 0.384 | a0d9c7a0bfb7 | 88863130a908 | title_screen_restart | 0 | 36 | PASS |
-| 99 | g2-mweltvml-5l-12kd7du-failure_restart | 5 | 3342572743 | 291 | 13 | 23 | 0.245 | 5bbbeb12f2e4 | c5a5c5bbfd72 | failure_restart | 0 | 40 | PASS |
-| 100 | g2-mweltvoc-5m-17w5fec-new_game | 9 | 3107222363 | 255 | 15 | 23 | 0.372 | 7730217b2c99 | 5e0113c34f13 | new_game | 0 | 35 | PASS |
+| 1 | g2-mweozre3-2u-1cdao4p-application_restart | 5 | 2032815467 | 291 | 13 | 21 | 0 | eb19e3858e6a | ea0702bbfa3c | application_restart | 0 | 50 | PASS |
+| 2 | g2-mweozrfb-2v-ov0aeb-title_screen_restart | 8 | 3106222360 | 192 | 15 | 21 | 0.165 | 505acd3678b4 | c128cc6086be | title_screen_restart | 0 | 23 | PASS |
+| 3 | g2-mweozrg8-2w-9usxq1-failure_restart | 9 | 396283944 | 255 | 15 | 22 | 0.254 | ab0f279ce2de | 98f4ac4a9e21 | failure_restart | 0 | 23 | PASS |
+| 4 | g2-mweozrhc-2x-1s579xg-new_game | 6 | 2625521570 | 261 | 13 | 20 | 0.29 | b52620fa38ca | a97021f03356 | new_game | 0 | 27 | PASS |
+| 5 | g2-mweozrik-2y-17xf3bj-application_restart | 9 | 3585923147 | 255 | 15 | 25 | 0.398 | 03d4a45ac1cd | ae509291d466 | application_restart | 0 | 28 | PASS |
+| 6 | g2-mweozrk1-2z-4sx69j-title_screen_restart | 7 | 2182741998 | 312 | 14 | 22 | 0.315 | 45de2f6b98f2 | fe913dcd2c70 | title_screen_restart | 0 | 34 | PASS |
+| 7 | g2-mweozrlj-30-s37ryg-failure_restart | 4 | 4059623916 | 273 | 13 | 23 | 0.32 | be013a0f8d56 | 8ce8c9a15e15 | failure_restart | 0 | 29 | PASS |
+| 8 | g2-mweozrmx-31-rcii06-new_game | 5 | 448786590 | 291 | 13 | 20 | 0.373 | a96ce35d7fb4 | 14764d726f9d | new_game | 0 | 33 | PASS |
+| 9 | g2-mweozro7-32-a0mfhd-application_restart | 8 | 1557114692 | 192 | 15 | 24 | 0.286 | 98167b547e0d | 0195b73bf2aa | application_restart | 0 | 26 | PASS |
+| 10 | g2-mweozrpn-33-htnu1s-title_screen_restart | 5 | 2715945434 | 291 | 13 | 20 | 0.363 | a0af67052f99 | 021f4eb3bd53 | title_screen_restart | 0 | 38 | PASS |
+| 11 | g2-mweozrrd-34-1x2l8sq-failure_restart | 1 | 1789465063 | 282 | 13 | 19 | 0.371 | cdeb07f7dd29 | 25accdfa3323 | failure_restart | 0 | 38 | PASS |
+| 12 | g2-mweozrt4-35-ce2ct9-new_game | 5 | 4117126577 | 291 | 13 | 19 | 0.366 | 395cbaca41a6 | d2f2abe0a7c2 | new_game | 0 | 42 | PASS |
+| 13 | g2-mweozrum-36-1ksqbwy-application_restart | 8 | 3049719702 | 192 | 15 | 25 | 0.32 | 7acb33fdbada | 06f244eb85a2 | application_restart | 0 | 29 | PASS |
+| 14 | g2-mweozrvy-37-14e5ixr-title_screen_restart | 1 | 3429996598 | 282 | 13 | 23 | 0.286 | 6dc1c327da3e | 79c1db321ea8 | title_screen_restart | 0 | 31 | PASS |
+| 15 | g2-mweozrxj-38-u9ligh-failure_restart | 5 | 3729849660 | 291 | 13 | 21 | 0.401 | 2a369e37c7c0 | 005d94f05ed2 | failure_restart | 0 | 35 | PASS |
+| 16 | g2-mweozrz3-39-1tvryn0-new_game | 1 | 2803369289 | 282 | 13 | 19 | 0.365 | 392179f04d0f | d8d96830d094 | new_game | 0 | 31 | PASS |
+| 17 | g2-mweozs0o-3a-1ve7bdp-application_restart | 3 | 390283926 | 312 | 16 | 19 | 0.331 | 3c043a05db55 | e1ea997e75f1 | application_restart | 0 | 35 | PASS |
+| 18 | g2-mweozs2i-3b-1rouj4b-title_screen_restart | 7 | 2809369307 | 312 | 14 | 21 | 0.306 | ec6f54801194 | 7c078f88dcf1 | title_screen_restart | 0 | 40 | PASS |
+| 19 | g2-mweozs48-3c-mrrg62-failure_restart | 9 | 783560861 | 255 | 15 | 24 | 0.36 | 84bf62b86587 | e23228f46553 | failure_restart | 0 | 32 | PASS |
+| 20 | g2-mweozs5j-3d-y51fr8-new_game | 8 | 1317764300 | 192 | 15 | 19 | 0.315 | e5982259904c | ea5610d8a949 | new_game | 0 | 28 | PASS |
+| 21 | g2-mweozs6s-3e-12ns6in-application_restart | 6 | 3195646221 | 261 | 13 | 24 | 0.35 | b15d8ae52900 | c7a0624684f3 | application_restart | 0 | 28 | PASS |
+| 22 | g2-mweozs85-3f-1tx4n92-title_screen_restart | 8 | 3275730334 | 192 | 15 | 19 | 0.297 | b783a93cf1db | 4cfed798abb2 | title_screen_restart | 0 | 35 | PASS |
+| 23 | g2-mweozs9k-3g-162rmqb-failure_restart | 1 | 2176741980 | 282 | 13 | 20 | 0.289 | dcff869680ee | 035c84b0bd7b | failure_restart | 0 | 32 | PASS |
+| 24 | g2-mweozsaz-3h-129tea2-new_game | 4 | 4207550441 | 273 | 13 | 22 | 0.332 | 025f3911de97 | 5f430c795d51 | new_game | 0 | 31 | PASS |
+| 25 | g2-mweozsc4-3i-1u348w0-application_restart | 8 | 656215782 | 192 | 15 | 19 | 0.349 | d7003021d40a | a10dbc547caa | application_restart | 0 | 22 | PASS |
+| 26 | g2-mweozsdb-3j-50t8di-title_screen_restart | 7 | 4210550450 | 312 | 14 | 20 | 0.346 | d6ace2e751f2 | 1d8dd205bbc1 | title_screen_restart | 0 | 31 | PASS |
+| 27 | g2-mweozsey-3k-1cmps8l-failure_restart | 5 | 1702041208 | 291 | 13 | 19 | 0.361 | a741bb0aaa87 | 40b4a19d691f | failure_restart | 0 | 34 | PASS |
+| 28 | g2-mweozsgj-3l-1biu2l8-new_game | 9 | 3677347014 | 255 | 15 | 24 | 0.383 | bab7ed5ad90e | 0173c9f5b632 | new_game | 0 | 32 | PASS |
+| 29 | g2-mweozsic-3m-12l2a09-application_restart | 3 | 3727849654 | 312 | 16 | 20 | 0.344 | 9a2f86154478 | c4314c7472a4 | application_restart | 0 | 44 | PASS |
+| 30 | g2-mweozsk6-3n-9xp1b4-title_screen_restart | 8 | 3254148885 | 192 | 15 | 23 | 0.321 | b76bd48e1d7f | 2f2bdf686048 | title_screen_restart | 0 | 35 | PASS |
+| 31 | g2-mweozsls-3o-1hcjv9r-failure_restart | 9 | 692136994 | 255 | 15 | 22 | 0.384 | 927017a0e82b | 33e99877ed20 | failure_restart | 0 | 35 | PASS |
+| 32 | g2-mweozsn7-3p-18ji2uz-new_game | 1 | 923487362 | 282 | 13 | 20 | 0.4 | 4d1a5d6fc524 | 3779050ab23f | new_game | 0 | 32 | PASS |
+| 33 | g2-mweozsoo-3q-p3nhh6-application_restart | 0 | 56509658 | 321 | 15 | 21 | 0.255 | 6c078d4dbe41 | 95738a58a421 | application_restart | 0 | 31 | PASS |
+| 34 | g2-mweozsq9-3r-4cnr72-title_screen_restart | 3 | 2474595036 | 312 | 16 | 20 | 0.408 | 15dea981f1f5 | 1b5cca04acbe | title_screen_restart | 0 | 33 | PASS |
+| 35 | g2-mweozsrp-3s-1toxeje-failure_restart | 9 | 4121126589 | 255 | 15 | 24 | 0.307 | 240c67888075 | ca5d9b3bc780 | failure_restart | 0 | 28 | PASS |
+| 36 | g2-mweozst1-3t-gqtvg-new_game | 1 | 1845967721 | 282 | 13 | 20 | 0.395 | 46674f027942 | 615e4a754870 | new_game | 0 | 30 | PASS |
+| 37 | g2-mweozsua-3u-b8s4kq-application_restart | 9 | 1706041220 | 255 | 15 | 24 | 0.269 | 0a7ee0714ea1 | 18d69c15abc5 | application_restart | 0 | 26 | PASS |
+| 38 | g2-mweozsvq-3v-14q2q7h-title_screen_restart | 0 | 1013911226 | 321 | 15 | 20 | 0.363 | ec25967abe24 | 426f9086669f | title_screen_restart | 0 | 37 | PASS |
+| 39 | g2-mweozsxk-3w-1f9gpzo-failure_restart | 5 | 1314764291 | 291 | 13 | 24 | 0.347 | 42c35ee3eb05 | 1dffd6deab9e | failure_restart | 0 | 38 | PASS |
+| 40 | g2-mweozsyq-3x-4qel50-new_game | 8 | 4141708035 | 192 | 15 | 20 | 0.287 | 6cd102225382 | f1970a04e3cc | new_game | 0 | 25 | PASS |
+| 41 | g2-mweozt0j-3y-185vpe7-application_restart | 0 | 387283917 | 321 | 15 | 19 | 0.293 | 8e9146259c67 | 02e44a0b2839 | application_restart | 0 | 52 | PASS |
+| 42 | g2-mweozt2g-3z-134yazh-title_screen_restart | 2 | 3966200043 | 300 | 14 | 20 | 0.359 | 43900d7938e9 | 94bf2f156b84 | title_screen_restart | 0 | 43 | PASS |
+| 43 | g2-mweozt40-40-1c8fty9-failure_restart | 9 | 452786602 | 255 | 15 | 19 | 0.372 | 8625fe43fc6c | c8f65b118f0c | failure_restart | 0 | 30 | PASS |
+| 44 | g2-mweozt5a-41-162p3f4-new_game | 6 | 2625521570 | 261 | 13 | 20 | 0.379 | 1016e612aaba | 87b9c61e97c2 | new_game | 0 | 30 | PASS |
+| 45 | g2-mweozt6q-42-1mswxka-application_restart | 5 | 2807369301 | 291 | 13 | 21 | 0.27 | 4ea64e5d1ae8 | 67fae083f9dd | application_restart | 0 | 35 | PASS |
+| 46 | g2-mweozt8f-43-gal3vo-title_screen_restart | 9 | 3973200064 | 255 | 15 | 21 | 0.385 | 1eaee4f1da1c | 589eb4a8d7a5 | title_screen_restart | 0 | 35 | PASS |
+| 47 | g2-mweozta4-44-1efft1w-failure_restart | 0 | 2802369286 | 321 | 15 | 22 | 0.34 | ccf14ef6bc10 | 8ac07a74f203 | failure_restart | 0 | 40 | PASS |
+| 48 | g2-mweoztby-45-xyfw1o-new_game | 4 | 60509670 | 273 | 13 | 20 | 0.313 | 582567ee257f | 0b2575099c5b | new_game | 0 | 38 | PASS |
+| 49 | g2-mweoztdm-46-klfu4-application_restart | 7 | 4062623925 | 312 | 14 | 19 | 0.352 | d21e0a1a2172 | 30dcbc66274d | application_restart | 0 | 37 | PASS |
+| 50 | g2-mweoztez-47-vugrw7-title_screen_restart | 8 | 1078413908 | 192 | 15 | 21 | 0.327 | 341adf2ed795 | 0dfd8c1fc8e5 | title_screen_restart | 0 | 23 | PASS |
+| 51 | g2-mweoztha-49-wbxads-failure_restart | 3 | 1073413893 | 312 | 16 | 20 | 0.294 | 119589695be7 | d84d5b2fdaca | failure_restart | 0 | 34 | PASS |
+| 52 | g2-mweoztis-4a-edodfs-new_game | 4 | 3728849657 | 273 | 13 | 23 | 0.363 | 503687747554 | b345b7ce9e91 | new_game | 0 | 31 | PASS |
+| 53 | g2-mweoztjt-4b-et6crt-application_restart | 8 | 2240244659 | 192 | 15 | 22 | 0.287 | 798ff9c26b92 | a45409a98174 | application_restart | 0 | 19 | PASS |
+| 54 | g2-mweoztkz-4c-1eu1l8l-title_screen_restart | 7 | 4119126583 | 312 | 14 | 21 | 0.383 | 7692d524c9d7 | 50d44dfb3920 | title_screen_restart | 0 | 31 | PASS |
+| 55 | g2-mweoztr5-4d-17cdlz8-failure_restart | 8 | 3254148885 | 192 | 15 | 20 | 0.384 | 340b8c9f7e6f | 9cfa28126513 | failure_restart | 1 | 193 | PASS |
+| 56 | g2-mweoztsw-4e-14h2uqv-new_game | 9 | 452786602 | 255 | 15 | 25 | 0.382 | 07f57e7c7dd1 | 6c2f55ae9e34 | new_game | 1 | 50 | PASS |
+| 57 | g2-mweozttt-4f-122g0w3-application_restart | 8 | 1317764300 | 192 | 15 | 20 | 0.248 | 99daaedda753 | 235c807619d7 | application_restart | 0 | 17 | PASS |
+| 58 | g2-mweoztvj-4g-inslot-title_screen_restart | 3 | 1847967727 | 312 | 16 | 21 | 0.395 | d97d19f0b98e | dda7dfefb4c6 | title_screen_restart | 0 | 51 | PASS |
+| 59 | g2-mweoztxb-4h-bg5ddt-failure_restart | 9 | 3437996622 | 255 | 15 | 25 | 0.38 | 83e2337c2b84 | 4b8e4fdf8f50 | failure_restart | 0 | 34 | PASS |
+| 60 | g2-mweoztzd-4i-r49emf-new_game | 1 | 3190646206 | 282 | 13 | 20 | 0.321 | 3be70587e548 | 4189fd9f2cc1 | new_game | 1 | 58 | PASS |
+| 61 | g2-mweozu5k-4j-m63qt9-application_restart | 3 | 150933534 | 312 | 16 | 22 | 0.373 | c0b49712ded5 | 610222c20698 | application_restart | 1 | 203 | PASS |
+| 62 | g2-mweozu78-4k-mgdqa6-title_screen_restart | 0 | 3189646203 | 321 | 15 | 23 | 0.335 | 96939493d0bb | a63b0f863340 | title_screen_restart | 0 | 37 | PASS |
+| 63 | g2-mweozu8l-4l-yocyj3-failure_restart | 8 | 2958295835 | 192 | 15 | 20 | 0.356 | 4838e227860b | cfe39794fafb | failure_restart | 0 | 26 | PASS |
+| 64 | g2-mweozudt-4m-15oktrw-new_game | 3 | 390283926 | 312 | 16 | 21 | 0.371 | f4f37aa7ecec | e16a4c0d38c2 | new_game | 1 | 178 | PASS |
+| 65 | g2-mweozuf9-4n-kylzzm-application_restart | 1 | 4113126565 | 282 | 13 | 20 | 0.244 | 5fc3de3b2139 | 225cafcbf8eb | application_restart | 0 | 28 | PASS |
+| 66 | g2-mweozugr-4o-1cvwpow-title_screen_restart | 5 | 3433996610 | 291 | 13 | 22 | 0.39 | 7a3848fc7aa2 | 8d55f94d187a | title_screen_restart | 0 | 34 | PASS |
+| 67 | g2-mweozui3-4p-mvkzs0-failure_restart | 8 | 1761543875 | 192 | 15 | 19 | 0.244 | fd7cd77c7c45 | 281bd2f98f98 | failure_restart | 0 | 24 | PASS |
+| 68 | g2-mweozuj1-4q-119o8ro-new_game | 6 | 1315764294 | 261 | 13 | 21 | 0.276 | 0a3a4e1b09aa | 349c0b550840 | new_game | 0 | 21 | PASS |
+| 69 | g2-mweozuk1-4r-7nlsib-application_restart | 8 | 2923374626 | 192 | 15 | 21 | 0.305 | 526b6fd5e912 | 60b607309049 | application_restart | 0 | 20 | PASS |
+| 70 | g2-mweozul1-4s-155wxj2-title_screen_restart | 9 | 1022911253 | 255 | 15 | 23 | 0.284 | bdc295bf9652 | ad193ec45c5c | title_screen_restart | 0 | 25 | PASS |
+| 71 | g2-mweozulx-4t-8jkdbi-failure_restart | 8 | 1226340433 | 192 | 15 | 20 | 0.277 | 709caa939e09 | e6636b9cec54 | failure_restart | 0 | 17 | PASS |
+| 72 | g2-mweozumz-4u-r6yqaw-new_game | 6 | 3674347005 | 261 | 13 | 22 | 0.343 | ae1b8a92fc35 | 3406d114e047 | new_game | 0 | 29 | PASS |
+| 73 | g2-mweozuof-4v-1ygwky-application_restart | 8 | 3993781510 | 192 | 15 | 19 | 0.289 | aa4e2975225e | ffb5f5c30d33 | application_restart | 0 | 31 | PASS |
+| 74 | g2-mweozupz-4w-m2pcnj-title_screen_restart | 9 | 3346572755 | 255 | 15 | 21 | 0.254 | 78def08abc39 | 06fbfe679d0a | title_screen_restart | 0 | 37 | PASS |
+| 75 | g2-mweozur7-4x-vxp4ix-failure_restart | 8 | 1043492699 | 192 | 15 | 22 | 0.326 | 4cceffd80f4f | 631dec314767 | failure_restart | 0 | 23 | PASS |
+| 76 | g2-mweozusd-4y-1tuhnzt-new_game | 3 | 3192646212 | 312 | 16 | 22 | 0.377 | 43f649f71723 | 6269192dbf8f | new_game | 0 | 32 | PASS |
+| 77 | g2-mweozuts-4z-v9djpa-application_restart | 9 | 2811369313 | 255 | 15 | 23 | 0.337 | b618505a0501 | ec24e12d76a5 | application_restart | 0 | 30 | PASS |
+| 78 | g2-mweozuuq-50-9f681y-title_screen_restart | 8 | 3550001935 | 192 | 15 | 20 | 0.342 | b713ac7aa44c | a4ef17e90761 | title_screen_restart | 0 | 18 | PASS |
+| 79 | g2-mweozuw4-51-l6l3vt-failure_restart | 5 | 3342572743 | 291 | 13 | 19 | 0.32 | 5e97c9055629 | 291049edb2e5 | failure_restart | 0 | 38 | PASS |
+| 80 | g2-mweozuxq-52-obav6h-new_game | 8 | 2092318134 | 192 | 15 | 19 | 0.378 | 3e5fc7065075 | 8ea556edb300 | new_game | 0 | 28 | PASS |
+| 81 | g2-mweozuyt-53-1on9orm-application_restart | 1 | 2324668505 | 282 | 13 | 22 | 0.278 | 316bc07e950d | d33a31f4f341 | application_restart | 0 | 26 | PASS |
+| 82 | g2-mweozv0a-54-5xj7cw-title_screen_restart | 2 | 924487365 | 300 | 14 | 19 | 0.37 | c0d09bb890cf | 17e0478f5d8d | title_screen_restart | 0 | 33 | PASS |
+| 83 | g2-mweozv1y-55-17llrq4-failure_restart | 6 | 3822273530 | 261 | 13 | 20 | 0.334 | a50c96246ccd | 6c7501796bf0 | failure_restart | 0 | 35 | PASS |
+| 84 | g2-mweozv3j-56-18zwerf-new_game | 3 | 1404188152 | 312 | 16 | 24 | 0.424 | fb012a16b76e | c6370025ad7c | new_game | 0 | 37 | PASS |
+| 85 | g2-mweozv4u-57-1cf1p1f-application_restart | 9 | 3437996622 | 255 | 15 | 21 | 0.366 | ae2b3ee5d279 | d5d440d1779c | application_restart | 0 | 27 | PASS |
+| 86 | g2-mweozv5y-58-1f0a6y-title_screen_restart | 8 | 2296747317 | 192 | 15 | 23 | 0.279 | 4d5d57670ebe | b2d9284dc592 | title_screen_restart | 0 | 22 | PASS |
+| 87 | g2-mweozv7o-59-j29upv-failure_restart | 0 | 3964200037 | 321 | 15 | 25 | 0.307 | d0a6df93f9d8 | 95c5214920a2 | failure_restart | 0 | 48 | PASS |
+| 88 | g2-mweozval-5a-5ywrqd-new_game | 7 | 2570018915 | 312 | 14 | 19 | 0.487 | 000aadf5fb50 | 9829ce3cab5d | new_game | 0 | 62 | PASS |
+| 89 | g2-mweozvc4-5b-16h901z-application_restart | 9 | 3346572755 | 255 | 15 | 24 | 0.237 | 2ddf53474ade | 66181df58186 | application_restart | 0 | 30 | PASS |
+| 90 | g2-mweozvdc-5c-1at3nnr-title_screen_restart | 5 | 4117126577 | 291 | 13 | 19 | 0.351 | f5626b923e42 | c0e95115aeba | title_screen_restart | 0 | 28 | PASS |
+| 91 | g2-mweozvf4-5d-105a4f9-failure_restart | 2 | 149933531 | 300 | 14 | 19 | 0.278 | d1d897a1d44e | 1a4ed8c710f2 | failure_restart | 0 | 41 | PASS |
+| 92 | g2-mweozvgu-5e-17cjphd-new_game | 4 | 3045719690 | 273 | 13 | 22 | 0.379 | 77a33ae5ce8e | fa4339691dbf | new_game | 0 | 37 | PASS |
+| 93 | g2-mweozvio-5f-1hmddb9-application_restart | 0 | 922487359 | 321 | 15 | 20 | 0.374 | 0782537cdba4 | bf262258c573 | application_restart | 0 | 41 | PASS |
+| 94 | g2-mweozvk8-5g-12pt8kk-title_screen_restart | 8 | 4141708035 | 192 | 15 | 20 | 0.243 | 17c667b1af13 | 16e27195c1ca | title_screen_restart | 0 | 30 | PASS |
+| 95 | g2-mweozvlj-5h-13twv8u-failure_restart | 1 | 4056623907 | 282 | 13 | 23 | 0.386 | a03ce94f5419 | 681b69e3cf64 | failure_restart | 0 | 28 | PASS |
+| 96 | g2-mweozvmj-5i-jcnpgd-new_game | 8 | 656215782 | 192 | 15 | 20 | 0.292 | 019b1861bfe1 | c9ac3e8652b8 | new_game | 0 | 18 | PASS |
+| 97 | g2-mweozvnl-5j-19bn9b4-application_restart | 1 | 3190646206 | 282 | 13 | 21 | 0.293 | c718d956efc0 | a6195e323146 | application_restart | 0 | 27 | PASS |
+| 98 | g2-mweozvp5-5k-1og4f86-title_screen_restart | 7 | 4210550450 | 312 | 14 | 19 | 0.389 | 182c8c3aa8b4 | 78a5882e4a89 | title_screen_restart | 0 | 38 | PASS |
+| 99 | g2-mweozvr3-5l-orsudy-failure_restart | 0 | 1309764276 | 321 | 15 | 22 | 0.352 | 81dae221c90d | e7aed0492ff3 | failure_restart | 0 | 39 | PASS |
+| 100 | g2-mweozvsa-5m-10012kv-new_game | 8 | 2923374626 | 192 | 15 | 25 | 0.292 | 7ac6d9e381ac | 981a28db538e | new_game | 0 | 22 | PASS |
 
 </details>
 

@@ -144,7 +144,7 @@ const CHECK = `
         cardsOnBoard: r.game.cards.length
       });
     }
-    // 本轮规格：第二关 50 套模板 + 最近 10 局双重去重必须在真实浏览器里同样生效
+    // 本轮规格：第二关 20 套模板 + 最近 10 局双重去重必须在真实浏览器里同样生效
     out.rounds2 = [];
     for (var j = 0; j < 4; j++) {
       var r2 = m.newGame(2, ['application_restart','title_screen_restart','failure_restart','new_game'][j]);

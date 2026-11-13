@@ -11,7 +11,7 @@
  *     遮挡关系的布局签名 → 与最近 3 局同时比较 **总牌数 / 布局签名 /
  *     几何相似度（layoutSimilarity）** → 任一不合格换 seed → 完整校验 →
  *     唯一 gameId → 保存历史 → 返回游戏实例。
- *   · 第二关（本轮）：50 套结构模板 + 本关最近 10 局历史 → 模板级排除 +
+ *   · 第二关（本轮）：20 套结构模板 + 本关最近 10 局历史 → 模板级排除 +
  *     几何级（结构签名 / 平移镜像归一化签名 / 真实牌面相似度）双重去重。
  * 不把「seed 不同」或「牌面顺序不同」当成布局不同；所有判定都基于真实生成结果。
  *
@@ -141,7 +141,7 @@ export function clearLayoutCache() {
 }
 
 /* ================================================================== */
-/* 第二关：50 套模板 + 最近 10 局双重去重                              */
+/* 第二关：20 套掩膜模板 + 最近 10 局双重去重                          */
 /* 第一关完全不走这里（createNewGameInner 在 level===2 时提前分流）。   */
 /* ================================================================== */
 
@@ -220,7 +220,7 @@ function createLevel2Game(o) {
   }
   if (!pool.length) {
     throw new GenerationFailureError(
-      '第二关 50 套模板已被最近 ' + recent.length + ' 局全部占用，无法生成不重复布局（未清空历史、未退回重复布局）',
+      '第二关 20 套模板已被最近 ' + recent.length + ' 局全部占用，无法生成不重复布局（未清空历史、未退回重复布局）',
       { reason: 'TEMPLATE_POOL_EXHAUSTED', level: 2, recent: recent, bannedTemplateIds: bannedTemplates }
     );
   }
@@ -529,7 +529,7 @@ export function createNewGame(opts) {
 function createNewGameInner(opts) {
   var o = opts || {};
   /**
-   * 第二关走独立的「50 套模板 + 最近 10 局双重去重」路径。
+   * 第二关走独立的「20 套掩膜模板 + 最近 10 局双重去重」路径。
    * 第一关完全冻结：下面原有的 createNewGameInner 主体逐字保留，
    * 只在 level===2 时提前分流，因此第一关的档位、seed、牌数、签名、
    * 相似度、历史窗口与校验逻辑不会受本轮任何改动影响。

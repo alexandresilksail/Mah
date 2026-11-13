@@ -1,5 +1,5 @@
 /**
- * 第二关模板几何生成器（50 套模板的实际落牌实现）。
+ * 第二关 20 套掩膜模板的几何生成器。
  *
  * 只在 generateLevel(2, seed, { profile, templateId }) 显式带 templateId 时启用；
  * 不带 templateId 时 generator.js 仍走 layout_profiles.js 的既有沙漏路径，
@@ -16,10 +16,12 @@
  * 【全局格网】每层都落在同一张 9 列 × 5 行的整格网格上：
  *   x = 33 + c*66 + px*33（c=0..8，px∈{0,1}；最大 594+66=660 ≤ 700）
  *   y = 220 + r*88 + py*44（r=0..4，py∈{0,1}；最大 616+88=704 ≤ 918）
- * 模板的 env 决定该层实际可用的列数 / 行数，shapes 决定占位格，
- * zones + trajectory 决定形状中心偏置，offsets 决定层间半格错位。
- * 相邻层继承一部分占位格，保证非底层牌都有下层支撑、不存在悬空牌，
- * 同时形成原版多层叠牌的遮挡链。seed 只决定层内细节与候选顺序。
+ *
+ * 【轮廓来源】模板的 mask 决定哪些格允许落牌 —— 20 套模板的整体轮廓
+ * （金字塔 / 双核心 / 环形 / 沙漏 / 月牙 / 棋盘 …）由此直接决定，
+ * 不是靠改 seed、改牌面顺序或整体平移坐标制造差异。
+ * growth 只决定层中心在掩膜内如何移动，layerShape 只决定层内优先选格顺序，
+ * offsets 决定层间半格错位（遮挡关系）。seed 只带来层内细节抖动。
  */
 import {
   TILE_W, TILE_H, LATTICE_X, LATTICE_Y, BOARD_BAND, layerPlanFor,
@@ -29,12 +31,12 @@ import { hasSupport } from './layout.js';
 import {
   buildQueue, countVisible, VISIBLE_MIN, VISIBLE_MAX, QUEUE_SHAPE,
 } from './layout_profiles.js';
-import { templateById, ZONE_ANCHORS } from './l2_templates.js';
+import { templateById, MASK_COLS, MASK_ROWS } from './l2_templates.js';
 
 var X_MIN = 33;
 var Y_MIN = 220;
-var GRID_COLS = 9;
-var GRID_ROWS = 5;
+var GRID_COLS = MASK_COLS;
+var GRID_ROWS = MASK_ROWS;
 
 function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
@@ -75,18 +77,17 @@ function normalizePlan(weights, total) {
 /**
  * 模板自己的层级分布：层数 N 与总张数 mainCount 都来自既有档位，
  * 只重分配「每层多少张」。曲线形状由模板定义，与 seed 无关。
+ * 容量上限 = 该模板掩膜的可落牌格数（一层不能落下比掩膜格更多的牌）。
  */
 export function templatePlanFor(profile, template) {
   var base = layerPlanFor(profile);
   var n = base.length;
   var curve = resampleCurve(template.structure.layerCurve, n);
   var plan = normalizePlan(curve, profile.mainCount);
-  // 每层必须能在全局格网里放下，溢出量挪到最轻的层，总和不变
-  // （windowFor 会按 need 自动扩窗，所以容量上限就是整张格网）
-  var capPerLayer = GRID_COLS * GRID_ROWS;
+  var capPerLayer = template.maskCellCount;
   var guard = 0;
   var moved = true;
-  while (moved && guard++ < 200) {
+  while (moved && guard++ < 400) {
     moved = false;
     for (var i = 0; i < plan.length; i++) {
       if (plan[i] <= capPerLayer) continue;
@@ -106,8 +107,8 @@ export function templatePlanFor(profile, template) {
 
 /**
  * 形状优先级：分数越小越优先被选中。
- * (biasC, biasR) 是该层形状中心，由模板区域 / 轨迹决定 —— 同一个形状
- * 落在不同区域会产生完全不同的占位格集合。
+ * (biasC, biasR) 是该层形状中心，由模板 growth 轨迹决定 —— 同一个形状
+ * 落在掩膜的不同位置会产生完全不同的占位格集合。
  */
 function shapeScore(shape, c, r, cols, rows, biasC, biasR) {
   var dx = c - biasC;
@@ -130,42 +131,66 @@ function shapeScore(shape, c, r, cols, rows, biasC, biasR) {
     case 'split':
     case 'dual':    return Math.min(c * c + dy * dy, (c - (cols - 1)) * (c - (cols - 1)) + dy * dy);
     case 'checker': return ((c + r) % 2 === 0 ? 0 : 2) + r * 0.05;
-    case 'pyramid': return r * 4 + Math.abs(dx) / (r + 1);
     case 'fan':     return Math.abs(dx) * (rows - r) / Math.max(1, rows);
+    case 'flat':    return 0;
     default:        return dx * dx + dy * dy;
   }
 }
 
 /**
- * 在可用格网里选 need 个格子。
- *  · 先按形状分数排序；
+ * 掩膜内选 need 个格子。
+ *  · 只在模板 mask 允许的格位里选（整体轮廓因此固定）；
+ *  · 先按形状分数排序，'@' 高密度格优先；
  *  · 优先取 inheritN 个「上一层占位格」（保证支撑、形成多层叠压）；
- *  · 其余按形状分数补足 → 缺口位置由形状决定，轮廓显著不同；
- *  · seed 只带来 0.18 的抖动，不改变形状特征。
+ *  · 其余按形状分数补足 → 缺口位置由掩膜与形状共同决定；
+ *  · 每层再叠加一个「层号 + 格位」的确定性扰动：同一模板的相邻层不会
+ *    选出完全相同的格位集合，层间错位才能形成真实遮挡链；
+ *  · seed 只带来 0.24 的额外抖动，不改变模板轮廓。
  */
-function shapeCells(rng, need, cols, rows, shape, biasC, biasR, inherit, inheritRatio) {
+function pickMaskCells(rng, need, cells, shape, bias, inherit, inheritRatio, li, usage) {
+  if (need > cells.length) {
+    throw new Error('单层需要 ' + need + ' 张，掩膜只有 ' + cells.length + ' 个可落牌格');
+  }
+  // 先把形状分数归一化到 [0,1]，否则 split（c² 可到 64）会彻底压死 band（|dy| ≤ 2），
+  // 导致每层都选同一批格、层间几乎不轮转、可见牌数被压到 15 以下。
+  var raw = [];
+  var minS = Infinity, maxS = -Infinity;
+  for (var i = 0; i < cells.length; i++) {
+    var b = shapeScore(shape, cells[i].c, cells[i].r, GRID_COLS, GRID_ROWS, bias[0], bias[1]);
+    raw.push(b);
+    if (b < minS) minS = b;
+    if (b > maxS) maxS = b;
+  }
+  var span = maxS - minS || 1;
   var scored = [];
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      scored.push({ c: c, r: r, k: c + ',' + r,
-                    s: shapeScore(shape, c, r, cols, rows, biasC, biasR) + rng.next() * 0.18 });
-    }
+  for (var j = 0; j < cells.length; j++) {
+    var cell = cells[j];
+    var norm = (raw[j] - minS) / span;         // 0 = 最符合形状，1 = 最不符合
+    var dense = cell.w > 1 ? -0.15 : 0;
+    var h = ((li + 1) * 73856093 ^ (cell.c + 1) * 19349663 ^ (cell.r + 1) * 83492791) >>> 0;
+    var jitter = (h % 997) / 997;
+    // 覆盖补偿：越久没被用过的掩膜格位优先级越高，保证每个连通区域都真实落牌
+    var last = Object.prototype.hasOwnProperty.call(usage, cell.k) ? usage[cell.k] : -1;
+    var starve = Math.min(1.60, (li - last) * 0.30);
+    // 0.58 形状 + 0.42 扰动 − 覆盖补偿：既保留掩膜内的形状倾向，
+    // 又让相邻层真正错位，形成原版那种「上层压住下层、但压不全」的遮挡链。
+    scored.push({ c: cell.c, r: cell.r, k: cell.k, s: 0.58 * norm + 0.42 * jitter + dense - starve + rng.next() * 0.12 });
   }
   scored.sort(function (a, b) { return a.s - b.s || a.r - b.r || a.c - b.c; });
   var inheritN = Math.min(need, Math.floor(need * inheritRatio));
   var out = [];
   var used = {};
   if (inherit && inheritN > 0) {
-    for (var i = 0; i < scored.length && out.length < inheritN; i++) {
-      if (!inherit[scored[i].k]) continue;
-      out.push(scored[i]);
-      used[scored[i].k] = 1;
+    for (var j = 0; j < scored.length && out.length < inheritN; j++) {
+      if (!inherit[scored[j].k]) continue;
+      out.push(scored[j]);
+      used[scored[j].k] = 1;
     }
   }
-  for (var j = 0; j < scored.length && out.length < need; j++) {
-    if (used[scored[j].k]) continue;
-    out.push(scored[j]);
-    used[scored[j].k] = 1;
+  for (var m = 0; m < scored.length && out.length < need; m++) {
+    if (used[scored[m].k]) continue;
+    out.push(scored[m]);
+    used[scored[m].k] = 1;
   }
   return out;
 }
@@ -180,89 +205,119 @@ function segmentOf(li, n) {
   return 'core';
 }
 
-/** 该层所属区域：模板 zones 池 + 轨迹共同决定 */
-function zoneFor(tpl, li, n) {
-  var zones = tpl.structure.zones;
-  var traj = tpl.structure.trajectory;
-  if (traj === 'scatter' || traj === 'dual') {
-    return zones[(li + Math.floor(li / zones.length)) % zones.length];
-  }
-  if (traj === 'ring' || traj === 'spiral') {
-    var q = Math.floor((li % n) / Math.max(1, n / 4)) % 4;
-    var quad = ['nw', 'ne', 'se', 'sw'][q];
-    for (var i = 0; i < zones.length; i++) if (zones[i] === quad) return quad;
-    return zones[li % zones.length];
-  }
-  return zones[li % zones.length];
-}
-
 /**
- * 区域窗口：把 zone 锚点映射成全局 9×5 格网里的一个子矩形。
- * 不同区域（中央 / 四角 / 上下 / 左右）因此真正落在**不同坐标区间**，
- * 而不是只改一个中心参数 —— 这是 50 套模板轮廓差异的主要来源。
- * 窗口尺寸由模板 env 决定，并保证 w*h ≥ need 且不越出格网。
+ * 形状中心偏置 (biasC, biasR)：在 9×5 全局格网里按模板 growth 推进，
+ * 形成纵向 / 横向 / 环形 / 阶梯 / 螺旋 / 交替的空间分布。
+ * 掩膜负责「哪些格能落牌」，这里只负责「这一层优先落在哪些格」。
  */
-function windowFor(zone, envCols, envRows, need) {
-  var anchor = ZONE_ANCHORS[zone] || ZONE_ANCHORS.center;
-  var ac = clamp(Math.round((anchor[0] - X_MIN) / TILE_W), 0, GRID_COLS - 1);
-  var ar = clamp(Math.round((anchor[1] - Y_MIN) / TILE_H), 0, GRID_ROWS - 1);
-  var w = clamp(envCols, 3, GRID_COLS);
-  var h = clamp(envRows, 2, GRID_ROWS);
-  // 至少留 2 个空格给支撑修补（修补只移动个别牌，不改张数）
-  var spare = need + 2;
-  if (w * h < spare) {
-    h = Math.min(GRID_ROWS, Math.max(h, Math.ceil(spare / GRID_COLS)));
-    w = Math.min(GRID_COLS, Math.max(w, Math.ceil(spare / h)));
-  }
-  var c0 = clamp(Math.round(ac - (w - 1) / 2), 0, GRID_COLS - w);
-  var r0 = clamp(Math.round(ar - (h - 1) / 2), 0, GRID_ROWS - h);
-  return { c0: c0, r0: r0, w: w, h: h };
-}
-
-/**
- * 形状中心偏置 (biasC, biasR)：在区域窗口内按轨迹推进，
- * 形成纵向 / 横向 / 环形 / 阶梯 / 螺旋 / 嵌套的空间分布。
- */
-function biasFor(tpl, li, n, cols, rows) {
+function biasFor(tpl, li, n) {
   var s = tpl.structure;
   var t = n > 1 ? li / (n - 1) : 0;
-  switch (s.trajectory) {
+  var cx = (GRID_COLS - 1) / 2;
+  var cy = (GRID_ROWS - 1) / 2;
+  function ic(v) { return clamp(Math.round(v), 0, GRID_COLS - 1); }
+  function ir(v) { return clamp(Math.round(v), 0, GRID_ROWS - 1); }
+  switch (s.growth) {
     case 'central':
-      return [clamp(Math.round(cols / 2), 0, cols - 1), clamp(Math.round(rows * t * 0.8), 0, rows - 1)];
-    case 'vertical':
-      return [clamp(Math.round(cols / 2 + (s.spreadX / 300) * (t - 0.5)), 0, cols - 1),
-              clamp(Math.round((rows - 1) * t), 0, rows - 1)];
-    case 'horizontal':
-      return [clamp(Math.round((cols - 1) * t), 0, cols - 1),
-              clamp(Math.round(rows / 2), 0, rows - 1)];
-    case 'stair':
-      return [clamp(Math.round((cols - 1) * t), 0, cols - 1),
-              clamp(Math.round((rows - 1) * t), 0, rows - 1)];
-    case 'ring':
-      return [clamp(Math.round(cols / 2 + (cols / 2 - 1) * Math.cos(2 * Math.PI * t)), 0, cols - 1),
-              clamp(Math.round(rows / 2 + (rows / 2 - 1) * Math.sin(2 * Math.PI * t)), 0, rows - 1)];
-    case 'spiral':
-      return [clamp(Math.round(cols / 2 + (cols / 2 - 1) * (0.3 + 0.7 * t) * Math.cos(2 * Math.PI * t * 1.6)), 0, cols - 1),
-              clamp(Math.round(rows / 2 + (rows / 2 - 1) * (0.3 + 0.7 * t) * Math.sin(2 * Math.PI * t * 1.6)), 0, rows - 1)];
-    case 'cross':
-      return li % 2 === 0
-        ? [clamp(Math.round((cols - 1) * t), 0, cols - 1), clamp(Math.round(rows / 2), 0, rows - 1)]
-        : [clamp(Math.round(cols / 2), 0, cols - 1), clamp(Math.round((rows - 1) * t), 0, rows - 1)];
-    case 'nest':
-      return [clamp(Math.round(cols / 2 + (cols / 3) * (1 - t) * Math.cos(2 * Math.PI * t * 0.7)), 0, cols - 1),
-              clamp(Math.round(rows / 2 + (rows / 3) * (1 - t) * Math.sin(2 * Math.PI * t * 0.7)), 0, rows - 1)];
-    case 'asym':
-      return [clamp(Math.round(cols / 2 + (li % 3 === 0 ? -1 : 1) * cols / 3), 0, cols - 1),
-              clamp(Math.round((rows - 1) * t * 0.7), 0, rows - 1)];
-    case 'scatter':
+      return [ic(cx), ir(cy)];
     case 'dual':
+      return [ic(li % 2 ? cx * 0.45 : GRID_COLS - 1 - cx * 0.45), ir(cy)];
+    case 'scatter': {
+      var band = li % 3;
+      return [ic(band === 0 ? 1 : (band === 1 ? cx : GRID_COLS - 2)), ir(cy)];
+    }
+    case 'ring':
+      return [ic(cx + cx * 0.9 * Math.cos(2 * Math.PI * t)),
+              ir(cy + cy * 0.9 * Math.sin(2 * Math.PI * t))];
+    case 'cross':
+      return li % 2
+        ? [ic(cx + cx * Math.cos(2 * Math.PI * t)), ir(cy)]
+        : [ic(cx), ir(cy + cy * Math.sin(2 * Math.PI * t))];
+    case 'stair':
+      return [ic((GRID_COLS - 1) * t), ir((GRID_ROWS - 1) * (1 - t))];
+    case 'stairDown':
+      return [ic((GRID_COLS - 1) * t), ir((GRID_ROWS - 1) * t)];
+    case 'left':
+      return [ic(cx * 0.35), ir(cy + cy * 0.5 * (t - 0.5))];
+    case 'right':
+      return [ic(GRID_COLS - 1 - cx * 0.35), ir(cy + cy * 0.5 * (t - 0.5))];
+    case 'dualVertical':
+      return [ic(cx), ir(li % 2 ? cy * 0.35 : GRID_ROWS - 1 - cy * 0.35)];
+    case 'butterfly':
+      return [ic(li % 2 ? cx * 0.3 : GRID_COLS - 1 - cx * 0.3), ir(cy)];
+    case 'hourglass':
+      return [ic(cx), ir(cy)];
+    case 'serpentine':
+      return [ic((li % 2 ? t : 1 - t) * (GRID_COLS - 1)), ir((GRID_ROWS - 1) * t)];
+    case 'checker':
+      return [ic((li * 3) % GRID_COLS), ir((li * 2) % GRID_ROWS)];
+    case 'crescent': {
+      var ang = Math.PI + t * Math.PI;
+      return [ic(cx * 0.6 + cx * 0.8 * Math.cos(ang)),
+              ir(cy + cy * 0.8 * Math.sin(ang))];
+    }
+    case 'wave':
+      return [ic(cx), ir(cy + cy * 0.75 * Math.sin(t * Math.PI * 2))];
+    case 'diag':
+      return [ic((GRID_COLS - 1) * t), ir((GRID_ROWS - 1) * t)];
+    case 'corners': {
+      var corner = li % 4;
+      var ccx = corner === 0 || corner === 2 ? cx * 0.25 : GRID_COLS - 1 - cx * 0.25;
+      var ccy = corner < 2 ? cy * 0.25 : GRID_ROWS - 1 - cy * 0.25;
+      return [ic(ccx), ir(ccy)];
+    }
+    case 'crossCenter':
+      return [ic(cx), ir(cy)];
+    case 'asym':
+      return [ic(li % 3 === 0 ? cx * 0.4 : GRID_COLS - 1 - cx * 0.45),
+              ir(cy + cy * 0.4 * (t - 0.5))];
     default:
-      return [clamp(Math.round(cols / 2), 0, cols - 1),
-              clamp(Math.round(rows / 2), 0, rows - 1)];
+      return [ic(cx), ir(cy)];
   }
 }
 
 /* ==================== 主堆 ==================== */
+
+/**
+ * 底层专用覆盖采样：每个连通区域至少 1 张，其余按「最远点」铺开。
+ * 底层不需要支撑，却是上层唯一的支撑来源；把它铺满轮廓后，
+ * 第 1 层几乎不可能出现悬空牌，后续层也能靠继承稳定叠压。
+ */
+function pickCoverCells(rng, need, cells, tpl) {
+  var chosen = [];
+  var used = {};
+  var regionFirst = {};
+  for (var i = 0; i < cells.length; i++) {
+    var rg = tpl.maskRegion[cells[i].k] || 'R1';
+    if (!regionFirst[rg]) regionFirst[rg] = cells[i];
+  }
+  for (var k in regionFirst) {
+    if (!Object.prototype.hasOwnProperty.call(regionFirst, k)) continue;
+    if (chosen.length >= need) break;
+    chosen.push(regionFirst[k]);
+    used[regionFirst[k].k] = 1;
+  }
+  while (chosen.length < need) {
+    var best = null;
+    var bestD = -Infinity;
+    for (var j = 0; j < cells.length; j++) {
+      if (used[cells[j].k]) continue;
+      var d = Infinity;
+      for (var m = 0; m < chosen.length; m++) {
+        var dd = Math.abs(cells[j].c - chosen[m].c) + Math.abs(cells[j].r - chosen[m].r);
+        if (dd < d) d = dd;
+      }
+      var jit = rng.next() * 0.3;
+      if (d + jit > bestD) { bestD = d + jit; best = cells[j]; }
+    }
+    if (!best) break;
+    chosen.push(best);
+    used[best.k] = 1;
+  }
+  var out = [];
+  for (var q = 0; q < chosen.length; q++) out.push({ c: chosen[q].c, r: chosen[q].r, k: chosen[q].k });
+  return out;
+}
 
 function buildTemplateStack(rng, plan, tpl) {
   var s = tpl.structure;
@@ -270,49 +325,35 @@ function buildTemplateStack(rng, plan, tpl) {
   var out = [];
   var px = (s.phase[0] + rng.int(0, 1)) % 2;
   var py = (s.phase[1] + rng.int(0, 1)) % 2;
-  var inheritRatio = 0.30 + s.density; // 0.40–0.46：保证支撑又不淹没形状
+  var inheritRatio = 0.12 + s.density * 0.6; // 0.19–0.21：只保证关键支撑，其余靠形状与扰动错位
   var prevCells = null;
+  var cells = tpl.maskCells;
+  var usage = {};
 
   for (var li = 0; li < n; li++) {
     var need = plan[li];
-    var zone = zoneFor(tpl, li, n);
     var seg = segmentOf(li, n);
-    var shape = s.shapes[li % s.shapes.length];
-    var win = windowFor(zone, s.env.colsHi, s.env.rowsMax, need);
-    var bias = biasFor(tpl, li, n, win.w, win.h);
-    // 上一层的绝对格坐标映射到当前窗口的局部坐标，用于继承支撑格
-    var localInherit = {};
-    if (prevCells) {
-      for (var pk in prevCells) {
-        if (!Object.prototype.hasOwnProperty.call(prevCells, pk)) continue;
-        var parts = pk.split(',');
-        var lc = Number(parts[0]) - win.c0;
-        var lr = Number(parts[1]) - win.r0;
-        if (lc >= 0 && lc < win.w && lr >= 0 && lr < win.h) localInherit[lc + ',' + lr] = 1;
-      }
-    }
-    var cells = shapeCells(rng, need, win.w, win.h, shape, bias[0], bias[1], localInherit, inheritRatio);
-    if (cells.length !== need) {
-      throw new Error('模板 ' + tpl.templateId + ' 第 ' + li + ' 层形状生成张数不符: ' + need);
-    }
+    var bias = biasFor(tpl, li, n);
+    var picked = li === 0
+      ? pickCoverCells(rng, need, cells, tpl)
+      : pickMaskCells(rng, need, cells, s.layerShape, bias, prevCells, inheritRatio, li, usage);
     var inherit = {};
-    for (var i = 0; i < cells.length; i++) {
-      var cell = cells[i];
-      var absC = win.c0 + cell.c;
-      var absR = win.r0 + cell.r;
+    for (var i = 0; i < picked.length; i++) {
+      var cell = picked[i];
+      usage[cell.k] = li;
       out.push({
-        x: X_MIN + absC * TILE_W + px * LATTICE_X,
-        y: Y_MIN + absR * TILE_H + py * LATTICE_Y,
+        x: X_MIN + cell.c * TILE_W + px * LATTICE_X,
+        y: Y_MIN + cell.r * TILE_H + py * LATTICE_Y,
         layer: li,
-        region: zone,
+        region: tpl.maskRegion[cell.k] || 'R1',
         zoneLayer: li,
         seg: seg,
-        gridW: win.w,
-        gridH: win.h,
-        gaps: (win.w * win.h - need) / (win.w * win.h),
+        gridW: tpl.maskBox.cols,
+        gridH: tpl.maskBox.rows,
+        gaps: 1 - tpl.maskCellCount / (GRID_COLS * GRID_ROWS),
         pinned: '',
       });
-      inherit[absC + ',' + absR] = 1;
+      inherit[cell.k] = 1;
     }
     prevCells = inherit;
     var off = s.offsets[rng.int(0, s.offsets.length - 1)];
@@ -326,14 +367,14 @@ function buildTemplateStack(rng, plan, tpl) {
 
 /**
  * 消除悬空牌：每张非底层牌必须与至少一张更低层的牌有 >10% 面积重叠。
- * 形状 / 区域窗口造成的少量无支撑牌，会被移到**同一层**里最近的一个
- * 「有支撑且不与同层其它牌重合」的格位。
+ * 掩膜造成的少量无支撑牌，会被移到**同一层**里最近的一个
+ * 「在掩膜内、有支撑且不与同层其它牌重合」的格位。
  *
  * 只改个别牌的落点，不改总张数、层数、区域、队列与三消规则，
- * 也不是给整堆加固定偏移；修完仍由 buildOnce 统一重排 z 全序。
+ * 也不会把牌移出模板轮廓；修完仍由 buildOnce 统一重排 z 全序。
  * @returns {number} 未能修补的悬空牌数（正常应为 0）
  */
-function repairSupport(cards) {
+function repairSupport(cards, tpl) {
   var byLayer = {};
   var maxLayer = 0;
   for (var i = 0; i < cards.length; i++) {
@@ -342,8 +383,9 @@ function repairSupport(cards) {
     byLayer[li].push(cards[i]);
     if (li > maxLayer) maxLayer = li;
   }
-  var lower = (byLayer[0] || []).slice(); // 底层牌不需要支撑，但它们是上层的支撑来源
+  var lower = (byLayer[0] || []).slice();
   var left = 0;
+
   for (var layer = 1; layer <= maxLayer; layer++) {
     var same = byLayer[layer] || [];
     if (!same.length) continue;
@@ -357,19 +399,18 @@ function repairSupport(cards) {
       var oc = Math.round((c.x - X_MIN - dx0) / TILE_W);
       var orow = Math.round((c.y - Y_MIN - dy0) / TILE_H);
       var cands = [];
-      // 4 种半格相位 × 9×5 格网，按「离原位最近」排序
+      // 4 种半格相位 × 掩膜内格位，按「离原位最近」排序
       for (var ph = 0; ph < 4; ph++) {
         var dx2 = (ph % 2) * LATTICE_X;
         var dy2 = Math.floor(ph / 2) * LATTICE_Y;
-        for (var gc = 0; gc < GRID_COLS; gc++) {
-          for (var gr = 0; gr < GRID_ROWS; gr++) {
-            cands.push({
-              x: X_MIN + gc * TILE_W + dx2,
-              y: Y_MIN + gr * TILE_H + dy2,
-              d: Math.abs(gc - oc) + Math.abs(gr - orow) +
-                 (dx2 === dx0 ? 0 : 1) + (dy2 === dy0 ? 0 : 1),
-            });
-          }
+        for (var mc = 0; mc < tpl.maskCells.length; mc++) {
+          var cell = tpl.maskCells[mc];
+          cands.push({
+            x: X_MIN + cell.c * TILE_W + dx2,
+            y: Y_MIN + cell.r * TILE_H + dy2,
+            d: Math.abs(cell.c - oc) + Math.abs(cell.r - orow) +
+               (dx2 === dx0 ? 0 : 1) + (dy2 === dy0 ? 0 : 1),
+          });
         }
       }
       cands.sort(function (a, b) { return a.d - b.d || a.y - b.y || a.x - b.x; });
@@ -380,7 +421,6 @@ function repairSupport(cards) {
         var key = nx + ',' + ny;
         if (occupied[key]) continue;
         var probe = { x: nx, y: ny };
-        // 同层严格零重叠（不只是 <10%）
         var clash = false;
         for (var sj = 0; sj < same.length; sj++) {
           if (same[sj] === c) continue;
@@ -418,7 +458,7 @@ function buildOnce(seed, profile, tpl) {
   // 尽量消除悬空牌（项目既有默认路径本身也有约 4% 的半格错位牌不满足
   // hasSupport>10%，这里只做「就近移到有支撑空位」的保守修补，不因个别
   // 无法修补的牌让整局生成失败；剩余数量如实挂在数组上供测试/报告统计）
-  var floating = repairSupport(out);
+  var floating = repairSupport(out, tpl);
   var q = buildQueue(rng, n, profile.queueCount / QUEUE_SHAPE.reduce(function (a, x) { return a + x.n; }, 0));
   if (q.total !== profile.queueCount) {
     throw new Error('模板队列张数 ' + q.total + ' ≠ 档位 ' + profile.queueCount);
@@ -453,7 +493,7 @@ export var TEMPLATE_CANDIDATE_ROUNDS = 64;
  * 候选必须同时满足：开局可点 19–25 张（VISIBLE_MIN/MAX）且主堆悬空牌 = 0。
  * 满足即立即返回；全都不满足时取「可见偏差 × 1000 + 悬空 × 100」最小的候选，
  * 由 createNewGame 的 validateLevel / 几何校验独立复核，绝不静默放宽。
- * 只换候选内部随机相位，不改模板结构、档位牌数、层数或队列规则。
+ * 只换候选内部随机相位，不改模板掩膜、档位牌数、层数或队列规则。
  */
 export function generateTemplateLayout(seed, profile, templateId) {
   var tpl = templateById(templateId);

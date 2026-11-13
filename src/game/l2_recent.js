@@ -41,7 +41,7 @@ export function usedTemplateIds(recent) {
   return out;
 }
 
-/** 候选模板池：50 套里排除最近 10 局用过的，顺序保持模板表原序 */
+/** 候选模板池：20 套里排除最近 10 局用过的，顺序保持模板表原序 */
 export function availableTemplateIds(recent) {
   var used = usedTemplateIds(recent);
   var out = [];

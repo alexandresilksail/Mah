@@ -1,65 +1,51 @@
 /**
- * 第二关 50 套布局模板（唯一结构定义源）。
+ * 第二关 20 套布局模板（唯一结构定义源）。
  *
- * 【参考口径】原版《羊了个羊》第二关的内部数据无法获取，这里只以**可观察到的
- * 布局特征**为参考：多层叠牌、上下/左右区域组合、层间半格错位形成的遮挡链、
- * 中央密堆 + 两侧盲盒、轮廓收放与空间分布。本文件不声称精确复刻原版算法，
- * 也不含任何从原版导出的坐标数据。
+ * 【参考口径】原版《羊了个羊》第二关的内部数据无法获取，本文件只以**可观察到的
+ * 布局特征**为参考（多层叠牌、区域组合、轮廓收放、层间半格错位遮挡），
+ * 不声称精确复刻原版算法，也不含任何从原版导出的坐标数据。
  *
- * 【模板 ≠ 随机种子 / 牌面顺序 / 坐标微调】每个模板是一组**结构参数**：
- *   · zones       : 该模板允许出现的区域集合（决定区域结构与 region 字段）
- *   · shapes      : 该模板逐层使用的牌堆形状序列（决定轮廓）
- *   · trajectory  : 层中心的空间轨迹（决定空间分布）
+ * 【模板 = 全局轮廓掩膜 + 成长参数，不是随机种子 / 牌面顺序 / 坐标微调】
+ * 每套模板都用一张 9 列 × 5 行的**显式掩膜**描述它在牌桌上的整体轮廓：
+ *   '#' 可落牌格、'@' 高密度格、'.' 禁止落牌格。
+ * 掩膜的连通分量就是该模板的「区域结构」（region 字段），
+ * 因此双核心 = 2 个分量、三岛屿 = 3 个、四角围合 = 4 个、环形 = 1 个连通环。
+ *
+ * 其余结构参数：
+ *   · growth      : 层中心随高度变化的轨迹（决定层间空间分布，不改变掩膜轮廓）
+ *   · layerShape  : 每层在掩膜内选格的形状偏好（blob / band / ring / cross …）
  *   · layerCurve  : 独立层级分布曲线（重采样到 N 层后归一化到 mainCount）
- *   · env         : 每层网格的列数 / 行数包络
- *   · offsets     : 层间半格错位向量集合（决定遮挡关系）
- *   · pin/align/spread/density/phase : 边界钉层、对齐步长、轨迹幅度、
- *                                     缺口比例、初始半格相位
- * 50 套定义的 `structureSignature` 两两不同；seed 只在**同一套模板内部**
- * 决定团块生长细节、层中心抖动与队列偏移，绝不用于制造模板之间的差异。
+ *   · offsets     : 层间半格错位向量（决定遮挡关系）
+ *   · density     : 继承上一层格位的比例基准（保证支撑、形成叠压）
+ *   · phase       : 初始半格相位
+ *
+ * 20 套的 structureSignature 两两不同；seed 只在**同一套模板内部**决定
+ * 层内抖动与队列偏移，绝不用于制造模板之间的差异。
  *
  * 【冻结边界】本文件只被第二关路径引用；第一关不 import、不读取、不受影响。
  *
- * 【牌数配置】模板只重分配「每层多少张」，总张数 / 层数 / 牌种数 / 44 张盲盒
- * 队列 / 三消规则全部沿用 config.js 的既有档位，一个都不改。
+ * 【牌数配置】模板只决定「每层在掩膜里的哪些格落牌」，总张数 / 层数 / 牌种数 /
+ * 44 张盲盒队列 / 三消规则全部沿用 config.js 的既有档位，一个都不改。
  */
 import { sha256Hex } from './sha256.js';
 
-/* ==================== 10 类原著风格结构 ==================== */
+/* 9 列 × 5 行的全局格网（与 l2_geometry.js 的 X_MIN/Y_MIN/TILE_W/TILE_H 对应） */
+export const MASK_COLS = 9;
+export const MASK_ROWS = 5;
+
+/* ==================== 形状族（仅用于报告分组） ==================== */
 
 export const TEMPLATE_CATEGORIES = [
-  { key: 'central', label: '中央集中型', feature: '主堆收在牌桌中央，层层向核心收拢叠压' },
-  { key: 'scatter', label: '多区域分散型', feature: '层分散到多个互不相连的区域，形成多堆并立' },
-  { key: 'dual', label: '双核心叠层型', feature: '左右/上下两个独立核心各自叠层' },
-  { key: 'extent', label: '横向及纵向延展型', feature: '沿水平或竖直方向拉长，形成长条延展牌堆' },
-  { key: 'ring', label: '环形包围型', feature: '层沿椭圆环绕，中心留空形成包围结构' },
-  { key: 'cross', label: '十字交错型', feature: '横臂与竖臂交错叠压' },
-  { key: 'stair', label: '阶梯递进型', feature: '层中心沿对角线逐级递降/递升' },
-  { key: 'nest', label: '多层嵌套型', feature: '外框包内层，层层向内嵌套' },
-  { key: 'asym', label: '非对称复杂叠层型', feature: '左右不对称、单边厚重与偏置缺口' },
-  { key: 'combo', label: '组合异形型', feature: '梳齿 / 弧带 / 菱形 / 螺旋 / 沙漏等组合轮廓' },
+  { key: 'core', label: '核心聚拢型', feature: '主堆围绕一个或两个核心收拢叠压' },
+  { key: 'island', label: '多岛分离型', feature: '多个互不相连的牌岛并立，中间留空' },
+  { key: 'frame', label: '围合环抱型', feature: '外围环绕或双向收束，中心形成空心/窄腰' },
+  { key: 'dir', label: '单向偏置型', feature: '整体偏向一侧或沿对角线逐级递进' },
+  { key: 'grid', label: '格网迷宫型', feature: '交错小堆 / 曲折通道，遮挡链细碎' },
+  { key: 'wave', label: '起伏异形型', feature: '轮廓高低起伏或弯月收束' },
+  { key: 'irregular', label: '不规则大陆型', feature: '不对称、多凸起、多凹陷的整体轮廓' },
 ];
 
-/* 区域锚点：牌左上角坐标可达范围内的逻辑中心（半格晶格会再吸附） */
-const ZONE_ANCHORS = {
-  center: [330, 396],
-  north: [330, 264],
-  south: [330, 506],
-  west: [165, 396],
-  east: [495, 396],
-  nw: [165, 264],
-  ne: [495, 264],
-  sw: [165, 484],
-  se: [495, 484],
-  coreA: [264, 396],
-  coreB: [396, 396],
-  midTop: [330, 308],
-  midBottom: [330, 462],
-  farWest: [99, 396],
-  farEast: [561, 396],
-};
-
-/* 独立层级分布曲线：重采样到 N 层后归一化，总和恒等于 profile.mainCount */
+/* 层级分布曲线：重采样到 N 层后归一化，总和恒等于 profile.mainCount */
 const CURVES = {
   flat: [1, 1, 1, 1, 1],
   rise: [1, 1.35, 1.7, 2.1, 2.5],
@@ -68,28 +54,7 @@ const CURVES = {
   valley: [2.2, 1.6, 1, 1.6, 2.2],
   dualpeak: [2, 1, 2, 1, 2],
   saw: [1, 2, 1, 2, 1],
-  step: [1, 1, 2, 2, 3, 3],
   plateau: [1, 2, 2, 2, 1],
-  spike: [1, 1, 3, 1, 1],
-  crown: [1, 1.25, 1.5, 2, 3],
-};
-
-/* 形状序列：逐层循环取用，决定每层团块轮廓 */
-const SHAPE_SETS = {
-  core: ['blob', 'pyramid', 'diamond', 'blob', 'nest'],
-  band: ['band', 'arc', 'band', 'comb', 'band'],
-  ring: ['ring', 'shell', 'ring', 'arc', 'ring'],
-  cross: ['cross', 'blob', 'cross', 'wedge', 'cross'],
-  stair: ['stair', 'wedge', 'stair', 'fan', 'stair'],
-  nest: ['nest', 'shell', 'nest', 'ring', 'nest'],
-  split: ['split', 'dual', 'split', 'checker', 'split'],
-  mixed: ['blob', 'band', 'ring', 'cross', 'stair', 'diamond'],
-  comb: ['comb', 'fan', 'comb', 'wedge', 'comb'],
-  arc: ['arc', 'shell', 'arc', 'diamond', 'arc'],
-  shell: ['shell', 'nest', 'ring', 'shell', 'nest'],
-  wedge: ['wedge', 'stair', 'fan', 'wedge', 'comb'],
-  fan: ['fan', 'arc', 'fan', 'wedge', 'fan'],
-  checker: ['checker', 'split', 'checker', 'comb', 'checker'],
 };
 
 /* 半格错位向量集合（px, py 各按 2 取模） */
@@ -101,39 +66,264 @@ const OFFSETS = {
   cross: [[1, 0], [0, 1], [1, 1], [0, 0]],
 };
 
-/* 网格包络 */
-const ENVS = {
-  wide: { colsLo: 7, colsHi: 10, rowsMax: 3 },
-  mid: { colsLo: 5, colsHi: 8, rowsMax: 4 },
-  narrow: { colsLo: 3, colsHi: 6, rowsMax: 5 },
-  tall: { colsLo: 3, colsHi: 5, rowsMax: 7 },
-  square: { colsLo: 4, colsHi: 6, rowsMax: 5 },
-  full: { colsLo: 8, colsHi: 10, rowsMax: 4 },
-};
-
-/* ==================== 50 套模板的显式定义 ==================== */
+/* ==================== 20 套显式轮廓掩膜 ==================== */
 
 /**
- * 用一个基配置 + 显式变体参数造出模板对象。
- * 变体之间必须有**结构参数差异**（区域集合 / 形状 / 轨迹 / 层级曲线 /
- * 网格包络 / 遮挡相位），不是只改一个数字。
+ * 20 套形状定义。
+ *  mask      : 5 行 × 9 列字符串，'#' 可落牌，'@' 高密度，'.' 禁止
+ *  growth    : 层中心轨迹
+ *  layerShape: 层内选格形状
+ *  curve     : 层级分布曲线
+ *  offsets / density / phase : 遮挡与继承参数
  */
+var DEFS = [
+  /* 1. 中心金字塔：底宽顶窄、中央集中 */
+  ['L2-P01', 'core', '中心金字塔', {
+    mask: ['...###...', '..#####..', '.#######.', '#########', '#########'],
+    growth: 'central', layerShape: 'pyramid', curve: 'rise', offsets: 'diag',
+    density: 0.12, phase: [0, 0],
+    feature: '底座铺满全宽、逐层向中央收拢，形成正金字塔',
+  }],
+
+  /* 2. 双核心：左右两个独立主牌堆，中间留空 */
+  ['L2-P02', 'core', '双核心', {
+    mask: ['####.####', '####.####', '####.####', '####.####', '####.####'],
+    growth: 'dual', layerShape: 'split', curve: 'arch', offsets: 'vert',
+    density: 0.12, phase: [1, 0],
+    feature: '左右各一座 4×5 主牌堆，中间整列留空',
+  }],
+
+  /* 3. 三岛屿：左、中、右三个独立牌堆 */
+  ['L2-P03', 'island', '三岛屿', {
+    mask: ['##.##.##.', '##.##.##.', '##.##.##.', '##.##.##.', '##.##.##.'],
+    growth: 'scatter', layerShape: 'split', curve: 'flat', offsets: 'diag',
+    density: 0.13, phase: [0, 1],
+    feature: '三座 2×5 牌岛并立，岛间整列断开',
+  }],
+
+  /* 4. 环形围绕：外围环绕，中间空心 */
+  ['L2-P04', 'frame', '环形围绕', {
+    mask: ['#########', '##.....##', '##.....##', '##.....##', '#########'],
+    growth: 'ring', layerShape: 'ring', curve: 'flat', offsets: 'cross',
+    density: 0.11, phase: [0, 0],
+    feature: '外圈闭合成环，中心 5×3 完全空心',
+  }],
+
+  /* 5. 十字交叉：横向与纵向主体交叠 */
+  ['L2-P05', 'frame', '十字交叉', {
+    mask: ['...###...', '#########', '#########', '#########', '...###...'],
+    growth: 'cross', layerShape: 'cross', curve: 'plateau', offsets: 'cross',
+    density: 0.11, phase: [1, 1],
+    feature: '中间三行全宽横臂 + 中列贯穿三行的竖臂',
+  }],
+
+  /* 6. 阶梯上升：左下 → 右上逐级递增 */
+  ['L2-P06', 'dir', '阶梯上升', {
+    mask: ['....####.', '..######.', '.########', '#####....', '####.....'],
+    growth: 'stair', layerShape: 'stair', curve: 'rise', offsets: 'diag',
+    density: 0.12, phase: [0, 0],
+    feature: '斜向 3 格宽带自左下抬升到右上，台阶式轮廓',
+  }],
+
+  /* 7. 阶梯下降：左上 → 右下逐级递减 */
+  ['L2-P07', 'dir', '阶梯下降', {
+    mask: ['.####....', '.######..', '########.', '....#####', '.....####'],
+    growth: 'stairDown', layerShape: 'stair', curve: 'fall', offsets: 'alt',
+    density: 0.12, phase: [1, 0],
+    feature: '斜向 3 格宽带自左上下降到右下，与上升阶梯镜像',
+  }],
+
+  /* 8. 左侧巨塔：左侧高密度，右侧分散 */
+  ['L2-P08', 'dir', '左侧巨塔', {
+    mask: ['####.....', '######...', '#######..', '#########', '######...'],
+    growth: 'left', layerShape: 'blob', curve: 'rise', offsets: 'vert',
+    density: 0.13, phase: [0, 1],
+    feature: '左 4 列厚实，向右逐层收窄，右下刻意留空',
+  }],
+
+  /* 9. 右侧巨塔：右侧高密度，左侧分散 */
+  ['L2-P09', 'dir', '右侧巨塔', {
+    mask: ['.....####', '...######', '..#######', '#########', '...######'],
+    growth: 'right', layerShape: 'blob', curve: 'fall', offsets: 'vert',
+    density: 0.13, phase: [1, 1],
+    feature: '右 4 列厚实，向左逐层收窄，左下刻意留空',
+  }],
+
+  /* 10. 上下双层岛：上方与下方两个主体区域 */
+  ['L2-P10', 'island', '上下双层岛', {
+    mask: ['#########', '#########', '.........', '#########', '#########'],
+    growth: 'dualVertical', layerShape: 'band', curve: 'dualpeak', offsets: 'horiz',
+    density: 0.13, phase: [0, 0],
+    feature: '上下两条 9×2 横带，中间整行断开',
+  }],
+
+  /* 11. 蝴蝶形：左右对称双翼，中央连接 */
+  ['L2-P11', 'frame', '蝴蝶形', {
+    mask: ['##.....##', '###...###', '####.####', '###...###', '##.....##'],
+    growth: 'butterfly', layerShape: 'split', curve: 'arch', offsets: 'diag',
+    density: 0.12, phase: [1, 0],
+    feature: '左右双翼外扩，中央仅一行相连形成蝶身',
+  }],
+
+  /* 12. 沙漏形：上下宽、中间窄 */
+  ['L2-P12', 'frame', '沙漏形', {
+    mask: ['#########', '#########', '...###...', '#########', '#########'],
+    growth: 'hourglass', layerShape: 'band', curve: 'valley', offsets: 'cross',
+    density: 0.12, phase: [0, 1],
+    feature: '上下各 9×2 宽带，中间一行收束到 3 格窄腰',
+  }],
+
+  /* 13. 迷宫形：多区域连接，形成曲折通道 */
+  ['L2-P13', 'grid', '迷宫形', {
+    mask: ['#########', '........#', '#########', '#........', '#########'],
+    growth: 'serpentine', layerShape: 'flat', curve: 'flat', offsets: 'alt',
+    density: 0.11, phase: [1, 1],
+    feature: '上下横墙与左右单格通道交替，形成 S 形走廊',
+  }],
+
+  /* 14. 棋盘形：多个分散小牌堆，交错排列 */
+  ['L2-P14', 'grid', '棋盘形', {
+    mask: ['###..###.', '###..###.', '###..###.', '.###..###', '.###..###'],
+    growth: 'checker', layerShape: 'checker', curve: 'flat', offsets: 'horiz',
+    density: 0.14, phase: [0, 0],
+    feature: '3×3 小块上下错位排布，形成棋盘式交错小堆',
+  }],
+
+  /* 15. 弧形月牙：整体弯月，中心偏移 */
+  ['L2-P15', 'wave', '弧形月牙', {
+    mask: ['..#####..', '.#######.', '####..###', '###....##', '####..###'],
+    growth: 'crescent', layerShape: 'ring', curve: 'arch', offsets: 'diag',
+    density: 0.11, phase: [1, 0],
+    feature: '左侧厚弧、右侧渐薄，凹口偏向右侧，整体呈弯月',
+  }],
+
+  /* 16. 波浪形：多个高低起伏的连续区域 */
+  ['L2-P16', 'wave', '波浪形', {
+    mask: ['#########', '###...###', '..#####..', '###...###', '#########'],
+    growth: 'wave', layerShape: 'arc', curve: 'saw', offsets: 'cross',
+    density: 0.12, phase: [0, 1],
+    feature: '轮廓按行起伏：满 → 缺口 → 窄 → 缺口 → 满，形成波浪',
+  }],
+
+  /* 17. 对角双塔：左上与右下两个主牌堆 */
+  ['L2-P17', 'island', '对角双塔', {
+    mask: ['######...', '######...', '...###...', '...######', '...######'],
+    growth: 'diag', layerShape: 'stair', curve: 'rise', offsets: 'alt',
+    density: 0.13, phase: [1, 1],
+    feature: '左上 6×2 与右下 6×2 两座塔，仅中央 3 格相连',
+  }],
+
+  /* 18. 四角围合：四角分布主体，中间留空 */
+  ['L2-P18', 'island', '四角围合', {
+    mask: ['####.####', '####.####', '.........', '####.####', '####.####'],
+    growth: 'corners', layerShape: 'split', curve: 'dualpeak', offsets: 'vert',
+    density: 0.13, phase: [0, 0],
+    feature: '四个 4×2 角块分居四角，中行与中列十字留空',
+  }],
+
+  /* 19. 中心十字岛：中央主体向四个方向延伸 */
+  ['L2-P19', 'frame', '中心十字岛', {
+    mask: ['..#####..', '..#####..', '#########', '..#####..', '..#####..'],
+    growth: 'crossCenter', layerShape: 'cross', curve: 'plateau', offsets: 'horiz',
+    density: 0.12, phase: [1, 0],
+    feature: '中央 3×5 主体 + 中部一行向左右各伸出 2 格',
+  }],
+
+  /* 20. 不规则大陆形：不对称、多凸起、多凹陷 */
+  ['L2-P20', 'irregular', '不规则大陆形', {
+    mask: ['.#######.', '####.####', '.########', '###..####', '.#######.'],
+    growth: 'asym', layerShape: 'blob', curve: 'rise', offsets: 'cross',
+    density: 0.15, phase: [0, 1],
+    feature: '左右不对称、上下多凸起，内部两处缺格形成海湾状凹陷',
+  }],
+];
+
+/* ==================== 掩膜解析：格位 / 密度 / 连通区域 ==================== */
+
+/** 解析一张掩膜：返回可落牌格列表（含密度权重） */
+function parseMask(rows, id) {
+  if (!rows || rows.length !== MASK_ROWS) {
+    throw new Error('模板 ' + id + ' 掩膜行数 ' + (rows ? rows.length : 0) + ' ≠ ' + MASK_ROWS);
+  }
+  var cells = [];
+  for (var r = 0; r < MASK_ROWS; r++) {
+    var line = rows[r];
+    if (typeof line !== 'string' || line.length !== MASK_COLS) {
+      throw new Error('模板 ' + id + ' 第 ' + r + ' 行宽度 ' + (line ? line.length : 0) + ' ≠ ' + MASK_COLS);
+    }
+    for (var c = 0; c < MASK_COLS; c++) {
+      var ch = line.charAt(c);
+      if (ch === '.') continue;
+      if (ch !== '#' && ch !== '@') {
+        throw new Error('模板 ' + id + ' 掩膜含非法字符 "' + ch + '"（只允许 # @ .）');
+      }
+      cells.push({ c: c, r: r, k: c + ',' + r, w: ch === '@' ? 1.7 : 1 });
+    }
+  }
+  return cells;
+}
+
+/** 4 邻域连通分量：每个格位 → 区域标签（R1 / R2 …） */
+function labelRegions(cells) {
+  var byKey = {};
+  for (var i = 0; i < cells.length; i++) byKey[cells[i].k] = cells[i];
+  var seen = {};
+  var labels = {};
+  var region = 0;
+  var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (var j = 0; j < cells.length; j++) {
+    var start = cells[j];
+    if (seen[start.k]) continue;
+    region++;
+    var label = 'R' + region;
+    var queue = [start];
+    seen[start.k] = 1;
+    labels[start.k] = label;
+    while (queue.length) {
+      var cur = queue.pop();
+      for (var d = 0; d < dirs.length; d++) {
+        var nk = (cur.c + dirs[d][0]) + ',' + (cur.r + dirs[d][1]);
+        if (!byKey[nk] || seen[nk]) continue;
+        seen[nk] = 1;
+        labels[nk] = label;
+        queue.push(byKey[nk]);
+      }
+    }
+  }
+  return { labels: labels, count: region };
+}
+
+/** 掩膜的包围盒（列/行跨度为 0 时按 1 处理） */
+function maskBox(cells) {
+  var c0 = MASK_COLS, c1 = -1, r0 = MASK_ROWS, r1 = -1;
+  for (var i = 0; i < cells.length; i++) {
+    if (cells[i].c < c0) c0 = cells[i].c;
+    if (cells[i].c > c1) c1 = cells[i].c;
+    if (cells[i].r < r0) r0 = cells[i].r;
+    if (cells[i].r > r1) r1 = cells[i].r;
+  }
+  return { c0: c0, c1: c1, r0: r0, r1: r1, cols: c1 - c0 + 1, rows: r1 - r0 + 1 };
+}
+
+/* ==================== 模板对象构造 ==================== */
+
 function tpl(templateId, category, name, cfg) {
   var cat = null;
   for (var i = 0; i < TEMPLATE_CATEGORIES.length; i++) {
     if (TEMPLATE_CATEGORIES[i].key === category) cat = TEMPLATE_CATEGORIES[i];
   }
+  var cells = parseMask(cfg.mask, templateId);
+  if (cells.length < 20) {
+    throw new Error('模板 ' + templateId + ' 可落牌格只有 ' + cells.length + ' 个（< 20，无法承载高层牌数）');
+  }
+  var regionInfo = labelRegions(cells);
+  var box = maskBox(cells);
   var structure = {
-    zones: cfg.zones.slice(),
-    shapes: SHAPE_SETS[cfg.shapes].slice(),
-    trajectory: cfg.trajectory,
+    mask: cfg.mask.slice(),
+    growth: cfg.growth,
+    layerShape: cfg.layerShape,
     layerCurve: CURVES[cfg.curve].slice(),
-    env: { colsLo: ENVS[cfg.env].colsLo, colsHi: ENVS[cfg.env].colsHi, rowsMax: ENVS[cfg.env].rowsMax },
     offsets: OFFSETS[cfg.offsets].map(function (p) { return [p[0], p[1]]; }),
-    align: cfg.align,
-    pin: cfg.pin,
-    spreadX: cfg.spreadX,
-    spreadY: cfg.spreadY,
     density: cfg.density,
     phase: [cfg.phase[0], cfg.phase[1]],
   };
@@ -144,81 +334,14 @@ function tpl(templateId, category, name, cfg) {
     name: name,
     feature: cfg.feature,
     structure: structure,
-    structureSignature: sha256Hex('MAH-L2-TPL-v1|' + templateId + '|' + JSON.stringify(structure)),
+    structureSignature: sha256Hex('MAH-L2-TPL-v2|' + templateId + '|' + JSON.stringify(structure)),
+    maskCells: cells,
+    maskCellCount: cells.length,
+    maskRegion: regionInfo.labels,
+    maskRegionCount: regionInfo.count,
+    maskBox: box,
   };
 }
-
-var DEFS = [
-  /* ---- 1 中央集中型 × 5 ---- */
-  ['L2-C01', 'central', '中央密核塔', { zones: ['center'], shapes: 'core', trajectory: 'central', curve: 'arch', env: 'mid', offsets: 'diag', align: 66, pin: 'none', spreadX: 18, spreadY: 150, density: 0.11, phase: [0, 0], feature: '全部层堆叠在中央，轮廓自下而上收拢' }],
-  ['L2-C02', 'central', '中央沙漏', { zones: ['center', 'midTop', 'midBottom'], shapes: 'mixed', trajectory: 'central', curve: 'valley', env: 'wide', offsets: 'cross', align: 33, pin: 'edges', spreadX: 42, spreadY: 160, density: 0.12, phase: [1, 0], feature: '中段收腰、上下两端外扩的沙漏轮廓' }],
-  ['L2-C03', 'central', '中央菱形核', { zones: ['center'], shapes: 'arc', trajectory: 'nest', curve: 'spike', env: 'square', offsets: 'vert', align: 66, pin: 'none', spreadX: 12, spreadY: 130, density: 0.09, phase: [0, 1], feature: '菱形外框逐层向内嵌，中心单层最厚' }],
-  ['L2-C04', 'central', '中央竖塔', { zones: ['center', 'north', 'south'], shapes: 'stair', trajectory: 'vertical', curve: 'rise', env: 'tall', offsets: 'vert', align: 33, pin: 'none', spreadX: 24, spreadY: 180, density: 0.13, phase: [1, 1], feature: '窄列高层塔，层张数自上而下递增' }],
-  ['L2-C05', 'central', '中央宽基座', { zones: ['center', 'midBottom'], shapes: 'band', trajectory: 'central', curve: 'plateau', env: 'full', offsets: 'horiz', align: 66, pin: 'edges', spreadX: 30, spreadY: 120, density: 0.10, phase: [0, 0], feature: '宽带状层做基座，上部窄层叠压' }],
-
-  /* ---- 2 多区域分散型 × 5 ---- */
-  ['L2-S01', 'scatter', '四象限分散', { zones: ['nw', 'ne', 'sw', 'se'], shapes: 'split', trajectory: 'scatter', curve: 'fall', env: 'narrow', offsets: 'alt', align: 66, pin: 'corners', spreadX: 0, spreadY: 0, density: 0.14, phase: [0, 0], feature: '四个互不相连的象限各自成堆' }],
-  ['L2-S02', 'scatter', '六区并立', { zones: ['nw', 'north', 'ne', 'sw', 'south', 'se'], shapes: 'mixed', trajectory: 'scatter', curve: 'fall', env: 'square', offsets: 'cross', align: 33, pin: 'none', spreadX: 0, spreadY: 0, density: 0.12, phase: [1, 0], feature: '六个区域并立，层张数锯齿交替' }],
-  ['L2-S03', 'scatter', '三岛链', { zones: ['west', 'center', 'east'], shapes: 'comb', trajectory: 'scatter', curve: 'dualpeak', env: 'mid', offsets: 'diag', align: 66, pin: 'edges', spreadX: 0, spreadY: 0, density: 0.11, phase: [0, 1], feature: '左中右三座牌岛，梳齿状边缘' }],
-  ['L2-S04', 'scatter', '上下双带', { zones: ['north', 'south', 'center'], shapes: 'band', trajectory: 'scatter', curve: 'fall', env: 'wide', offsets: 'horiz', align: 33, pin: 'none', spreadX: 0, spreadY: 0, density: 0.10, phase: [1, 1], feature: '上下两条横向带 + 中央连接层' }],
-  ['L2-S05', 'scatter', '边缘散点', { zones: ['farWest', 'farEast', 'nw', 'se'], shapes: 'split', trajectory: 'scatter', curve: 'spike', env: 'narrow', offsets: 'alt', align: 66, pin: 'corners', spreadX: 0, spreadY: 0, density: 0.16, phase: [0, 0], feature: '贴边散点堆，中央刻意留空' }],
-
-  /* ---- 3 双核心叠层型 × 5 ---- */
-  ['L2-D01', 'dual', '左右双核', { zones: ['coreA', 'coreB'], shapes: 'core', trajectory: 'dual', curve: 'arch', env: 'mid', offsets: 'diag', align: 66, pin: 'edges', spreadX: 0, spreadY: 120, density: 0.11, phase: [0, 0], feature: '左右两个核心交替叠层' }],
-  ['L2-D02', 'dual', '上下双核', { zones: ['north', 'south'], shapes: 'mixed', trajectory: 'dual', curve: 'valley', env: 'wide', offsets: 'vert', align: 33, pin: 'none', spreadX: 0, spreadY: 0, density: 0.12, phase: [1, 0], feature: '上下两个核心，中间腰部收窄' }],
-  ['L2-D03', 'dual', '对角双核', { zones: ['nw', 'se'], shapes: 'arc', trajectory: 'dual', curve: 'dualpeak', env: 'square', offsets: 'cross', align: 66, pin: 'corners', spreadX: 0, spreadY: 0, density: 0.10, phase: [0, 1], feature: '西北 / 东南对角两核，弧形轮廓' }],
-  ['L2-D04', 'dual', '双核夹桥', { zones: ['coreA', 'center', 'coreB'], shapes: 'cross', trajectory: 'dual', curve: 'step', env: 'mid', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 0, spreadY: 90, density: 0.11, phase: [1, 1], feature: '双核之间有十字连接层' }],
-  ['L2-D05', 'dual', '不等双核', { zones: ['west', 'coreB'], shapes: 'stair', trajectory: 'dual', curve: 'rise', env: 'narrow', offsets: 'alt', align: 66, pin: 'none', spreadX: 0, spreadY: 140, density: 0.13, phase: [0, 0], feature: '左侧厚重、右侧轻薄的不等双核' }],
-
-  /* ---- 4 横向及纵向延展型 × 5 ---- */
-  ['L2-E01', 'extent', '横向长卷', { zones: ['farWest', 'west', 'center', 'east', 'farEast'], shapes: 'band', trajectory: 'horizontal', curve: 'rise', env: 'wide', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 220, spreadY: 40, density: 0.10, phase: [0, 0], feature: '沿水平方向铺满全宽的长卷' }],
-  ['L2-E02', 'extent', '纵向长柱', { zones: ['north', 'center', 'south'], shapes: 'comb', trajectory: 'vertical', curve: 'rise', env: 'tall', offsets: 'vert', align: 66, pin: 'none', spreadX: 40, spreadY: 180, density: 0.12, phase: [1, 0], feature: '纵向拉长的窄柱与梳齿边缘' }],
-  ['L2-E03', 'extent', '横向双带', { zones: ['north', 'south'], shapes: 'band', trajectory: 'horizontal', curve: 'saw', env: 'full', offsets: 'cross', align: 33, pin: 'edges', spreadX: 190, spreadY: 0, density: 0.11, phase: [0, 1], feature: '上下两条横向带交替叠压' }],
-  ['L2-E04', 'extent', '纵向阶梯柱', { zones: ['west', 'center', 'east'], shapes: 'stair', trajectory: 'vertical', curve: 'step', env: 'square', offsets: 'diag', align: 66, pin: 'none', spreadX: 60, spreadY: 170, density: 0.13, phase: [1, 1], feature: '纵向延展同时横向阶梯错位' }],
-  ['L2-E05', 'extent', '斜向长带', { zones: ['nw', 'center', 'se'], shapes: 'arc', trajectory: 'stair', curve: 'rise', env: 'wide', offsets: 'alt', align: 33, pin: 'corners', spreadX: 170, spreadY: 160, density: 0.12, phase: [0, 0], feature: '沿对角线延展的弧带' }],
-
-  /* ---- 5 环形包围型 × 5 ---- */
-  ['L2-R01', 'ring', '标准环墙', { zones: ['nw', 'north', 'ne', 'east', 'se', 'south', 'sw', 'west'], shapes: 'ring', trajectory: 'ring', curve: 'flat', env: 'wide', offsets: 'cross', align: 33, pin: 'corners', spreadX: 180, spreadY: 150, density: 0.12, phase: [0, 0], feature: '层沿椭圆环绕，中心留空' }],
-  ['L2-R02', 'ring', '双层套环', { zones: ['nw', 'ne', 'sw', 'se', 'center'], shapes: 'nest', trajectory: 'ring', curve: 'valley', env: 'mid', offsets: 'diag', align: 66, pin: 'none', spreadX: 160, spreadY: 140, density: 0.11, phase: [1, 0], feature: '外环 + 内环两层嵌套' }],
-  ['L2-R03', 'ring', '半环抱月', { zones: ['west', 'nw', 'north', 'ne', 'east'], shapes: 'arc', trajectory: 'ring', curve: 'arch', env: 'wide', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 190, spreadY: 130, density: 0.13, phase: [0, 1], feature: '上半环包围，下方开口' }],
-  ['L2-R04', 'ring', '螺旋收环', { zones: ['nw', 'ne', 'se', 'sw', 'center'], shapes: 'shell', trajectory: 'spiral', curve: 'spike', env: 'square', offsets: 'alt', align: 66, pin: 'corners', spreadX: 170, spreadY: 140, density: 0.10, phase: [1, 1], feature: '环半径逐层收缩的螺旋包围' }],
-  ['L2-R05', 'ring', '环中带核', { zones: ['north', 'east', 'south', 'west', 'center'], shapes: 'ring', trajectory: 'ring', curve: 'dualpeak', env: 'full', offsets: 'vert', align: 33, pin: 'none', spreadX: 180, spreadY: 150, density: 0.11, phase: [0, 0], feature: '环墙 + 中央独立核心' }],
-
-  /* ---- 6 十字交错型 × 5 ---- */
-  ['L2-X01', 'cross', '正十字', { zones: ['north', 'south', 'west', 'east', 'center'], shapes: 'cross', trajectory: 'cross', curve: 'flat', env: 'mid', offsets: 'cross', align: 33, pin: 'none', spreadX: 150, spreadY: 150, density: 0.11, phase: [0, 0], feature: '横臂与竖臂交替叠压' }],
-  ['L2-X02', 'cross', '斜十字', { zones: ['nw', 'ne', 'sw', 'se', 'center'], shapes: 'cross', trajectory: 'cross', curve: 'valley', env: 'square', offsets: 'diag', align: 66, pin: 'corners', spreadX: 160, spreadY: 140, density: 0.12, phase: [1, 0], feature: '沿对角线展开的十字' }],
-  ['L2-X03', 'cross', '双横一竖', { zones: ['north', 'south', 'center'], shapes: 'band', trajectory: 'cross', curve: 'saw', env: 'wide', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 190, spreadY: 120, density: 0.10, phase: [0, 1], feature: '两条横带被一条竖带贯穿' }],
-  ['L2-X04', 'cross', '楔形交错', { zones: ['west', 'center', 'east'], shapes: 'mixed', trajectory: 'cross', curve: 'step', env: 'mid', offsets: 'alt', align: 66, pin: 'none', spreadX: 140, spreadY: 140, density: 0.13, phase: [1, 1], feature: '楔形与十字形状交错' }],
-  ['L2-X05', 'cross', '十字嵌套', { zones: ['center', 'north', 'east', 'south', 'west'], shapes: 'nest', trajectory: 'cross', curve: 'arch', env: 'square', offsets: 'vert', align: 33, pin: 'none', spreadX: 150, spreadY: 150, density: 0.11, phase: [0, 0], feature: '外层十字框嵌套内层十字' }],
-
-  /* ---- 7 阶梯递进型 × 5 ---- */
-  ['L2-T01', 'stair', '右降阶梯', { zones: ['nw', 'center', 'se'], shapes: 'stair', trajectory: 'stair', curve: 'rise', env: 'mid', offsets: 'diag', align: 66, pin: 'corners', spreadX: 170, spreadY: 170, density: 0.11, phase: [0, 0], feature: '层中心自左上向右下逐级递降' }],
-  ['L2-T02', 'stair', '左升阶梯', { zones: ['ne', 'center', 'sw'], shapes: 'stair', trajectory: 'stair', curve: 'fall', env: 'mid', offsets: 'alt', align: 33, pin: 'corners', spreadX: 170, spreadY: 170, density: 0.12, phase: [1, 0], feature: '层中心自右上向左下递降' }],
-  ['L2-T03', 'stair', '折线阶梯', { zones: ['west', 'north', 'east', 'south'], shapes: 'comb', trajectory: 'stair', curve: 'saw', env: 'wide', offsets: 'cross', align: 66, pin: 'none', spreadX: 180, spreadY: 150, density: 0.10, phase: [0, 1], feature: '阶梯方向逐段折返' }],
-  ['L2-T04', 'stair', '宽台阶梯', { zones: ['center', 'midBottom'], shapes: 'band', trajectory: 'stair', curve: 'plateau', env: 'full', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 160, spreadY: 140, density: 0.11, phase: [1, 1], feature: '每级阶梯都是宽平台' }],
-  ['L2-T05', 'stair', '嵌套阶梯', { zones: ['nw', 'ne', 'sw', 'se'], shapes: 'mixed', trajectory: 'stair', curve: 'dualpeak', env: 'square', offsets: 'vert', align: 66, pin: 'corners', spreadX: 160, spreadY: 160, density: 0.13, phase: [0, 0], feature: '阶梯与嵌套框交替' }],
-
-  /* ---- 8 多层嵌套型 × 5 ---- */
-  ['L2-N01', 'nest', '方框套核', { zones: ['center'], shapes: 'nest', trajectory: 'nest', curve: 'crown', env: 'square', offsets: 'vert', align: 66, pin: 'none', spreadX: 20, spreadY: 100, density: 0.11, phase: [0, 0], feature: '外框逐层向内收缩、顶层加冠形成宽口' }],
-  ['L2-N02', 'nest', '壳层包裹', { zones: ['center', 'midTop', 'midBottom'], shapes: 'shell', trajectory: 'nest', curve: 'valley', env: 'mid', offsets: 'diag', align: 33, pin: 'edges', spreadX: 40, spreadY: 130, density: 0.12, phase: [1, 0], feature: '壳层 + 内核交替' }],
-  ['L2-N03', 'nest', '同心菱', { zones: ['center'], shapes: 'arc', trajectory: 'nest', curve: 'rise', env: 'wide', offsets: 'cross', align: 66, pin: 'none', spreadX: 30, spreadY: 120, density: 0.10, phase: [0, 1], feature: '同心菱形轮廓逐层缩放' }],
-  ['L2-N04', 'nest', '双层套嵌', { zones: ['coreA', 'coreB'], shapes: 'ring', trajectory: 'nest', curve: 'dualpeak', env: 'square', offsets: 'alt', align: 33, pin: 'none', spreadX: 50, spreadY: 110, density: 0.11, phase: [1, 1], feature: '两个套嵌中心各自成环' }],
-  ['L2-N05', 'nest', '阶梯套嵌', { zones: ['center', 'north', 'south'], shapes: 'mixed', trajectory: 'nest', curve: 'step', env: 'mid', offsets: 'horiz', align: 66, pin: 'edges', spreadX: 45, spreadY: 140, density: 0.13, phase: [0, 0], feature: '嵌套深度按层阶梯递进' }],
-
-  /* ---- 9 非对称复杂叠层型 × 5 ---- */
-  ['L2-A01', 'asym', '左重右轻', { zones: ['west', 'center', 'east'], shapes: 'split', trajectory: 'asym', curve: 'rise', env: 'wide', offsets: 'diag', align: 33, pin: 'left', spreadX: 150, spreadY: 150, density: 0.12, phase: [0, 0], feature: '左侧厚堆，右侧稀疏' }],
-  ['L2-A02', 'asym', '右重左轻', { zones: ['east', 'center', 'west'], shapes: 'comb', trajectory: 'asym', curve: 'rise', env: 'wide', offsets: 'alt', align: 66, pin: 'right', spreadX: 150, spreadY: 150, density: 0.12, phase: [1, 0], feature: '右侧厚堆，左侧稀疏' }],
-  ['L2-A03', 'asym', '偏置缺口', { zones: ['nw', 'center', 'se'], shapes: 'wedge', trajectory: 'asym', curve: 'saw', env: 'mid', offsets: 'cross', align: 33, pin: 'corners', spreadX: 160, spreadY: 160, density: 0.15, phase: [0, 1], feature: '楔形缺口偏置到一侧' }],
-  ['L2-A04', 'asym', '不规则扇面', { zones: ['sw', 'south', 'se', 'center'], shapes: 'fan', trajectory: 'asym', curve: 'spike', env: 'square', offsets: 'vert', align: 66, pin: 'none', spreadX: 140, spreadY: 150, density: 0.13, phase: [1, 1], feature: '扇形展开，厚薄不均' }],
-  ['L2-A05', 'asym', '断桥叠层', { zones: ['west', 'east', 'center'], shapes: 'checker', trajectory: 'asym', curve: 'dualpeak', env: 'narrow', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 170, spreadY: 140, density: 0.16, phase: [0, 0], feature: '棋盘式断点造成不规则遮挡链' }],
-
-  /* ---- 10 组合异形型 × 5 ---- */
-  ['L2-M01', 'combo', '梳齿长墙', { zones: ['west', 'center', 'east'], shapes: 'comb', trajectory: 'horizontal', curve: 'rise', env: 'full', offsets: 'horiz', align: 33, pin: 'edges', spreadX: 200, spreadY: 60, density: 0.11, phase: [0, 0], feature: '水平长墙 + 梳齿缺口' }],
-  ['L2-M02', 'combo', '弧带环绕', { zones: ['nw', 'north', 'ne', 'center'], shapes: 'arc', trajectory: 'ring', curve: 'arch', env: 'wide', offsets: 'cross', align: 66, pin: 'corners', spreadX: 180, spreadY: 130, density: 0.12, phase: [1, 0], feature: '弧带沿上缘环绕' }],
-  ['L2-M03', 'combo', '菱形叠压', { zones: ['center', 'north', 'south'], shapes: 'arc', trajectory: 'vertical', curve: 'valley', env: 'square', offsets: 'vert', align: 33, pin: 'none', spreadX: 60, spreadY: 170, density: 0.10, phase: [0, 1], feature: '菱形轮廓沿纵向叠压' }],
-  ['L2-M04', 'combo', '螺旋外扩', { zones: ['center', 'nw', 'ne', 'se', 'sw'], shapes: 'mixed', trajectory: 'spiral', curve: 'step', env: 'mid', offsets: 'diag', align: 66, pin: 'corners', spreadX: 170, spreadY: 150, density: 0.13, phase: [1, 1], feature: '层中心沿螺旋向外扩张' }],
-  ['L2-M05', 'combo', '沙漏交错', { zones: ['midTop', 'center', 'midBottom'], shapes: 'mixed', trajectory: 'cross', curve: 'saw', env: 'full', offsets: 'alt', align: 33, pin: 'edges', spreadX: 150, spreadY: 150, density: 0.11, phase: [0, 0], feature: '宽窄层交错 + 十字错位' }],
-];
 
 export var L2_TEMPLATES = [];
 for (var di = 0; di < DEFS.length; di++) {
@@ -244,17 +367,20 @@ export function templateSummary(t) {
     name: t.name,
     feature: t.feature,
     structureSignature: t.structureSignature,
-    zones: t.structure.zones.slice(),
-    shapes: t.structure.shapes.slice(),
-    trajectory: t.structure.trajectory,
+    mask: t.structure.mask.slice(),
+    maskCellCount: t.maskCellCount,
+    maskRegionCount: t.maskRegionCount,
+    maskBox: t.maskBox,
+    growth: t.structure.growth,
+    layerShape: t.structure.layerShape,
     layerCurve: t.structure.layerCurve.slice(),
-    env: t.structure.env,
     offsets: t.structure.offsets,
-    pin: t.structure.pin,
+    density: t.structure.density,
+    phase: t.structure.phase,
   };
 }
 
-/** 按类别统计（10 类 × 5 套） */
+/** 按形状族统计 */
 export function templateCategoryStats() {
   var out = {};
   for (var i = 0; i < L2_TEMPLATES.length; i++) {
@@ -264,4 +390,5 @@ export function templateCategoryStats() {
   return out;
 }
 
-export { ZONE_ANCHORS };
+/** 兼容旧引用：几何层已改用掩膜，不再使用区域锚点 */
+export var ZONE_ANCHORS = { center: [330, 396] };

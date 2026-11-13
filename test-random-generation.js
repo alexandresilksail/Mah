@@ -8,7 +8,7 @@
  *    真实跑 validateLevel / 几何 / 三消 / 遮挡 / 注册表校验；
  *  · 第一关（完全冻结，判定逐字不动）：档位 ≠ 上一局、最近 3 局 layoutSimilarity
  *    全部 < 0.60、牌数与布局签名不与最近 3 局重复、几何签名不重复；
- *  · 第二关（本轮规格）：50 套模板择一、最近 10 局模板级 + 几何级双重去重、
+ *  · 第二关（本轮规格）：20 套模板择一、最近 10 局模板级 + 几何级双重去重、
  *    主堆 structureSimilarity < 0.60、牌数 / 牌面 / seed 不作差异依据；
  *  · 输出 sim 的均值 / P95 / 最大值（L1、L2 分别统计）与失败重试次数；
  *  · 同档位、不同 seed 的几何必须不同（30 个 seed 至少 25 种不同几何）；
@@ -99,8 +99,8 @@ ok(MAX_ATTEMPTS === 50, '生成重试上限 = 50');
 ok(HISTORY_LIMIT === 3 && L2_HISTORY_LIMIT === 10 &&
   historyLimitFor(1) === 3 && historyLimitFor(2) === 10,
   '历史窗口按关卡隔离：L1 = 3 局（冻结）、L2 = 10 局（本轮规格）');
-ok(L2_TEMPLATE_IDS.length === 50 && new Set(L2_TEMPLATE_IDS).size === 50,
-  '第二关布局模板 50 套且 templateId 唯一');
+ok(L2_TEMPLATE_IDS.length === 20 && new Set(L2_TEMPLATE_IDS).size === 20,
+  '第二关布局模板 20 套且 templateId 唯一');
 ok(SIMILARITY_THRESHOLD === 0.6, '重复判定阈值 = 0.60（第 2.2 节）');
 ok(REASONS.length === 4, '4 种 generationReason 已定义');
 

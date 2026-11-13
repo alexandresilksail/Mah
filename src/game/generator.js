@@ -335,7 +335,7 @@ export function generateLevel(level, seed, opt = {}) {
   for (let round = 0; round < LAYOUT_ROUNDS && !built; round++) {
     roundsUsed = round + 1;
     const layoutSeed = round === 0 ? s : ((s ^ Math.imul(round, 0x9e3779b9)) >>> 0);
-    // 只有第二关显式带 templateId 时才走 50 套模板；第一关与不带模板的第二关
+    // 只有第二关显式带 templateId 时才走 20 套掩膜模板；第一关与不带模板的第二关
     // 仍走既有 generateProfileLayout，几何与难度基线逐字节不变。
     const src = (lv === 2 && opt.templateId)
       ? generateTemplateLayout(layoutSeed, profile, opt.templateId)

@@ -197,8 +197,8 @@ ok(HISTORY_LIMIT === 3, `HISTORY_LIMIT = 3（实测 ${HISTORY_LIMIT}）`);
 ok(L2_HISTORY_LIMIT === 10 && historyLimitFor(1) === 3 && historyLimitFor(2) === 10,
   `第一关窗口冻结 3 局 / 第二关独立窗口 10 局（实测 ${historyLimitFor(1)} / ${historyLimitFor(2)}）`);
 ok(L2_RECORD_FIELDS.length === 15, '第二关历史记录含 12 个基础字段 + 3 个去重字段');
-ok(L2_TEMPLATES.length === 50 && L2_TEMPLATE_IDS.length === 50 &&
-  new Set(L2_TEMPLATE_IDS).size === 50, '第二关布局模板 50 套且 ID 唯一');
+ok(L2_TEMPLATES.length === 20 && L2_TEMPLATE_IDS.length === 20 &&
+  new Set(L2_TEMPLATE_IDS).size === 20, '第二关布局模板 20 套且 ID 唯一');
 ok(VISIBLE_MIN === 19 && VISIBLE_MAX === 25, '第二关开局可点区间 19–25');
 ok(SIMILARITY_THRESHOLD === 0.6, '布局相似度阈值 = 0.60');
 ok(QUEUE_SHAPE.length === 4 && QUEUE_SHAPE.reduce((a, q) => a + q.n, 0) === 44,

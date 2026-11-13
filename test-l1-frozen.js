@@ -102,10 +102,10 @@ ok(l1Rows.every((r) => r.same), '第一关 20 条基线无任何一项漂移');
 /* ---------------- [2] 传 templateId 也不影响第一关 ---------------- */
 section('[2] 第一关冻结边界：强行传 templateId 仍走原路径');
 for (const row of baseline.l1.slice(0, 8)) {
-  const d = generateLevel(1, row.seed, { profile: row.profile, templateId: 'L2-C01' });
+  const d = generateLevel(1, row.seed, { profile: row.profile, templateId: 'L2-P01' });
   ok(d.templateId === null || d.templateId === undefined,
     `L1 p${row.profile} seed=${row.seed} 返回数据不含 templateId`);
-  const now = compare(1, row, { profile: row.profile, templateId: 'L2-C01' });
+  const now = compare(1, row, { profile: row.profile, templateId: 'L2-P01' });
   ok(!!now, `L1 p${row.profile} seed=${row.seed} 传 templateId 后仍与基线逐字节一致`);
 }
 

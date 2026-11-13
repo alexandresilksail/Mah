@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-13T06:54:18.584Z
-- Git commit：`c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`
+- 运行时间：2026-11-13T08:06:10.853Z
+- Git commit：`f17b73bce482fae522a43c1df8cd2ca6ebf51b34`
 - 断言：通过 **110**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -11,23 +11,23 @@
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 9924128 | `61eb93fc932cd5f29524f1fc64ccd7fd40e0d9ae66af9070dc3efdb13eddb9b2` |
-| dist/MahLeMah-legacy.html | 9958241 | `0d5c00475d929545e50b5149cab3bb6d8e8e6fd4a7cb1c3c608c8778519e2f8c` |
+| dist/MahLeMah.html | 9916421 | `61f322e503b256a6e66e487d311574a7f5e2cef29fb4bda6c931588a6fddb3fd` |
+| dist/MahLeMah-legacy.html | 9950536 | `d9dac7d73741585082853fcf529bccf2a7030084bfd71e6e4a53babaeb852f73` |
 
 ## bundle 逐字节比对
 
 | 版本 | HTML 内嵌字节 | 现场打包字节 | 相同 |
 |---|---:|---:|---|
-| 现代版 | 9921996 | 9921996 | PASS |
-| legacy | 9927899 | 9927899 | PASS |
+| 现代版 | 9914289 | 9914289 | PASS |
+| legacy | 9920194 | 9920194 | PASS |
 
 ## 构建元信息
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-a4340d1 | 2.0.0-a4340d1 | 2.0.0-c410239 |
-| gitCommit | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801 |
-| sourceHash | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` |
+| buildVersion | 2.0.0-f17b73b | 2.0.0-f17b73b | 2.0.0-f17b73b |
+| gitCommit | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 |
+| sourceHash | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` |
 | sourceFiles | 37 | 37 | 37 |
 
 > 两个 HTML 的 buildTimestamp 允许相差数秒（两次独立构建），其余字段必须完全一致。
@@ -50,9 +50,9 @@
 
 真实档位的总牌数（运行时由 mainCount + queueCount 得出，从 config 读取）：24 / 30 / 36 / 48 / 321 / 282 / 300 / 312 / 273 / 291 / 261 / 192 / 255 张；其主堆张数常量 24 / 30 / 36 / 48 / 277 / 238 / 256 / 268 / 229 / 247 / 217 / 148 / 211 全部同时存在于两个 bundle（逐字节比对才是主判定）。
 
-## 第二关 50 套模板 / 双重去重一致性
+## 第二关 20 套模板 / 双重去重一致性
 
-4 个正式 HTML 均内嵌 50 个唯一 `templateId`、结构签名算法、等价几何算法、双重去重判定与模板池耗尽报错；网页版 3 个副本逐字节相同。
+4 个正式 HTML 均内嵌 20 个唯一 `templateId`、结构签名算法、等价几何算法、双重去重判定与模板池耗尽报错；网页版 3 个副本逐字节相同。
 
 | 产物 | 模板 ID 数 | 关键标记 |
 |---|---:|---|

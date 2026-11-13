@@ -1,0 +1,586 @@
+{
+  "generatedAt": "2026-11-13T07:50:46.092Z",
+  "profileId": 0,
+  "templates": [
+    {
+      "templateId": "L2-P01",
+      "name": "中心金字塔",
+      "category": "核心聚拢型",
+      "feature": "底座铺满全宽、逐层向中央收拢，形成正金字塔",
+      "seed": 7077,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 33,
+      "visible": 21,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "...###...",
+        "..#####..",
+        ".#######.",
+        "#########",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P02",
+      "name": "双核心",
+      "category": "核心聚拢型",
+      "feature": "左右各一座 4×5 主牌堆，中间整列留空",
+      "seed": 7208,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 2,
+      "maskCellCount": 40,
+      "visible": 22,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "####.####",
+        "####.####",
+        "####.####",
+        "####.####",
+        "####.####"
+      ]
+    },
+    {
+      "templateId": "L2-P03",
+      "name": "三岛屿",
+      "category": "多岛分离型",
+      "feature": "三座 2×5 牌岛并立，岛间整列断开",
+      "seed": 7339,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 3,
+      "maskCellCount": 30,
+      "visible": 21,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 594,
+        "maxY": 704,
+        "w": 561,
+        "h": 484
+      },
+      "mask": [
+        "##.##.##.",
+        "##.##.##.",
+        "##.##.##.",
+        "##.##.##.",
+        "##.##.##."
+      ]
+    },
+    {
+      "templateId": "L2-P04",
+      "name": "环形围绕",
+      "category": "围合环抱型",
+      "feature": "外圈闭合成环，中心 5×3 完全空心",
+      "seed": 7470,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 30,
+      "visible": 19,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "#########",
+        "##.....##",
+        "##.....##",
+        "##.....##",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P05",
+      "name": "十字交叉",
+      "category": "围合环抱型",
+      "feature": "中间三行全宽横臂 + 中列贯穿三行的竖臂",
+      "seed": 7601,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 33,
+      "visible": 24,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "...###...",
+        "#########",
+        "#########",
+        "#########",
+        "...###..."
+      ]
+    },
+    {
+      "templateId": "L2-P06",
+      "name": "阶梯上升",
+      "category": "单向偏置型",
+      "feature": "斜向 3 格宽带自左下抬升到右上，台阶式轮廓",
+      "seed": 7732,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 27,
+      "visible": 20,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "....####.",
+        "..######.",
+        ".########",
+        "#####....",
+        "####....."
+      ]
+    },
+    {
+      "templateId": "L2-P07",
+      "name": "阶梯下降",
+      "category": "单向偏置型",
+      "feature": "斜向 3 格宽带自左上下降到右下，与上升阶梯镜像",
+      "seed": 7863,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 27,
+      "visible": 20,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        ".####....",
+        ".######..",
+        "########.",
+        "....#####",
+        ".....####"
+      ]
+    },
+    {
+      "templateId": "L2-P08",
+      "name": "左侧巨塔",
+      "category": "单向偏置型",
+      "feature": "左 4 列厚实，向右逐层收窄，右下刻意留空",
+      "seed": 7994,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 32,
+      "visible": 22,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "####.....",
+        "######...",
+        "#######..",
+        "#########",
+        "######..."
+      ]
+    },
+    {
+      "templateId": "L2-P09",
+      "name": "右侧巨塔",
+      "category": "单向偏置型",
+      "feature": "右 4 列厚实，向左逐层收窄，左下刻意留空",
+      "seed": 8125,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 32,
+      "visible": 21,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        ".....####",
+        "...######",
+        "..#######",
+        "#########",
+        "...######"
+      ]
+    },
+    {
+      "templateId": "L2-P10",
+      "name": "上下双层岛",
+      "category": "多岛分离型",
+      "feature": "上下两条 9×2 横带，中间整行断开",
+      "seed": 8256,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 2,
+      "maskCellCount": 36,
+      "visible": 22,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "#########",
+        "#########",
+        ".........",
+        "#########",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P11",
+      "name": "蝴蝶形",
+      "category": "围合环抱型",
+      "feature": "左右双翼外扩，中央仅一行相连形成蝶身",
+      "seed": 8387,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 2,
+      "maskCellCount": 28,
+      "visible": 20,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "##.....##",
+        "###...###",
+        "####.####",
+        "###...###",
+        "##.....##"
+      ]
+    },
+    {
+      "templateId": "L2-P12",
+      "name": "沙漏形",
+      "category": "围合环抱型",
+      "feature": "上下各 9×2 宽带，中间一行收束到 3 格窄腰",
+      "seed": 8518,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 39,
+      "visible": 24,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "#########",
+        "#########",
+        "...###...",
+        "#########",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P13",
+      "name": "迷宫形",
+      "category": "格网迷宫型",
+      "feature": "上下横墙与左右单格通道交替，形成 S 形走廊",
+      "seed": 8649,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 29,
+      "visible": 21,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "#########",
+        "........#",
+        "#########",
+        "#........",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P14",
+      "name": "棋盘形",
+      "category": "格网迷宫型",
+      "feature": "3×3 小块上下错位排布，形成棋盘式交错小堆",
+      "seed": 8780,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 2,
+      "maskCellCount": 30,
+      "visible": 22,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "###..###.",
+        "###..###.",
+        "###..###.",
+        ".###..###",
+        ".###..###"
+      ]
+    },
+    {
+      "templateId": "L2-P15",
+      "name": "弧形月牙",
+      "category": "起伏异形型",
+      "feature": "左侧厚弧、右侧渐薄，凹口偏向右侧，整体呈弯月",
+      "seed": 8911,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 31,
+      "visible": 19,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "..#####..",
+        ".#######.",
+        "####..###",
+        "###....##",
+        "####..###"
+      ]
+    },
+    {
+      "templateId": "L2-P16",
+      "name": "波浪形",
+      "category": "起伏异形型",
+      "feature": "轮廓按行起伏：满 → 缺口 → 窄 → 缺口 → 满，形成波浪",
+      "seed": 9042,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 35,
+      "visible": 19,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "#########",
+        "###...###",
+        "..#####..",
+        "###...###",
+        "#########"
+      ]
+    },
+    {
+      "templateId": "L2-P17",
+      "name": "对角双塔",
+      "category": "多岛分离型",
+      "feature": "左上 6×2 与右下 6×2 两座塔，仅中央 3 格相连",
+      "seed": 9173,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 27,
+      "visible": 19,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "######...",
+        "######...",
+        "...###...",
+        "...######",
+        "...######"
+      ]
+    },
+    {
+      "templateId": "L2-P18",
+      "name": "四角围合",
+      "category": "多岛分离型",
+      "feature": "四个 4×2 角块分居四角，中行与中列十字留空",
+      "seed": 9304,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 4,
+      "maskCellCount": 32,
+      "visible": 22,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "####.####",
+        "####.####",
+        ".........",
+        "####.####",
+        "####.####"
+      ]
+    },
+    {
+      "templateId": "L2-P19",
+      "name": "中心十字岛",
+      "category": "围合环抱型",
+      "feature": "中央 3×5 主体 + 中部一行向左右各伸出 2 格",
+      "seed": 9435,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 29,
+      "visible": 19,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        "..#####..",
+        "..#####..",
+        "#########",
+        "..#####..",
+        "..#####.."
+      ]
+    },
+    {
+      "templateId": "L2-P20",
+      "name": "不规则大陆形",
+      "category": "不规则大陆型",
+      "feature": "左右不对称、上下多凸起，内部两处缺格形成海湾状凹陷",
+      "seed": 9566,
+      "cards": 321,
+      "mainCards": 277,
+      "layers": 28,
+      "regions": 1,
+      "maskCellCount": 37,
+      "visible": 23,
+      "floating": 0,
+      "box": {
+        "minX": 33,
+        "minY": 220,
+        "maxX": 660,
+        "maxY": 704,
+        "w": 627,
+        "h": 484
+      },
+      "mask": [
+        ".#######.",
+        "####.####",
+        ".########",
+        "###..####",
+        ".#######."
+      ]
+    }
+  ]
+}

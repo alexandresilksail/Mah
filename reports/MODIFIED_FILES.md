@@ -1,92 +1,91 @@
-# 修改文件清单（第二关 50 套布局模板 + 最近 10 局双重去重）
+# 修改文件清单（第二关 20 套指定全局形状 + 最近 10 局双重去重）
 
 **项目**：MahLeMah（`mah-le-mah/`）
 **日期**：2026-11-13
-**本轮提交**：`c410239`（完整哈希 `c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`），已推送 `origin/main`
-**口径**：只改第二关生成 / 去重 / 历史持久化及其测试、产物、文档；**第一关完全冻结**，只允许回归测试。
-**上一轮基线**：`a4340d1`（背景音乐集成 + 双关卡布局修复收尾）
+**本版口径**：只改第二关布局系统（模板定义 + 落牌几何 + 去重口径）及其测试 / 产物 / 文档；
+**第一关完全冻结**，只做回归测试；不改核心玩法、牌数配置、难度体系、音乐与音效链路。
+**取代关系**：本版取代同日早些时候的「50 套参数化结构模板」版本（`f17b73b`）。
+**上一轮基线**：`f17b73b`
 
 ---
 
-## 1. 新增源码（4）
-
-| 文件 | 职责 |
-|---|---|
-| `src/game/l2_templates.js` | **50 套第二关结构模板的唯一定义源**：10 类 × 5 套，唯一 `templateId`、独立 `zones / shapes / trajectory / layerCurve / env / offsets / density`，结构参数 SHA-256 签名。导出 `L2_TEMPLATES` / `L2_TEMPLATE_IDS` / `templateById()` / `templateSummary()` / `templateCategoryStats()` |
-| `src/game/l2_geometry.js` | 按模板结构参数在 9×5 半格格网真实落牌；`windowFor()` 区域窗口、`shapeCells()` 轮廓、`buildTemplateStack()` 层级堆叠、`repairSupport()` 悬空修补；候选筛选保证开局可点 19–25；复用既有 `buildQueue()` 生成 44 张盲盒队列 |
-| `src/game/l2_structure.js` | `calculateStructureSignature()`（坐标 / 层级 / 区域 / 层牌数与质心 / 包围盒 / 轮廓 / 遮挡边 / 可操作区）、`canonicalGeometrySignature()`（平移 + 左右镜像归一化）、`structureSimilarity()`（只比主堆）、`mainStackCards()`、`structureFields()` |
-| `src/game/l2_recent.js` | 第二关「最近 10 局」双重去重纯函数层：`usedTemplateIds()` / `availableTemplateIds()` / `equivalentRecords()` / `checkL2DualDedup()`；`L2_DEDUP_ALGORITHM`、`L2_SIMILARITY_THRESHOLD = 0.60` |
-
-## 2. 新增测试（2）
-
-| 文件 | 结果 | 覆盖 |
-|---|---|---|
-| `test-l2-templates.js` | **539 / 0** | 50 模板定义唯一性、50×3=150 局真实生成与合法性（含消除后暴露、真实安装进 Game）、1225 对两两差异、平移/镜像/换牌面的等价几何识别、模板级与几何级拒绝路径、12 局五种重开入口、模板池耗尽明确报错 |
-| `test-l1-frozen.js` | **64 / 0** | 修改前 20 条 L1 基线 + 9 条 L2 默认路径基线逐字段回归、强传 templateId 不影响 L1、L1 统一入口口径、源码冻结边界静态检查 |
-
-## 3. 新增基线 / 报告 / 日志
-
-| 文件 | 说明 |
-|---|---|
-| `reports/L1_FROZEN_BASELINE.json` | 审计阶段（修改前）保存的 20 条 L1 + 9 条 L2 默认路径几何基线 |
-| `reports/l2-templates-report.{json,md}` | **50 套模板完整 ID / 结构参数 / 代表布局指标清单** + 差异测试结果 |
-| `reports/l2-templates-output.txt` | 上述测试真实 stdout |
-| `reports/l1-frozen-report.{json,md}` / `l1-frozen-output.txt` | 第一关冻结回归结果与真实 stdout |
-| `reports/FINAL_test.txt` 等 10 份 `FINAL_*.txt` | 最终一次全套真实运行输出（7 个 Node 测试 + render + browser smoke + music real playback） |
-| `reports/FINAL_RERUN_ALL.txt` | 本轮最终运行汇总（由上述日志汇总，非手写 PASS 模板） |
-
-## 4. 修改的源码（7）
+## 1. 重写的源码（2）
 
 | 文件 | 改动要点 |
 |---|---|
-| `src/game/new_game.js` | 新增第二关独立分支 `createLevel2Game()`：50 套模板候选池 → 抽档位/seed → 生成真实牌局 → 结构签名与等价几何签名 → 与最近 10 局重放牌面做模板级 + 几何级双重判定 → 完整校验（含零悬空、开局可点 19–25）→ 写历史；`meta` 增加 `templateId` / `structureSignature` / `canonicalGeometrySignature` / `dedupAlgorithm` / `availableTemplateCount` 与 4 项去重检查；**第一关主体代码路径逐字未改** |
-| `src/game/generator.js` | 新增 `generateTemplateLayout` 导入；模板分支严格限定 `lv === 2 && opt.templateId`；返回 `templateId` / `floatingCount`；不带模板的第二关默认路径与几何逐字节不变 |
-| `src/game/recent_games.js` | 按关卡分窗口：`HISTORY_LIMIT = 3`（L1 冻结）、`L2_HISTORY_LIMIT = 10`、`historyLimitFor(level)`；新增 `L2_EXTRA_FIELDS` / `L2_RECORD_FIELDS`；`sanitizeRecord(raw, level)` 对 L2 三个可选字段校验、旧档缺字段合法；`sanitizeHistory` / `appendHistory` / `previousFrom` 按关卡取窗口 |
-| `src/game/layout_profiles.js` | **仅**把 `buildQueue` 改为 `export function buildQueue` 供模板路径复用；第一关布局逻辑一行未改 |
-| `src/game/save_data.js` | 存档说明与 `historyFor()` 调用同步为按关卡窗口；L2 历史经 `sanitizeHistory(raw, 2)` 读取，旧档兼容 |
-| `src/main.js` | 调试面板第二关附加 `templateId` / `structureSignature` / `canonicalGeometrySignature` / `dedupAlgorithm` / `availableTemplateCount` 与四项双重去重 PASS-FAIL；第一关输出逐字不变 |
-| `src-tauri/src/main.rs` | `RECORD_FIELDS[15]`（12 必填 + 3 个 L2 可选）、`REQUIRED_RECORD_FIELDS[12]`、`L2_OPTIONAL_RECORD_FIELDS[3]`；`HISTORY_LIMIT_L1 = 3` / `HISTORY_LIMIT_L2 = 10`；`validate_history_field(obj, key, limit)` 按关卡校验并拒绝第一关历史出现模板字段；旧档兼容 |
+| `src/game/l2_templates.js` | **20 套指定全局形状的唯一定义源**。新增 `MASK_COLS=9` / `MASK_ROWS=5`、`parseMask()`（`#` 可落牌 / `@` 高密度 / `.` 禁止，非法字符直接抛错）、`labelRegions()`（4 邻域连通分量 → 区域标签 R1/R2/…）、`maskBox()`。每套模板新增 `mask` / `maskCells` / `maskCellCount` / `maskRegion` / `maskRegionCount` / `maskBox` 与结构参数 `growth` / `layerShape` / `curve` / `offsets` / `density` / `phase` / `feature`。形状族改为 7 族（`core` / `island` / `frame` / `dir` / `grid` / `wave` / `irregular`）。结构签名算法标签 `MAH-L2-TPL-v1` → `MAH-L2-TPL-v2`。`ZONE_ANCHORS` 仅为旧引用兼容保留 |
+| `src/game/l2_geometry.js` | 落牌改为**只在掩膜格内**进行。`templatePlanFor()` 的 `capPerLayer` 改为 `template.maskCellCount`；新增 `pickCoverCells()`（底层每区域至少 1 张 + 最远点铺开）；重写 `pickMaskCells()`（形状分归一化 [0,1] × 0.58 + 层号确定性扰动 × 0.42 + 高密度加成 − 覆盖补偿 + 微随机）；`biasFor()` 扩到 20 种生长轨迹；`repairSupport()` 候选格只取自 `tpl.maskCells`；`shareScore()` 新增 `flat` 分支。移除 `zoneFor()` / `windowFor()` / `shapeCells()` 与 `ZONE_ANCHORS` 依赖 |
 
-## 5. 修改的既有测试与工具（4）
+## 2. 新增工具（1）
+
+| 文件 | 职责 |
+|---|---|
+| `tools/l2_thumbnails.mjs` | 20 套模板各固定 `(profile 0, seed = 7077 + i*131)` 真实生成一局，取主堆真实 `x/y/layer` 按 z 顺序绘制 SVG 俯视图（虚线格 = 5×9 掩膜），输出 `reports/l2-thumbnails.html` / `.json`，供逐一核对形状 |
+
+## 3. 修改的源码注释 / 文案（4，逻辑零改动）
+
+| 文件 | 改动 |
+|---|---|
+| `src/game/new_game.js` | 「50 套」→「20 套掩膜模板」注释 3 处；`TEMPLATE_POOL_EXHAUSTED` 错误文案改 20 套。**`createLevel2Game()` 与第一关主体一行未改** |
+| `src/game/generator.js` | 模板分支注释「50 套模板」→「20 套掩膜模板」；`lr === 2 && opt.templateId` 判定与默认路径逐字节不变 |
+| `src/game/l2_recent.js` | `availableTemplateIds()` 注释「50 套」→「20 套」；判定逻辑不变 |
+| `src/main.js` | 调试面板 `availableTemplateCount` 分母 `/ 50` → `/ 20` |
+
+## 4. 修改的既有测试与工具（6）
 
 | 文件 | 改动要点 | 最终 |
 |---|---|---|
-| `test.js` | `[1]` 增加分关卡窗口 / 50 模板常量断言；`[8b]` Rust 断言改为 15 字段白名单与 L1=3 / L2=10 双窗口；`[14]` 按关卡分流（L1 三局口径逐字保留，L2 用 10 局 + 主堆结构相似度 + 模板/等价几何零重复）；`[19]` 双关各 100 局按各自窗口统计，L2 增加模板 / 等价几何 / 结构签名零重复与「牌数不作差异依据」断言 | **625 / 0** |
-| `test-random-generation.js` | 标题改为「第一关 100 局冻结回归 + 第二关 100 局新规格压力测试」；L1 判定逐字保留；L2 改为主堆 `structureSimilarity`、10 局窗口、模板/等价几何/结构签名零重复、`seed + templateId` 精确重放、多区域分散型合法性（零悬空 / 无异常重叠 / 消除后暴露 / 真实开局）、跨重启历史字段持久化；汇总与 Markdown 报告按关卡分流 | **7788 / 0** |
-| `test-build-consistency.js` | 新增 `[7]` 节：4 个正式 HTML 均内嵌 50 个唯一 `templateId` 与全部第二关升级标记，网页版 3 个副本逐字节相同，4 个新模块源码齐备 | **110 / 0** |
-| `tools/browser_smoke.mjs` | 每个 HTML 在原有 4 局 L1 之外再真实开 4 局 L2，校验 `templateId` / 两种几何签名、四项双重去重 PASS、模板与等价几何零重复、历史按持久化起始值递增且 ≤10；历史跨页面继承被如实纳入判定 | `allPassed=true` |
+| `test-l2-templates.js` | 按 20 套 / 7 族 / 5×9 掩膜重写判定口径：`[0]` 20 个唯一 ID + 7 族均有模板 + 掩膜两两不同 + 每套 5×9 且可落牌格 ≥ 20 + 结构签名唯一；`[1]` 20×3=60 局合法性；`[2]` 190 对两两差异（层分布 ≥6 / 区域分布 ≥4 / 占位格轮廓 ≥16 种）；`[4]` 候选池断言 `availableTemplateIds(recent10).length === 10`；**新增两项聚合断言**「60 局主堆落牌全部位于掩膜格内」「60 局主堆覆盖掩膜全部连通区域」；报告 Markdown 增加掩膜表格 | **262 / 0** |
+| `test-l1-frozen.js` | 强传 `templateId` 的取值 `'L2-C01'` → `'L2-P01'`（旧 ID 已不存在）。判定逻辑与基线文件一字未改 | **64 / 0** |
+| `test.js` | `[1]` 模板数量断言 50 → 20（`L2_TEMPLATES.length` / `L2_TEMPLATE_IDS.length` / `new Set(...).size` 三者均为 20）。**`[3]` 第二关默认路径段逐字未改** | **625 / 0** |
+| `test-random-generation.js` | 注释与 `L2_TEMPLATE_IDS.length === 50` 断言改为 20；L1 判定逐字保留 | **7788 / 0** |
+| `test-build-consistency.js` | `[7]` 标题与 `ids.size` 断言 50 → 20；`indexOf('L2-C01')` → `indexOf('L2-P01')`；报告文案同步 | **110 / 0** |
+| `tools/browser_smoke.mjs` | 仅注释「50 套 → 20 套」；L2 每页仍真实开 4 局并校验模板 / 两种几何签名 / 四项双重去重 | `allPassed=true` |
 
-## 6. 重建产物（4）
+## 5. 重建产物（4）
 
 | 文件 | 字节 | SHA-256 |
 |---|---:|---|
-| `dist/MahLeMah.html` | 9,924,128 | `61eb93fc932cd5f29524f1fc64ccd7fd40e0d9ae66af9070dc3efdb13eddb9b2` |
-| `dist/index.html` | 9,924,128 | 同上（同内容副本） |
-| `dist/Mah了个Mah.html` | 9,924,128 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 9,958,241 | `0d5c00475d929545e50b5149cab3bb6d8e8e6fd4a7cb1c3c608c8778519e2f8c` |
+| `dist/MahLeMah.html` | 9,916,421 | `61f322e503b256a6e66e487d311574a7f5e2cef29fb4bda6c931588a6fddb3fd` |
+| `dist/index.html` | 9,916,421 | 同上（同内容副本） |
+| `dist/Mah了个Mah.html` | 9,916,421 | 同上（同内容副本） |
+| `dist/MahLeMah-legacy.html` | 9,950,536 | `d9dac7d73741585082853fcf529bccf2a7030084bfd71e6e4a53babaeb852f73` |
 
-`sourceHash=f6d0bbf4fd6932a1…`（37 个源文件）、`buildVersion=2.0.0-a4340d1`。
-4 个产物同时保留 5 首内置背景音乐（data URI），由 `npm run build:all` 从当前 `src/` 重建。
+`sourceHash=e3f1aba2f8dd2b3e…`（37 个源文件）、`buildVersion=2.0.0-f17b73b`。
+4 个产物均内嵌 20 个 `templateId`（`L2-P01`…`L2-P20`）与 5 首内置背景音乐，
+由 `npm run build:all` 从当前 `src/` 重建。
 
-## 7. 更新的文档 / 既有报告
+## 6. 新增 / 刷新的报告
 
 | 文件 | 说明 |
 |---|---|
-| `README.md` | 新增 `## 0.0` 本轮规格速览；0.3 节改为按关卡分窗口说明；文件树加入 4 个新模块与 4 个测试；验收清单新增 6 条本轮断言 |
-| `CHANGELOG.md` | 新增「2026-11-13 · 第二关 50 套布局模板 + 最近 10 局双重去重」章节，含真实测试数与未运行项 |
-| `DELIVERY.md` | 新增 `## 0.0` 本轮增量、真实运行结果表与未重建项 |
-| `reports/FINAL_ACCEPTANCE.md` | 重写为本轮最终验收（9 项交付对照 + 逐条验收判定 + 未执行项） |
-| `reports/MODIFIED_FILES.md` | 本文件 |
-| 自动生成的既有报告 | `random-generation-report.{json,md}` / `-output.txt`、`build-consistency-report.{json,md}` / `-output.txt`、`browser-smoke-report.json`、`layout-position-report.json`、`music-playback-report.{json,md}`、`music-real-playback-report.json`、`FINAL_RERUN_ALL.txt` 均由最终真实运行刷新 |
+| `reports/l2-thumbnails.{html,json,png}` | **20 套布局缩略图**（HTML 可交互俯视 + Edge 截图 PNG） |
+| `reports/l2-100-games.txt` | 第二关连续 100 局实测（任意连续 10 局零重复） |
+| `reports/l2-templates-report.{json,md}` / `-output.txt` | 20 套模板 ID / 掩膜 / 结构参数 / 代表布局指标 + 差异测试结果（真实运行自动生成） |
+| `reports/l1-frozen-report.{json,md}` / `-output.txt` | 第一关冻结回归结果与真实 stdout |
+| `reports/FINAL_*.txt`（10 份） | 最终一次全套真实运行输出（7 个 Node 测试 + render + browser smoke + music real playback） |
+| `reports/FINAL_RERUN_ALL.txt` | 本版最终运行汇总（由上述日志汇总，非手写 PASS 模板） |
+| `reports/FINAL_ACCEPTANCE.md` / `MODIFIED_FILES.md` | 本版验收报告与本清单 |
 
-## 8. 刻意未改动 / 未重建
+## 7. 更新的文档
+
+| 文件 | 说明 |
+|---|---|
+| `README.md` | `## 0.0` 章节重写为「20 套全局形状 + 掩膜」；统一生成流程说明改 20 套 + 池耗尽报错；文件树与验收清单数值同步（262/0、60 局、190 对、0.4104 / 0.3560、20/20 种）；补「落牌在掩膜内 + 覆盖全部连通区域」断言；修正三处早期遗留的 `validateTemplate` / 「连通分量 = 1」口径 |
+| `CHANGELOG.md` | 新增本版章节（取代 50 套版，含掩膜体系说明、新数值、未运行项）；旧 50 套章节标注「已被取代」保留为历史记录 |
+| `DELIVERY.md` | `## 0.0` 本轮增量表与真实运行结果表全部改 20 套口径；标题同步 |
+
+## 8. 刻意未改动
 
 | 文件 | 原因 |
 |---|---|
-| `src/game/config.js`、`engine.js`、`layout.js`、`layout_signature.js`、`tiles.js`、`seed_pool.js`、`robots.js` | 牌数配置、难度体系、三消规则、发牌、几何签名、渲染与核心玩法一律不动 |
-| `src/game/music_player.js`、`music_manifest.js`、`render.js`、`src/assets/music/*`、`tools/gen_music_manifest.mjs`、`src-tauri/tauri.conf.json` | 背景音乐与音效链路按要求保留，未重新导入、未重新分配场景、未改 CSP |
-| `dist/MahLeMah-Setup-v2.0.0.exe`、`MahLeMah-Portable-v2.0.0.zip`、`SHA256SUMS.txt` | 本机缺 MSVC `link.exe`，Rust 构建失败，桌面产物**未重建**，仍是旧冻结版本 |
-| `npm run test:release`（12000 局） | 本轮未重跑，如实标注 |
+| `src/game/config.js`、`engine.js`、`layout.js`、`layout_profiles.js`、`layout_signature.js`、`tiles.js`、`seed_pool.js`、`robots.js` | 牌数配置、难度体系、三消规则、第一关布局、发牌、几何签名、渲染与核心玩法一律不动 |
+| `src/game/l2_structure.js` | 几何级去重算法本版无需改动，仍按真实坐标 / 层级 / 区域 / 轮廓 / 遮挡 / 可操作区计算 |
+| `src/game/recent_games.js`、`save_data.js`、`src-tauri/src/main.rs` | 历史窗口（L1=3 / L2=10）、15 字段白名单与旧档兼容已在上轮完成，本版无改动 |
+| `src/game/music_player.js`、`music_manifest.js`、`render.js`、`src/assets/music/*`、`src-tauri/tauri.conf.json` | 音乐与音效链路按要求保留 |
+| `reports/L1_FROZEN_BASELINE.json` | 第一关冻结基线不得改动（改了就不再是冻结回归） |
+| `dist/MahLeMah-Setup-v2.0.0.exe`、`MahLeMah-Portable-v2.0.0.zip`、`SHA256SUMS.txt` | 本机缺 MSVC `link.exe`，Rust 构建不可用，桌面产物**未重建**，仍是旧冻结版本 |
+| `npm run test:release`（12000 局） | 本版未重跑，如实标注 |
 
 ## 9. 真实运行汇总
 
@@ -94,15 +93,20 @@
 |---|---|
 | `node test.js` | 625 / 0 / EXIT=0 |
 | `node test-random-generation.js` | 7788 / 0 / EXIT=0（双关各 100 局） |
-| `node test-l2-templates.js` | 539 / 0 / EXIT=0 |
+| `node test-l2-templates.js` | 262 / 0 / EXIT=0 |
 | `node test-l1-frozen.js` | 64 / 0 / EXIT=0 |
 | `node test-layout-position.js` | 35 / 0 / EXIT=0 |
 | `node test-music-playback.js` | 69 / 0 / EXIT=0 |
 | `node test-build-consistency.js` | 110 / 0 / EXIT=0 |
 | `node tools/test_render.mjs` | 27 / 27 |
-| `node tools/browser_smoke.mjs` | `allPassed=true` |
+| `node tools/browser_smoke.mjs` | `allPassed=true`（`exceptions=0`） |
 | `node tools/music_real_playback.mjs` | 54 / 54（桌面版未运行） |
-| `cargo check` / `cargo build` | **尝试后失败**（缺 MSVC `link.exe`） |
+| `node tools/l2_thumbnails.mjs` | 20 / 20 套缩略图生成 |
+| `cargo check` / `cargo build` | **未运行成功**（缺 MSVC `link.exe`） |
 | 桌面版 / Windows 安装版重建与真机播放 | **未运行** |
 
-本轮提交：`c410239`（`c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`）。
+Node 断言合计 **8953 项，0 失败**。
+
+---
+
+**本版提交**：见下方回填（提交后更新）。
