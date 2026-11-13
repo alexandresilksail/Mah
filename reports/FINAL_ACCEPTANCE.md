@@ -300,4 +300,4 @@ npm run build:all                     # 重建 4 个 HTML
 ```
 
 修改文件清单见 `reports/MODIFIED_FILES.md`。
-本轮提交见 `reports/MODIFIED_FILES.md` 文末（提交后回填）。
+本轮提交：`0344ad7`（完整哈希 `0344ad7281b16ba785ad24d99eb9e36f8f5d1401`），已推送 `origin/main`。
