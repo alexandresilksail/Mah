@@ -313,4 +313,5 @@ node tools/l2_thumbnails.mjs          # 重新生成 20 套缩略图
 npm run build:all                     # 重建 4 个 HTML
 ```
 
-修改文件清单与提交 ID 见 `reports/MODIFIED_FILES.md`。
+修改文件清单见 `reports/MODIFIED_FILES.md`。
+本轮提交：`7cda8b9`（完整哈希 `7cda8b94d2b7c0c8b38a891bf7159dd8d56e0c3b`），已推送 `origin/main`。
