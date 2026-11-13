@@ -9,6 +9,27 @@
 > 一致性由 `node test-build-consistency.js` 逐字节验证。
 > **2026-11-12 本轮**：背景音乐真正集成并真机验证播放、第一关布局按包围盒动态居中、
 > 双关卡最近三局「牌数 + 布局签名 + 几何相似度」三重差异化（历史窗口回到 3 局）。
+> **2026-11-13 本轮**：第二关升级为 50 套真正不同的布局模板 + 最近 10 局
+> 「模板级 + 几何级」双重去重；第一关完全冻结，只做回归测试。
+
+---
+
+## 0.0 第二关 50 套布局模板 + 最近 10 局双重去重（2026-11-13）
+
+| 要求 | 实现 | 证据 |
+|---|---|---|
+| 50 套真正不同的布局模板 | `src/game/l2_templates.js`：10 类 × 5 套，每套唯一 `templateId` 与独立 zones / shapes / trajectory / layerCurve / env / offsets / density | `reports/l2-templates-report.md`（50 套 ID 与结构参数清单） |
+| 差异来自结构而非 seed / 牌面 | `src/game/l2_geometry.js` 按模板结构参数在 9×5 半格格网上真实落牌；`src/game/l2_structure.js` 用坐标 / 层级 / 区域 / 轮廓 / 遮挡 / 可操作区算结构签名 | 1225 对两两结构 sim 最大 0.4354、主堆布局 sim 最大 0.4426，全部 < 0.60（占位格轮廓 50/50 种） |
+| 最近 10 局实际布局零重复 | 第二关独立 `level2RecentGames` 窗口 = 10；模板级排除已用模板，几何级比较平移 / 镜像归一化的等价结构 | `node test-random-generation.js` 100 局 + `test-l2-templates.js` 12 局重开入口 |
+| 跨应用重启有效 | 记录含 `templateId` / `structureSignature` / `canonicalGeometrySignature`，Rust 白名单同步且旧档缺字段合法 | `test-l1-frozen.js` 与浏览器冒烟（两个 HTML 共用持久化历史） |
+| 第一关完全不变 | `reports/L1_FROZEN_BASELINE.json` 修改前基线逐项回归；模板分支严格限定 `lv === 2 && opt.templateId` | `node test-l1-frozen.js` 64/0 |
+| 音乐 / 音效 / 三消规则不受影响 | 只改第二关生成与去重链路，5 首内置音乐原样打进全部重建产物 | `test-music-playback.js` 69/0、Edge 真机播放 54/54 |
+
+**测试命令**：`node test-l2-templates.js`（50 模板）、`node test-random-generation.js`（双关各 100 局）、
+`node test-l1-frozen.js`（第一关冻结）、`node test-build-consistency.js`（产物一致性）。
+
+> 原版《羊了个羊》内部数据无法获取，模板只参考**可观察**的多层叠牌、区域组合、
+> 半格遮挡与轮廓收放特征，不声称精确复刻原版算法，也不含任何从原版导出的坐标数据。
 
 ---
 
@@ -16,10 +37,10 @@
 
 | 要求 | 实现 | 证据 |
 |---|---|---|
-| 每次新开局牌数与布局都不同于本关最近三局 | `createNewGame()` 生成后真实计算总牌数与布局签名，冲突即重试（上限 50 次） | `test-random-generation.js` 两关各 100 局 |
+| 每次新开局牌数与布局都不同于本关最近三局（**第一关**；第二关见 0.0） | `createNewGame()` 生成后真实计算总牌数与布局签名，冲突即重试（上限 50 次） | `test-random-generation.js` 两关各 100 局 |
 | 不允许换 seed 就当作换布局 | 几何签名只纳入坐标 / 层级 / 区域 / 遮挡 / 可操作区，与洗牌无关 | `layout_signature.js` + `test.js [14]` |
 | 三种重新开局统一入口 | `case 'start'` / `'restart'|'replay'` / `'next'` / 键盘 `r` / `?lv=` 全部走 `newGame()` → `createNewGame()` | `test-build-consistency.js` + 200 局报告的入口审计 |
-| 重启后历史不丢 | 存档 `v:3` 新增 `level1RecentGames` / `level2RecentGames`，每关最多 3 条 | 200 局测试中的磁盘往返重启模拟 + 浏览器实测 |
+| 重启后历史不丢 | 存档 `v:3` 新增 `level1RecentGames` / `level2RecentGames`（L1 最多 3 条、L2 最多 10 条） | 100 局测试中的磁盘往返重启模拟 + 浏览器两个 HTML 共用持久化历史实测 |
 | 两个 HTML 与源码一致 | 构建脚本与一致性检查共用 `tools/bundle_shared.mjs`，逐字节比对内嵌 bundle | `reports/build-consistency-report.md` |
 | 调试面板真实数据 | `?dev=1` 显示 gameId / 签名 / 四项 PASS-FAIL / 最近三局 | Edge CDP 实测两个 HTML |
 
@@ -99,19 +120,29 @@
 
 ---
 
-## 0.3 最近三局差异化 / 布局签名 / 调试面板（本轮核心）
+## 0.3 差异化 / 布局签名 / 调试面板
 
-### 两关独立历史
+### 两关独立历史（2026-11-13 起按关卡分窗口）
 
-`level1RecentGames` 与 `level2RecentGames` 各自维护最近 3 局，绝不互相读取。
-每条记录含 `gameId / level / difficultyId / seed / totalTiles / tileTypeCount /
-layoutSignature / geometrySignature / distributionSignature / generatedAt /
-generationReason / validationResult`。历史只存元数据、不存牌面，存档体积有上界。
+`level1RecentGames` 与 `level2RecentGames` 绝不互相读取：
 
-**滚动窗口规则**：新局的总牌数、布局签名、几何签名都必须 ≠ 本关最近三局中任意一局。
-不要求 200 局全局牌数唯一。L1 恰好 4 个牌数（24/30/36/48）刚好够连续 4 局互不重复；
-L2 有 9 个不同牌数（id 3 与 id 7 同为 312 且几何相同，被统一入口视为同一布局而拒绝连续出现）。
-配置数量足够，**没有**为了凑数增删任何牌，也没有扩展档位。
+- **第一关冻结为最近 3 局**（`HISTORY_LIMIT = 3`），每条记录 12 个基础字段；
+- **第二关独立维护最近 10 局**（`L2_HISTORY_LIMIT = 10`），额外持久化
+  `templateId` / `structureSignature` / `canonicalGeometrySignature`；
+  旧存档缺这 3 个字段仍合法（由 seed 重放的真实牌面兜底）。
+
+历史只存元数据、不存牌面，存档体积有上界；`historyLimitFor(level)` 是唯一窗口取值入口。
+
+**滚动窗口规则（按关卡分流）**：
+
+- **L1（完全冻结）**：新局的总牌数、布局签名、几何签名都必须 ≠ 最近 3 局中任意一局；
+  L1 恰好 4 个牌数（24/30/36/48）够连续 4 局互不重复。
+- **L2（本轮新规格）**：模板级排除最近 10 局用过的 `templateId`；几何级比较最终实际布局，
+  拒绝等价几何（平移 / 左右镜像归一化后签名相同）、相同结构签名、相同几何签名，
+  并要求与最近 10 局重放牌面的主堆结构相似度与布局相似度都 < 0.60。
+  牌面图案、牌面顺序、随机种子与总牌数都**不能**作为布局不同的依据。
+  发现重复必须重试（上限 50 次），仍无法满足则抛 `GenerationFailureError`：
+  不清空历史、不改 seed、不微调坐标、不退回重复布局。
 
 ### 统一生成流程 `createNewGame()`（`src/game/new_game.js`）
 
@@ -121,6 +152,11 @@ L2 有 9 个不同牌数（id 3 与 id 7 同为 312 且几何相同，被统一�
 同层零重叠 / 可点牌校验 → 生成唯一 `gameId` → 写历史 → 返回游戏实例。
 **上限 50 次**，仍不合格抛 `GenerationFailureError`（带逐次失败原因），
 绝不自动接受重复牌局。
+
+> **第二关（2026-11-13 起）**走 `createLevel2Game()` 独立分支：从「最近 10 局未用过的
+> 50 套模板」候选池取模板 → 选档位 → 抽 seed → 按模板结构参数生成真实牌局 →
+> 计算 `structureSignature` / `canonicalGeometrySignature` → 与最近 10 局重放牌面做
+> 模板级 + 几何级双重判定 → 完整校验 → 写历史。第一关代码路径逐字未改。
 
 ### 布局签名（`src/game/layout_signature.js`）
 
@@ -262,7 +298,12 @@ mah-le-mah/
 │   └── game/
 │       ├── config.js             # 单一常量源：66×88 / 半格晶格 / 槽位 / 遮挡阈值 / 按钮坐标
 │       ├── tile_types.js         # ★ v2.0.0：16 种牌型的唯一注册表（ID/名称/配色）
-│       ├── music_manifest.js      # ★ 本轮：内置 5 首音乐清单（data URI）+ 统一场景映射
+│       ├── music_manifest.js      # ★ 内置 5 首音乐清单（data URI）+ 统一场景映射
+│       ├── l2_templates.js        # ★ 2026-11-13：50 套第二关结构模板（10 类 × 5 套）
+│       ├── l2_geometry.js         # ★ 2026-11-13：按模板结构参数真实落牌 + 悬空修补
+│       ├── l2_structure.js        # ★ 2026-11-13：结构签名 / 等价几何 / 主堆相似度
+│       ├── l2_recent.js           # ★ 2026-11-13：最近 10 局模板级 + 几何级双重去重判定
+│       ├── recent_games.js        # 两关独立历史（L1=3 / L2=10），字段白名单
 │       ├── layout.js             # 模板 → 牌坐标；几何遮挡判定；peelOrder
 │       ├── generator.js          # 漏斗发牌 / 可解性证书 / 六策略机器人模拟
 │       ├── seed_pool.js          # 离线验收 seed 池（L2 用）
@@ -273,7 +314,11 @@ mah-le-mah/
 │       ├── audio.js              # Web Audio 合成音效（独立开关/音量；生产版唯一音频模块）
 │       └── dom_view.es5.js       # 无 Canvas 时的 DOM 降级渲染器
 ├── test.js                       # Node 纯逻辑验证（当前 11 项 Wilson 断言失败，见 TEST_REPORT.md）
-├── test-random-generation.js     # 两关各 100 局压力测试
+├── test-random-generation.js     # 第一关 100 局冻结回归 + 第二关 100 局新规格压力测试
+├── test-l2-templates.js          # ★ 2026-11-13：50 套模板 / 150 局 / 1225 对差异 / 等价几何
+├── test-l1-frozen.js             # ★ 2026-11-13：第一关修改前基线逐项冻结回归
+├── test-layout-position.js       # 第一关布局动态居中专项
+├── test-music-playback.js        # 内置背景音乐集成专项
 ├── test-build-consistency.js     # 两个 HTML 与 src 逐字节一致性检查
 ├── src-tauri/
 │   ├── Cargo.toml                # release 体积优化 + serde_json（存档校验）
@@ -495,7 +540,13 @@ AudioContext；音乐只用一个 `HTMLAudioElement`。点击音效不会被音�
 > 详见 `TEST_REPORT.md §6`。本轮新增的 `[14]` 节（统一入口 / 签名 / 最近三局）全部通过。
 - [x] 16 种牌型注册表：ID/名称/配色三元组唯一，`validateRegistry()` 通过
 - [x] 第 1 关 4 个档位（24/30/36/48 张）、第 2 关 10 个档位（192–321 张），全部按档位配额三消
-- [x] 每关最近三局牌数 / 布局签名 / 几何签名差异化（`test-random-generation.js` 200 局）
+- [x] 第一关最近三局牌数 / 布局签名 / 几何签名差异化（冻结口径，100 局回归）
+- [x] 第二关 50 套模板：ID / 结构参数 / 结构签名 / 等价几何签名全部唯一（`test-l2-templates.js` 539/0）
+- [x] 第二关 50 套 × 3 组档位共 150 局：牌数 / 层级 / 坐标 / 遮挡 / 零悬空 / 消除后暴露 / 真实开局安装全部合法
+- [x] 第二关 1225 对两两结构差异全部 < 0.60（结构 sim 最大 0.4354 / 主堆布局 sim 最大 0.4426）
+- [x] 第二关最近 10 局模板级 + 几何级零重复；双关各 100 局连续生成零失败，历史跨重启有效
+- [x] 第一关完全冻结：修改前 20 条基线逐项零漂移，强传 templateId 也不进入模板路径（`test-l1-frozen.js` 64/0）
+- [x] 4 个 HTML 产物均内嵌 50 个 templateId 与双重去重逻辑，构建一致性 110/0
 - [x] 两个 HTML 与 `src/` 内嵌 bundle 逐字节一致（`test-build-consistency.js`）
 - [x] 两关模板 `validateTemplate` 严格校验通过（无静默修正）
 - [x] 模板反例全部被拒：非法坐标 / 容量不足 / 长度不一致 / 层号重复 / 漏声明交叉遮挡

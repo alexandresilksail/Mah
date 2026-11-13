@@ -1,0 +1,150 @@
+============================================================================
+ MahLeMah v2.0.0 验证 · 内置背景音乐 / 第一关布局居中 / 双关最近三局差异化 / 六机器人难度
+============================================================================
+ Node v22.22.2
+
+[1] 单一常量源 / 版本号 / 几何常量 / 本轮规格常量
+   旧规格 LEVEL_SPEC: L1 48 张 / L2 240 张（仅作道具 / 复活 / 槽位布局的兼容默认值，真实张数一律取当前档位）
+   难度权重 {"naiveFailure":0.2,"mistakeGap":0.15,"lateDeath":0.35,"pressure":0.15,"diversity":0.15}
+
+[2] 16 种牌型唯一注册表
+   雀(sparrow) 中(red-centre) 發(green-fa) 框(blue-frame) 金(coin-1) 三(coin-3) 竹(bamboo-2) 五(bamboo-5) 梅(flower-plum) 兰(flower-orchid) 菊(flower-chrys) 鲤(fish) 月(moon) 日(sun) 云(cloud) 星(star)
+
+[3] 第二关 seed 驱动布局：沙漏主堆 + 半格晶格 + 四条盲盒链（30 seed × 10 档位）
+   L2 包围盒最小 660×616 · 可点 21~25 · 顶部 3~5 列 / 中段 8~10 列 / 核心 4~5 列 × ≤4 行
+
+[3b] 第一关 seed 驱动布局：紧凑堆 / 每层连通团块 / 列数 5–7 随机（30 seed × 4 档位）
+   L1 最大包围盒 528×616 · 可点 15~42（每层团块连通，整堆亦单连通）
+
+[3c] layoutSimilarity 纯函数（第 2.2 节）
+
+[4] 发牌一律整池 Fisher–Yates（第 3.2 节）：无三带 / 波次 / order / 区域偏置
+   开局花色最少 8 种 · 第一关证书 12/12 · 第二关 solvable=false（如实记录）
+
+[5] 分档验收 seed 池（SEED_POOL['L2-<id>'] / POOL_META，第 3.3 / 3.4 节）
+   档位   N   T   张数  候选/合格/录取 缺口  可点范围  遮挡链最小  压深最小  入池机器人通关
+   L2-0  28  15   321   400/385/ 40   0    22~25       27         7.95   0
+   L2-1  24  13   282   400/333/ 40   0    22~25       23         6.73   0
+   L2-2  26  14   300   400/370/ 40   0    22~25       32         7.38   0
+   L2-3  27  16   312   400/379/ 40   0    22~25       26         7.56   0
+   L2-4  23  13   273   400/376/ 40   0    22~25       22         6.48   0
+   L2-5  25  13   291   400/339/ 40   0    22~25       24         7.01   0
+   L2-6  22  13   261   400/308/ 40   0    21~25       21         6.16   0
+   L2-7  27  14   312   400/367/ 40   0    22~25       27         7.66   0
+   L2-8  15  15   192   400/124/ 40   0    21~25       15          4.2   0
+   L2-9  20  15   255   400/363/ 40   0    22~25       18         5.61   0
+   tune_pool 总耗时 134.3s · 每档候选 400 · 目标 40 · 总缺口 0
+
+[6] 槽位 / 三消 / 道具规则
+
+[7] 两关静态档位表 / 层张数插值 / levelParams
+
+[8] 视觉 / 兼容版 / Tauri 最小权限 / 版本号
+
+[8b] Rust 存档加固 / p1-p2 / musicMap 白名单 / 音乐命令
+
+[8c] 内置背景音乐资源 / 四个产物一致 / 音效链路独立
+
+[9] 运行时生成耗时
+   L2 分档生成 20 次 · 平均 4.50 ms/局 · L1 平均 4.55 ms/局
+  ✓ L2 单局生成 < 400ms（实测 4.50ms）
+  ✓ L1 单局生成 < 400ms（实测 4.55ms，含几何 × 洗牌拒采样）
+
+[10] 分档关卡构造与几何验收（10 个 L2 档位 × 40 个池内 seed + 4 个 L1 档位）
+   L2-0 N=28 T=15 张=321 · 可点 22~25 · 压深 ≥7.95 · 链 ≥27 · 全局层 36
+   L2-1 N=24 T=13 张=282 · 可点 22~25 · 压深 ≥6.73 · 链 ≥23 · 全局层 32
+   L2-2 N=26 T=14 张=300 · 可点 22~25 · 压深 ≥7.38 · 链 ≥32 · 全局层 34
+   L2-3 N=27 T=16 张=312 · 可点 22~25 · 压深 ≥7.56 · 链 ≥26 · 全局层 35
+   L2-4 N=23 T=13 张=273 · 可点 22~25 · 压深 ≥6.48 · 链 ≥22 · 全局层 31
+   L2-5 N=25 T=13 张=291 · 可点 22~25 · 压深 ≥7.01 · 链 ≥24 · 全局层 33
+   L2-6 N=22 T=13 张=261 · 可点 21~25 · 压深 ≥6.16 · 链 ≥21 · 全局层 30
+   L2-7 N=27 T=14 张=312 · 可点 22~25 · 压深 ≥7.66 · 链 ≥27 · 全局层 35
+   L2-8 N=15 T=15 张=192 · 可点 21~25 · 压深 ≥4.20 · 链 ≥15 · 全局层 23
+   L2-9 N=20 T=15 张=255 · 可点 22~25 · 压深 ≥5.61 · 链 ≥18 · 全局层 28
+   几何验收耗时 3.2s
+
+[11] 分档机器人难度验收（每档 5 种机器人各 400 局，池内种子循环 10 轮）
+   说明：greedy 单独用于第 1.4 节「4 个第一关档位 greedy ≥95%」，L2 的 5 种机器人取其余 5 种。
+   池内种子循环 10 轮 × 40 seed = 400 局 / 档 / 机器人
+   L2-0 N=28 T=15 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-1 N=24 T=13 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-2 N=26 T=14 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-3 N=27 T=16 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-4 N=23 T=13 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-5 N=25 T=13 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-6 N=22 T=13 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-7 N=27 T=14 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-8 N=15 T=15 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   L2-9 N=20 T=15 | random 0.00%(0) | noisy 0.00%(0) | lookahead 0.00%(0) | montecarlo 0.00%(0) | search 0.00%(0)
+        pooled 通关率 0.00% · 95% Wilson 上界 0.19% · 阈值 ≤3% ✓
+   全档合计：
+     random        4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
+     noisy         4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
+     lookahead     4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
+     montecarlo    4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
+     search        4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
+     合计 20000 局 · 通关 0 · 通关率 0.00% · 95% Wilson 上界 0.02% · 阈值 ≤1% ✓
+   机器人仿真耗时 129.8s
+
+[11b] 4 个第一关档位 greedy 通关率 ≥95%（每档 400 局）
+   L1-0 2 层 / 8 种 / 24 张 · greedy 100.00% (400/400)
+   L1-1 3 层 / 10 种 / 30 张 · greedy 100.00% (400/400)
+   L1-2 3 层 / 12 种 / 36 张 · greedy 99.75% (399/400)
+   L1-3 3 层 / 16 种 / 48 张 · greedy 99.00% (396/400)
+
+[12] rollProfile / 100 次重开 / 通关流程 / 旧存档
+   L2 100 次重开：档位变化 100/100 · seed 命中当前档位池 100/100
+   开关 true：档位保持 100/100 · seed 变化 100/100
+   通关存档 {"v":4,"level":1,"best":2,"sound":true,"sfxVol":1,"music":true,"musicVol":0.6,"musicMap":{},"p1":0,"p2":0,"level1RecentGames":[],"level2RecentGames":[]} · startNewRun 档位 0/0 → 1/2
+
+[13] 界面文案与源码一致性
+
+[14] 统一生成入口 / 布局签名 / 最近三局差异化（真实运行）
+[mah] level=1 profileId=1 seed=4148064957 gameId=g1-mweltb9s-1-s323nw-application_restart reason=application_restart tiles=30 sig=239a64d60b1a
+[mah] level=1 profileId=0 seed=1165153761 gameId=g1-mweltb9y-2-b43pqp-title_screen_restart reason=title_screen_restart tiles=24 sig=df7a6c6faf23
+[mah] level=1 profileId=2 seed=22725323 gameId=g1-mweltba5-3-htbcdo-failure_restart reason=failure_restart tiles=36 sig=996ea706acf2
+[mah] level=1 profileId=3 seed=1337155160 gameId=g1-mweltbbd-4-1upeb4w-new_game reason=new_game tiles=48 sig=f0d489f1bb45
+[mah] level=1 profileId=1 seed=3983815883 gameId=g1-mweltbbs-5-1g75988-application_restart reason=application_restart tiles=30 sig=b5720293e0ca
+[mah] level=1 profileId=0 seed=1087046334 gameId=g1-mweltbbz-6-1ov72m7-title_screen_restart reason=title_screen_restart tiles=24 sig=1bf4f3d933a7
+[mah] level=2 profileId=3 seed=1700041202 gameId=g2-mweltbdu-7-ht8y23-application_restart reason=application_restart tiles=312 sig=ba1b59df3821
+[mah] level=2 profileId=8 seed=3162725018 gameId=g2-mweltbfc-8-lk05or-title_screen_restart reason=title_screen_restart tiles=192 sig=3b8289e3adbb
+[mah] level=2 profileId=2 seed=2952295817 gameId=g2-mweltbiq-9-ht5xsk-failure_restart reason=failure_restart tiles=300 sig=a616d04eca49
+[mah] level=2 profileId=7 seed=2809369307 gameId=g2-mweltbnj-a-1n6tzq9-new_game reason=new_game tiles=312 sig=472dd826b810
+[mah] level=2 profileId=1 seed=1698041196 gameId=g2-mweltbqr-b-kc0kwn-application_restart reason=application_restart tiles=282 sig=5b8d48bfa82a
+[mah] level=2 profileId=7 seed=542210463 gameId=g2-mweltbsr-c-xnv11s-title_screen_restart reason=title_screen_restart tiles=312 sig=be546e1cca31
+[mah] level=1 profileId=1 seed=1052328689 gameId=g1-mweltbtg-e-1v35ga2-new_game reason=new_game tiles=30 sig=b90180646191
+[mah] level=1 profileId=2 seed=2476334332 gameId=g1-mweltbtt-f-1ucrwf-new_game reason=new_game tiles=36 sig=3d93a5b956aa
+[mah] level=1 profileId=3 seed=255040475 gameId=g1-mweltbu5-g-1u86fcg-new_game reason=new_game tiles=48 sig=cac76957005a
+[mah] level=1 profileId=0 seed=94616976 gameId=g1-mweltbuf-h-168n780-new_game reason=new_game tiles=24 sig=3d4917b6e0e2
+[mah] level=1 profileId=1 seed=261084172 gameId=g1-mweltbul-i-s6iq52-new_game reason=new_game tiles=30 sig=82f15c6416ec
+[mah] level=1 profileId=2 seed=2993937986 gameId=g1-mweltbut-j-6jakmp-new_game reason=new_game tiles=36 sig=16ced9ba41d0
+[mah] level=1 profileId=3 seed=1912298997 gameId=g1-mweltbv5-k-4981wd-new_game reason=new_game tiles=48 sig=29a5d7df3eb4
+
+[15] matchScene 表驱动（第 4.2 节）
+
+[16] 音乐确认流程状态机（第 4.3 节：确认前不改存档 / 取消不写 / 应用才写）
+
+[17] sceneOf 覆盖 6 种状态（第 4.1 节）
+[mah] level=1 profileId=0 seed=12345
+[mah] level=2 profileId=0 seed=7000
+
+[18] 文件名净化 / musicMap 清洗 / MusicPlayer 行为（第 4.4 / 4.5 节）
+
+[19] 差异化统计（每关 100 局：L1 最近 3 局 / L2 最近 10 局）
+   L1 100 局 · sim 均值 0.248 · P95 0.564 · 最大 0.5889 · 重试合计 11 次 · 窗口对 295 · 耗时 1.1s
+      最大相似度出现在 g1-mweltc7r-1c-esi9ns-new_game / g1-mweltc8u-1e-1reykvp-title_screen_restart
+   L2 100 局 · sim 均值 0.155 · P95 0.242 · 最大 0.4160 · 重试合计 5 次 · 窗口对 4215 · 耗时 10.3s
+      最大相似度出现在 g2-mweltf4f-47-1e0am5u-failure_restart / g2-mweltfdj-4b-h3xn3b-failure_restart
+
+============================================================================
+ 断言：通过 625 项，失败 0 项
+============================================================================

@@ -1,0 +1,12 @@
+[mah] level=1 profileId=0 seed=9001
+[mah] level=2 profileId=0 seed=9002
+[mah] level=2 profileId=0 seed=4242
+[mah] level=1 profileId=0 seed=4242
+  [PASS] 标题页存在「如何卸载」按钮
+  [PASS] 卸载说明只有一个「知道了」，不存在任何删除确认按钮
+  [PASS] 卸载说明面板绘制无异常
+[mah] level=2 profileId=0 seed=7
+  [PASS] 暂停面板存在卸载说明按钮
+  [PASS] 标题页与设置面板均无任何背景音乐入口，仅保留音效开关 / 音量
+cardAt -> null
+render smoke OK：27 个场景全部绘制通过（无异常）

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-12T14:00:43.265Z",
+  "generatedAt": "2026-11-13T06:37:32.524Z",
   "resource": {
     "files": [
       "失败场景音乐.wav",
@@ -224,7 +224,7 @@
     },
     {
       "group": "version",
-      "label": "网页版 产物存在（9885845 字节）",
+      "label": "网页版 产物存在（9924128 字节）",
       "pass": true
     },
     {
@@ -254,7 +254,7 @@
     },
     {
       "group": "version",
-      "label": "独立 HTML 版 产物存在（9885845 字节）",
+      "label": "独立 HTML 版 产物存在（9924128 字节）",
       "pass": true
     },
     {
@@ -284,7 +284,7 @@
     },
     {
       "group": "version",
-      "label": "中文名副本 产物存在（9885845 字节）",
+      "label": "中文名副本 产物存在（9924128 字节）",
       "pass": true
     },
     {
@@ -314,7 +314,7 @@
     },
     {
       "group": "version",
-      "label": "ES5 legacy 版 产物存在（9919967 字节）",
+      "label": "ES5 legacy 版 产物存在（9958241 字节）",
       "pass": true
     },
     {
@@ -367,7 +367,7 @@
     {
       "name": "网页版",
       "file": "dist/index.html",
-      "bytes": 9885845,
+      "bytes": 9924128,
       "payloads": 5,
       "exactHits": 5,
       "payloadOk": true,
@@ -378,7 +378,7 @@
     {
       "name": "独立 HTML 版",
       "file": "dist/MahLeMah.html",
-      "bytes": 9885845,
+      "bytes": 9924128,
       "payloads": 5,
       "exactHits": 5,
       "payloadOk": true,
@@ -389,7 +389,7 @@
     {
       "name": "中文名副本",
       "file": "dist/Mah了个Mah.html",
-      "bytes": 9885845,
+      "bytes": 9924128,
       "payloads": 5,
       "exactHits": 5,
       "payloadOk": true,
@@ -400,7 +400,7 @@
     {
       "name": "ES5 legacy 版",
       "file": "dist/MahLeMah-legacy.html",
-      "bytes": 9919967,
+      "bytes": 9958241,
       "payloads": 5,
       "exactHits": 5,
       "payloadOk": true,

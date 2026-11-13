@@ -1,0 +1,243 @@
+============================================================================
+ MahLeMah · 双关卡各 100 局随机生成压力测试（真实运行）
+ commit=a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 start=2026-11-13T06:37:04.006Z
+============================================================================
+
+[0] 签名算法 / 注册表 / 配置 / 几何多样性自检
+   L1 4 个档位 × 30 seed · 每档不同几何最少 29 种
+   L2 10 个档位 × 30 seed · 每档不同几何最少 30 种
+
+[1] 第 1 关连续 100 局（独立历史）
+[mah] level=1 profileId=1 seed=2770536127 gameId=g1-mweltohl-1-1dxq74h-application_restart reason=application_restart tiles=30 sig=a60060633017
+[mah] level=1 profileId=3 seed=4030693290 gameId=g1-mweltoib-2-gzdbsb-title_screen_restart reason=title_screen_restart tiles=48 sig=441475d8a628
+[mah] level=1 profileId=0 seed=4076950352 gameId=g1-mweltoix-3-1mk0i62-failure_restart reason=failure_restart tiles=24 sig=06f82d3416fd
+[mah] level=1 profileId=2 seed=717176305 gameId=g1-mweltoj7-4-qvlb1f-new_game reason=new_game tiles=36 sig=97a96de4c0cd
+[mah] level=1 profileId=1 seed=3860098961 gameId=g1-mweltojh-5-u45ay6-application_restart reason=application_restart tiles=30 sig=baa781965b87
+[mah] level=1 profileId=3 seed=2257182226 gameId=g1-mweltoju-6-7c02mu-title_screen_restart reason=title_screen_restart tiles=48 sig=d29a2519a121
+[mah] level=1 profileId=0 seed=2435832818 gameId=g1-mweltokb-7-1ir70x8-failure_restart reason=failure_restart tiles=24 sig=2241bddb1726
+[mah] level=1 profileId=2 seed=1564041084 gameId=g1-mweltokk-8-2mdrx3-new_game reason=new_game tiles=36 sig=c487995bc3d5
+[mah] level=1 profileId=1 seed=2126681165 gameId=g1-mweltol4-9-1v8l9q5-application_restart reason=application_restart tiles=30 sig=7864951609bc
+[mah] level=1 profileId=3 seed=4001953556 gameId=g1-mweltolh-a-3beyi9-title_screen_restart reason=title_screen_restart tiles=48 sig=f6d7479a6b6d
+[mah] level=1 profileId=0 seed=4172231158 gameId=g1-mweltolz-b-14wbv2-failure_restart reason=failure_restart tiles=24 sig=ba034581bbb0
+[mah] level=1 profileId=2 seed=3541192102 gameId=g1-mweltom6-c-7qxzwx-new_game reason=new_game tiles=36 sig=eda384138230
+[mah] level=1 profileId=1 seed=2642077735 gameId=g1-mweltomh-d-1wx390d-application_restart reason=application_restart tiles=30 sig=b08d0bdad830
+[mah] level=1 profileId=3 seed=521766674 gameId=g1-mweltomu-e-dahuij-title_screen_restart reason=title_screen_restart tiles=48 sig=3cb1e64190e7
+[mah] level=1 profileId=0 seed=2769676130 gameId=g1-mwelton8-f-bpr949-failure_restart reason=failure_restart tiles=24 sig=08f9f83d7715
+[mah] level=1 profileId=2 seed=1691047809 gameId=g1-mweltong-g-1wvpfb4-new_game reason=new_game tiles=36 sig=4fd720ac2e6a
+[mah] level=1 profileId=1 seed=3292719392 gameId=g1-mweltonr-h-1drvw64-application_restart reason=application_restart tiles=30 sig=ec5b0b380e3e
+[mah] level=1 profileId=3 seed=914831401 gameId=g1-mweltoo5-i-uleguh-title_screen_restart reason=title_screen_restart tiles=48 sig=35d749ab4e7d
+[mah] level=1 profileId=0 seed=2975216973 gameId=g1-mweltoom-j-1mqp4kg-failure_restart reason=failure_restart tiles=24 sig=0688dcb7e45f
+[mah] level=1 profileId=2 seed=3262968162 gameId=g1-mweltoov-k-cqsxjp-new_game reason=new_game tiles=36 sig=2114cd8bafbf
+[mah] level=1 profileId=1 seed=399640519 gameId=g1-mweltop7-l-b4apph-application_restart reason=application_restart tiles=30 sig=93819ed2d5a8
+[mah] level=1 profileId=3 seed=3714301428 gameId=g1-mweltopj-m-16rax2v-title_screen_restart reason=title_screen_restart tiles=48 sig=9f91ec1699ad
+[mah] level=1 profileId=0 seed=503317403 gameId=g1-mweltopy-n-1nw9wqc-failure_restart reason=failure_restart tiles=24 sig=e6062af7e14f
+[mah] level=1 profileId=2 seed=2103900859 gameId=g1-mweltoq8-o-190wyj3-new_game reason=new_game tiles=36 sig=85aca9f8122f
+[mah] level=1 profileId=1 seed=486679040 gameId=g1-mweltoqn-p-10mf8jj-application_restart reason=application_restart tiles=30 sig=2188ebb6ce34
+[mah] level=1 profileId=3 seed=312110716 gameId=g1-mweltoqz-q-t62ye3-title_screen_restart reason=title_screen_restart tiles=48 sig=fe0000b5e2a0
+[mah] level=1 profileId=0 seed=2258435403 gameId=g1-mweltorc-r-1vrxcl8-failure_restart reason=failure_restart tiles=24 sig=785dd1061af4
+[mah] level=1 profileId=2 seed=777711124 gameId=g1-mweltorx-s-tsmsuw-new_game reason=new_game tiles=36 sig=906c6d641841
+[mah] level=1 profileId=1 seed=3162290706 gameId=g1-mweltosv-t-gfekpe-application_restart reason=application_restart tiles=30 sig=5c217d278676
+[mah] level=1 profileId=3 seed=2920635820 gameId=g1-mweltoti-u-d1m7ag-title_screen_restart reason=title_screen_restart tiles=48 sig=2ddc6d084de5
+[mah] level=1 profileId=0 seed=3532581811 gameId=g1-mweltouh-v-1bpdkaw-failure_restart reason=failure_restart tiles=24 sig=4b7f7518c805
+[mah] level=1 profileId=2 seed=2540556116 gameId=g1-mweltov2-w-1ocbnc5-new_game reason=new_game tiles=36 sig=b835e78513fd
+[mah] level=1 profileId=1 seed=2433723931 gameId=g1-mweltovt-x-nvy70a-application_restart reason=application_restart tiles=30 sig=970e68e04f17
+[mah] level=1 profileId=3 seed=3785519161 gameId=g1-mweltowf-y-1nvj69e-title_screen_restart reason=title_screen_restart tiles=48 sig=da9d1366288a
+[mah] level=1 profileId=0 seed=1308236131 gameId=g1-mweltoxf-z-3s04oh-failure_restart reason=failure_restart tiles=24 sig=dffa0505961a
+[mah] level=1 profileId=2 seed=701312259 gameId=g1-mweltoxr-10-u1htxb-new_game reason=new_game tiles=36 sig=a7e716d17c17
+[mah] level=1 profileId=1 seed=2024149455 gameId=g1-mweltoy2-11-of3lfn-application_restart reason=application_restart tiles=30 sig=c3ead4886d0e
+[mah] level=1 profileId=3 seed=1810907212 gameId=g1-mweltoyi-12-1jzm36x-title_screen_restart reason=title_screen_restart tiles=48 sig=50f835b18a52
+[mah] level=1 profileId=0 seed=2734571433 gameId=g1-mweltoz6-13-113imxr-failure_restart reason=failure_restart tiles=24 sig=898c9ea4f929
+[mah] level=1 profileId=2 seed=841154598 gameId=g1-mweltoze-14-1l93khm-new_game reason=new_game tiles=36 sig=95dd9b49d322
+[mah] level=1 profileId=1 seed=3894385509 gameId=g1-mweltozp-15-ajryi9-application_restart reason=application_restart tiles=30 sig=e8197827d69d
+[mah] level=1 profileId=3 seed=2985997416 gameId=g1-mweltp04-16-1rbtphq-title_screen_restart reason=title_screen_restart tiles=48 sig=be3af4f69a51
+[mah] level=1 profileId=0 seed=1618744524 gameId=g1-mweltp0o-17-1d515v7-failure_restart reason=failure_restart tiles=24 sig=dc20e2be53c1
+[mah] level=1 profileId=2 seed=3612473864 gameId=g1-mweltp13-18-1s3daq7-new_game reason=new_game tiles=36 sig=6824194f2850
+[mah] level=1 profileId=1 seed=3077571163 gameId=g1-mweltp1e-19-1tm08b8-application_restart reason=application_restart tiles=30 sig=b43d7ea1e512
+[mah] level=1 profileId=3 seed=2532911298 gameId=g1-mweltp22-1a-qwrlxh-title_screen_restart reason=title_screen_restart tiles=48 sig=e1121b83c306
+[mah] level=1 profileId=0 seed=727294125 gameId=g1-mweltp32-1b-i0bhk1-failure_restart reason=failure_restart tiles=24 sig=1f84128beeac
+[mah] level=1 profileId=2 seed=329395708 gameId=g1-mweltp3d-1c-1nncghm-new_game reason=new_game tiles=36 sig=5ce552ed7b0b
+[mah] level=1 profileId=1 seed=3938136193 gameId=g1-mweltp3u-1d-rin7gw-application_restart reason=application_restart tiles=30 sig=40f6619d24a7
+[mah] level=1 profileId=3 seed=323462238 gameId=g1-mweltp4b-1e-1nlf4qb-title_screen_restart reason=title_screen_restart tiles=48 sig=73ed50347c1b
+[mah] level=1 profileId=0 seed=3702879510 gameId=g1-mweltp50-1f-1k7i94t-application_restart reason=application_restart tiles=24 sig=4fe154f7e3d1
+   重启模拟：恢复 3 条历史，额外生成 1 局 reason=application_restart，牌数 24，sim 最大 0.3163
+[mah] level=1 profileId=0 seed=197579818 gameId=g1-mweltp53-1g-1jkpygf-failure_restart reason=failure_restart tiles=24 sig=252da23afefb
+[mah] level=1 profileId=2 seed=3533242162 gameId=g1-mweltp5e-1h-1ffamia-new_game reason=new_game tiles=36 sig=c19d838aed63
+[mah] level=1 profileId=1 seed=3996743331 gameId=g1-mweltp5t-1i-f2gzkm-application_restart reason=application_restart tiles=30 sig=4a4acd033ef5
+[mah] level=1 profileId=3 seed=3400085465 gameId=g1-mweltp6f-1j-1ftekxh-title_screen_restart reason=title_screen_restart tiles=48 sig=c329e62e3fde
+[mah] level=1 profileId=0 seed=1324896669 gameId=g1-mweltp7a-1k-1ewygev-failure_restart reason=failure_restart tiles=24 sig=4bfb081d4679
+[mah] level=1 profileId=2 seed=1588712159 gameId=g1-mweltp7l-1l-1fvvzn8-new_game reason=new_game tiles=36 sig=51765960d0a8
+[mah] level=1 profileId=1 seed=1631992337 gameId=g1-mweltp7y-1m-17herxk-application_restart reason=application_restart tiles=30 sig=864adf241bee
+[mah] level=1 profileId=3 seed=2581463186 gameId=g1-mweltp8c-1n-1auj1f3-title_screen_restart reason=title_screen_restart tiles=48 sig=c05983d37108
+[mah] level=1 profileId=0 seed=3585594413 gameId=g1-mweltp8w-1o-d6kww7-failure_restart reason=failure_restart tiles=24 sig=4ddb5c45acbe
+[mah] level=1 profileId=2 seed=3760778064 gameId=g1-mweltp94-1p-8m69yx-new_game reason=new_game tiles=36 sig=4a7ee868b5f3
+[mah] level=1 profileId=1 seed=4252768884 gameId=g1-mweltp9e-1q-gpcxdz-application_restart reason=application_restart tiles=30 sig=1ac8903bb0a7
+[mah] level=1 profileId=3 seed=3008360051 gameId=g1-mweltpa3-1r-5x49b3-title_screen_restart reason=title_screen_restart tiles=48 sig=a63752ac3488
+[mah] level=1 profileId=0 seed=4143015469 gameId=g1-mweltpb7-1s-1lyjj7b-failure_restart reason=failure_restart tiles=24 sig=99fbed77fe5f
+[mah] level=1 profileId=2 seed=3921377138 gameId=g1-mweltpbf-1t-cly7zq-new_game reason=new_game tiles=36 sig=2ff834b4e1a2
+[mah] level=1 profileId=1 seed=4003609332 gameId=g1-mweltpbp-1u-1o3srjs-application_restart reason=application_restart tiles=30 sig=01dc372b8fe6
+[mah] level=1 profileId=3 seed=3741146647 gameId=g1-mweltpc2-1v-1x0b4e5-title_screen_restart reason=title_screen_restart tiles=48 sig=7962676814ef
+[mah] level=1 profileId=0 seed=2143220746 gameId=g1-mweltpci-1w-f3f7tq-failure_restart reason=failure_restart tiles=24 sig=7694f5d8b93c
+[mah] level=1 profileId=2 seed=1243062969 gameId=g1-mweltpcu-1x-1j673oj-new_game reason=new_game tiles=36 sig=f62dd9a2c1d8
+[mah] level=1 profileId=1 seed=3738471216 gameId=g1-mweltpd3-1y-1h7n28i-application_restart reason=application_restart tiles=30 sig=ecda1fd1cd2c
+[mah] level=1 profileId=3 seed=4216883497 gameId=g1-mweltpdp-1z-yf9lrh-title_screen_restart reason=title_screen_restart tiles=48 sig=6b92802e5584
+[mah] level=1 profileId=0 seed=3700009933 gameId=g1-mweltpen-20-19fnkh0-failure_restart reason=failure_restart tiles=24 sig=35ff62a6f775
+[mah] level=1 profileId=2 seed=3696709662 gameId=g1-mweltpev-21-1p8intm-new_game reason=new_game tiles=36 sig=731ec88e2bfe
+[mah] level=1 profileId=1 seed=37022687 gameId=g1-mweltpf5-22-1c323ik-application_restart reason=application_restart tiles=30 sig=495eb192be76
+[mah] level=1 profileId=3 seed=2696012078 gameId=g1-mweltpfg-23-1qrejc7-title_screen_restart reason=title_screen_restart tiles=48 sig=8e43963e6532
+[mah] level=1 profileId=0 seed=2113126421 gameId=g1-mweltpfs-24-1fo4bg6-failure_restart reason=failure_restart tiles=24 sig=0d32857cf9a1
+[mah] level=1 profileId=2 seed=4094886396 gameId=g1-mweltpg1-25-e7i5ga-new_game reason=new_game tiles=36 sig=2f13325d3772
+[mah] level=1 profileId=1 seed=1986067227 gameId=g1-mweltpgb-26-ocoepd-application_restart reason=application_restart tiles=30 sig=9e3e19361631
+[mah] level=1 profileId=3 seed=2115970200 gameId=g1-mweltpgo-27-zv0i69-title_screen_restart reason=title_screen_restart tiles=48 sig=d513a577f991
+[mah] level=1 profileId=0 seed=2802850261 gameId=g1-mweltph5-28-zj3o2m-failure_restart reason=failure_restart tiles=24 sig=a58d5b354135
+[mah] level=1 profileId=2 seed=465704192 gameId=g1-mweltphd-29-1yaa9z8-new_game reason=new_game tiles=36 sig=5831d32cf805
+[mah] level=1 profileId=1 seed=1680911806 gameId=g1-mweltphn-2a-1hmxn1j-application_restart reason=application_restart tiles=30 sig=8b722aadc3f7
+[mah] level=1 profileId=3 seed=3200449166 gameId=g1-mweltpi0-2b-16qsaxq-title_screen_restart reason=title_screen_restart tiles=48 sig=0d46bb541cc2
+[mah] level=1 profileId=0 seed=299629245 gameId=g1-mweltpil-2c-4kxz3z-failure_restart reason=failure_restart tiles=24 sig=6bf502a31736
+[mah] level=1 profileId=2 seed=1630541551 gameId=g1-mweltpjl-2d-msl20q-new_game reason=new_game tiles=36 sig=7af703ba488e
+[mah] level=1 profileId=1 seed=3804727786 gameId=g1-mweltpl4-2e-hdixiz-application_restart reason=application_restart tiles=30 sig=ea4df7e34ef9
+[mah] level=1 profileId=3 seed=3446765634 gameId=g1-mweltplg-2f-d12acf-title_screen_restart reason=title_screen_restart tiles=48 sig=9fe81137d5d0
+[mah] level=1 profileId=0 seed=2912642764 gameId=g1-mweltpls-2g-1kcbbuv-failure_restart reason=failure_restart tiles=24 sig=ff0d16629c22
+[mah] level=1 profileId=2 seed=4065439033 gameId=g1-mweltpm1-2h-1sids5v-new_game reason=new_game tiles=36 sig=80b88cffbd29
+[mah] level=1 profileId=1 seed=3729446498 gameId=g1-mweltpmc-2i-12igtn8-application_restart reason=application_restart tiles=30 sig=f57ca7e8bc26
+[mah] level=1 profileId=3 seed=1164640850 gameId=g1-mweltpmo-2j-oqn2zo-title_screen_restart reason=title_screen_restart tiles=48 sig=f279731e090a
+[mah] level=1 profileId=0 seed=1334464756 gameId=g1-mweltpn3-2k-xweqvm-failure_restart reason=failure_restart tiles=24 sig=7eee2061f10d
+[mah] level=1 profileId=2 seed=2629762475 gameId=g1-mweltpnb-2l-1su98d8-new_game reason=new_game tiles=36 sig=1db3071df0d8
+[mah] level=1 profileId=1 seed=2810310409 gameId=g1-mweltpnp-2m-vrh58k-application_restart reason=application_restart tiles=30 sig=416bc7864788
+[mah] level=1 profileId=3 seed=3335007863 gameId=g1-mweltpob-2n-zyu4ls-title_screen_restart reason=title_screen_restart tiles=48 sig=9aa424e7de4d
+[mah] level=1 profileId=0 seed=1541136990 gameId=g1-mweltppc-2o-10pxwcf-failure_restart reason=failure_restart tiles=24 sig=8a3d89f3467e
+[mah] level=1 profileId=2 seed=3214683479 gameId=g1-mweltppl-2p-1hoz8gg-new_game reason=new_game tiles=36 sig=65a7c597ac32
+[mah] level=1 profileId=1 seed=3741102437 gameId=g1-mweltppv-2q-dvqqco-application_restart reason=application_restart tiles=30 sig=5847a66980ee
+[mah] level=1 profileId=3 seed=1895636238 gameId=g1-mweltpr9-2r-195zzkf-title_screen_restart reason=title_screen_restart tiles=48 sig=c3d0c6483ec6
+[mah] level=1 profileId=0 seed=1268527551 gameId=g1-mweltptt-2s-9f68wx-failure_restart reason=failure_restart tiles=24 sig=702174baef66
+[mah] level=1 profileId=2 seed=168755412 gameId=g1-mweltpu1-2t-li0i6o-new_game reason=new_game tiles=36 sig=ccc70f3fb26a
+   L1 完成 100/100 局 · 重试 7 次 · 失败 0 次 · 耗时 1753 ms
+   L1 三局滑窗 sim：均值 0.2450 · P95 0.4918 · 最大 0.5845 · 对数 294
+      最大相似度出现在 g1-mweltptt-2s-9f68wx-failure_restart / g1-mweltppv-2q-dvqqco-application_restart
+
+[2] 第 2 关连续 100 局（独立历史）
+[mah] level=2 profileId=8 seed=1557114692 gameId=g2-mweltpv1-2u-frgbw0-application_restart reason=application_restart tiles=192 sig=7dcc9796f330
+[mah] level=2 profileId=0 seed=3041719678 gameId=g2-mweltpwu-2v-1q1nsae-title_screen_restart reason=title_screen_restart tiles=321 sig=1b60f1dae7b9
+[mah] level=2 profileId=8 seed=1134916566 gameId=g2-mweltpym-2w-10y940o-failure_restart reason=failure_restart tiles=192 sig=de7abcd524a6
+[mah] level=2 profileId=5 seed=2089318125 gameId=g2-mweltq05-2x-1c446i9-new_game reason=new_game tiles=291 sig=0cd108b1ba38
+[mah] level=2 profileId=7 seed=2957295832 gameId=g2-mweltq23-2y-1kjv2w-application_restart reason=application_restart tiles=312 sig=84190dc86e15
+[mah] level=2 profileId=6 seed=1555114686 gameId=g2-mweltq3w-2z-1h7ew3h-title_screen_restart reason=title_screen_restart tiles=261 sig=20f1db1a8d4c
+[mah] level=2 profileId=5 seed=1406188158 gameId=g2-mweltq5q-30-11klefz-failure_restart reason=failure_restart tiles=291 sig=ca5e6128c04d
+[mah] level=2 profileId=8 seed=2444673842 gameId=g2-mweltq7w-31-1ii8fan-new_game reason=new_game tiles=192 sig=c88b89aa4e26
+[mah] level=2 profileId=7 seed=4119126583 gameId=g2-mweltq9v-32-a2cmq6-application_restart reason=application_restart tiles=312 sig=f3e8475cc84f
+[mah] level=2 profileId=9 seed=9007027 gameId=g2-mweltqbt-33-so3pd8-title_screen_restart reason=title_screen_restart tiles=255 sig=ef0298433b9c
+[mah] level=2 profileId=5 seed=448786590 gameId=g2-mweltqds-34-1g4mgnn-failure_restart reason=failure_restart tiles=291 sig=818065036c13
+[mah] level=2 profileId=8 seed=1522193483 gameId=g2-mweltqg0-35-1xf3udz-new_game reason=new_game tiles=192 sig=383722e64946
+[mah] level=2 profileId=9 seed=2959295838 gameId=g2-mweltqi5-36-18g9qbp-application_restart reason=application_restart tiles=255 sig=11233429ee5a
+[mah] level=2 profileId=8 seed=2296747317 gameId=g2-mweltqjo-37-14wjv1z-title_screen_restart reason=title_screen_restart tiles=192 sig=bd445bb8205d
+[mah] level=2 profileId=6 seed=4209550447 gameId=g2-mweltql6-38-19co592-failure_restart reason=failure_restart tiles=261 sig=d52ca0f78b58
+[mah] level=2 profileId=2 seed=2177741983 gameId=g2-mweltqn7-39-77jpev-new_game reason=new_game tiles=300 sig=18a2998cd8ef
+[mah] level=2 profileId=8 seed=1317764300 gameId=g2-mweltqpi-3a-k4s6sa-application_restart reason=application_restart tiles=192 sig=7211705ab0bc
+[mah] level=2 profileId=5 seed=392283932 gameId=g2-mweltqqv-3b-2w72ml-title_screen_restart reason=title_screen_restart tiles=291 sig=ec6b1fc75652
+[mah] level=2 profileId=6 seed=3674347005 gameId=g2-mweltqsn-3c-1gtd1lz-failure_restart reason=failure_restart tiles=261 sig=f3c9cef48b81
+[mah] level=2 profileId=0 seed=922487359 gameId=g2-mweltqv4-3d-1tww4i6-new_game reason=new_game tiles=321 sig=39061c841623
+[mah] level=2 profileId=2 seed=3670346993 gameId=g2-mweltqyb-3e-82uvcd-application_restart reason=application_restart tiles=300 sig=d03ed0899938
+[mah] level=2 profileId=7 seed=2034815473 gameId=g2-mweltr0i-3f-1q4fkqe-title_screen_restart reason=title_screen_restart tiles=312 sig=98b41a6d08f7
+[mah] level=2 profileId=3 seed=2087318119 gameId=g2-mweltr7w-3g-l4nury-failure_restart reason=failure_restart tiles=312 sig=9e0d5ba28711
+[mah] level=2 profileId=7 seed=7007021 gameId=g2-mweltrai-3h-s0j8gi-new_game reason=new_game tiles=312 sig=8a40d3014542
+[mah] level=2 profileId=6 seed=1224340427 gameId=g2-mweltrcd-3i-rjpj64-application_restart reason=application_restart tiles=261 sig=164e37c4add2
+[mah] level=2 profileId=4 seed=2179741989 gameId=g2-mweltre5-3j-domhxt-title_screen_restart reason=title_screen_restart tiles=273 sig=e35a8c1bbdf3
+[mah] level=2 profileId=8 seed=3275730334 gameId=g2-mweltrfv-3k-1c7n75r-failure_restart reason=failure_restart tiles=192 sig=1994b0a04ec7
+[mah] level=2 profileId=7 seed=3971200058 gameId=g2-mweltrhl-3l-18okimq-new_game reason=new_game tiles=312 sig=e410c063b527
+[mah] level=2 profileId=4 seed=3672346999 gameId=g2-mweltrjn-3m-1m9gu3p-application_restart reason=application_restart tiles=273 sig=8d7928bc5f40
+[mah] level=2 profileId=2 seed=4114126568 gameId=g2-mweltrlg-3n-1lozp4-title_screen_restart reason=title_screen_restart tiles=300 sig=7983369ef994
+[mah] level=2 profileId=7 seed=2478595048 gameId=g2-mweltrnr-3o-121jduh-failure_restart reason=failure_restart tiles=312 sig=2a2b1a07a3c0
+[mah] level=2 profileId=1 seed=2655442764 gameId=g2-mweltrpp-3p-164n507-new_game reason=new_game tiles=282 sig=4e152ea6d521
+[mah] level=2 profileId=8 seed=1008571490 gameId=g2-mweltrrb-3q-12l0h2v-application_restart reason=application_restart tiles=192 sig=f3f4f39827d6
+[mah] level=2 profileId=4 seed=3580923132 gameId=g2-mweltrso-3r-1fvpzui-title_screen_restart reason=title_screen_restart tiles=273 sig=a79c47353758
+[mah] level=2 profileId=9 seed=783560861 gameId=g2-mweltrub-3s-1yoeuo8-failure_restart reason=failure_restart tiles=255 sig=4d8955cdd0fb
+[mah] level=2 profileId=6 seed=1555114686 gameId=g2-mweltrw7-3t-1k7qsmr-new_game reason=new_game tiles=261 sig=5a770bb6e8c6
+[mah] level=2 profileId=0 seed=3428996595 gameId=g2-mweltry4-3u-fsbnbs-application_restart reason=application_restart tiles=321 sig=4839a7bfb82c
+[mah] level=2 profileId=2 seed=2804369292 gameId=g2-mwelts05-3v-1kq5mui-title_screen_restart reason=title_screen_restart tiles=300 sig=642f032ea6b6
+[mah] level=2 profileId=4 seed=539210454 gameId=g2-mwelts2d-3w-o2ve28-failure_restart reason=failure_restart tiles=273 sig=2ce3c4476758
+[mah] level=2 profileId=6 seed=2660442779 gameId=g2-mwelts4h-3x-1f30700-new_game reason=new_game tiles=261 sig=75891a2c58c4
+[mah] level=2 profileId=5 seed=3821273527 gameId=g2-mwelts6o-3y-hnr4c7-application_restart reason=application_restart tiles=291 sig=0e064bc84adc
+[mah] level=2 profileId=6 seed=2569018912 gameId=g2-mwelts8e-3z-k92q1e-title_screen_restart reason=title_screen_restart tiles=261 sig=3101adc36814
+[mah] level=2 profileId=8 seed=2240244659 gameId=g2-mwelts9y-40-otfjkl-failure_restart reason=failure_restart tiles=192 sig=9001d80ec21b
+[mah] level=2 profileId=1 seed=57509661 gameId=g2-mweltsbj-41-1i42sfe-new_game reason=new_game tiles=282 sig=794df546f185
+[mah] level=2 profileId=3 seed=298860059 gameId=g2-mweltseo-42-4yr3c5-application_restart reason=application_restart tiles=312 sig=9ee377bbe6ce
+[mah] level=2 profileId=4 seed=4116126574 gameId=g2-mweltsif-43-28brdn-title_screen_restart reason=title_screen_restart tiles=273 sig=227c51070770
+[mah] level=2 profileId=0 seed=535210442 gameId=g2-mweltsk6-44-1se71v8-failure_restart reason=failure_restart tiles=321 sig=5a4150e526a5
+[mah] level=2 profileId=5 seed=300860065 gameId=g2-mweltsmh-45-k4dgmd-new_game reason=new_game tiles=291 sig=7e2fb2e38b3d
+[mah] level=2 profileId=8 seed=4141708035 gameId=g2-mweltsoj-46-xb0och-application_restart reason=application_restart tiles=192 sig=bc7d50b9bc95
+[mah] level=2 profileId=1 seed=388283920 gameId=g2-mweltsq0-47-sw961j-title_screen_restart reason=title_screen_restart tiles=282 sig=03f43d85a39c
+[mah] level=2 profileId=7 seed=154933546 gameId=g2-mweltsse-48-ocip2b-application_restart reason=application_restart tiles=312 sig=b4af3da7f875
+   重启模拟：恢复 10 条历史，额外生成 1 局 reason=application_restart，牌数 312，sim 最大 0.2307
+[mah] level=2 profileId=6 seed=4209550447 gameId=g2-mweltstf-49-2ndrjq-failure_restart reason=failure_restart tiles=261 sig=853fc2a50993
+[mah] level=2 profileId=0 seed=147933525 gameId=g2-mweltswc-4a-157rz49-new_game reason=new_game tiles=321 sig=5581157976d3
+[mah] level=2 profileId=9 seed=1945391612 gameId=g2-mweltszo-4b-1mj235d-application_restart reason=application_restart tiles=255 sig=0c66079e93d5
+[mah] level=2 profileId=2 seed=2712945425 gameId=g2-mweltt1f-4c-10s8hdy-title_screen_restart reason=title_screen_restart tiles=300 sig=ccb696a64ef2
+[mah] level=2 profileId=0 seed=3668346987 gameId=g2-mweltt4h-4d-196yicr-failure_restart reason=failure_restart tiles=321 sig=bc275582e836
+[mah] level=2 profileId=5 seed=1793465075 gameId=g2-mweltt6h-4e-7sl5dp-new_game reason=new_game tiles=291 sig=cecd1c585396
+[mah] level=2 profileId=2 seed=2177741983 gameId=g2-mweltt8f-4f-ai9zws-application_restart reason=application_restart tiles=300 sig=0f7314a0e613
+[mah] level=2 profileId=4 seed=2714945431 gameId=g2-mwelttab-4g-1o983gp-title_screen_restart reason=title_screen_restart tiles=273 sig=0162d4c081fb
+[mah] level=2 profileId=6 seed=393283935 gameId=g2-mwelttdr-4h-1lw4brr-failure_restart reason=failure_restart tiles=261 sig=acfb32b66177
+[mah] level=2 profileId=3 seed=3007009 gameId=g2-mwelttfp-4i-qnj81c-new_game reason=new_game tiles=312 sig=4051cfb80e18
+[mah] level=2 profileId=9 seed=304860077 gameId=g2-mweltthh-4j-l7o7d6-application_restart reason=application_restart tiles=255 sig=a9b221d5a0c7
+[mah] level=2 profileId=3 seed=2474595036 gameId=g2-mwelttjc-4k-1h2f6u1-title_screen_restart reason=title_screen_restart tiles=312 sig=688720e0f213
+[mah] level=2 profileId=8 seed=1557114692 gameId=g2-mwelttkz-4l-10pjuzd-failure_restart reason=failure_restart tiles=192 sig=2d70f0f41252
+[mah] level=2 profileId=1 seed=3965200040 gameId=g2-mwelttme-4m-kxo1ou-new_game reason=new_game tiles=282 sig=5a59a646625b
+[mah] level=2 profileId=7 seed=1943391606 gameId=g2-mwelttoh-4n-v0qh0q-application_restart reason=application_restart tiles=312 sig=d12009d3b19c
+[mah] level=2 profileId=5 seed=1554114683 gameId=g2-mwelttqu-4o-ubkipz-title_screen_restart reason=title_screen_restart tiles=291 sig=d7c9b62f3932
+[mah] level=2 profileId=2 seed=2325668508 gameId=g2-mwelttt0-4p-de2n39-failure_restart reason=failure_restart tiles=300 sig=ff58dbe2d299
+[mah] level=2 profileId=7 seed=929487380 gameId=g2-mwelttuy-4q-py4o2x-new_game reason=new_game tiles=312 sig=fcc9d740e166
+[mah] level=2 profileId=2 seed=4114126568 gameId=g2-mwelttwy-4r-s52m2y-application_restart reason=application_restart tiles=300 sig=d8ce268a49c6
+[mah] level=2 profileId=9 seed=1945391612 gameId=g2-mwelttzf-4s-bvrmbt-title_screen_restart reason=title_screen_restart tiles=255 sig=7dbd33095d79
+[mah] level=2 profileId=8 seed=1008571490 gameId=g2-mweltu20-4t-gsn38r-failure_restart reason=failure_restart tiles=192 sig=70f6f84c9335
+[mah] level=2 profileId=7 seed=3731849666 gameId=g2-mweltu3w-4u-18vsriw-new_game reason=new_game tiles=312 sig=3c8339ff64a3
+[mah] level=2 profileId=9 seed=452786602 gameId=g2-mweltu5l-4v-2d0ke7-application_restart reason=application_restart tiles=255 sig=d649441a81ed
+[mah] level=2 profileId=7 seed=2330668523 gameId=g2-mweltu79-4w-11h80l0-title_screen_restart reason=title_screen_restart tiles=312 sig=29551f74d125
+[mah] level=2 profileId=2 seed=3487499259 gameId=g2-mweltu9d-4x-1qepeyn-failure_restart reason=failure_restart tiles=300 sig=39ed4f8614a4
+[mah] level=2 profileId=4 seed=2179741989 gameId=g2-mweltuba-4y-1nsjhlx-new_game reason=new_game tiles=273 sig=384dd38ac216
+[mah] level=2 profileId=5 seed=3673347002 gameId=g2-mweltud4-4z-1l1xx75-application_restart reason=application_restart tiles=291 sig=8e116af2a784
+[mah] level=2 profileId=3 seed=2030815461 gameId=g2-mweltuf3-50-895biu-title_screen_restart reason=title_screen_restart tiles=312 sig=496c49f6e111
+[mah] level=2 profileId=9 seed=3346572755 gameId=g2-mweltuhb-51-15c0pnq-failure_restart reason=failure_restart tiles=255 sig=e3daaac9d1d5
+[mah] level=2 profileId=1 seed=4204550432 gameId=g2-mweltujs-52-fqmc2z-new_game reason=new_game tiles=282 sig=b12f23d5c719
+[mah] level=2 profileId=3 seed=3579923129 gameId=g2-mweltult-53-l5tekr-application_restart reason=application_restart tiles=312 sig=e79d7f531d28
+[mah] level=2 profileId=4 seed=2954295823 gameId=g2-mweltuno-54-1ohg4k-title_screen_restart reason=title_screen_restart tiles=273 sig=c0ea1cfe8e30
+[mah] level=2 profileId=9 seed=3107222363 gameId=g2-mweltupx-55-imna2g-failure_restart reason=failure_restart tiles=255 sig=7ccd65e6a54c
+[mah] level=2 profileId=1 seed=2803369289 gameId=g2-mweltusr-56-f60wx6-new_game reason=new_game tiles=282 sig=b8efab3b5ba9
+[mah] level=2 profileId=7 seed=154933546 gameId=g2-mweltuuq-57-cm5xoh-application_restart reason=application_restart tiles=312 sig=5c1a6e612062
+[mah] level=2 profileId=0 seed=1013911226 gameId=g2-mweltuwu-58-1fc2ruh-title_screen_restart reason=title_screen_restart tiles=321 sig=6526790d313d
+[mah] level=2 profileId=2 seed=833063498 gameId=g2-mweltuzh-59-1smkzuf-failure_restart reason=failure_restart tiles=300 sig=c62f517b0bbe
+[mah] level=2 profileId=7 seed=929487380 gameId=g2-mweltv22-5a-1gmnck9-new_game reason=new_game tiles=312 sig=ba0f10d76ae9
+[mah] level=2 profileId=5 seed=392283932 gameId=g2-mweltv49-5b-1mc0ps0-application_restart reason=application_restart tiles=291 sig=1cc793d1cdb1
+[mah] level=2 profileId=8 seed=3789352327 gameId=g2-mweltv5u-5c-7nzjqy-title_screen_restart reason=title_screen_restart tiles=192 sig=3502c59127eb
+[mah] level=2 profileId=0 seed=683136967 gameId=g2-mweltv7l-5d-4tsk1j-failure_restart reason=failure_restart tiles=321 sig=dd673971a391
+[mah] level=2 profileId=5 seed=836063507 gameId=g2-mweltvaf-5e-vtsmvb-new_game reason=new_game tiles=291 sig=a3d672bd51eb
+[mah] level=2 profileId=4 seed=4059623916 gameId=g2-mweltvcc-5f-1fai8xw-application_restart reason=application_restart tiles=273 sig=399a8ad3a6c1
+[mah] level=2 profileId=3 seed=2566018903 gameId=g2-mweltveh-5g-1wz2feo-title_screen_restart reason=title_screen_restart tiles=312 sig=ea498f3bd2c8
+[mah] level=2 profileId=9 seed=692136994 gameId=g2-mweltvgd-5h-euwgqb-failure_restart reason=failure_restart tiles=255 sig=292bc86a283d
+[mah] level=2 profileId=6 seed=1942391603 gameId=g2-mweltvhx-5i-1efjief-new_game reason=new_game tiles=261 sig=600fa72f3df3
+[mah] level=2 profileId=9 seed=1706041220 gameId=g2-mweltvj9-5j-17u1rgs-application_restart reason=application_restart tiles=255 sig=aa7204580e0b
+[mah] level=2 profileId=1 seed=2028815455 gameId=g2-mweltvks-5k-3mjzho-title_screen_restart reason=title_screen_restart tiles=282 sig=a0d9c7a0bfb7
+[mah] level=2 profileId=5 seed=3342572743 gameId=g2-mweltvml-5l-12kd7du-failure_restart reason=failure_restart tiles=291 sig=5bbbeb12f2e4
+[mah] level=2 profileId=9 seed=3107222363 gameId=g2-mweltvoc-5m-17w5fec-new_game reason=new_game tiles=255 sig=7730217b2c99
+   L2 完成 100/100 局 · 重试 5 次 · 失败 0 次 · 耗时 7591 ms
+   L2 三局滑窗 sim：均值 0.1525 · P95 0.2402 · 最大 0.4281 · 对数 945
+      最大相似度出现在 g2-mweltrpp-3p-164n507-new_game / g2-mweltrcd-3i-rjpj64-application_restart
+
+[2] 汇总与重复检查
+   全局布局签名 200 个，去重后 200 个（滚动窗口规则不要求全局唯一）
+
+[3] 三种重新开局入口
+[mah] level=1 profileId=1 seed=3444896415 gameId=g1-mweltvp6-5n-q4v6xc-new_game reason=new_game tiles=30 sig=105987c3e940
+[mah] level=1 profileId=3 seed=3202427445 gameId=g1-mweltvpi-5o-ekhj5f-failure_restart reason=failure_restart tiles=48 sig=931f28f732dd
+
+[4] 存档 v4 / 历史隔离 / 损坏容错
+[mah] level=1 profileId=3 seed=1653926464 gameId=g1-mweltvsr-5p-6jbsit-new_game reason=new_game tiles=48 sig=8ca900ab865a
+[mah] level=1 profileId=2 seed=1334036716 gameId=g1-mweltvtm-5q-15qofqy-new_game reason=new_game tiles=36 sig=004ccc31ef6b
+[mah] level=1 profileId=0 seed=2146826376 gameId=g1-mweltvtr-5r-4po2ey-new_game reason=new_game tiles=24 sig=1ae3a1af8e07
+[mah] level=1 profileId=1 seed=3039609554 gameId=g1-mweltvtw-5s-1yg9w0v-new_game reason=new_game tiles=30 sig=c1361497417a
+[mah] level=1 profileId=3 seed=4269578579 gameId=g1-mweltvu4-5t-1fgqufc-new_game reason=new_game tiles=48 sig=615e7c6bf042
+   L1 牌数范围 24–48 · 档位分布 {"0":25,"1":25,"2":25,"3":25}
+   L2 牌数范围 192–321 · 档位分布 {"0":8,"1":7,"2":10,"3":7,"4":9,"5":12,"6":10,"7":12,"8":13,"9":12}
+
+============================================================================
+ 断言：通过 7788 项，失败 0 项
+ 报告：reports/random-generation-report.json / .md / -output.txt
+============================================================================

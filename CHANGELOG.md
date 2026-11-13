@@ -5,6 +5,66 @@
 
 ---
 
+## 2026-11-13 · 第二关 50 套布局模板 + 最近 10 局双重去重（第一关冻结）
+
+### 新增
+
+- `src/game/l2_templates.js`：10 类 × 5 套 = **50 套**第二关结构模板，每套唯一
+  `templateId` 与独立结构参数（zones / shapes / trajectory / layerCurve / env /
+  offsets / density）。只参考原版**可观察**布局特征，不声称复刻原版算法，
+  不含任何从原版导出的坐标数据。
+- `src/game/l2_geometry.js`：按结构参数在 9×5 半格格网真实落牌；候选筛选保证开局
+  可点 19–25 张；`repairSupport()` 消除主堆悬空牌；44 张盲盒队列沿用既有规则。
+- `src/game/l2_structure.js`：结构签名纳入坐标 / 层级 / 区域 / 层牌数与质心 / 轮廓 /
+  遮挡关系 / 可操作区；`canonicalGeometrySignature()` 归一化平移与左右镜像，
+  用于识别「不同模板生成的等价结构」；相似度只比主堆。
+- `src/game/l2_recent.js`：模板级 + 几何级双重去重纯函数判定层。
+- `test-l2-templates.js`、`test-l1-frozen.js`、`reports/L1_FROZEN_BASELINE.json`
+  （修改前的第一关几何基线）。
+
+### 修改
+
+- `createNewGame()` 第二关走独立 `createLevel2Game()` 分支：从「最近 10 局未用过的
+  50 套模板」候选池取模板 → 生成真实牌局 → 双重去重 → 完整校验 → 写历史。
+  **第一关代码路径逐字未改**。
+- `recent_games.js`：按关卡分窗口（L1 = 3 冻结 / L2 = 10），第二关记录新增
+  `templateId` / `structureSignature` / `canonicalGeometrySignature` 三个**可选**字段，
+  旧存档缺字段合法。
+- `generator.js`：模板分支严格限定 `lv === 2 && opt.templateId`；不带模板的第二关
+  默认路径逐字节不变；第一关永远不进入模板路径。
+- `save_data.js` / `src-tauri/src/main.rs`：同步 15 字段记录白名单（12 必填 + 3 个
+  L2 可选）、按关卡历史窗口、第一关历史拒绝出现模板字段、旧档兼容。
+- `main.js` 调试面板：第二关显示 `templateId` / 结构签名 / 等价几何 / 去重算法与
+  四项双重去重 PASS-FAIL；第一关输出不变。
+- `test.js` / `test-random-generation.js` / `test-build-consistency.js` /
+  `tools/browser_smoke.mjs`：按新规格改写第二关断言并新增覆盖，第一关断言逐字保留。
+
+### 测试（真实运行）
+
+`node test.js` **625/0**；`node test-random-generation.js` **7788/0**（双关各 100 局）；
+`node test-l2-templates.js` **539/0**（50 模板 × 3 档位 = 150 局、1225 对差异、
+等价几何识别、12 局五种重开入口）；`node test-l1-frozen.js` **64/0**（20 条 L1 基线
++ 9 条 L2 默认路径基线零漂移）；`node test-layout-position.js` **35/0**；
+`node test-music-playback.js` **69/0**；`node test-build-consistency.js` **110/0**；
+`node tools/test_render.mjs` 27/27；`node tools/browser_smoke.mjs` `allPassed=true`
+（两个 HTML 各 4 局 L1 + 4 局 L2）；`node tools/music_real_playback.mjs` **54/54**
+（网页版 / 独立 HTML / ES5 legacy 真机播放）。
+
+第二关 100 局窗口内主堆结构 sim 最大 **0.4160**；50 套模板 1225 对结构 sim 最大
+**0.4354**、主堆布局 sim 最大 **0.4426**，全部 < 0.60。4 个 HTML 产物由当前 `src/`
+重建，均内嵌 50 个 `templateId` 与 5 首内置音乐。
+
+### 未运行（如实标注）
+
+- `cargo check` / `cargo build` **尝试后失败**：本机缺 MSVC `link.exe`
+  （Git Bash 下还被 GNU `link` 遮蔽），Rust 依赖 build script 无法链接。
+  这是环境限制，不是本轮源码的编译错误；源码静态一致性由 `test.js [8b]` 与
+  `test-build-consistency.js` 断言覆盖。
+- 桌面版 exe / Windows 安装版 / Portable zip / Setup.exe **未用本轮源码重建**；
+  桌面版真机音乐播放**未运行**。
+
+---
+
 ## 2026-11-12 · 内置背景音乐集成 / 第一关布局居中 / 双关卡最近三局差异化
 
 ### 新增

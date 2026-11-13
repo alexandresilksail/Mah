@@ -1,13 +1,15 @@
 /**
  * 存档字段构造 / 读取（纯 JS，零 DOM）。
  *
- * v:3 —— 新增 level1RecentGames / level2RecentGames（每关最近五局元数据）；
+ * v:3 —— 新增 level1RecentGames / level2RecentGames（每关最近牌局元数据）；
  * v:4 —— 新增 music / musicVol（背景音乐开关与音量）与 musicMap（场景 → 文件名数组）。
  * 兼容策略：旧档缺任一字段时按缺省处理，绝不判非法；
  * 损坏的历史条目由 recent_games.sanitizeHistory 逐条丢弃，
  * 损坏的音乐映射由 music_store.sanitizeMusicMap 逐条丢弃，不加载任何非法数据。
  *
- * 历史只存元数据（12 个短字段 × 5 条 × 2 关），音乐只存文件名（≤24 首 × 6 场景），
+ * 本轮：第一关窗口仍为 3 局；第二关独立维护最近 10 局，记录额外带
+ * templateId / structureSignature / canonicalGeometrySignature（旧档缺这 3 个字段合法）。
+ * 历史只存元数据（≤15 个短字段 × 10 条 × 2 关），音乐只存文件名（≤24 首 × 6 场景），
  * 存档体积有上界（Rust 侧 64KB 上限 + musicMap 单独 4KB 上限）。
  */
 import { historyFor, sanitizeHistory } from './recent_games.js';
@@ -53,8 +55,9 @@ export function applySaveToGame(game, saved, preserveProfile = false) {
     for (var k in saved) {
       if (Object.prototype.hasOwnProperty.call(saved, k)) snap[k] = saved[k];
     }
-    snap.level1RecentGames = sanitizeHistory(saved.level1RecentGames);
-    snap.level2RecentGames = sanitizeHistory(saved.level2RecentGames);
+    // 两关窗口不同：L1 = 3（冻结）、L2 = 10，必须按关卡传参清洗
+    snap.level1RecentGames = sanitizeHistory(saved.level1RecentGames, 1);
+    snap.level2RecentGames = sanitizeHistory(saved.level2RecentGames, 2);
     snap.musicMap = sanitizeMusicMap(saved.musicMap);
     game.saveState = snap;
   }

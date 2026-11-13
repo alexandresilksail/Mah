@@ -1,10 +1,56 @@
-# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 内置背景音乐 / 双 Windows 产物）+ 2026-11-12 本轮增量
+# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 内置背景音乐 / 双 Windows 产物）+ 2026-11-13 本轮增量（第二关 50 套模板 / 最近 10 局去重）
 
 > 本文件是交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
 > **牌数口径**：旧版的「第一关固定 24 张 / 第二关 222 张、8/15 种牌型、葫芦单堆」是
 > 历史数据。当前源码第 1 关有 4 个合法档位（24 / 30 / 36 / 48 张），
 > 第 2 关有 10 个合法档位（192–321 张）；222 张从未出现在当前配置中。
 > 「游戏内自删除卸载」已彻底移除。详见 `RELEASE_NOTES.md` / `CHANGELOG.md`。
+
+---
+
+## 0.0 2026-11-13 本轮增量（第二关 50 套模板 + 最近 10 局双重去重）
+
+| 类别 | 文件 | 说明 |
+|---|---|---|
+| 50 套模板 | `src/game/l2_templates.js` | 10 类 × 5 套，唯一 `templateId`、独立结构参数与结构签名；完整 ID 清单见 `reports/l2-templates-report.md` |
+| 真实落牌 | `src/game/l2_geometry.js` | 按结构参数生成布局、开局可点 19–25 张、主堆零悬空、44 张盲盒队列不变 |
+| 几何签名 | `src/game/l2_structure.js` | 坐标 / 层级 / 区域 / 轮廓 / 遮挡 / 可操作区 + 平移与镜像归一化的等价几何签名 |
+| 去重判定 | `src/game/l2_recent.js` | 模板级 + 几何级双重去重纯函数 |
+| 生成入口 | `src/game/new_game.js` / `generator.js` | 第二关独立分支；第一关代码路径逐字未改，L2 默认路径逐字节不变 |
+| 历史持久化 | `src/game/recent_games.js` / `save_data.js` / `src-tauri/src/main.rs` | L1 窗口 3（冻结）/ L2 窗口 10；15 字段白名单（12 必填 + 3 可选），旧档兼容 |
+| 调试面板 | `src/main.js` | 第二关显示模板 ID、结构签名、等价几何、去重算法与四项 PASS-FAIL |
+| 产物 | `dist/MahLeMah.html`、`index.html`、`Mah了个Mah.html`、`MahLeMah-legacy.html` | 全部由当前 `src/` 重建，各内嵌 50 个 `templateId` 与 5 首内置音乐 |
+| 新测试 | `test-l2-templates.js` / `test-l1-frozen.js` | 50 模板 539/0、第一关冻结 64/0 |
+| 报告 | `reports/l2-templates-report.*`、`l1-frozen-report.*`、`random-generation-report.*`、`build-consistency-report.*` | 全部由真实运行生成 |
+
+**真实运行结果（本轮最终复跑）**
+
+| 命令 | 结果 |
+|---|---|
+| `node test.js` | **625 通过 / 0 失败 / EXIT=0** |
+| `node test-random-generation.js` | **7788 / 0**（第一关 100 局 + 第二关 100 局） |
+| `node test-l2-templates.js` | **539 / 0**（150 局生成、1225 对差异、等价几何、12 局重开入口） |
+| `node test-l1-frozen.js` | **64 / 0**（20 条 L1 基线 + 9 条 L2 默认路径基线零漂移） |
+| `node test-layout-position.js` | **35 / 0** |
+| `node test-music-playback.js` | **69 / 0** |
+| `node test-build-consistency.js` | **110 / 0**（4 个 HTML 模板 ID 集合一致） |
+| `node tools/test_render.mjs` | 27/27 场景通过 |
+| `node tools/browser_smoke.mjs` | `allPassed=true`（两个 HTML 各 4 局 L1 + 4 局 L2，历史跨页继承） |
+| `node tools/music_real_playback.mjs` | 54/54（网页版 / 独立 HTML / ES5 legacy 真机播放） |
+
+第二关 100 局最近 10 局零重复；50 套模板 1225 对结构 sim 最大 0.4354、
+主堆布局 sim 最大 0.4426，全部 < 0.60；第一关 20 条修改前基线逐项零漂移。
+
+**未运行 / 未重建（如实标注）**
+
+- `cargo check` / `cargo build` 尝试后失败：本机缺 MSVC `link.exe`
+  （Git Bash 下还被 GNU `link` 遮蔽），Rust 依赖 build script 无法链接。
+- 桌面版 exe / Windows 安装版 / Portable zip / Setup.exe / SHA256SUMS.txt
+  **未用本轮源码重建**，仍是旧冻结产物；桌面版真机音乐播放未运行。
+- 本轮未重跑 `npm run test:release`（12000 局发布压力测试）。
+
+> 修改文件清单、Git commit ID 与最终验收结论见 `reports/FINAL_ACCEPTANCE.md`
+> 与 `reports/MODIFIED_FILES.md`。
 
 ---
 

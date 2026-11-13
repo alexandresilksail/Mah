@@ -144,6 +144,29 @@ const CHECK = `
         cardsOnBoard: r.game.cards.length
       });
     }
+    // 本轮规格：第二关 50 套模板 + 最近 10 局双重去重必须在真实浏览器里同样生效
+    out.rounds2 = [];
+    for (var j = 0; j < 4; j++) {
+      var r2 = m.newGame(2, ['application_restart','title_screen_restart','failure_restart','new_game'][j]);
+      if (!r2) { out.errors.push('L2 newGame 返回 null（生成失败）'); continue; }
+      var m2 = r2.game.meta;
+      var hist2 = m.getSaveState().level2RecentGames || [];
+      out.rounds2.push({
+        gameId: m2.gameId,
+        level: m2.level,
+        templateId: m2.templateId,
+        structureSignature: m2.structureSignature,
+        canonicalGeometrySignature: m2.canonicalGeometrySignature,
+        geometrySignature: m2.geometrySignature,
+        layoutSignature: m2.layoutSignature,
+        totalTiles: m2.totalTiles,
+        checks: m2.checks,
+        similarityMax: m2.similarityMax,
+        historyLimit: m2.historyLimit,
+        historyCount: hist2.length,
+        cardsOnBoard: r2.game.cards.length
+      });
+    }
     var panel = document.getElementById('mah-dev-panel');
     out.devPanelPresent = !!panel;
     out.devPanelText = panel ? (panel.innerText || panel.textContent || '').slice(0, 400) : '';
@@ -238,11 +261,32 @@ for (const p of result.pages) {
     const diffFromPrev = !prev || prev.difficultyId !== r.difficultyId;
     return noSameGeom && noSameSig && noSameTiles && diffFromPrev;
   });
+  // 第二关：4 局真实开局，模板 / 等价几何 / 结构签名零重复，双重去重全 PASS
+  const l2 = v.rounds2 || [];
+  const okL2 = l2.length === 4 && l2.every((r) =>
+    r.level === 2 && /^L2-[A-Z]\d{2}$/.test(r.templateId || '') &&
+    /^[0-9a-f]{64}$/.test(r.structureSignature || '') &&
+    /^[0-9a-f]{64}$/.test(r.canonicalGeometrySignature || '') &&
+    r.cardsOnBoard === r.totalTiles && r.historyLimit === 10 &&
+    r.checks.templateCheck === 'PASS' && r.checks.canonicalCheck === 'PASS' &&
+    r.checks.structureCheck === 'PASS' && r.checks.geometryCheck === 'PASS' &&
+    r.checks.historyCheck === 'PASS' && r.similarityMax < 0.60) &&
+    new Set(l2.map((r) => r.templateId)).size === 4 &&
+    new Set(l2.map((r) => r.canonicalGeometrySignature)).size === 4 &&
+    // 两个页面共用同一持久化存储：第二个 HTML 会继承第一个的历史，
+    // 因此历史条数按「本页起始值」递增，且始终不超过 10 局窗口。
+    l2.every((r, i) => r.historyCount === Math.min(10, l2[0].historyCount + i) &&
+      r.historyCount <= 10);
   const okBuild = !!v.build && !!v.build.sourceHash && !!v.build.gitCommit;
   const okPanel = !!v.devPanelPresent;
   const okExc = (p.exceptions || []).length === 0 && !v.error;
-  p.checks = { rounds: okRounds, differentiation: okDiff, buildInfo: okBuild, devPanel: okPanel, noExceptions: okExc };
-  if (okRounds && okDiff && okBuild && okPanel && okExc) passed++;
+  p.checks = { rounds: okRounds, differentiation: okDiff, l2Templates: okL2,
+    buildInfo: okBuild, devPanel: okPanel, noExceptions: okExc };
+  for (const r of l2) {
+    console.log(`    L2 ${r.gameId} · ${r.templateId} · ${r.totalTiles} 张 · 历史 ${r.historyCount}` +
+      ` · 检查 ${JSON.stringify(r.checks)}`);
+  }
+  if (okRounds && okDiff && okL2 && okBuild && okPanel && okExc) passed++;
 }
 result.summary = { pages: result.pages.length, passed, allPassed: result.executed && passed === 2 && result.errors.length === 0 };
 result.exitCode = result.summary.allPassed ? 0 : 1;

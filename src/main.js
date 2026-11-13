@@ -235,6 +235,14 @@ function updateDevPanel(meta) {
     ['attempts', meta.attempts], ['retries', meta.retries],
   ];
   for (const f of fields) appendLine(devPanel, f[0] + ' = ' + f[1]);
+  // 第二关附加的真实几何 / 模板字段（第一关输出逐字不变）
+  if (meta.level === 2) {
+    appendLine(devPanel, 'templateId = ' + meta.templateId);
+    appendLine(devPanel, 'structureSignature = ' + meta.structureSignature);
+    appendLine(devPanel, 'canonicalGeometrySignature = ' + meta.canonicalGeometrySignature);
+    appendLine(devPanel, 'dedupAlgorithm = ' + meta.dedupAlgorithm);
+    appendLine(devPanel, 'availableTemplateCount = ' + meta.availableTemplateCount + ' / 50');
+  }
   appendLine(devPanel, '--- 最近 ' + meta.historyLimit + ' 局检查 ---');
   const c = meta.checks;
   appendLine(devPanel, '最近三局牌数检查   : ' + (c.tileCountCheck || 'N/A'));
@@ -243,6 +251,15 @@ function updateDevPanel(meta) {
     '（最大 sim ' + c.similarityMax + ' / 阈值 ' + meta.similarityThreshold + '）');
   appendLine(devPanel, '难度档位检查       : ' + c.difficultyCheck);
   appendLine(devPanel, '历史记录保存       : ' + c.historyCheck);
+  if (meta.level === 2) {
+    appendLine(devPanel, '--- 第二关最近 10 局双重去重 ---');
+    appendLine(devPanel, '模板级去重检查     : ' + c.templateCheck);
+    appendLine(devPanel, '等价几何检查       : ' + c.canonicalCheck);
+    appendLine(devPanel, '结构签名检查       : ' + c.structureCheck);
+    appendLine(devPanel, '几何相似度检查     : ' + c.similarityCheck +
+      '（最大结构 sim ' + meta.similarityMax + ' / 布局 sim ' + meta.layoutSimilarityMax +
+      ' / 阈值 ' + meta.similarityThreshold + '）');
+  }
   appendLine(devPanel, '--- 背景音乐播放状态 ---');
   const ms = musicPlayer.status();
   appendLine(devPanel, '状态=' + (ms.playing ? 'PLAYING' : 'STOPPED') +
@@ -258,6 +275,11 @@ function updateDevPanel(meta) {
     appendLine(devPanel, '  [' + (i + 1) + '] ' + r.totalTiles + ' 张 · sim=' + r.similarity +
       ' / 相似=' + r.simCheck + ' / 几何=' + r.geometryCheck +
       ' · ' + String(r.layoutSignature).slice(0, 12) + ' · ' + r.gameId);
+    if (meta.level === 2) {
+      appendLine(devPanel, '        模板=' + (r.templateId || '（旧档）') +
+        ' / 模板级=' + r.templateCheck + ' / 布局 sim=' + r.layoutSimilarity +
+        ' · ' + String(r.canonicalGeometrySignature || '').slice(0, 12));
+    }
   }
   appendLine(devPanel, '--- 当前持久化历史 ---');
   appendLine(devPanel, 'L1 = ' + historyFor(game.saveState, 1).length +
@@ -267,7 +289,8 @@ function updateDevPanel(meta) {
 /**
  * 全项目唯一的新牌局包装：所有 UI 入口（应用重启后开始 / 标题页重开 /
  * 失败重开 / 进入下一关 / 毕业再玩 / 键盘 r / ?lv=）都只走这里。
- * createNewGame 内部完成档位重选、seed、签名、最近三局差异化与完整校验；
+ * createNewGame 内部完成档位重选、seed、签名、
+ * 第一关最近 3 局差异化 / 第二关最近 10 局模板级 + 几何级双重去重与完整校验；
  * 50 次仍不合格时抛明确错误，绝不退化成「复用上一局」。
  */
 let saveState = {};

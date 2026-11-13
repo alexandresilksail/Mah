@@ -294,7 +294,8 @@ const QUEUE_SHAPE = [
   { name: 'queueRightH', dir: 'h', x: 99, y: 748, dy: [0, 1], n: 15 },
 ];
 
-function buildQueue(rng, baseLayer, scale) {
+/** 导出给 l2_geometry.js 复用：44 张盲盒队列的几何规则必须与第一关/旧第二关完全一致 */
+export function buildQueue(rng, baseLayer, scale) {
   const out = [];
   let layer = baseLayer;
   let total = 0;

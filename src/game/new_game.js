@@ -5,12 +5,15 @@
  * 进入下一关 / 开始新一轮 / 键盘 r / ?lv= 调试）都必须调用这里。
  * 禁止任何入口再自行拼 generateLevel + 档位 + seed。
  *
- * 流程（本轮「双关卡最近三局」口径）：识别关卡 → 读本关最近 3 局 →
- * 选合法档位（≠ 上一局，且牌数不与最近 3 局冲突）→ 新 seed → 生成真实牌局 →
- * 计算基于坐标/层级/牌面位置/遮挡关系的布局签名 → 与最近 3 局同时比较
- * **总牌数 / 布局签名 / 几何相似度（layoutSimilarity）** → 任一不合格换 seed →
- * 完整校验 → 唯一 gameId → 保存历史 → 返回游戏实例。
- * 不把「seed 不同」当成布局不同；所有判定都基于真实生成结果。
+ * 流程：识别关卡 → 分流。
+ *   · 第一关（完全冻结）：读本关最近 3 局 → 选合法档位（≠ 上一局，且牌数不与
+ *     最近 3 局冲突）→ 新 seed → 生成真实牌局 → 计算基于坐标/层级/牌面位置/
+ *     遮挡关系的布局签名 → 与最近 3 局同时比较 **总牌数 / 布局签名 /
+ *     几何相似度（layoutSimilarity）** → 任一不合格换 seed → 完整校验 →
+ *     唯一 gameId → 保存历史 → 返回游戏实例。
+ *   · 第二关（本轮）：50 套结构模板 + 本关最近 10 局历史 → 模板级排除 +
+ *     几何级（结构签名 / 平移镜像归一化签名 / 真实牌面相似度）双重去重。
+ * 不把「seed 不同」或「牌面顺序不同」当成布局不同；所有判定都基于真实生成结果。
  *
  * 几何现在由 seed 程序化生成（第 1 节），所以「同一档位换 seed 几何不变」的
  * 旧假设被彻底删除：不再有按 (level,difficultyId) 缓存几何签名的预筛逻辑，
@@ -23,15 +26,22 @@ import { profilesFor, profileFor, rollProfile, LEVEL_COUNT } from './config.js';
 import { generateLevel, validateLevel, verify } from './generator.js';
 import { pickPoolSeed } from './seed_pool.js';
 import { calculateLayoutSignature, layoutSimilarity, SIMILARITY_THRESHOLD } from './layout_signature.js';
+import { structureFields, structureSimilarity, mainStackCards } from './l2_structure.js';
+import { L2_TEMPLATE_IDS } from './l2_templates.js';
+import {
+  availableTemplateIds, usedTemplateIds, checkL2DualDedup,
+  L2_SIMILARITY_THRESHOLD, L2_DEDUP_ALGORITHM,
+} from './l2_recent.js';
 import {
   GENERATION_REASONS, previousFrom, appendHistory, makeGameId,
-  checkAgainstRecent, historyFor, HISTORY_LIMIT,
+  checkAgainstRecent, historyFor, HISTORY_LIMIT, L2_HISTORY_LIMIT,
+  historyLimitFor,
 } from './recent_games.js';
 import { sameLayerOverlapCount, isHalfLattice } from './layout.js';
 import { readBuildInfo } from './build_info.js';
 
 export const MAX_ATTEMPTS = 50;
-export { HISTORY_LIMIT };
+export { HISTORY_LIMIT, L2_HISTORY_LIMIT, historyLimitFor };
 
 function indexOf(arr, v) {
   for (var i = 0; i < arr.length; i++) if (arr[i] === v) return i;
@@ -126,6 +136,367 @@ function layoutOfRecord(record) {
 export function clearLayoutCache() {
   layoutCache = {};
   layoutCacheSize = 0;
+  l2LayoutCache = {};
+  l2LayoutCacheSize = 0;
+}
+
+/* ================================================================== */
+/* 第二关：50 套模板 + 最近 10 局双重去重                              */
+/* 第一关完全不走这里（createNewGameInner 在 level===2 时提前分流）。   */
+/* ================================================================== */
+
+/**
+ * 第二关历史重放：按记录里的 (level, difficultyId, seed, templateId) 精确重建
+ * 那一局的**真实牌面**，用于几何级相似度比较。旧档记录没有 templateId 时，
+ * 按既有默认路径重放，保证旧存档仍然能被正确对比。
+ * 缓存按 gameId 之外的确定性键保存，跨 100 局连续生成时每局只重放一次。
+ */
+var l2LayoutCache = {};
+var l2LayoutCacheSize = 0;
+var L2_LAYOUT_CACHE_MAX = 320;
+
+function layoutOfRecordL2(record) {
+  var key = '2|' + record.difficultyId + '|' + record.seed + '|' + (record.templateId || '-');
+  if (Object.prototype.hasOwnProperty.call(l2LayoutCache, key)) return l2LayoutCache[key];
+  var result = null;
+  try {
+    var opt = { profile: record.difficultyId };
+    if (record.templateId) opt.templateId = record.templateId;
+    var d = generateLevel(2, record.seed, opt);
+    if (d && d.cards && d.cards.length === record.totalTiles) {
+      result = { cards: d.cards, main: mainStackCards(d.cards) };
+    }
+  } catch (e) {
+    result = null;
+  }
+  if (l2LayoutCacheSize > L2_LAYOUT_CACHE_MAX) { l2LayoutCache = {}; l2LayoutCacheSize = 0; }
+  l2LayoutCache[key] = result;
+  l2LayoutCacheSize++;
+  return result;
+}
+
+/**
+ * 第二关新牌局（唯一入口 createNewGame 的内部实现）。
+ *
+ * 每次尝试：从「最近 10 局用过的模板」之外的候选池里取一套模板 →
+ * 选档位 → 从该档位 seed 池抽 seed → 生成**真实牌局** →
+ * 计算基于坐标/层级/区域/轮廓/遮挡/可操作区的结构签名 →
+ * 与最近 10 局重放出的真实牌面做双重去重判定 →
+ * 完整校验 → 写入本关最近 10 局历史 → 返回。
+ *
+ * 重试上限 50 次；仍不合格抛 GenerationFailureError，绝不退回重复布局、
+ * 绝不清空历史、绝不靠「换个 seed / 微调坐标」宣称布局不同。
+ */
+function createLevel2Game(o) {
+  var level = 2;
+  var reason = o.generationReason || 'new_game';
+  if (indexOf(GENERATION_REASONS, reason) < 0) {
+    throw new GenerationFailureError('非法 generationReason: ' + reason, { reason: 'BAD_REASON' });
+  }
+  var game = o.game;
+  if (!game) {
+    throw new GenerationFailureError('createNewGame 需要注入 game 实例', { reason: 'NO_GAME_INSTANCE' });
+  }
+  var rand = typeof o.rand === 'function' ? o.rand : Math.random;
+  var save = o.save && typeof o.save === 'object' ? o.save : {};
+  var maxAttempts = o.maxAttempts === undefined ? MAX_ATTEMPTS : o.maxAttempts;
+  if (!(maxAttempts >= 1)) maxAttempts = 1;
+  if (maxAttempts > MAX_ATTEMPTS) maxAttempts = MAX_ATTEMPTS;
+
+  var prev = previousFrom(save, level);
+  var recent = prev.recent; // 本关最近 10 局，绝不读 L1 历史
+  var bannedTemplates = usedTemplateIds(recent);
+  // 仅测试隔离用：额外追加禁用模板（只能增加约束，绝不能放宽）
+  if (isArray(o.bannedTemplateIds)) {
+    for (var bi = 0; bi < o.bannedTemplateIds.length; bi++) {
+      if (indexOf(bannedTemplates, o.bannedTemplateIds[bi]) < 0) {
+        bannedTemplates.push(o.bannedTemplateIds[bi]);
+      }
+    }
+  }
+  var pool = [];
+  for (var pi = 0; pi < L2_TEMPLATE_IDS.length; pi++) {
+    if (indexOf(bannedTemplates, L2_TEMPLATE_IDS[pi]) < 0) pool.push(L2_TEMPLATE_IDS[pi]);
+  }
+  if (!pool.length) {
+    throw new GenerationFailureError(
+      '第二关 50 套模板已被最近 ' + recent.length + ' 局全部占用，无法生成不重复布局（未清空历史、未退回重复布局）',
+      { reason: 'TEMPLATE_POOL_EXHAUSTED', level: 2, recent: recent, bannedTemplateIds: bannedTemplates }
+    );
+  }
+  // Fisher–Yates 打乱候选顺序（只影响搜索顺序，不影响任何判定）
+  for (var si = pool.length - 1; si > 0; si--) {
+    var sj = rand();
+    if (!(sj >= 0) || sj >= 1) sj = 0;
+    var swap = Math.floor(sj * (si + 1));
+    var tmp = pool[si]; pool[si] = pool[swap]; pool[swap] = tmp;
+  }
+
+  var current = o.currentDifficulty;
+  if (current === undefined || current === null) {
+    current = recent.length && typeof recent[recent.length - 1].difficultyId === 'number'
+      ? recent[recent.length - 1].difficultyId : game.profile.l2;
+  }
+  var diffRing = [];
+  {
+    var dpool = profilesFor(2);
+    for (var dp = 0; dp < dpool.length; dp++) if (dpool[dp].id !== current) diffRing.push(dpool[dp].id);
+    if (!diffRing.length) diffRing.push(dpool[0].id);
+  }
+
+  var build = readBuildInfo();
+  var t0 = Date.now();
+  var attempts = 0;
+  var failures = [];
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    var templateId = pool[(attempts - 1) % pool.length];
+    var difficultyId = attempts <= 8
+      ? rollProfile(2, rand, current)
+      : diffRing[(attempts - 9) % diffRing.length];
+    if (difficultyId === current) difficultyId = diffRing[0];
+    var profile = profileFor(2, difficultyId);
+    var difficultyValid = profile.id === difficultyId && difficultyId !== current;
+    var seed = pickPoolSeed(2, difficultyId, rand) >>> 0;
+
+    var data;
+    try {
+      data = generateLevel(2, seed, { profile: difficultyId, templateId: templateId });
+    } catch (e) {
+      failures.push({ attempt: attempts, templateId: templateId, difficultyId: difficultyId,
+        seed: seed, reason: 'GENERATE_THREW', detail: String(e && e.message) });
+      continue;
+    }
+    if (!data || data.templateId !== templateId) {
+      failures.push({ attempt: attempts, reason: 'TEMPLATE_MISMATCH', templateId: templateId });
+      continue;
+    }
+    var sig = calculateLayoutSignature(data);
+    var st = structureFields(data);
+    var totalTiles = data.cards.length;
+
+    /* 几何级：与最近 10 局重放出的真实牌面逐个比较 */
+    var recentChecks = [];
+    var maxStructSim = 0;
+    var maxLayoutSim = 0;
+    var mainCards = mainStackCards(data.cards);
+    for (var ri = 0; ri < recent.length; ri++) {
+      var rec = recent[ri];
+      var replay = layoutOfRecordL2(rec);
+      var sSim = 0, lSim = 0;
+      if (replay) {
+        sSim = structureSimilarity(data.cards, replay.cards);
+        lSim = layoutSimilarity(mainCards, replay.main);
+      }
+      if (sSim > maxStructSim) maxStructSim = sSim;
+      if (lSim > maxLayoutSim) maxLayoutSim = lSim;
+      recentChecks.push({
+        gameId: rec.gameId,
+        difficultyId: rec.difficultyId,
+        templateId: rec.templateId || '',
+        totalTiles: rec.totalTiles,
+        layoutSignature: rec.layoutSignature,
+        geometrySignature: rec.geometrySignature,
+        structureSignature: rec.structureSignature || '',
+        canonicalGeometrySignature: rec.canonicalGeometrySignature || '',
+        structureSimilarity: Math.round(sSim * 1000) / 1000,
+        layoutSimilarity: Math.round(lSim * 1000) / 1000,
+        replayOk: !!replay,
+      });
+    }
+
+    var dedup = checkL2DualDedup(recent, {
+      templateId: templateId,
+      structureSignature: st.structureSignature,
+      canonicalGeometrySignature: st.canonicalGeometrySignature,
+      geometrySignature: sig.geometrySignature,
+      seed: seed,
+      gameId: '',
+      structureSimilarityMax: maxStructSim,
+      layoutSimilarityMax: maxLayoutSim,
+    });
+    // 测试显式注入的排除集合同样真实生效
+    var externalSigs = strings(o.previousSignatures);
+    var externalSeeds = strings(o.previousSeeds);
+    if (externalSigs && indexOf(externalSigs, sig.layoutSignature) >= 0) {
+      dedup.checks.geometrySignatureDifferent = false;
+      dedup.failedChecks.push('EXTERNAL_LAYOUT_SIGNATURE');
+      dedup.pass = false;
+    }
+    if (externalSeeds && indexOf(externalSeeds, seed) >= 0) {
+      dedup.checks.seedFresh = false;
+      dedup.failedChecks.push('EXTERNAL_SEED');
+      dedup.pass = false;
+    }
+
+    if (!dedup.pass || !difficultyValid) {
+      failures.push({
+        attempt: attempts, templateId: templateId, difficultyId: difficultyId,
+        seed: seed, totalTiles: totalTiles,
+        structureSignature: st.structureSignature,
+        canonicalGeometrySignature: st.canonicalGeometrySignature,
+        structureSimilarityMax: dedup.checks.structureSimilarityMax,
+        layoutSimilarityMax: dedup.checks.layoutSimilarityMax,
+        reason: 'RECENT_CONFLICT',
+        failedChecks: dedup.failedChecks.concat(difficultyValid ? [] : ['DIFFICULTY']),
+        equivalents: dedup.equivalents,
+      });
+      continue;
+    }
+
+    /* 完整校验：牌型 / 三消 / 遮挡 / 几何 / 可操作性 / 开局可点区间 / 悬空 */
+    var validation = validateLevel(data);
+    var verifyOk = data.requireSolution === false ? true : !!verify(data);
+    var geometryOk = sameLayerOverlapCount(data.cards) === 0 && !!isHalfLattice(data.cards);
+    var floatingOk = (data.floatingCount || 0) === 0;
+    var playableOk = data.visible >= 19 && data.visible <= 25 && sig.playableCount > 0;
+    if (!validation.ok || !verifyOk || !geometryOk || !floatingOk || !playableOk) {
+      failures.push({
+        attempt: attempts, templateId: templateId, difficultyId: difficultyId,
+        seed: seed, totalTiles: totalTiles, reason: 'VALIDATION_FAILED',
+        issues: validation.issues.slice(),
+        verifyOk: verifyOk, geometryOk: geometryOk, floatingOk: floatingOk,
+        playableOk: playableOk, visible: data.visible,
+      });
+      continue;
+    }
+
+    var gameId = makeGameId(level, reason, rand);
+    if (indexOf(prev.previousGameIds, gameId) >= 0) {
+      failures.push({ attempt: attempts, reason: 'GAME_ID_COLLISION', gameId: gameId });
+      continue;
+    }
+    var generatedAt = isoNow();
+    var record = {
+      gameId: gameId,
+      level: level,
+      difficultyId: difficultyId,
+      seed: seed,
+      totalTiles: totalTiles,
+      tileTypeCount: sig.tileTypeCount,
+      layoutSignature: sig.layoutSignature,
+      geometrySignature: sig.geometrySignature,
+      distributionSignature: sig.distributionSignature,
+      generatedAt: generatedAt,
+      generationReason: reason,
+      validationResult: 'PASS',
+      templateId: templateId,
+      structureSignature: st.structureSignature,
+      canonicalGeometrySignature: st.canonicalGeometrySignature,
+    };
+    var nextSave = appendHistory(save, level, record);
+    var savedList = historyFor(nextSave, level);
+    var historySaved = savedList.length > 0 && savedList[savedList.length - 1].gameId === gameId &&
+      savedList[savedList.length - 1].templateId === templateId;
+    if (!historySaved) {
+      failures.push({ attempt: attempts, reason: 'HISTORY_WRITE_FAILED', gameId: gameId });
+      continue;
+    }
+
+    var previousRecentChecks = [];
+    for (var pi2 = 0; pi2 < recentChecks.length; pi2++) {
+      var rc = recentChecks[pi2];
+      previousRecentChecks.push({
+        gameId: rc.gameId,
+        difficultyId: rc.difficultyId,
+        templateId: rc.templateId,
+        totalTiles: rc.totalTiles,
+        layoutSignature: rc.layoutSignature,
+        structureSignature: rc.structureSignature,
+        canonicalGeometrySignature: rc.canonicalGeometrySignature,
+        similarity: rc.structureSimilarity,
+        layoutSimilarity: rc.layoutSimilarity,
+        simCheck: rc.replayOk && (rc.structureSimilarity >= L2_SIMILARITY_THRESHOLD ||
+          rc.layoutSimilarity >= L2_SIMILARITY_THRESHOLD) ? 'FAIL' : 'PASS',
+        geometryCheck: 'PASS',
+        templateCheck: rc.templateId === templateId ? 'FAIL' : 'PASS',
+      });
+    }
+
+    var meta = {
+      gameId: gameId,
+      buildVersion: build.buildVersion,
+      gitCommit: build.gitCommit,
+      sourceHash: build.sourceHash,
+      buildTimestamp: build.buildTimestamp,
+      level: level,
+      difficultyId: difficultyId,
+      seed: seed,
+      totalTiles: totalTiles,
+      tileTypeCount: sig.tileTypeCount,
+      layerCount: sig.layerCount,
+      layoutSignature: sig.layoutSignature,
+      geometrySignature: sig.geometrySignature,
+      distributionSignature: sig.distributionSignature,
+      templateId: templateId,
+      structureSignature: st.structureSignature,
+      canonicalGeometrySignature: st.canonicalGeometrySignature,
+      dedupAlgorithm: L2_DEDUP_ALGORITHM,
+      generatedAt: generatedAt,
+      generationReason: reason,
+      historyLimit: historyLimitFor(level),
+      similarityThreshold: L2_SIMILARITY_THRESHOLD,
+      similarityMax: dedup.checks.structureSimilarityMax,
+      layoutSimilarityMax: dedup.checks.layoutSimilarityMax,
+      availableTemplateCount: dedup.checks.availableTemplateCount,
+      usedTemplateIds: dedup.checks.usedTemplateIds,
+      previousRecentChecks: previousRecentChecks,
+      previousThreeChecks: previousRecentChecks,
+      checks: {
+        similarityMax: dedup.checks.structureSimilarityMax,
+        templateCheck: dedup.checks.templateDifferent ? 'PASS' : 'FAIL',
+        canonicalCheck: dedup.checks.canonicalDifferent ? 'PASS' : 'FAIL',
+        structureCheck: dedup.checks.structureDifferent ? 'PASS' : 'FAIL',
+        tileCountCheck: 'N/A（本轮 L2 按模板级 + 几何级去重，牌数按档位配置）',
+        layoutCheck: dedup.checks.geometrySignatureDifferent ? 'PASS' : 'FAIL',
+        geometryCheck: (dedup.checks.canonicalDifferent && dedup.checks.structureDifferent &&
+          dedup.checks.similarityDifferent) ? 'PASS' : 'FAIL',
+        similarityCheck: dedup.checks.similarityDifferent ? 'PASS' : 'FAIL',
+        difficultyCheck: difficultyValid ? 'PASS' : 'FAIL',
+        historyCheck: historySaved ? 'PASS' : 'FAIL',
+      },
+      attempts: attempts,
+      retries: attempts - 1,
+      validation: { ok: validation.ok, kinds: validation.kinds, total: validation.total, visible: validation.visible },
+    };
+
+    if (typeof game.installLevelData === 'function') {
+      game.profile.l2 = difficultyId;
+      game.installLevelData(data, meta);
+    } else {
+      throw new GenerationFailureError('game 实例缺少 installLevelData', { reason: 'BAD_GAME_INSTANCE' });
+    }
+
+    return {
+      game: game,
+      data: data,
+      signature: sig,
+      record: record,
+      nextSave: nextSave,
+      meta: meta,
+      checks: dedup.checks,
+      attempts: attempts,
+      retries: attempts - 1,
+      failures: failures,
+      elapsedMs: Date.now() - t0,
+    };
+  }
+
+  throw new GenerationFailureError(
+    '第 2 关连续 ' + attempts + ' 次未能生成满足「最近 ' + historyLimitFor(level) +
+      ' 局模板级 + 几何级双重去重」的合法牌局（未清空历史、未接受重复布局）',
+    {
+      reason: 'MAX_ATTEMPTS_EXCEEDED',
+      level: level,
+      generationReason: reason,
+      attempts: attempts,
+      availableTemplateIds: pool,
+      bannedTemplateIds: bannedTemplates,
+      recent: recent,
+      failures: failures,
+    }
+  );
 }
 
 var locked = false;
@@ -157,6 +528,13 @@ export function createNewGame(opts) {
 
 function createNewGameInner(opts) {
   var o = opts || {};
+  /**
+   * 第二关走独立的「50 套模板 + 最近 10 局双重去重」路径。
+   * 第一关完全冻结：下面原有的 createNewGameInner 主体逐字保留，
+   * 只在 level===2 时提前分流，因此第一关的档位、seed、牌数、签名、
+   * 相似度、历史窗口与校验逻辑不会受本轮任何改动影响。
+   */
+  if (o.level === 2) return createLevel2Game(o);
   var level = o.level === 2 ? 2 : 1;
   if (level > LEVEL_COUNT) level = LEVEL_COUNT;
   var reason = o.generationReason || 'new_game';

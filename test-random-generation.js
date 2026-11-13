@@ -1,15 +1,15 @@
 /**
- * 双关卡各 100 局随机生成压力测试（最近三局差异化口径）。
+ * 第一关 100 局冻结回归 + 第二关 100 局新规格压力测试（真实运行）。
  *
  *   node test-random-generation.js
  *
  *  · 第一关 100 局 + 第二关 100 局，各自使用**独立**的 Game 实例与存档历史；
  *  · 每局真实调用统一入口 createNewGame()，真实生成牌局、真实计算签名、
  *    真实跑 validateLevel / 几何 / 三消 / 遮挡 / 注册表校验；
- *  · 每局都检查：
- *      - 档位 ≠ 上一局档位（第 2.3 节，沿用）；
- *      - 与本关最近 5 局的 layoutSimilarity **全部 < 0.60**（第 2.3 / 2.4 节）；
- *      - geometrySignature 不与最近 5 局中任何一局完全相同；
+ *  · 第一关（完全冻结，判定逐字不动）：档位 ≠ 上一局、最近 3 局 layoutSimilarity
+ *    全部 < 0.60、牌数与布局签名不与最近 3 局重复、几何签名不重复；
+ *  · 第二关（本轮规格）：50 套模板择一、最近 10 局模板级 + 几何级双重去重、
+ *    主堆 structureSimilarity < 0.60、牌数 / 牌面 / seed 不作差异依据；
  *  · 输出 sim 的均值 / P95 / 最大值（L1、L2 分别统计）与失败重试次数；
  *  · 同档位、不同 seed 的几何必须不同（30 个 seed 至少 25 种不同几何）；
  *  · 中途把存档序列化到磁盘再读回，模拟应用重启，验证历史不丢；
@@ -31,8 +31,11 @@ import {
 } from './src/game/layout_signature.js';
 import { sha256Hex } from './src/game/sha256.js';
 import {
-  GENERATION_REASONS, historyFor, sanitizeHistory, sanitizeRecord, HISTORY_LIMIT,
+  GENERATION_REASONS, historyFor, sanitizeHistory, sanitizeRecord,
+  HISTORY_LIMIT, L2_HISTORY_LIMIT, historyLimitFor,
 } from './src/game/recent_games.js';
+import { structureSimilarity, mainStackCards } from './src/game/l2_structure.js';
+import { L2_TEMPLATE_IDS } from './src/game/l2_templates.js';
 import { makeSaveData, applySaveToGame, SAVE_VERSION } from './src/game/save_data.js';
 import {
   LEVEL1_PROFILES, LEVEL2_PROFILES, profilesFor, profileFor,
@@ -41,7 +44,7 @@ import {
 import { generateLevel, validateLevel, verify, countVisible } from './src/game/generator.js';
 import { validateRegistry, TYPE_IDS } from './src/game/tile_types.js';
 import {
-  sameLayerOverlapCount, isHalfLattice, countComponents,
+  sameLayerOverlapCount, isHalfLattice, countComponents, hasSupport,
 } from './src/game/layout.js';
 import { SEED_POOL } from './src/game/seed_pool.js';
 
@@ -93,7 +96,11 @@ ok(sha256Hex('abc') === createHash('sha256').update('abc', 'utf8').digest('hex')
 ok(validateRegistry().ok, '16 种牌型注册表完整');
 ok(LEVEL1_PROFILES.length === 4 && LEVEL2_PROFILES.length === 10, '档位表 4 + 10 个预设');
 ok(MAX_ATTEMPTS === 50, '生成重试上限 = 50');
-ok(HISTORY_LIMIT === 3, '历史窗口 = 3 局（两关各自独立）');
+ok(HISTORY_LIMIT === 3 && L2_HISTORY_LIMIT === 10 &&
+  historyLimitFor(1) === 3 && historyLimitFor(2) === 10,
+  '历史窗口按关卡隔离：L1 = 3 局（冻结）、L2 = 10 局（本轮规格）');
+ok(L2_TEMPLATE_IDS.length === 50 && new Set(L2_TEMPLATE_IDS).size === 50,
+  '第二关布局模板 50 套且 templateId 唯一');
 ok(SIMILARITY_THRESHOLD === 0.6, '重复判定阈值 = 0.60（第 2.2 节）');
 ok(REASONS.length === 4, '4 种 generationReason 已定义');
 
@@ -194,16 +201,30 @@ function validateGenerated(level, r) {
   labels.push(ok(inBand, `L${level} 所有坐标在牌桌边界内`));
   labels.push(ok(!!isHalfLattice(cards), `L${level} 半格晶格成立`));
   labels.push(ok(sameLayerOverlapCount(cards) === 0, `L${level} 同层零重叠`));
-  // 主堆单连通（盲盒队列是独立区域，不参与连通性判定）
-  const mainCards = cards.filter((c) => c.region === 'core');
-  labels.push(ok(mainCards.length > 0 && countComponents(mainCards) === 1,
-    `L${level} 主堆单连通、是紧凑堆（${mainCards.length} 张，实测分量 ${mainCards.length ? countComponents(mainCards) : 0}）`));
-  // 每层必须是一个连通团块（第 1.2 / 1.4 节：每层由 seed 随机生长的连通团块）
-  const byLayer = {};
-  let layerSplit = 0;
-  for (const c of mainCards) (byLayer[c.layer] = byLayer[c.layer] || []).push(c);
-  for (const key of Object.keys(byLayer)) if (countComponents(byLayer[key]) > 1) layerSplit++;
-  labels.push(ok(layerSplit === 0, `L${level} 每层团块连通（分裂层数 ${layerSplit}）`));
+  // 第一关维持「主堆单连通 + 每层团块连通」的冻结判定，逐字不变；
+  // 第二关按本轮规格允许多区域分散 / 双核心 / 环形等模板，改判真实合法性：
+  // 无异常重叠、无悬空牌、无无法触达牌、主堆带真实区域标记。
+  if (level === 1) {
+    const mainCards = cards.filter((c) => c.region === 'core');
+    labels.push(ok(mainCards.length > 0 && countComponents(mainCards) === 1,
+      `L1 主堆单连通、是紧凑堆（${mainCards.length} 张，实测分量 ${mainCards.length ? countComponents(mainCards) : 0}）`));
+    // 每层必须是一个连通团块（第 1.2 / 1.4 节：每层由 seed 随机生长的连通团块）
+    const byLayer = {};
+    let layerSplit = 0;
+    for (const c of mainCards) (byLayer[c.layer] = byLayer[c.layer] || []).push(c);
+    for (const key of Object.keys(byLayer)) if (countComponents(byLayer[key]) > 1) layerSplit++;
+    labels.push(ok(layerSplit === 0, `L1 每层团块连通（分裂层数 ${layerSplit}）`));
+  } else {
+    const mainCards = mainStackCards(cards);
+    let noSupport = 0;
+    for (const c of mainCards) if (!hasSupport(c, cards)) noSupport++;
+    labels.push(ok(mainCards.length > 0 && (d.floatingCount || 0) === 0 && noSupport === 0,
+      `L2 主堆 ${mainCards.length} 张：零悬空（floatingCount=${d.floatingCount || 0} / 无支撑 ${noSupport}）`));
+    labels.push(ok(sameLayerOverlapCount(mainCards) === 0,
+      `L2 主堆同层零异常重叠（实测 ${sameLayerOverlapCount(mainCards)}）`));
+    const zones = new Set(mainCards.map((c) => String(c.region)));
+    labels.push(ok(zones.size >= 1, `L2 主堆带真实区域标记（${zones.size} 个区域）`));
+  }
   // 盲盒队列：44 张、每条链只有队首可点
   const queueCards = cards.filter((c) => c.seg === 'queue');
   labels.push(ok(queueCards.length === profileFor(level, rec.difficultyId).queueCount,
@@ -227,10 +248,12 @@ function validateGenerated(level, r) {
     again.geometrySignature === rec.geometrySignature &&
     again.distributionSignature === rec.distributionSignature,
   `L${level} 布局签名可从实际牌局数据复算`));
-  // seed 可重放：历史记录只存 seed，必须能还原出完全相同的布局签名
-  const replay = generateLevel(level, rec.seed, { profile: rec.difficultyId });
+  // 可重放：L1 只存 seed；L2 存 seed + templateId，两者必须能还原出完全相同的布局签名
+  const replayOpt = { profile: rec.difficultyId };
+  if (level === 2 && rec.templateId) replayOpt.templateId = rec.templateId;
+  const replay = generateLevel(level, rec.seed, replayOpt);
   labels.push(ok(calculateLayoutSignature(replay).layoutSignature === rec.layoutSignature,
-    `L${level} 存档里的 seed 能精确重放该局布局`));
+    `L${level} 存档里的 ${level === 2 ? 'seed + templateId' : 'seed'} 能精确重放该局布局`));
   // 档位 / seed 有效
   const ids = profilesFor(level).map((p) => p.id);
   labels.push(ok(ids.indexOf(rec.difficultyId) >= 0, `L${level} difficultyId 属于合法档位表`));
@@ -240,11 +263,17 @@ function validateGenerated(level, r) {
     labels.push(ok((SEED_POOL['L2-' + rec.difficultyId] || []).indexOf(rec.seed) >= 0,
       `L2 seed 来自当前档位的分档 seed 池`));
   }
-  // 历史写入与本关隔离
+  // 历史写入与本关隔离（窗口按关卡取值）
+  const limit = historyLimitFor(level);
   const saved = historyFor(r.nextSave, level);
-  labels.push(ok(saved.length > 0 && saved.length <= HISTORY_LIMIT &&
+  labels.push(ok(saved.length > 0 && saved.length <= limit &&
     saved[saved.length - 1].gameId === rec.gameId,
-  `L${level} 新记录已写入本关历史且不超过 ${HISTORY_LIMIT} 条（实测 ${saved.length}）`));
+  `L${level} 新记录已写入本关历史且不超过 ${limit} 条（实测 ${saved.length}）`));
+  if (level === 2) {
+    labels.push(ok(saved[saved.length - 1].templateId === rec.templateId &&
+      saved[saved.length - 1].canonicalGeometrySignature === rec.canonicalGeometrySignature,
+    `L2 历史记录持久化了 templateId 与等价几何签名`));
+  }
   const other = level === 1 ? 2 : 1;
   const otherList = historyFor(r.nextSave, other);
   labels.push(ok(otherList.length === 0, `L${level} 未写入 L${other} 的历史`));
@@ -253,12 +282,17 @@ function validateGenerated(level, r) {
     r.game.meta.totalTiles === rec.totalTiles &&
     r.game.meta.layoutSignature === rec.layoutSignature,
   `L${level} game.meta 是真实运行数据`));
-  labels.push(ok(r.meta.checks.layoutCheck === 'PASS' && r.meta.checks.geometryCheck === 'PASS' &&
-    r.meta.checks.difficultyCheck === 'PASS' && r.meta.checks.historyCheck === 'PASS',
-  `L${level} 四项检查均为 PASS`));
-  labels.push(ok(r.meta.historyLimit === HISTORY_LIMIT &&
+  const checks = r.meta.checks;
+  const baseChecksOk = checks.layoutCheck === 'PASS' && checks.geometryCheck === 'PASS' &&
+    checks.difficultyCheck === 'PASS' && checks.historyCheck === 'PASS';
+  const l2ChecksOk = level !== 2 || (checks.templateCheck === 'PASS'
+    && checks.canonicalCheck === 'PASS' && checks.structureCheck === 'PASS'
+    && checks.similarityCheck === 'PASS' && String(checks.tileCountCheck).indexOf('N/A') === 0);
+  labels.push(ok(baseChecksOk && l2ChecksOk,
+    `L${level} ${level === 2 ? '八项（含双重去重）' : '四项'}检查均为 PASS`));
+  labels.push(ok(r.meta.historyLimit === limit &&
     r.meta.similarityThreshold === SIMILARITY_THRESHOLD,
-  `L${level} meta 记录 historyLimit=${HISTORY_LIMIT} / 阈值 ${SIMILARITY_THRESHOLD}`));
+  `L${level} meta 记录 historyLimit=${limit} / 阈值 ${SIMILARITY_THRESHOLD}`));
   return labels.every(Boolean);
 }
 
@@ -298,12 +332,17 @@ for (const level of [1, 2]) {
     ok(r.record.difficultyId !== currentDifficulty,
       `L${level} #${i + 1} 难度档位已重新选择（${currentDifficulty} → ${r.record.difficultyId}）`);
 
-    /* ---- 本轮规格：与最近 3 局的 layoutSimilarity 全部 < 0.60 ---- */
+    /* ---- 差异化判定：L1 保持最近 3 局 layoutSimilarity 口径；
+             L2 按本轮规格用最近 10 局 + 主堆 structureSimilarity + 双重去重 ---- */
+    const limit = historyLimitFor(level);
+    const simOf = level === 1
+      ? (a, b) => layoutSimilarity(a, b)
+      : (a, b) => structureSimilarity(a, b);
     let maxSim = 0;
     let maxSimWith = null;
     let simFail = false;
     for (let k = 0; k < recentBoards.length; k++) {
-      const s = layoutSimilarity(r.data.cards, recentBoards[k].cards);
+      const s = simOf(r.data.cards, recentBoards[k].cards);
       R.sims.push(s);
       if (s > maxSim) { maxSim = s; maxSimWith = recentBoards[k].gameId; }
       if (s >= SIMILARITY_THRESHOLD) simFail = true;
@@ -315,20 +354,38 @@ for (const level of [1, 2]) {
     ok(r.meta.similarityMax !== undefined && Math.abs(r.meta.similarityMax - Math.round(maxSim * 1000) / 1000) < 1e-9,
       `L${level} #${i + 1} 入口记录的 similarityMax 与外部复算一致（${r.meta.similarityMax}）`);
 
-    /* ---- 本轮规格：每局与最近三局比较「总牌数 + 布局签名」 ---- */
-    const beforeTiles = before.map((x) => x.totalTiles);
     const beforeSigs = before.map((x) => x.layoutSignature);
-    ok(beforeTiles.indexOf(r.record.totalTiles) < 0,
-      `L${level} #${i + 1} 总牌数 ${r.record.totalTiles} 与最近 ${beforeTiles.length} 局 [${beforeTiles.join(',')}] 都不同`);
+    if (level === 1) {
+      /* ---- 第一关：每局与最近三局比较「总牌数 + 布局签名」，逐字保持 ---- */
+      const beforeTiles = before.map((x) => x.totalTiles);
+      ok(beforeTiles.indexOf(r.record.totalTiles) < 0,
+        `L1 #${i + 1} 总牌数 ${r.record.totalTiles} 与最近 ${beforeTiles.length} 局 [${beforeTiles.join(',')}] 都不同`);
+      ok(r.meta.checks.tileCountCheck === 'PASS' && r.meta.checks.layoutCheck === 'PASS' &&
+        r.meta.checks.geometryCheck === 'PASS',
+        `L1 #${i + 1} 入口三项检查均为 PASS（牌数 / 布局 / 几何相似度）`);
+    } else {
+      /* ---- 第二关：模板级 + 几何级双重去重，牌数/牌面/seed 不作差异依据 ---- */
+      const beforeTpl = before.map((x) => x.templateId);
+      const beforeCanon = before.map((x) => x.canonicalGeometrySignature);
+      const beforeStruct = before.map((x) => x.structureSignature);
+      ok(L2_TEMPLATE_IDS.indexOf(r.record.templateId) >= 0 && beforeTpl.indexOf(r.record.templateId) < 0,
+        `L2 #${i + 1} 模板 ${r.record.templateId} 合法且最近 ${beforeTpl.length} 局未用过`);
+      ok(beforeCanon.indexOf(r.record.canonicalGeometrySignature) < 0,
+        `L2 #${i + 1} 等价几何（平移 / 左右镜像归一化）未与最近 ${beforeCanon.length} 局重复`);
+      ok(beforeStruct.indexOf(r.record.structureSignature) < 0,
+        `L2 #${i + 1} 结构签名未与最近 ${beforeStruct.length} 局重复`);
+      ok(r.meta.checks.templateCheck === 'PASS' && r.meta.checks.canonicalCheck === 'PASS' &&
+        r.meta.checks.structureCheck === 'PASS' && r.meta.checks.similarityCheck === 'PASS',
+        `L2 #${i + 1} 入口四项双重去重检查均为 PASS`);
+      ok(String(r.meta.checks.tileCountCheck).indexOf('N/A') === 0,
+        `L2 #${i + 1} 不把牌数 / 牌面 / seed 当作布局差异依据`);
+    }
     ok(beforeSigs.indexOf(r.record.layoutSignature) < 0,
       `L${level} #${i + 1} 布局签名与最近 ${beforeSigs.length} 局都不同（不把 seed 不同当成布局不同）`);
-    ok(r.meta.checks.tileCountCheck === 'PASS' && r.meta.checks.layoutCheck === 'PASS' &&
-      r.meta.checks.geometryCheck === 'PASS',
-      `L${level} #${i + 1} 入口三项检查均为 PASS（牌数 / 布局 / 几何相似度）`);
     ok(before.map((x) => x.seed).indexOf(r.record.seed) < 0 && Number.isInteger(r.record.seed),
-      `L${level} #${i + 1} 新随机 seed 合法且未与最近三局重复`);
+      `L${level} #${i + 1} 新随机 seed 合法且未与最近 ${limit} 局重复`);
 
-    /* ---- 几何签名不与最近 3 局任何一局完全相同 ---- */
+    /* ---- 几何签名不与本关窗口内任何一局完全相同 ---- */
     ok(beforeGeom.indexOf(r.record.geometrySignature) < 0,
       `L${level} #${i + 1} 几何签名不同于本关最近 ${beforeGeom.length} 局`);
     ok(r.record.layoutSignature !== undefined && beforeIds.indexOf(r.record.gameId) < 0,
@@ -358,12 +415,15 @@ for (const level of [1, 2]) {
       visible: r.data.visible,
       similarityMax: Math.round(maxSim * 1000) / 1000,
       maxSimWith,
+      templateId: r.record.templateId || '',
+      canonicalGeometrySignature: r.record.canonicalGeometrySignature || '',
+      structureSignature: r.record.structureSignature || '',
       recentTileCounts: before.map((x) => x.totalTiles),
       checks: r.meta.checks,
       generatedAt: r.record.generatedAt,
     });
     recentBoards.push({ gameId: r.record.gameId, cards: r.data.cards });
-    while (recentBoards.length > HISTORY_LIMIT) recentBoards.shift();
+    while (recentBoards.length > limit) recentBoards.shift();
     save = r.nextSave;
     game.saveState = save;
 
@@ -374,8 +434,8 @@ for (const level of [1, 2]) {
       const restoredGame = new Game(null);
       applySaveToGame(restoredGame, reloaded);
       const hist = historyFor(restoredGame.saveState, level);
-      ok(hist.length === HISTORY_LIMIT && hist.every((x) => !!sanitizeRecord(x)),
-        `L${level} 模拟应用重启后最近 ${HISTORY_LIMIT} 局历史仍然有效（${hist.length} 条）`);
+      ok(hist.length === limit && hist.every((x) => !!sanitizeRecord(x)),
+        `L${level} 模拟应用重启后最近 ${limit} 局历史仍然有效（${hist.length} 条）`);
       ok(historyFor(restoredGame.saveState, level === 1 ? 2 : 1).length === 0,
         `L${level} 重启后另一关历史仍为空`);
       // 用重启后恢复的存档继续生成，验证差异化仍然成立
@@ -392,15 +452,22 @@ for (const level of [1, 2]) {
       if (after) {
         let afterSimMax = 0;
         for (const b of recentBoards) {
-          const s = layoutSimilarity(after.data.cards, b.cards);
+          const s = simOf(after.data.cards, b.cards);
           if (s > afterSimMax) afterSimMax = s;
         }
         ok(afterSimMax < SIMILARITY_THRESHOLD &&
           hist.map((x) => x.geometrySignature).indexOf(after.record.geometrySignature) < 0,
-        `L${level} 重启后首个新局仍与重启前最近 ${HISTORY_LIMIT} 局不同（sim 最大 ${afterSimMax.toFixed(4)}）`);
-        ok(hist.map((x) => x.totalTiles).indexOf(after.record.totalTiles) < 0 &&
-          hist.map((x) => x.layoutSignature).indexOf(after.record.layoutSignature) < 0,
-          `L${level} 重启后首个新局的牌数与布局签名仍不同于最近 ${HISTORY_LIMIT} 局`);
+        `L${level} 重启后首个新局仍与重启前最近 ${limit} 局不同（sim 最大 ${afterSimMax.toFixed(4)}）`);
+        if (level === 1) {
+          ok(hist.map((x) => x.totalTiles).indexOf(after.record.totalTiles) < 0 &&
+            hist.map((x) => x.layoutSignature).indexOf(after.record.layoutSignature) < 0,
+            `L1 重启后首个新局的牌数与布局签名仍不同于最近 ${limit} 局`);
+        } else {
+          ok(hist.map((x) => x.templateId).indexOf(after.record.templateId) < 0 &&
+            hist.map((x) => x.canonicalGeometrySignature).indexOf(after.record.canonicalGeometrySignature) < 0 &&
+            hist.map((x) => x.structureSignature).indexOf(after.record.structureSignature) < 0,
+            `L2 重启后首个新局的模板 / 等价几何 / 结构签名仍不同于最近 ${limit} 局`);
+        }
         R.restartVerified = true;
         // 把这一局也纳入 gameId 唯一性集合（它是额外生成的第 101 局）
         allGameIds.push(after.record.gameId);
@@ -423,24 +490,41 @@ ok(allGameIds.length === (PER_LEVEL * 2 + 2) && new Set(allGameIds).size === all
   `全部 gameId 唯一（${allGameIds.length} 个）`);
 for (const level of [1, 2]) {
   const R = results[level];
+  const limit = historyLimitFor(level);
   ok(R.games.length === PER_LEVEL, `L${level} 完成 ${PER_LEVEL} 局`);
   ok(R.failures === 0, `L${level} 生成失败 0 次`);
   ok(R.restartVerified, `L${level} 重启后历史有效`);
-  // 滚动窗口（最近 3 局）重复检查
+  // 滚动窗口重复检查：L1 三局（牌数 / 布局 / 几何）；
+  // L2 十局（模板 ID / 等价几何 / 结构签名 / 布局 / 几何），牌数不作差异依据。
   let sigRepeat = 0, geomRepeat = 0, tileRepeat = 0;
+  let tplRepeat = 0, canonRepeat = 0, structRepeat = 0;
   for (let i = 0; i < R.games.length; i++) {
-    const w = R.games.slice(Math.max(0, i - HISTORY_LIMIT), i);
-    if (w.some((x) => x.layoutSignature === R.games[i].layoutSignature)) sigRepeat++;
-    if (w.some((x) => x.geometrySignature === R.games[i].geometrySignature)) geomRepeat++;    if (w.some((x) => x.totalTiles === R.games[i].totalTiles)) tileRepeat++;
+    const w = R.games.slice(Math.max(0, i - limit), i);
+    const g = R.games[i];
+    if (w.some((x) => x.layoutSignature === g.layoutSignature)) sigRepeat++;
+    if (w.some((x) => x.geometrySignature === g.geometrySignature)) geomRepeat++;
+    if (level === 1) {
+      if (w.some((x) => x.totalTiles === g.totalTiles)) tileRepeat++;
+    } else {
+      if (w.some((x) => x.templateId === g.templateId)) tplRepeat++;
+      if (w.some((x) => x.canonicalGeometrySignature === g.canonicalGeometrySignature)) canonRepeat++;
+      if (w.some((x) => x.structureSignature === g.structureSignature)) structRepeat++;
+    }
   }
-  ok(tileRepeat === 0, `L${level} 最近 ${HISTORY_LIMIT} 局总牌数重复 0 次`);
-  ok(sigRepeat === 0, `L${level} 最近 ${HISTORY_LIMIT} 局布局签名重复 0 次`);
-  ok(geomRepeat === 0, `L${level} 最近 ${HISTORY_LIMIT} 局几何签名重复 0 次`);
+  if (level === 1) {
+    ok(tileRepeat === 0, `L1 最近 ${limit} 局总牌数重复 0 次`);
+  } else {
+    ok(tplRepeat === 0, `L2 最近 ${limit} 局模板 ID 重复 0 次`);
+    ok(canonRepeat === 0, `L2 最近 ${limit} 局等价几何签名重复 0 次`);
+    ok(structRepeat === 0, `L2 最近 ${limit} 局结构签名重复 0 次`);
+  }
+  ok(sigRepeat === 0, `L${level} 最近 ${limit} 局布局签名重复 0 次`);
+  ok(geomRepeat === 0, `L${level} 最近 ${limit} 局几何签名重复 0 次`);
   ok(R.worst < SIMILARITY_THRESHOLD,
     `L${level} 全部滑窗对 sim 的最大值 < ${SIMILARITY_THRESHOLD}（实测 ${R.worst.toFixed(4)}）`);
   ok(R.p95 < SIMILARITY_THRESHOLD,
     `L${level} 滑窗 sim 的 P95 < ${SIMILARITY_THRESHOLD}（实测 ${R.p95.toFixed(4)}）`);
-  R.rolling = { sigRepeat, geomRepeat, tileRepeat };
+  R.rolling = { sigRepeat, geomRepeat, tileRepeat, tplRepeat, canonRepeat, structRepeat };
 }
 const allRecords = results[1].games.concat(results[2].games);
 const globalSigSet = new Set(allRecords.map((x) => x.layoutSignature));
@@ -496,8 +580,9 @@ for (const reason of ['application_restart', 'title_screen_restart', 'failure_re
     ok(threw && e.detail.reason === 'MAX_ATTEMPTS_EXCEEDED' && e.detail.attempts === 3,
       '50 次仍不合格时抛出明确的 GenerationFailureError（此处用 3 次复现）');
     ok(threw && e.detail.failures.length === 3 &&
-      e.detail.failures.every((x) => (x.failedChecks || []).indexOf('SEED') >= 0),
-    '失败原因逐次记录为 SEED 冲突，未自动接受重复牌局');
+      e.detail.failures.every((x) => (x.failedChecks || [])
+        .some((f) => f === 'SEED' || f === 'EXTERNAL_SEED')),
+    '失败原因逐次记录为 SEED / EXTERNAL_SEED 冲突，未自动接受重复牌局');
   }
   ok(threw, '配置被占满时不接受重复牌局');
 }
@@ -533,7 +618,9 @@ section('[4] 存档 v' + SAVE_VERSION + ' / 历史隔离 / 损坏容错');
   ok(/SAVE_FIELDS: \[&str; 12\]/.test(rust) &&
     /level1RecentGames/.test(rust) && /level2RecentGames/.test(rust) && /musicMap/.test(rust),
   'Rust 白名单已扩展到 12 键（含两关历史 + musicMap）');
-  ok(/HISTORY_LIMIT: usize = 3/.test(rust), 'Rust 历史窗口同步为 3');
+  ok(/HISTORY_LIMIT_L1:\s*usize = 3/.test(rust) && /HISTORY_LIMIT_L2:\s*usize = 10/.test(rust)
+    && /RECORD_FIELDS:\s*\[&str;\s*15\]/.test(rust),
+  'Rust 历史窗口按关卡同步为 L1=3 / L2=10，记录白名单 15 字段');
   ok(/validate_history_field/.test(rust) && /MAX_SAVE_BYTES: usize = 64 \* 1024/.test(rust),
   'Rust 保留 64KB 上限并新增历史校验');
   ok(/fs::rename\(&tmp, &(path|target)\)/.test(rust), 'Rust 仍使用原子写入');
@@ -549,7 +636,8 @@ const report = {
     gitCommit,
     command: 'node test-random-generation.js',
     algorithm: SIGNATURE_ALGORITHM,
-    historyLimit: HISTORY_LIMIT,
+    historyLimit: { L1: HISTORY_LIMIT, L2: L2_HISTORY_LIMIT },
+    l2TemplateCount: L2_TEMPLATE_IDS.length,
     similarityThreshold: SIMILARITY_THRESHOLD,
     maxAttempts: MAX_ATTEMPTS,
     perLevel: PER_LEVEL,
@@ -559,7 +647,7 @@ const report = {
     assertions: { pass, fail },
     exitCode: fail ? 1 : 0,
     elapsedMs: Date.now() - tStart,
-    note: `最近 ${HISTORY_LIMIT} 局为滑动窗口规则，不要求 ${PER_LEVEL} 局全局唯一`,
+    note: `L1 最近 ${HISTORY_LIMIT} 局（冻结）/ L2 最近 ${L2_HISTORY_LIMIT} 局（模板级 + 几何级双重去重）为滑动窗口规则，不要求 ${PER_LEVEL} 局全局唯一`,
   },
   levels: {},
   seedDiversity,
@@ -641,7 +729,7 @@ let md = `# 双关卡各 100 局随机生成压力测试报告\n\n` +
   `- 运行时间：${report.meta.generatedAt}\n- Git commit：\`${gitCommit}\`\n` +
   `- 断言：通过 **${pass}**，失败 **${fail}**\n- 总耗时：${report.meta.elapsedMs} ms\n` +
   `- 布局签名算法：\`${SIGNATURE_ALGORITHM}\`（SHA-256，浏览器与 Node 共用同一实现）\n` +
-  `- 历史窗口：每关最近 ${HISTORY_LIMIT} 局；重复阈值 sim ≥ ${SIMILARITY_THRESHOLD}；重试上限 ${MAX_ATTEMPTS} 次\n\n` +
+  `- 历史窗口：L1 最近 ${HISTORY_LIMIT} 局（冻结）/ L2 最近 ${L2_HISTORY_LIMIT} 局；第二关 ${L2_TEMPLATE_IDS.length} 套模板 + 模板级 / 几何级双重去重；重复阈值 sim ≥ ${SIMILARITY_THRESHOLD}；重试上限 ${MAX_ATTEMPTS} 次\n\n` +
   `## 全局\n\n` +
   table(['项', '值'], [
     ['总生成局数', String(report.meta.totalGames)],
@@ -652,7 +740,7 @@ let md = `# 双关卡各 100 局随机生成压力测试报告\n\n` +
     ['平均单局生成耗时', report.global.averageGenerationMs.toFixed(2) + ' ms'],
     ['失败案例', String(report.global.failureCases.length)],
   ]) + '\n\n' +
-  `## 最近三局滑动窗口相似度\n\n` +
+  `## 滑动窗口相似度（L1 三局 / L2 十局）\n\n` +
   table(['关卡', '窗口对数', '均值', 'P95', '最大值', '阈值', '判定'], [
     ['L1', report.levels.L1.summary.similarity.pairs, report.levels.L1.summary.similarity.mean.toFixed(4),
       report.levels.L1.summary.similarity.p95.toFixed(4), report.levels.L1.summary.similarity.max.toFixed(4),
@@ -678,9 +766,15 @@ for (const level of [1, 2]) {
       ['牌型数分布', JSON.stringify(S.tileTypeCountDistribution)],
       ['生成原因分布', JSON.stringify(S.reasonDistribution)],
       ['布局签名去重', String(S.uniqueLayoutSignatures) + ' / ' + String(S.total)],
-      [`最近 ${HISTORY_LIMIT} 局总牌数重复`, String(S.rolling.tileRepeat)],
-      [`最近 ${HISTORY_LIMIT} 局布局签名重复`, String(S.rolling.sigRepeat)],
-      [`最近 ${HISTORY_LIMIT} 局几何签名重复`, String(S.rolling.geomRepeat)],
+      ...(level === 1 ? [
+        [`最近 ${HISTORY_LIMIT} 局总牌数重复`, String(S.rolling.tileRepeat)],
+      ] : [
+        [`最近 ${L2_HISTORY_LIMIT} 局模板 ID 重复`, String(S.rolling.tplRepeat)],
+        [`最近 ${L2_HISTORY_LIMIT} 局等价几何签名重复`, String(S.rolling.canonRepeat)],
+        [`最近 ${L2_HISTORY_LIMIT} 局结构签名重复`, String(S.rolling.structRepeat)],
+      ]),
+      [`最近 ${historyLimitFor(level)} 局布局签名重复`, String(S.rolling.sigRepeat)],
+      [`最近 ${historyLimitFor(level)} 局几何签名重复`, String(S.rolling.geomRepeat)],
       ['重试次数（失败重试合计）', String(S.retries)],
       ['生成失败次数', String(S.failures)],
       ['滑窗 sim 均值 / P95 / 最大', S.similarity.mean.toFixed(4) + ' / ' + S.similarity.p95.toFixed(4) + ' / ' + S.similarity.max.toFixed(4)],

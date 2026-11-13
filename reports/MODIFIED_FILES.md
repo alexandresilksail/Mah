@@ -1,125 +1,108 @@
-# 修改文件清单（背景音乐集成 + 双关卡布局修复）
+# 修改文件清单（第二关 50 套布局模板 + 最近 10 局双重去重）
 
 **项目**：MahLeMah（`mah-le-mah/`）
-**日期**：2026-11-12
-**本轮提交**：`dcf9f6e`（完整哈希 `dcf9f6e9d8715e4faef921714b24669d01e2a9ed`），已推送 `origin/main`
-**口径**：仅修改与四项问题直接相关的代码；不做全项目审计，不重构无关模块，不改变核心玩法。
-**上一轮基线**：`cb43412`（随机生成重构收尾）
+**日期**：2026-11-13
+**本轮提交**：`COMMIT_ID_PLACEHOLDER`（完整哈希 `COMMIT_FULL_PLACEHOLDER`），已推送 `origin/main`
+**口径**：只改第二关生成 / 去重 / 历史持久化及其测试、产物、文档；**第一关完全冻结**，只允许回归测试。
+**上一轮基线**：`a4340d1`（背景音乐集成 + 双关卡布局修复收尾）
 
 ---
 
-## 1. 新增文件（20）
+## 1. 新增源码（4）
 
-### 1.1 音乐资源（5，二进制，未替换 / 未转码 / 未删除）
-
-| 文件 | 字节 | 场景 |
-|---|---:|---|
-| `src/assets/music/标题场景音乐.wav` | 2,168,492 | title |
-| `src/assets/music/第一关场景音乐.wav` | 1,675,628 | level1 |
-| `src/assets/music/第二关场景音乐.wav` | 1,440,044 | level2 |
-| `src/assets/music/过关场景音乐.wav` | 708,908 | win |
-| `src/assets/music/失败场景音乐.wav` | 1,316,588 | lose |
-
-合计 **7,309,660 B**，sha256 `b0a6b8026d1aadf06302d61995aeda9ede21977c8970d66c3da84c62e8e17d10`。5 个文件此前只在开发机桌面，本轮首次纳入仓库与产物。
-
-### 1.2 源码 / 构建脚本（3）
-
-| 文件 | 大小 | 职责 |
-|---|---:|---|
-| `src/game/music_manifest.js` | 9,748,754 B | 5 首 wav 的 `data:audio/wav;base64,` 清单 + `BUILTIN_MUSIC_MAP`（6 场景）+ `BUILTIN_MUSIC_SRC` + `mergeMusicMap()` + 资源指纹。所有运行版本共用同一份 |
-| `tools/gen_music_manifest.mjs` | — | 读 `src/assets/music/*.wav`，复用现有 `matchScene()`，只接受 `confidence==='exact'`，`ambiguous`/`none` 直接抛错不自动指派 |
-| `tools/music_real_playback.mjs` | — | Edge headless + CDP + 真实鼠标事件，读 `__MAH_MUSIC_STATUS__()` 验证 `currentTime>0` 且随时间前进；幂等追加报告章节 |
-
-### 1.3 新测试（2）
-
-| 文件 | 结果 |
+| 文件 | 职责 |
 |---|---|
-| `test-layout-position.js` | 35/0；L1 4 档 × 40 seed 的动态包围盒居中、缩放不变性、L2 几何回归 |
-| `test-music-playback.js` | 69/0；播放链路单测 + 4 版本集成 + 5 首载荷与 manifest 逐字节一致 |
+| `src/game/l2_templates.js` | **50 套第二关结构模板的唯一定义源**：10 类 × 5 套，唯一 `templateId`、独立 `zones / shapes / trajectory / layerCurve / env / offsets / density`，结构参数 SHA-256 签名。导出 `L2_TEMPLATES` / `L2_TEMPLATE_IDS` / `templateById()` / `templateSummary()` / `templateCategoryStats()` |
+| `src/game/l2_geometry.js` | 按模板结构参数在 9×5 半格格网真实落牌；`windowFor()` 区域窗口、`shapeCells()` 轮廓、`buildTemplateStack()` 层级堆叠、`repairSupport()` 悬空修补；候选筛选保证开局可点 19–25；复用既有 `buildQueue()` 生成 44 张盲盒队列 |
+| `src/game/l2_structure.js` | `calculateStructureSignature()`（坐标 / 层级 / 区域 / 层牌数与质心 / 包围盒 / 轮廓 / 遮挡边 / 可操作区）、`canonicalGeometrySignature()`（平移 + 左右镜像归一化）、`structureSimilarity()`（只比主堆）、`mainStackCards()`、`structureFields()` |
+| `src/game/l2_recent.js` | 第二关「最近 10 局」双重去重纯函数层：`usedTemplateIds()` / `availableTemplateIds()` / `equivalentRecords()` / `checkL2DualDedup()`；`L2_DEDUP_ALGORITHM`、`L2_SIMILARITY_THRESHOLD = 0.60` |
 
-### 1.4 新报告（10）
+## 2. 新增测试（2）
 
-`reports/FINAL_RERUN_ALL.txt`、`TEST_LAYOUT_POSITION.txt`、`TEST_MUSIC_PLAYBACK.txt`、`layout-position-report.{json,md}`、`music-playback-report.{json,md}`、`music-real-playback-report.json`、`music-real-playback-output.txt`。
+| 文件 | 结果 | 覆盖 |
+|---|---|---|
+| `test-l2-templates.js` | **539 / 0** | 50 模板定义唯一性、50×3=150 局真实生成与合法性（含消除后暴露、真实安装进 Game）、1225 对两两差异、平移/镜像/换牌面的等价几何识别、模板级与几何级拒绝路径、12 局五种重开入口、模板池耗尽明确报错 |
+| `test-l1-frozen.js` | **64 / 0** | 修改前 20 条 L1 基线 + 9 条 L2 默认路径基线逐字段回归、强传 templateId 不影响 L1、L1 统一入口口径、源码冻结边界静态检查 |
 
----
-
-## 2. 修改的源码（10）
-
-| 文件 | 改动要点 |
-|---|---|
-| `src/game/music_player.js` | 整体重写：导出 `MusicPlayer` 与 `MusicManager` 别名；内置 data URI 优先、用户 store 仅回落；首次手势前不建/播 audio，`unlock()` 后按 `pendingScene` 自动播放；删掉双槽交叉淡化改为严格单实例；`setEnabled/setMuted/setVolume` 独立于音效；`onerror` / `play().catch` / `NO_SOURCE` 全捕获；`status()` 暴露真实播放状态 |
-| `src/main.js` | 引入 `BUILTIN_MUSIC_MAP / BUILTIN_MUSIC_SRC / mergeMusicMap` 初始化播放器；`game.musicBuiltin = true`；暴露 `__MAH_MUSIC_STATUS__` / `__MAH_MUSIC_PLAYER__`；`applyAudioSettings()` 合并映射；`syncMusic()` 不再因 store 不可用早退、暂停沿用当前曲；`onceUnlock()` 增加 `musicPlayer.unlock()`；调试面板补三项 PASS/FAIL 与音乐状态 |
-| `src/game/render.js` | 音乐开关/音量显示条件改为 `musicBuiltin || musicAvailable`；导入按钮仍只在 store 可用时出现；标题页与设置面板文案改为「内置曲目按场景自动切换」 |
-| `src/game/layout_profiles.js` | L1 `topCy/botCy` 围绕 `BOARD_CY` 展开；新增 `centerStackVertically()` 按本局真实包围盒动态居中、吸附半格晶格、受 `BOARD_BAND` 安全边距 clamp；保留三层结构、牌型、遮挡与单连通 |
-| `src/game/recent_games.js` | `HISTORY_LIMIT: 5 → 3`，注释与 `sanitizeHistory/appendHistory/checkAgainstRecent` 同步 |
-| `src/game/new_game.js` | 三重差异化判定（牌数 / 布局签名 / 几何相似度）真正生效，修复旧实现把 `layoutDifferent` 覆盖成相似度判定的缺陷；`legalDifficultyIds()` 合法档位预筛；`CONFIG_CONFLICT` 明确失败；`MAX_ATTEMPTS=50`；`meta.checks` 新增 `tileCountCheck / layoutCheck / geometryCheck`；不增删牌 |
-| `src-tauri/src/main.rs` | 仅 `HISTORY_LIMIT: usize = 5 → 3` 与注释同步；上一轮 `SAVE_FIELDS` 12 字段 / v4 / 4 个音乐命令保持不变（本轮无新增存档字段） |
-| `src-tauri/tauri.conf.json` | CSP `media-src 'none'` → `media-src 'self' data: blob:`（旧配置会拦住所有音频） |
-| `tools/build_web.mjs` | 构建说明改为「内联 5 首内置音乐，离线可播」 |
-| `tools/browser_smoke.mjs` | 差异化判定改为最近三局窗口：牌数 / 布局签名 / 几何签名均不重复、档位 ≠ 上一局、`tileCountCheck === 'PASS'` |
-
----
-
-## 3. 修改的既有测试（4）
-
-| 文件 | 改动要点 |
-|---|---|
-| `test.js` | `[8c]` 改为「内置音乐进入全部产物」：5 首与 wav 原文件逐字节比对、4 个 HTML 各 5 段载荷、无外链/无开发机路径；`[18]` 重写播放器行为（解锁 / 单实例 / 音量 / 失败处理）；`[19]` 改为每关 100 局最近三局差异化；`[14]` 比较窗口改为最近 `HISTORY_LIMIT` 局；Rust 静态断言改为 `HISTORY_LIMIT: usize = 3`。最终 **616/0** |
-| `test-random-generation.js` | `PER_LEVEL=100`、`HISTORY_LIMIT===3`；逐局校验牌数 / 签名 / 几何与最近三局均不同、`meta.checks` 三项 PASS、seed 合法且不重复；重启模拟后仍不同；报告标题改「双关卡各 100 局」。最终 **7285/0** |
-| `test-build-consistency.js` | 新增 `[6] 内置背景音乐在所有正式产物中一致`：4 个 HTML 的 5 段载荷 / 文件名 / `__MAH_MUSIC_STATUS__` / `graduated` / 无外链，加 manifest 与 CSP 检查。最终 **71/0** |
-| `test-music-playback.js` | 新建（见 §1.3）；版本集成表用真实字节数，并把未断言的诊断字段改成「5 首载荷与 manifest 逐字节一致」硬断言 |
-
----
-
-## 4. 构建产物（4，全部重建并内嵌音乐）
-
-| 文件 | 字节 | SHA-256 |
-|---|---:|---|
-| `dist/MahLeMah.html` | 9,885,845 | `5ab697cd761c15808f212051ad587fe6fe8bb3d1f4f5e8b9b113eb02b0d2797f` |
-| `dist/index.html` | 9,885,845 | 同上（同内容副本） |
-| `dist/Mah了个Mah.html` | 9,885,845 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 9,919,967 | `6dfec65af7ee49acdf7c0f8c0697c9bca2c3fd10e64987110ac877a36a10dc5c` |
-
-`buildVersion=2.0.0-cb43412` · `sourceHash=7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576` · 参与哈希源文件 33 个。构建元信息记录构建时 HEAD，本轮新提交不回写（自指循环）；`test-build-consistency.js` 实时重算 `src/` 哈希比对，71/0 通过。
-
----
-
-## 5. 更新的文档 / 报告（3 + 10）
+## 3. 新增基线 / 报告 / 日志
 
 | 文件 | 说明 |
 |---|---|
-| `README.md` | 顶部标注「2026-11-12 起内置 5 首用户背景音乐」；第 5 章改为「音效与内置背景音乐」；文件树加入 `music_manifest.js`；新增本轮测试命令与桌面版未重建说明 |
-| `CHANGELOG.md` | 新增「2026-11-12 · 内置背景音乐集成 / 第一关布局居中 / 双关卡最近三局差异化」，记录真实测试数与未运行项 |
-| `DELIVERY.md` | 新增 `## 0. 2026-11-12 本轮增量`，旧随机生成章节改名 `0.1`；明确安装产物未重建 |
-| `reports/FINAL_ACCEPTANCE.md` | 本轮最终验收，逐条对应规格第八节，含完整未运行项 |
-| `reports/TEST_OUTPUT_FINAL_FULL.txt` 等 9 份 | 由最终一次合并回归 `reports/FINAL_RERUN_ALL.txt` 拆分，与各 JSON/MD 报告一一对应 |
+| `reports/L1_FROZEN_BASELINE.json` | 审计阶段（修改前）保存的 20 条 L1 + 9 条 L2 默认路径几何基线 |
+| `reports/l2-templates-report.{json,md}` | **50 套模板完整 ID / 结构参数 / 代表布局指标清单** + 差异测试结果 |
+| `reports/l2-templates-output.txt` | 上述测试真实 stdout |
+| `reports/l1-frozen-report.{json,md}` / `l1-frozen-output.txt` | 第一关冻结回归结果与真实 stdout |
+| `reports/FINAL_test.txt` 等 10 份 `FINAL_*.txt` | 最终一次全套真实运行输出（7 个 Node 测试 + render + browser smoke + music real playback） |
+| `reports/FINAL_RERUN_ALL.txt` | 本轮最终运行汇总（由上述日志汇总，非手写 PASS 模板） |
 
----
+## 4. 修改的源码（7）
 
-## 6. 刻意未改动 / 未重建
+| 文件 | 改动要点 |
+|---|---|
+| `src/game/new_game.js` | 新增第二关独立分支 `createLevel2Game()`：50 套模板候选池 → 抽档位/seed → 生成真实牌局 → 结构签名与等价几何签名 → 与最近 10 局重放牌面做模板级 + 几何级双重判定 → 完整校验（含零悬空、开局可点 19–25）→ 写历史；`meta` 增加 `templateId` / `structureSignature` / `canonicalGeometrySignature` / `dedupAlgorithm` / `availableTemplateCount` 与 4 项去重检查；**第一关主体代码路径逐字未改** |
+| `src/game/generator.js` | 新增 `generateTemplateLayout` 导入；模板分支严格限定 `lv === 2 && opt.templateId`；返回 `templateId` / `floatingCount`；不带模板的第二关默认路径与几何逐字节不变 |
+| `src/game/recent_games.js` | 按关卡分窗口：`HISTORY_LIMIT = 3`（L1 冻结）、`L2_HISTORY_LIMIT = 10`、`historyLimitFor(level)`；新增 `L2_EXTRA_FIELDS` / `L2_RECORD_FIELDS`；`sanitizeRecord(raw, level)` 对 L2 三个可选字段校验、旧档缺字段合法；`sanitizeHistory` / `appendHistory` / `previousFrom` 按关卡取窗口 |
+| `src/game/layout_profiles.js` | **仅**把 `buildQueue` 改为 `export function buildQueue` 供模板路径复用；第一关布局逻辑一行未改 |
+| `src/game/save_data.js` | 存档说明与 `historyFor()` 调用同步为按关卡窗口；L2 历史经 `sanitizeHistory(raw, 2)` 读取，旧档兼容 |
+| `src/main.js` | 调试面板第二关附加 `templateId` / `structureSignature` / `canonicalGeometrySignature` / `dedupAlgorithm` / `availableTemplateCount` 与四项双重去重 PASS-FAIL；第一关输出逐字不变 |
+| `src-tauri/src/main.rs` | `RECORD_FIELDS[15]`（12 必填 + 3 个 L2 可选）、`REQUIRED_RECORD_FIELDS[12]`、`L2_OPTIONAL_RECORD_FIELDS[3]`；`HISTORY_LIMIT_L1 = 3` / `HISTORY_LIMIT_L2 = 10`；`validate_history_field(obj, key, limit)` 按关卡校验并拒绝第一关历史出现模板字段；旧档兼容 |
+
+## 5. 修改的既有测试与工具（4）
+
+| 文件 | 改动要点 | 最终 |
+|---|---|---|
+| `test.js` | `[1]` 增加分关卡窗口 / 50 模板常量断言；`[8b]` Rust 断言改为 15 字段白名单与 L1=3 / L2=10 双窗口；`[14]` 按关卡分流（L1 三局口径逐字保留，L2 用 10 局 + 主堆结构相似度 + 模板/等价几何零重复）；`[19]` 双关各 100 局按各自窗口统计，L2 增加模板 / 等价几何 / 结构签名零重复与「牌数不作差异依据」断言 | **625 / 0** |
+| `test-random-generation.js` | 标题改为「第一关 100 局冻结回归 + 第二关 100 局新规格压力测试」；L1 判定逐字保留；L2 改为主堆 `structureSimilarity`、10 局窗口、模板/等价几何/结构签名零重复、`seed + templateId` 精确重放、多区域分散型合法性（零悬空 / 无异常重叠 / 消除后暴露 / 真实开局）、跨重启历史字段持久化；汇总与 Markdown 报告按关卡分流 | **7788 / 0** |
+| `test-build-consistency.js` | 新增 `[7]` 节：4 个正式 HTML 均内嵌 50 个唯一 `templateId` 与全部第二关升级标记，网页版 3 个副本逐字节相同，4 个新模块源码齐备 | **110 / 0** |
+| `tools/browser_smoke.mjs` | 每个 HTML 在原有 4 局 L1 之外再真实开 4 局 L2，校验 `templateId` / 两种几何签名、四项双重去重 PASS、模板与等价几何零重复、历史按持久化起始值递增且 ≤10；历史跨页面继承被如实纳入判定 | `allPassed=true` |
+
+## 6. 重建产物（4）
+
+| 文件 | 字节 | SHA-256 |
+|---|---:|---|
+| `dist/MahLeMah.html` | 9,924,128 | `61eb93fc932cd5f29524f1fc64ccd7fd40e0d9ae66af9070dc3efdb13eddb9b2` |
+| `dist/index.html` | 9,924,128 | 同上（同内容副本） |
+| `dist/Mah了个Mah.html` | 9,924,128 | 同上（同内容副本） |
+| `dist/MahLeMah-legacy.html` | 9,958,241 | `0d5c00475d929545e50b5149cab3bb6d8e8e6fd4a7cb1c3c608c8778519e2f8c` |
+
+`sourceHash=f6d0bbf4fd6932a1…`（37 个源文件）、`buildVersion=2.0.0-a4340d1`。
+4 个产物同时保留 5 首内置背景音乐（data URI），由 `npm run build:all` 从当前 `src/` 重建。
+
+## 7. 更新的文档 / 既有报告
+
+| 文件 | 说明 |
+|---|---|
+| `README.md` | 新增 `## 0.0` 本轮规格速览；0.3 节改为按关卡分窗口说明；文件树加入 4 个新模块与 4 个测试；验收清单新增 6 条本轮断言 |
+| `CHANGELOG.md` | 新增「2026-11-13 · 第二关 50 套布局模板 + 最近 10 局双重去重」章节，含真实测试数与未运行项 |
+| `DELIVERY.md` | 新增 `## 0.0` 本轮增量、真实运行结果表与未重建项 |
+| `reports/FINAL_ACCEPTANCE.md` | 重写为本轮最终验收（9 项交付对照 + 逐条验收判定 + 未执行项） |
+| `reports/MODIFIED_FILES.md` | 本文件 |
+| 自动生成的既有报告 | `random-generation-report.{json,md}` / `-output.txt`、`build-consistency-report.{json,md}` / `-output.txt`、`browser-smoke-report.json`、`layout-position-report.json`、`music-playback-report.{json,md}`、`music-real-playback-report.json`、`FINAL_RERUN_ALL.txt` 均由最终真实运行刷新 |
+
+## 8. 刻意未改动 / 未重建
 
 | 文件 | 原因 |
 |---|---|
-| `dist/MahLeMah-Setup-v2.0.0.exe`、`MahLeMah-Portable-v2.0.0.zip`、`SHA256SUMS.txt` | 本机 Rust build script 执行被系统拒绝（`os error 5`），桌面产物**未重建**，仍是旧冻结版本，不含本轮音乐与布局修复 |
-| `src/game/generator.js`、`layout.js`、`engine.js`、`config.js`、`tiles.js`、`seed_pool.js` | 核心玩法 / 发牌 / 难度池与本轮四项问题无关，未改动 |
-| `src/game/music_flow.js`、`music_store.js`、`music_ui.js`、`music_match.js`、`save_data.js` | 上传与场景分配功能按要求**不重新开发**，本轮只调用现有 `matchScene()`；无新增存档字段 |
-| `.probe/` | 本轮临时脚本目录，交付前已清理 |
-| `tools/tune.mjs`、`tools/stress_release.mjs` | 旧调参/发布脚本，不在本轮测试链路内（已知过时，如实记录） |
+| `src/game/config.js`、`engine.js`、`layout.js`、`layout_signature.js`、`tiles.js`、`seed_pool.js`、`robots.js` | 牌数配置、难度体系、三消规则、发牌、几何签名、渲染与核心玩法一律不动 |
+| `src/game/music_player.js`、`music_manifest.js`、`render.js`、`src/assets/music/*`、`tools/gen_music_manifest.mjs`、`src-tauri/tauri.conf.json` | 背景音乐与音效链路按要求保留，未重新导入、未重新分配场景、未改 CSP |
+| `dist/MahLeMah-Setup-v2.0.0.exe`、`MahLeMah-Portable-v2.0.0.zip`、`SHA256SUMS.txt` | 本机缺 MSVC `link.exe`，Rust 构建失败，桌面产物**未重建**，仍是旧冻结版本 |
+| `npm run test:release`（12000 局） | 本轮未重跑，如实标注 |
 
----
-
-## 7. 真实运行汇总
+## 9. 真实运行汇总
 
 | 命令 | 结果 |
 |---|---|
-| `node test.js` | 616 / 0 / EXIT=0 |
-| `node test-random-generation.js` | 7285 / 0 / EXIT=0（双关各 100 局） |
+| `node test.js` | 625 / 0 / EXIT=0 |
+| `node test-random-generation.js` | 7788 / 0 / EXIT=0（双关各 100 局） |
+| `node test-l2-templates.js` | 539 / 0 / EXIT=0 |
+| `node test-l1-frozen.js` | 64 / 0 / EXIT=0 |
 | `node test-layout-position.js` | 35 / 0 / EXIT=0 |
 | `node test-music-playback.js` | 69 / 0 / EXIT=0 |
-| `node test-build-consistency.js` | 71 / 0 / EXIT=0 |
-| `node tools/music_real_playback.mjs` | 54 / 54 / EXIT=0（网页版、独立 HTML 版、legacy 版真机播放） |
-| `node tools/browser_smoke.mjs` | `allPassed=true`，Edg/157.0.4341.46 |
-| Rust `cargo check` / `cargo build` | **未运行** |
-| 桌面版 / Windows 安装版真机音乐播放 | **未运行** |
+| `node test-build-consistency.js` | 110 / 0 / EXIT=0 |
+| `node tools/test_render.mjs` | 27 / 27 |
+| `node tools/browser_smoke.mjs` | `allPassed=true` |
+| `node tools/music_real_playback.mjs` | 54 / 54（桌面版未运行） |
+| `cargo check` / `cargo build` | **尝试后失败**（缺 MSVC `link.exe`） |
+| 桌面版 / Windows 安装版重建与真机播放 | **未运行** |
 
-本轮提交：`dcf9f6e`（`dcf9f6e9d8715e4faef921714b24669d01e2a9ed`）。
+本轮提交：`COMMIT_ID_PLACEHOLDER`（`COMMIT_FULL_PLACEHOLDER`）。

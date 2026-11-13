@@ -1,0 +1,34 @@
+============================================================================
+ MahLeMah · 第二关 50 套布局模板专项验收（真实运行）
+ commit=a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 start=2026-11-13T06:37:18.809Z
+============================================================================
+
+[0] 50 套模板定义：唯一 ID / 类别 / 结构参数
+   类别：中央集中型×5 / 多区域分散型×5 / 双核心叠层型×5 / 横向及纵向延展型×5 / 环形包围型×5 / 十字交错型×5 / 阶梯递进型×5 / 多层嵌套型×5 / 非对称复杂叠层型×5 / 组合异形型×5
+
+[1] 50 套模板 × 3 组 (档位, seed) = 150 局真实生成与合法性
+
+[2] 50 套代表布局：1225 对两两结构差异
+   结构 sim 最大 0.4354 · 主堆布局 sim 最大 0.4426 · 越界 0/1225
+   层分布 36 种 · 区域分布 49 种 · 占位格轮廓 50/50 种 · 包围盒 4 种
+
+[3] 等价几何 / 牌面 / 模板级去重判定
+
+[4] 五种重开入口：连续 12 局第二关去重与历史持久化
+[mah] level=2 profileId=2 seed=1072413890 gameId=g2-mwelu3z8-1-61fl0o-new_game reason=new_game tiles=300 sig=308b183eae6e
+[mah] level=2 profileId=3 seed=3579923129 gameId=g2-mwelu43i-2-1m2qey9-failure_restart reason=failure_restart tiles=312 sig=6d4862a05707
+[mah] level=2 profileId=9 seed=1410188170 gameId=g2-mwelu477-3-92jhhl-title_screen_restart reason=title_screen_restart tiles=255 sig=90f65fc2deae
+[mah] level=2 profileId=1 seed=148933528 gameId=g2-mwelu49k-4-1s1eqo9-application_restart reason=application_restart tiles=282 sig=6762867b3079
+[mah] level=2 profileId=6 seed=153933543 gameId=g2-mwelu4c0-5-ewqvgy-new_game reason=new_game tiles=261 sig=f3f312275da7
+[mah] level=2 profileId=8 seed=543210466 gameId=g2-mwelu4dx-6-10jqkp-new_game reason=new_game tiles=192 sig=59a136040c55
+[mah] level=2 profileId=1 seed=2085318113 gameId=g2-mwelu4g8-7-1f8kqj2-failure_restart reason=failure_restart tiles=282 sig=27b3aec8925a
+[mah] level=2 profileId=0 seed=1549114668 gameId=g2-mwelu4ke-8-1ezwlpo-title_screen_restart reason=title_screen_restart tiles=321 sig=194d82c3c42e
+[mah] level=2 profileId=5 seed=1314764291 gameId=g2-mwelu4ok-9-15a2ukq-application_restart reason=application_restart tiles=291 sig=a0316529ff57
+[mah] level=2 profileId=8 seed=2444673842 gameId=g2-mwelu4qo-a-1xmtb0j-new_game reason=new_game tiles=192 sig=60b314876c7d
+[mah] level=2 profileId=2 seed=1403188149 gameId=g2-mwelu4sx-b-33xl6q-new_game reason=new_game tiles=300 sig=c4d8b5031c7d
+[mah] level=2 profileId=8 seed=3367154201 gameId=g2-mwelu4v1-c-h9nlgk-failure_restart reason=failure_restart tiles=192 sig=7f4c14b9255e
+
+============================================================================
+ 断言：通过 539 项，失败 0 项
+ 报告：reports/l2-templates-report.json / .md / -output.txt
+============================================================================

@@ -24,6 +24,7 @@ import { TYPE_IDS } from './tile_types.js';
 import { makeRng, randomSeed } from './rng.js';
 import { pickPoolSeed } from './seed_pool.js';
 import { generateProfileLayout } from './layout_profiles.js';
+import { generateTemplateLayout } from './l2_geometry.js';
 import {
   peelOrder, overlapArea, isBlocked,
   buildBlockerGraph, regionStats, crossOcclusionStats, sameLayerOverlapCount,
@@ -334,7 +335,11 @@ export function generateLevel(level, seed, opt = {}) {
   for (let round = 0; round < LAYOUT_ROUNDS && !built; round++) {
     roundsUsed = round + 1;
     const layoutSeed = round === 0 ? s : ((s ^ Math.imul(round, 0x9e3779b9)) >>> 0);
-    const src = generateProfileLayout(layoutSeed, profile);
+    // 只有第二关显式带 templateId 时才走 50 套模板；第一关与不带模板的第二关
+    // 仍走既有 generateProfileLayout，几何与难度基线逐字节不变。
+    const src = (lv === 2 && opt.templateId)
+      ? generateTemplateLayout(layoutSeed, profile, opt.templateId)
+      : generateProfileLayout(layoutSeed, profile);
     const cards = src.map(baseCard);
     assignZ(cards);
     const byId = {};
@@ -405,6 +410,10 @@ export function generateLevel(level, seed, opt = {}) {
     layerCount,
     profile,
     profileId: profile.id,
+    // 第二关模板 ID（null = 既有默认路径）；写入 data 供历史重放与调试面板使用
+    templateId: lv === 2 && opt.templateId ? opt.templateId : null,
+    // 模板路径的悬空牌修补统计（0 = 主堆全部有支撑；默认路径恒为 0）
+    floatingCount: src.floatingCount || 0,
     solution: solution ? solution.slice() : null,
     requireSolution: needSolvable,
     solvable: !!solution,

@@ -1,0 +1,5263 @@
+{
+  "meta": {
+    "generatedAt": "2026-11-13T06:37:29.253Z",
+    "gitCommit": "a4340d167ff6b185a0f59ee0ecda7d3901b82cf8",
+    "command": "node test-l2-templates.js",
+    "templateCount": 50,
+    "perTemplateCases": 3,
+    "totalGenerated": 150,
+    "pairCount": 1225,
+    "maxStructureSimilarity": 0.43544277783408214,
+    "maxLayoutSimilarity": 0.4426497211842929,
+    "similarityThreshold": 0.6,
+    "l2HistoryLimit": 10,
+    "assertions": {
+      "pass": 539,
+      "fail": 0
+    },
+    "exitCode": 0
+  },
+  "categories": [
+    {
+      "key": "central",
+      "label": "中央集中型",
+      "feature": "主堆收在牌桌中央，层层向核心收拢叠压",
+      "count": 5
+    },
+    {
+      "key": "scatter",
+      "label": "多区域分散型",
+      "feature": "层分散到多个互不相连的区域，形成多堆并立",
+      "count": 5
+    },
+    {
+      "key": "dual",
+      "label": "双核心叠层型",
+      "feature": "左右/上下两个独立核心各自叠层",
+      "count": 5
+    },
+    {
+      "key": "extent",
+      "label": "横向及纵向延展型",
+      "feature": "沿水平或竖直方向拉长，形成长条延展牌堆",
+      "count": 5
+    },
+    {
+      "key": "ring",
+      "label": "环形包围型",
+      "feature": "层沿椭圆环绕，中心留空形成包围结构",
+      "count": 5
+    },
+    {
+      "key": "cross",
+      "label": "十字交错型",
+      "feature": "横臂与竖臂交错叠压",
+      "count": 5
+    },
+    {
+      "key": "stair",
+      "label": "阶梯递进型",
+      "feature": "层中心沿对角线逐级递降/递升",
+      "count": 5
+    },
+    {
+      "key": "nest",
+      "label": "多层嵌套型",
+      "feature": "外框包内层，层层向内嵌套",
+      "count": 5
+    },
+    {
+      "key": "asym",
+      "label": "非对称复杂叠层型",
+      "feature": "左右不对称、单边厚重与偏置缺口",
+      "count": 5
+    },
+    {
+      "key": "combo",
+      "label": "组合异形型",
+      "feature": "梳齿 / 弧带 / 菱形 / 螺旋 / 沙漏等组合轮廓",
+      "count": 5
+    }
+  ],
+  "templates": [
+    {
+      "templateId": "L2-C01",
+      "category": "central",
+      "categoryLabel": "中央集中型",
+      "name": "中央密核塔",
+      "feature": "全部层堆叠在中央，轮廓自下而上收拢",
+      "structureSignature": "442de75172f161462343692186e13805ce513c6a6e5fcf2338e618450118c3fc",
+      "zones": [
+        "center"
+      ],
+      "shapes": [
+        "blob",
+        "pyramid",
+        "diamond",
+        "blob",
+        "nest"
+      ],
+      "trajectory": "central",
+      "layerCurve": [
+        1,
+        1.6,
+        2.2,
+        1.6,
+        1
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 321,
+        "layers": 72,
+        "regions": 5,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "20965c1de23af880e32ca5c6d97abab55d93f2bb5861110e26fea6006a9dd294",
+        "canonicalGeometrySignature": "0a8fde454edd1d114f1daa770899f379c0758e7f21cd1003387e19557f2273eb"
+      },
+      "cases": [
+        {
+          "profileId": 0,
+          "seed": 7919,
+          "cards": 321,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "20965c1de23af880e32ca5c6d97abab55d93f2bb5861110e26fea6006a9dd294",
+          "canonicalGeometrySignature": "0a8fde454edd1d114f1daa770899f379c0758e7f21cd1003387e19557f2273eb"
+        },
+        {
+          "profileId": 1,
+          "seed": 7936,
+          "cards": 282,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "795419ac00a292d529d9533a91d936cdc8ad1a3da0b54460b65ca8132ac9029c",
+          "canonicalGeometrySignature": "33101627ae7051207b0dbf65f93ab64d253d2eac950df228c3d20b9d06bd5c18"
+        },
+        {
+          "profileId": 2,
+          "seed": 7953,
+          "cards": 300,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "939911bb2d5ed90fa10277e0c9bc355e5fe4763a85f191094e3efc0849106ca9",
+          "canonicalGeometrySignature": "51a13445be544793556468f2ce643e216aa18cac5aa9ef78326233c8fbfaf4d6"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-C02",
+      "category": "central",
+      "categoryLabel": "中央集中型",
+      "name": "中央沙漏",
+      "feature": "中段收腰、上下两端外扩的沙漏轮廓",
+      "structureSignature": "fded2151192892005fd81a9de62d2a86c3e0b16b03a709f2dccc9ffd1720c28b",
+      "zones": [
+        "center",
+        "midTop",
+        "midBottom"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "central",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 282,
+        "layers": 68,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 21,
+        "structureSignature": "6e31c65561dabf6b02b7307588d3d8d42ca7bd46eeb22b7ec3f590dd01525edf",
+        "canonicalGeometrySignature": "76682a7e2d90ee9cf80b9dcb20664178adbbe9815a0a93f0310a59937276b4b9"
+      },
+      "cases": [
+        {
+          "profileId": 1,
+          "seed": 8050,
+          "cards": 282,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "6e31c65561dabf6b02b7307588d3d8d42ca7bd46eeb22b7ec3f590dd01525edf",
+          "canonicalGeometrySignature": "76682a7e2d90ee9cf80b9dcb20664178adbbe9815a0a93f0310a59937276b4b9"
+        },
+        {
+          "profileId": 2,
+          "seed": 8067,
+          "cards": 300,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "d0b5e3e1d1a5fc31fd62fca9010ee8f674790f3450949636e614d5d2843c9d02",
+          "canonicalGeometrySignature": "c61fa7c304bc83e25469666173d268a19a71894c44d80655b767f02b4d075df2"
+        },
+        {
+          "profileId": 3,
+          "seed": 8084,
+          "cards": 312,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "deceef8a65533184e498d251855507aea1d4817b3b110154a03821babe81e3ab",
+          "canonicalGeometrySignature": "e792c4f7482a7ce0e783df2ea8ecc68e4eafa685a1c2a11f8b7196f601f24271"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-C03",
+      "category": "central",
+      "categoryLabel": "中央集中型",
+      "name": "中央菱形核",
+      "feature": "菱形外框逐层向内嵌，中心单层最厚",
+      "structureSignature": "20999de40343e1d373771c58600942356af2f8c547f14002a5130768f9e3fa3d",
+      "zones": [
+        "center"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        1,
+        1,
+        3,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 300,
+        "layers": 70,
+        "regions": 5,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "478ba9fe65d4167334492a523b1337d71464f10426e1193fa26c0c7f4b954b51",
+        "canonicalGeometrySignature": "e4a16ebf18778cc9742090155081b587270f7d40a961f7d4c4e75c8def4f9df5"
+      },
+      "cases": [
+        {
+          "profileId": 2,
+          "seed": 8181,
+          "cards": 300,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "478ba9fe65d4167334492a523b1337d71464f10426e1193fa26c0c7f4b954b51",
+          "canonicalGeometrySignature": "e4a16ebf18778cc9742090155081b587270f7d40a961f7d4c4e75c8def4f9df5"
+        },
+        {
+          "profileId": 3,
+          "seed": 8198,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 12,
+          "installOk": true,
+          "structureSignature": "f364e632c8a047ec4a0f701f65c66e28ae76326750de62c95382e2fe8e34a82c",
+          "canonicalGeometrySignature": "7d56bccc12ce9b6e8d283eff0d2b7a6466fea5284c96c8a0d7d556a680b504d7"
+        },
+        {
+          "profileId": 4,
+          "seed": 8215,
+          "cards": 273,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "8d4a88698fc3d8d59461c537a99e2b7029d26698aa687c4564672c8422dbc8c2",
+          "canonicalGeometrySignature": "006f4996422449b6eb6554b0803335ded771235df0b457728c1b0ffac4154942"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-C04",
+      "category": "central",
+      "categoryLabel": "中央集中型",
+      "name": "中央竖塔",
+      "feature": "窄列高层塔，层张数自上而下递增",
+      "structureSignature": "26dd8e5a78f1b7d19b2d675242ccde387c9f8e2e9e77b4c6a363a4900772dfb8",
+      "zones": [
+        "center",
+        "north",
+        "south"
+      ],
+      "shapes": [
+        "stair",
+        "wedge",
+        "stair",
+        "fan",
+        "stair"
+      ],
+      "trajectory": "vertical",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 5,
+        "rowsMax": 7
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "660bf931f7e071c828d5a8b2a5ceb084bdf11e7b891d0e19867d95429da910fa",
+        "canonicalGeometrySignature": "2d31caa8b3efee056c83f0bf226da14c366c53439b707af3b8dbe2712415a2e0"
+      },
+      "cases": [
+        {
+          "profileId": 3,
+          "seed": 8312,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "660bf931f7e071c828d5a8b2a5ceb084bdf11e7b891d0e19867d95429da910fa",
+          "canonicalGeometrySignature": "2d31caa8b3efee056c83f0bf226da14c366c53439b707af3b8dbe2712415a2e0"
+        },
+        {
+          "profileId": 4,
+          "seed": 8329,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 12,
+          "installOk": true,
+          "structureSignature": "63575fb010a4febe52867add75169e829d63159a9ea4783561a18c9242310397",
+          "canonicalGeometrySignature": "a1772cae993a554d2bff986e2246762aae41315eae6709bbed93f2bdc68e5c6b"
+        },
+        {
+          "profileId": 5,
+          "seed": 8346,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "ff5ea5cfe42857fefcbd37d1aaae3dbda0a59275c499a7058b2e117ce1cfb660",
+          "canonicalGeometrySignature": "6971da03386704c0286aa9a398a7c7358a7613a583fde750f1f8be270695e305"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-C05",
+      "category": "central",
+      "categoryLabel": "中央集中型",
+      "name": "中央宽基座",
+      "feature": "宽带状层做基座，上部窄层叠压",
+      "structureSignature": "0302f8f12db15ea5efc388fb21d3aa13671cd0562a54955e3b54024d81247cd0",
+      "zones": [
+        "center",
+        "midBottom"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "central",
+      "layerCurve": [
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 273,
+        "layers": 67,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 22,
+        "structureSignature": "b679ea804e2905e95a5f9796b35dc4199f3784404ff991276e2e824eee597f36",
+        "canonicalGeometrySignature": "4c4618d96119092d6401882a22c1dcc5e4ce80a69ce942f8155ba2933d8eec17"
+      },
+      "cases": [
+        {
+          "profileId": 4,
+          "seed": 8443,
+          "cards": 273,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "b679ea804e2905e95a5f9796b35dc4199f3784404ff991276e2e824eee597f36",
+          "canonicalGeometrySignature": "4c4618d96119092d6401882a22c1dcc5e4ce80a69ce942f8155ba2933d8eec17"
+        },
+        {
+          "profileId": 5,
+          "seed": 8460,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "0f0c30c5435f62b8fdcae63e0cd4da70d133491138d345c4dbff6db84fc9e02a",
+          "canonicalGeometrySignature": "1a93f6419fe599b478495755e90cf582000b98a9132cdefbc89e4d29d537d5a8"
+        },
+        {
+          "profileId": 6,
+          "seed": 8477,
+          "cards": 261,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "76f20e4b1dd7f31ebbac03f162a1e3ac67ff2d7db4c61de3898bfff68916430b",
+          "canonicalGeometrySignature": "964b529bdbfd5cb71b4b7ec1355937e4ae96812792f6c5ac8bde6815e0c85980"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-S01",
+      "category": "scatter",
+      "categoryLabel": "多区域分散型",
+      "name": "四象限分散",
+      "feature": "四个互不相连的象限各自成堆",
+      "structureSignature": "3758ac3e2028fb4ac101266b2efd13836e4916f4335d50f69254f98dc96812d8",
+      "zones": [
+        "nw",
+        "ne",
+        "sw",
+        "se"
+      ],
+      "shapes": [
+        "split",
+        "dual",
+        "split",
+        "checker",
+        "split"
+      ],
+      "trajectory": "scatter",
+      "layerCurve": [
+        2.5,
+        2.1,
+        1.7,
+        1.35,
+        1
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 291,
+        "layers": 69,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "5f1c9c6d98028ea6879e43f82dd5ba02d2735128ae460ba1869d1ba541ac51e8",
+        "canonicalGeometrySignature": "e0d4d3d46aaeb8dd93f71aad8c7ea15ef1cc88f157d4d9494a6f07b525421689"
+      },
+      "cases": [
+        {
+          "profileId": 5,
+          "seed": 8574,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "5f1c9c6d98028ea6879e43f82dd5ba02d2735128ae460ba1869d1ba541ac51e8",
+          "canonicalGeometrySignature": "e0d4d3d46aaeb8dd93f71aad8c7ea15ef1cc88f157d4d9494a6f07b525421689"
+        },
+        {
+          "profileId": 6,
+          "seed": 8591,
+          "cards": 261,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "1a303441ed123bc63677402213061cf74d7198c81266a431d441b6f013daf033",
+          "canonicalGeometrySignature": "2e48902ed5bf7c1376a6c2d9de37138ba64981e64163b006207f0598f9e0055c"
+        },
+        {
+          "profileId": 7,
+          "seed": 8608,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "27d32ac279cc0b70e01f41ac237e01d9c2409ef7ff8ed1d614196d27facf5d93",
+          "canonicalGeometrySignature": "4ca450d0f43a9e1a00a98585bd9d8ad264078d16aa565040d5cd33ee49e6b968"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-S02",
+      "category": "scatter",
+      "categoryLabel": "多区域分散型",
+      "name": "六区并立",
+      "feature": "六个区域并立，层张数锯齿交替",
+      "structureSignature": "2e98fb22710ab0a1f53247683fbe91354b89892d59cb4fff371eb1155165bf30",
+      "zones": [
+        "nw",
+        "north",
+        "ne",
+        "sw",
+        "south",
+        "se"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "scatter",
+      "layerCurve": [
+        2.5,
+        2.1,
+        1.7,
+        1.35,
+        1
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 261,
+        "layers": 66,
+        "regions": 10,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "f493163aa0cc14c961ce0d162164e6657d6b20f6ad6a031fc86339713cde7e1f",
+        "canonicalGeometrySignature": "1896abd99436efb6ffc4aab9a9c25242f79c7ac2f65e89bd2d8a6fae98eedbe1"
+      },
+      "cases": [
+        {
+          "profileId": 6,
+          "seed": 8705,
+          "cards": 261,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "f493163aa0cc14c961ce0d162164e6657d6b20f6ad6a031fc86339713cde7e1f",
+          "canonicalGeometrySignature": "1896abd99436efb6ffc4aab9a9c25242f79c7ac2f65e89bd2d8a6fae98eedbe1"
+        },
+        {
+          "profileId": 7,
+          "seed": 8722,
+          "cards": 312,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "b4c018f386799adb2663260041d0fa6e6c0fe9da81fb610881554321720a2a70",
+          "canonicalGeometrySignature": "ec6307a5e7204dc99bbcd33a3ebc4e1ccd4dcf705e1f9bf7efb8e96ec973d2db"
+        },
+        {
+          "profileId": 8,
+          "seed": 8739,
+          "cards": 192,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "307941dcf3b87be00983eaec33559918512a9faec6692c803d8456d5f126af90",
+          "canonicalGeometrySignature": "98f3a150e537503143ae438b75d739a0a608977cc996e6049a4bb1a9b015f493"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-S03",
+      "category": "scatter",
+      "categoryLabel": "多区域分散型",
+      "name": "三岛链",
+      "feature": "左中右三座牌岛，梳齿状边缘",
+      "structureSignature": "346d5dff62e2ae6a9cb25e13c7171440c138bc15cb7be1287b00ce6f5c5f6cbf",
+      "zones": [
+        "west",
+        "center",
+        "east"
+      ],
+      "shapes": [
+        "comb",
+        "fan",
+        "comb",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "scatter",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 19,
+        "structureSignature": "b3739eba5bb79fbd0d63d1fac11d1912ac066cef5fb69871d056c1cca0f8b673",
+        "canonicalGeometrySignature": "514641dcb83a6bcdc6022b330c8ee948f8f3f6276287c3570b661778eed1a2ea"
+      },
+      "cases": [
+        {
+          "profileId": 7,
+          "seed": 8836,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "b3739eba5bb79fbd0d63d1fac11d1912ac066cef5fb69871d056c1cca0f8b673",
+          "canonicalGeometrySignature": "514641dcb83a6bcdc6022b330c8ee948f8f3f6276287c3570b661778eed1a2ea"
+        },
+        {
+          "profileId": 8,
+          "seed": 8853,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "fe8f632647b1935502b87da182ed60b379dd83dd887874242309da8f504ca0ca",
+          "canonicalGeometrySignature": "3489f541015a13d28012fe2ade61cd3dd82a8269f157f014d59b64cf364887ee"
+        },
+        {
+          "profileId": 9,
+          "seed": 8870,
+          "cards": 255,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "07d9a85d78e6a2a4648eea3b2f7f47cfb7edd4d171fb5c349b02cc0428bbd6c3",
+          "canonicalGeometrySignature": "30e84976b3f97e20665fb0317c52047921895920db4f48ad1bb45653e648108e"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-S04",
+      "category": "scatter",
+      "categoryLabel": "多区域分散型",
+      "name": "上下双带",
+      "feature": "上下两条横向带 + 中央连接层",
+      "structureSignature": "d18a5901e73ea84d62dff8d18ad06ce788e6c23377ed1a87933d4c0358c1597b",
+      "zones": [
+        "north",
+        "south",
+        "center"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "scatter",
+      "layerCurve": [
+        2.5,
+        2.1,
+        1.7,
+        1.35,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 192,
+        "layers": 59,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 20,
+        "structureSignature": "b17a32348e8e4b77c85fb56b181636638fbe980ef39e3324f8e1ab6570c74dcf",
+        "canonicalGeometrySignature": "417dbdf8b20bde0ad220a6d4febf69576e503674633e7bfa78d0da52124a62cd"
+      },
+      "cases": [
+        {
+          "profileId": 8,
+          "seed": 8967,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "b17a32348e8e4b77c85fb56b181636638fbe980ef39e3324f8e1ab6570c74dcf",
+          "canonicalGeometrySignature": "417dbdf8b20bde0ad220a6d4febf69576e503674633e7bfa78d0da52124a62cd"
+        },
+        {
+          "profileId": 9,
+          "seed": 8984,
+          "cards": 255,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "8e3a4737ed46b8ceccb91e2f9f5a78b1aabea710a7b20fb85ad17d6525946901",
+          "canonicalGeometrySignature": "127456063557c6b321a17990e38f5064576576b6e1caf67d879324bbd029c442"
+        },
+        {
+          "profileId": 0,
+          "seed": 9001,
+          "cards": 321,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "04d714b9743d26ba7d337329e728acd603cd917236ede58385c174e719ed9048",
+          "canonicalGeometrySignature": "5404d63048d9f44f87ff5a3ce46b63540fdbce6afdb6edb25be8d13804abc779"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-S05",
+      "category": "scatter",
+      "categoryLabel": "多区域分散型",
+      "name": "边缘散点",
+      "feature": "贴边散点堆，中央刻意留空",
+      "structureSignature": "272b6d04de8828f319a404f1e06d8f136f6a4cfdeee00bb1f23b70350b27cbd8",
+      "zones": [
+        "farWest",
+        "farEast",
+        "nw",
+        "se"
+      ],
+      "shapes": [
+        "split",
+        "dual",
+        "split",
+        "checker",
+        "split"
+      ],
+      "trajectory": "scatter",
+      "layerCurve": [
+        1,
+        1,
+        3,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 255,
+        "layers": 64,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 24,
+        "structureSignature": "945b541945bdf61ef68c01b4a7656b0417ed91b8d4df1ed29bef98d4e35eb6d9",
+        "canonicalGeometrySignature": "65373e748ae1f8d8deee8d9e4cf287bc86c0f7729468f8cea5b820777c2e2694"
+      },
+      "cases": [
+        {
+          "profileId": 9,
+          "seed": 9098,
+          "cards": 255,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "945b541945bdf61ef68c01b4a7656b0417ed91b8d4df1ed29bef98d4e35eb6d9",
+          "canonicalGeometrySignature": "65373e748ae1f8d8deee8d9e4cf287bc86c0f7729468f8cea5b820777c2e2694"
+        },
+        {
+          "profileId": 0,
+          "seed": 9115,
+          "cards": 321,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "96422040b44ae2183f6efb5175a322872389aa1d398813967472d675f3b92fef",
+          "canonicalGeometrySignature": "d9215344c081908a6d19597d8d7b6cf14ca68d1f3d3d384757c2f8dbb5623340"
+        },
+        {
+          "profileId": 1,
+          "seed": 9132,
+          "cards": 282,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "316944687dac396103c10d8f5e8b6bfe40f1067f918065bf991eb20128bd009e",
+          "canonicalGeometrySignature": "70a9e72523222363a5f1ae8ef48d52919f4ce154af1e549ea9ab757f5f42a0bd"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-D01",
+      "category": "dual",
+      "categoryLabel": "双核心叠层型",
+      "name": "左右双核",
+      "feature": "左右两个核心交替叠层",
+      "structureSignature": "272cc1f4ffc0c3d38dd99563d3278644e2978520953ddfdb9c83e4d19484da4d",
+      "zones": [
+        "coreA",
+        "coreB"
+      ],
+      "shapes": [
+        "blob",
+        "pyramid",
+        "diamond",
+        "blob",
+        "nest"
+      ],
+      "trajectory": "dual",
+      "layerCurve": [
+        1,
+        1.6,
+        2.2,
+        1.6,
+        1
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 321,
+        "layers": 72,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 19,
+        "structureSignature": "d237f9c165831e8073f1e65f59a36591ecfbab413870e18ec3bf3605047b773f",
+        "canonicalGeometrySignature": "2063161c5c2f00261600d95550d9c91a115741b6440411adfe534a2737cf8f4e"
+      },
+      "cases": [
+        {
+          "profileId": 0,
+          "seed": 9229,
+          "cards": 321,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "d237f9c165831e8073f1e65f59a36591ecfbab413870e18ec3bf3605047b773f",
+          "canonicalGeometrySignature": "2063161c5c2f00261600d95550d9c91a115741b6440411adfe534a2737cf8f4e"
+        },
+        {
+          "profileId": 1,
+          "seed": 9246,
+          "cards": 282,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "8cce81622f59353e9982482df2f071aa650463a1a5cd0f4821b4f3ffe7363b68",
+          "canonicalGeometrySignature": "565af5ea5bea899585f6e7ea33cb550912da1134542c6592dd053c14329615aa"
+        },
+        {
+          "profileId": 2,
+          "seed": 9263,
+          "cards": 300,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "dc955edb87a67e789ca31b644c9ebd8a579361c32d069348293639196bba55e2",
+          "canonicalGeometrySignature": "52b55259448d628b2ca79301fa575315b89892a4927ec880a59a7b0260ce94dd"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-D02",
+      "category": "dual",
+      "categoryLabel": "双核心叠层型",
+      "name": "上下双核",
+      "feature": "上下两个核心，中间腰部收窄",
+      "structureSignature": "fa527fb9cf159eeeec97153864ea5f6a0065f74a382fdfa7878a7b71798b1f1f",
+      "zones": [
+        "north",
+        "south"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "dual",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 282,
+        "layers": 68,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "7c56638cad86e997876099ef5c537a3ba79185156c0e4d8d895cb05e1bd07744",
+        "canonicalGeometrySignature": "bf3c53b4e3cfee1909a3cecc9072f53e29f71e20796cc0ab1f68a027f005d952"
+      },
+      "cases": [
+        {
+          "profileId": 1,
+          "seed": 9360,
+          "cards": 282,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "7c56638cad86e997876099ef5c537a3ba79185156c0e4d8d895cb05e1bd07744",
+          "canonicalGeometrySignature": "bf3c53b4e3cfee1909a3cecc9072f53e29f71e20796cc0ab1f68a027f005d952"
+        },
+        {
+          "profileId": 2,
+          "seed": 9377,
+          "cards": 300,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "085f52fe5f69b9df40348bd0834e44eb8ec0239ac8b8dc66571cf128bd0916c3",
+          "canonicalGeometrySignature": "e55f5ba0d6ae7878719057cfa05b0cfe7c94a84d3df3c9dbb609e307dac0fa1c"
+        },
+        {
+          "profileId": 3,
+          "seed": 9394,
+          "cards": 312,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "e6d937ae2a45a55af09f02c68aa5b42ebf365e98953d2013cd02972608720473",
+          "canonicalGeometrySignature": "ba91ef13f7e77d1c2d5a082e12af164fecbd7b28f82f2cc966449a2505aa3352"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-D03",
+      "category": "dual",
+      "categoryLabel": "双核心叠层型",
+      "name": "对角双核",
+      "feature": "西北 / 东南对角两核，弧形轮廓",
+      "structureSignature": "cdf08a4608270982552f31e079af92b42068dcc3709fc15a0e038c3fc89d6bc9",
+      "zones": [
+        "nw",
+        "se"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "dual",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 300,
+        "layers": 70,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "49e6a64801c957f29601656fd54ba7eed2df47543757f42523dab7d27f1d3b4b",
+        "canonicalGeometrySignature": "a24fc737c54251e42162e6910ef59ca38e9875537c1e22e019619e0b530df7da"
+      },
+      "cases": [
+        {
+          "profileId": 2,
+          "seed": 9491,
+          "cards": 300,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "49e6a64801c957f29601656fd54ba7eed2df47543757f42523dab7d27f1d3b4b",
+          "canonicalGeometrySignature": "a24fc737c54251e42162e6910ef59ca38e9875537c1e22e019619e0b530df7da"
+        },
+        {
+          "profileId": 3,
+          "seed": 9508,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "9c60b9e66fd42c5d286323189e3d3890328cdf9bccb47bd771425cdfe445f814",
+          "canonicalGeometrySignature": "fcf06c29e51c5819ca44a758727087f2719c3dfdd8fef06a5c8062954826fd40"
+        },
+        {
+          "profileId": 4,
+          "seed": 9525,
+          "cards": 273,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "70eae11b8daf35a4cfb9ba0e1852938d6980020379a2055e9062c5e55d68fe0c",
+          "canonicalGeometrySignature": "15c2a87b794c841a94b76e28a1dfe1400739d8dfdd27266eaac52639f694f5f4"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-D04",
+      "category": "dual",
+      "categoryLabel": "双核心叠层型",
+      "name": "双核夹桥",
+      "feature": "双核之间有十字连接层",
+      "structureSignature": "2003e7390f7559632e4e119ff7dff43704f38fcc68bb9e2fe827589ab3d813f2",
+      "zones": [
+        "coreA",
+        "center",
+        "coreB"
+      ],
+      "shapes": [
+        "cross",
+        "blob",
+        "cross",
+        "wedge",
+        "cross"
+      ],
+      "trajectory": "dual",
+      "layerCurve": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 21,
+        "structureSignature": "afafd968d9e51581d83f8a064b1808bd6d205c58bc50052c982371cba941b8af",
+        "canonicalGeometrySignature": "99e0fa7da63712c3e5e31d8a5eb5b58febf186d46344f2e991414116838c567f"
+      },
+      "cases": [
+        {
+          "profileId": 3,
+          "seed": 9622,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "afafd968d9e51581d83f8a064b1808bd6d205c58bc50052c982371cba941b8af",
+          "canonicalGeometrySignature": "99e0fa7da63712c3e5e31d8a5eb5b58febf186d46344f2e991414116838c567f"
+        },
+        {
+          "profileId": 4,
+          "seed": 9639,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "e9c17424d231ea968c11dceb450a18bbe211ed2935df578fe3932d986b8c3cc2",
+          "canonicalGeometrySignature": "d07b5dd6ee3d9e5db2f75ec3af881108ed32f9a5b881fc750753f6a4cc617844"
+        },
+        {
+          "profileId": 5,
+          "seed": 9656,
+          "cards": 291,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "04ff29a843be21382f96f03b440f8750a0a5e3c8d0fd1343d4d92270aef7acb6",
+          "canonicalGeometrySignature": "970b37e5104017add9387717fbaf681cf5d7d3fbeaa1bee63211f7d14125c1ab"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-D05",
+      "category": "dual",
+      "categoryLabel": "双核心叠层型",
+      "name": "不等双核",
+      "feature": "左侧厚重、右侧轻薄的不等双核",
+      "structureSignature": "cee4da372e4ddf80b5e0faa5ba4ac78f284239326ec140bde6bfd16666eb0a2b",
+      "zones": [
+        "west",
+        "coreB"
+      ],
+      "shapes": [
+        "stair",
+        "wedge",
+        "stair",
+        "fan",
+        "stair"
+      ],
+      "trajectory": "dual",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 273,
+        "layers": 67,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 25,
+        "structureSignature": "0da8dc730d3387d6cc52d6410954645984ffce6f71e93a231072158a6f176f36",
+        "canonicalGeometrySignature": "f16e6ba3354ee758678554bf7fdc4d41ca4ec40aea2e08f4ecda9ad51baffb4e"
+      },
+      "cases": [
+        {
+          "profileId": 4,
+          "seed": 9753,
+          "cards": 273,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "0da8dc730d3387d6cc52d6410954645984ffce6f71e93a231072158a6f176f36",
+          "canonicalGeometrySignature": "f16e6ba3354ee758678554bf7fdc4d41ca4ec40aea2e08f4ecda9ad51baffb4e"
+        },
+        {
+          "profileId": 5,
+          "seed": 9770,
+          "cards": 291,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "3fc290375c72dedd2a9f55e7877ca41e3b9f71af0e662d2bfbd78f4c3066a749",
+          "canonicalGeometrySignature": "ea64c37bd86b74a8ff1d61275feb3044a10e04836f68eefc22a7f634adbf0f68"
+        },
+        {
+          "profileId": 6,
+          "seed": 9787,
+          "cards": 261,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "6494206a2f1a4714dc3e708aa466c37d7f6e668246b0f140d6278d6d091edf06",
+          "canonicalGeometrySignature": "a05db4e3adafa397ff1893b85eb5bbc9dfafc14d2d1eda2331b68395678a89c3"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-E01",
+      "category": "extent",
+      "categoryLabel": "横向及纵向延展型",
+      "name": "横向长卷",
+      "feature": "沿水平方向铺满全宽的长卷",
+      "structureSignature": "bcbd5a3e26bd473e049888e6ae56b8a421532adb4285e4cbe1d6b2483b49faeb",
+      "zones": [
+        "farWest",
+        "west",
+        "center",
+        "east",
+        "farEast"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "horizontal",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 291,
+        "layers": 69,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 352,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 484
+        },
+        "visible": 23,
+        "structureSignature": "63feee774913623933b0307d3949a3fee1552665dad5226c8aec6a1e414f5495",
+        "canonicalGeometrySignature": "93a3104cdd6c51fc522b5450b82521178651eeb4cc5027fd0eb8a71ee568ea0d"
+      },
+      "cases": [
+        {
+          "profileId": 5,
+          "seed": 9884,
+          "cards": 291,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "63feee774913623933b0307d3949a3fee1552665dad5226c8aec6a1e414f5495",
+          "canonicalGeometrySignature": "93a3104cdd6c51fc522b5450b82521178651eeb4cc5027fd0eb8a71ee568ea0d"
+        },
+        {
+          "profileId": 6,
+          "seed": 9901,
+          "cards": 261,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "4daa437712c2b2ac54cdc6e42981cd9d764338b40a1d6d5e22deca2832ad62c9",
+          "canonicalGeometrySignature": "bd89c655ee73b1efbfe0a9dab9cae2aeb182706d535782a9eaefb4d68c84ede2"
+        },
+        {
+          "profileId": 7,
+          "seed": 9918,
+          "cards": 312,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "8b79e3b326aac8d042fd105a2af01003cfb1ac4a1049378fa6d555bead1ea7b6",
+          "canonicalGeometrySignature": "72e0f1269ec43171d80c4090b5293d1c87379e2cdac302b67d26c4c3ebff1114"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-E02",
+      "category": "extent",
+      "categoryLabel": "横向及纵向延展型",
+      "name": "纵向长柱",
+      "feature": "纵向拉长的窄柱与梳齿边缘",
+      "structureSignature": "de12a5205eb5307749bcbdbcfbe2cbc054647f7c212ecfe141f11c44b3ab95ff",
+      "zones": [
+        "north",
+        "center",
+        "south"
+      ],
+      "shapes": [
+        "comb",
+        "fan",
+        "comb",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "vertical",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 5,
+        "rowsMax": 7
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 261,
+        "layers": 66,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "5ab1e10dad4cda984d58ea55486618d505cef3dba8bce12bebd74420e38745e2",
+        "canonicalGeometrySignature": "b40de7c8ede479404adb438894c29790b48404e6a3741c6cbd3a31f923d1ea9f"
+      },
+      "cases": [
+        {
+          "profileId": 6,
+          "seed": 10015,
+          "cards": 261,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "5ab1e10dad4cda984d58ea55486618d505cef3dba8bce12bebd74420e38745e2",
+          "canonicalGeometrySignature": "b40de7c8ede479404adb438894c29790b48404e6a3741c6cbd3a31f923d1ea9f"
+        },
+        {
+          "profileId": 7,
+          "seed": 10032,
+          "cards": 312,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "d210fd41117ad43d830aeb632ceb25d2f2cbb693f004ea18e65b588b85e53285",
+          "canonicalGeometrySignature": "05d4acda5ec73961316455de08c68b4d8c67a694007d34dedaead1479acc363a"
+        },
+        {
+          "profileId": 8,
+          "seed": 10049,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "a8f6bf29784de8250a21610d850547497b37794ac4b29df0b980f0ebacf2072f",
+          "canonicalGeometrySignature": "d6626f7edc1608cbcd409149f30bf968ef294ef9db9cbffabaa6801f9e22e34f"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-E03",
+      "category": "extent",
+      "categoryLabel": "横向及纵向延展型",
+      "name": "横向双带",
+      "feature": "上下两条横向带交替叠压",
+      "structureSignature": "61f787e2745639b17d1dd0726d4596b4bfc633dbb299e1889313efdbc9fe2615",
+      "zones": [
+        "north",
+        "south"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "horizontal",
+      "layerCurve": [
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "ce41ed1c219b31d39a6425203e9094af2acb72188cea0db2ff2a62261cefbe36",
+        "canonicalGeometrySignature": "e1e155db7568baff8084b5fe69373d53e62147b4f74ca1c7ba98c3bcf6f9c425"
+      },
+      "cases": [
+        {
+          "profileId": 7,
+          "seed": 10146,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "ce41ed1c219b31d39a6425203e9094af2acb72188cea0db2ff2a62261cefbe36",
+          "canonicalGeometrySignature": "e1e155db7568baff8084b5fe69373d53e62147b4f74ca1c7ba98c3bcf6f9c425"
+        },
+        {
+          "profileId": 8,
+          "seed": 10163,
+          "cards": 192,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "4fc721fca9d59b77c35c0f2c041eef50c0d0c12377bc6ccb02810bfa518efb89",
+          "canonicalGeometrySignature": "d5354e48aed13a9f9aff8560ad623de0998233cbbf9072fcf43ef82d2737ac39"
+        },
+        {
+          "profileId": 9,
+          "seed": 10180,
+          "cards": 255,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "26970d8ca7b9c0da921623e869f31e94fdeccdd656bcf2bb92620cec7627201a",
+          "canonicalGeometrySignature": "6c73d63cafd0c6fe97a34b3a75cfd563986dce6e20239c3a208024400526c8da"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-E04",
+      "category": "extent",
+      "categoryLabel": "横向及纵向延展型",
+      "name": "纵向阶梯柱",
+      "feature": "纵向延展同时横向阶梯错位",
+      "structureSignature": "e89d422e77d57f2b22f0cddd04f43ce6f3bf73d1ddca6fe7da2cc1bd9545879c",
+      "zones": [
+        "west",
+        "center",
+        "east"
+      ],
+      "shapes": [
+        "stair",
+        "wedge",
+        "stair",
+        "fan",
+        "stair"
+      ],
+      "trajectory": "vertical",
+      "layerCurve": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 192,
+        "layers": 59,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "f46fcc4f901fc2207601c3f36bb57e1002b6b8e0b537d13f038f285c7df8a839",
+        "canonicalGeometrySignature": "44779bff8e6b9d1ad927703142a40f0b7c21a0e69cf80bd6a578f1b7e3cbcf6f"
+      },
+      "cases": [
+        {
+          "profileId": 8,
+          "seed": 10277,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "f46fcc4f901fc2207601c3f36bb57e1002b6b8e0b537d13f038f285c7df8a839",
+          "canonicalGeometrySignature": "44779bff8e6b9d1ad927703142a40f0b7c21a0e69cf80bd6a578f1b7e3cbcf6f"
+        },
+        {
+          "profileId": 9,
+          "seed": 10294,
+          "cards": 255,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "2aee7179655b8651424a666ae788c614c5a03cd86b177a24b27e62f8eada13af",
+          "canonicalGeometrySignature": "c0ef1d9fe1a3c859abc7711a002d594e3c57cf103a41e640eb84fb5cea50ce53"
+        },
+        {
+          "profileId": 0,
+          "seed": 10311,
+          "cards": 321,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "5850ad4105dfa8dbc1d8856819a15a9d1990458b7e40269b12e4de058086599a",
+          "canonicalGeometrySignature": "1a8973abbc639faa438ed5bbc0ab67981e929e2de33833971986aa81e6cc2312"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-E05",
+      "category": "extent",
+      "categoryLabel": "横向及纵向延展型",
+      "name": "斜向长带",
+      "feature": "沿对角线延展的弧带",
+      "structureSignature": "5875e9c36cb3e159803bdb5c6bc0dc74ba2f6896617bc4c54208472697860496",
+      "zones": [
+        "nw",
+        "center",
+        "se"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 255,
+        "layers": 64,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "0f29fe5822ab9243d08da275289a21f5aa38bb3dba0251768615600785b9ba13",
+        "canonicalGeometrySignature": "948fbf1bdc4aceb3b67dfbd00fcab7880ac74c121171d83794408c175125d946"
+      },
+      "cases": [
+        {
+          "profileId": 9,
+          "seed": 10408,
+          "cards": 255,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "0f29fe5822ab9243d08da275289a21f5aa38bb3dba0251768615600785b9ba13",
+          "canonicalGeometrySignature": "948fbf1bdc4aceb3b67dfbd00fcab7880ac74c121171d83794408c175125d946"
+        },
+        {
+          "profileId": 0,
+          "seed": 10425,
+          "cards": 321,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "da918575b1762a44e8586e8e21c5e12a134963a0e4e6570ebde655b54611333e",
+          "canonicalGeometrySignature": "de7ebb9356e6ccd94e35ffe3991db822bd4aa19e0615b75a028c9178b61c11f1"
+        },
+        {
+          "profileId": 1,
+          "seed": 10442,
+          "cards": 282,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "2f4d2a725735f5694ffe6d6aa678229253b7fe2e36cd7919aa9532c98318dd69",
+          "canonicalGeometrySignature": "c914dc2951016f6f5e1b1cb335019da25465742c030bcbffa7788219ddc2aeca"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-R01",
+      "category": "ring",
+      "categoryLabel": "环形包围型",
+      "name": "标准环墙",
+      "feature": "层沿椭圆环绕，中心留空",
+      "structureSignature": "78d8d7da28784f95a4ca7a86b6014f30f95e72f392690c358b8ccd30fcc7dec5",
+      "zones": [
+        "nw",
+        "north",
+        "ne",
+        "east",
+        "se",
+        "south",
+        "sw",
+        "west"
+      ],
+      "shapes": [
+        "ring",
+        "shell",
+        "ring",
+        "arc",
+        "ring"
+      ],
+      "trajectory": "ring",
+      "layerCurve": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 321,
+        "layers": 72,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "61b1d97c39ca8b1d38266da2b6d8d0cddd4617ac51b5351241e829f11f888040",
+        "canonicalGeometrySignature": "0b29d0d15b89555fbdd4f871d2cdee7df78ee8dccc556b5728e1dc69b00177a9"
+      },
+      "cases": [
+        {
+          "profileId": 0,
+          "seed": 10539,
+          "cards": 321,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "61b1d97c39ca8b1d38266da2b6d8d0cddd4617ac51b5351241e829f11f888040",
+          "canonicalGeometrySignature": "0b29d0d15b89555fbdd4f871d2cdee7df78ee8dccc556b5728e1dc69b00177a9"
+        },
+        {
+          "profileId": 1,
+          "seed": 10556,
+          "cards": 282,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "218fdcc89f62a3be56ab62ae86aa06765f2d66a92336d899e30979712f1241dc",
+          "canonicalGeometrySignature": "6866d3287c79e51477e05c3ee543568c1acf3b5048b6827464e40cce87808590"
+        },
+        {
+          "profileId": 2,
+          "seed": 10573,
+          "cards": 300,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "c9c39203f7cc2afd161290bfdb0fe1d2c9d459c29fa98755b102b0deaa6357ef",
+          "canonicalGeometrySignature": "6f7e7f30a87372e6d7911ae68c9c9a12a74d7ce77c9c547dc17441b1c762e917"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-R02",
+      "category": "ring",
+      "categoryLabel": "环形包围型",
+      "name": "双层套环",
+      "feature": "外环 + 内环两层嵌套",
+      "structureSignature": "484f4cb760576ff1bb6d69399e7c0f31ca26332780e6e1908a430db12e4af79a",
+      "zones": [
+        "nw",
+        "ne",
+        "sw",
+        "se",
+        "center"
+      ],
+      "shapes": [
+        "nest",
+        "shell",
+        "nest",
+        "ring",
+        "nest"
+      ],
+      "trajectory": "ring",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 282,
+        "layers": 68,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "869af06ad09823f56488380fb0f61ea3a223940fc6dc77c9bfcd63788ad4e635",
+        "canonicalGeometrySignature": "4a66a004740e4a8db812a956e6c35f5f459e462be07c37b08bce83b538985c04"
+      },
+      "cases": [
+        {
+          "profileId": 1,
+          "seed": 10670,
+          "cards": 282,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "869af06ad09823f56488380fb0f61ea3a223940fc6dc77c9bfcd63788ad4e635",
+          "canonicalGeometrySignature": "4a66a004740e4a8db812a956e6c35f5f459e462be07c37b08bce83b538985c04"
+        },
+        {
+          "profileId": 2,
+          "seed": 10687,
+          "cards": 300,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "12661ee6ea8d791ecb7da1e75ab901e5b94b231d216d8e89b307d1b3ba91329c",
+          "canonicalGeometrySignature": "54dafffc7d4833d9d6a5aedee7656d9a02bdbbce3dc818b919c7538aa29df561"
+        },
+        {
+          "profileId": 3,
+          "seed": 10704,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "dc4841206c520548de139aa58b6a6b087a61092aef5f9cd674fbe8fcb72b98fd",
+          "canonicalGeometrySignature": "85224eaa257b84484d5572a0887213c72460f88a6219596d5ea5c9cbc87caace"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-R03",
+      "category": "ring",
+      "categoryLabel": "环形包围型",
+      "name": "半环抱月",
+      "feature": "上半环包围，下方开口",
+      "structureSignature": "70c215badef4fadb228e5dfc21edf3a0df1ff33d541b9667c96a280a0f50f767",
+      "zones": [
+        "west",
+        "nw",
+        "north",
+        "ne",
+        "east"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "ring",
+      "layerCurve": [
+        1,
+        1.6,
+        2.2,
+        1.6,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 300,
+        "layers": 70,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 22,
+        "structureSignature": "7871689d6de1a5cac030fd29bd98c10f6e4f5d5f70a013ae4bd4fa679cca246e",
+        "canonicalGeometrySignature": "814fd9de58062af08e3683550c8bdb20d110874a6a04220e52d0b18309f059c0"
+      },
+      "cases": [
+        {
+          "profileId": 2,
+          "seed": 10801,
+          "cards": 300,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 22,
+          "installOk": true,
+          "structureSignature": "7871689d6de1a5cac030fd29bd98c10f6e4f5d5f70a013ae4bd4fa679cca246e",
+          "canonicalGeometrySignature": "814fd9de58062af08e3683550c8bdb20d110874a6a04220e52d0b18309f059c0"
+        },
+        {
+          "profileId": 3,
+          "seed": 10818,
+          "cards": 312,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "ce6c4ffef11688bb05227388ef8e033eae72edb56ffcc25e88d349eed2d02457",
+          "canonicalGeometrySignature": "84d978f2d9ee3761af3c1199a324c55689e09a1505ca9c540edc2452d4da197e"
+        },
+        {
+          "profileId": 4,
+          "seed": 10835,
+          "cards": 273,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "9b6f61cc0b0512f98c3efe90c854cfc379f748ea14e36bd13233aeb89ae8b30c",
+          "canonicalGeometrySignature": "2de9e01ef77017361951c0ed394c8db654b9240931f164f2273123db32a852e6"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-R04",
+      "category": "ring",
+      "categoryLabel": "环形包围型",
+      "name": "螺旋收环",
+      "feature": "环半径逐层收缩的螺旋包围",
+      "structureSignature": "9410ccef7bd9b74d71820a59aa2edd28eea7b3ce8fbdb80561a36908a0bcbd52",
+      "zones": [
+        "nw",
+        "ne",
+        "se",
+        "sw",
+        "center"
+      ],
+      "shapes": [
+        "shell",
+        "nest",
+        "ring",
+        "shell",
+        "nest"
+      ],
+      "trajectory": "spiral",
+      "layerCurve": [
+        1,
+        1,
+        3,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "965519b0654495cbdcbb2d8946efa2bc37cf4a1d4beb9b92e26ec34c54f99493",
+        "canonicalGeometrySignature": "f015e7c050db535113ddf41a91d03569dea6c48578694490c7e49b6c515825ae"
+      },
+      "cases": [
+        {
+          "profileId": 3,
+          "seed": 10932,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "965519b0654495cbdcbb2d8946efa2bc37cf4a1d4beb9b92e26ec34c54f99493",
+          "canonicalGeometrySignature": "f015e7c050db535113ddf41a91d03569dea6c48578694490c7e49b6c515825ae"
+        },
+        {
+          "profileId": 4,
+          "seed": 10949,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "46aa606ae7ebde7ff4802a1520471d088da0353166884c447d4cacdc628d0da6",
+          "canonicalGeometrySignature": "dfd1bad4f289ccaa5af32cb11db8acd721dc2cb4b42078d2def1cd91ea09553c"
+        },
+        {
+          "profileId": 5,
+          "seed": 10966,
+          "cards": 291,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "7412954c168b0fcac4721e3f7fb8dc961e6d45aaaaa4178ef087e79c0e31184b",
+          "canonicalGeometrySignature": "167a4e5d5198b98533210f920aa35a23f62b9986e5535cb58dc627ce9a88bbd5"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-R05",
+      "category": "ring",
+      "categoryLabel": "环形包围型",
+      "name": "环中带核",
+      "feature": "环墙 + 中央独立核心",
+      "structureSignature": "52d50cef49bf3a514dc33b3dfdd58c25a427dc78a236157352d5d3cbcb244237",
+      "zones": [
+        "north",
+        "east",
+        "south",
+        "west",
+        "center"
+      ],
+      "shapes": [
+        "ring",
+        "shell",
+        "ring",
+        "arc",
+        "ring"
+      ],
+      "trajectory": "ring",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 273,
+        "layers": 67,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 25,
+        "structureSignature": "6da0d0916fe0f0fc3b9560ddd4557c5790890bd79334305061b066dc6700bc34",
+        "canonicalGeometrySignature": "52e92156a27382fdbd7a4b208f1207f66e945c27ad9c2054d0da843cadba0831"
+      },
+      "cases": [
+        {
+          "profileId": 4,
+          "seed": 11063,
+          "cards": 273,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "6da0d0916fe0f0fc3b9560ddd4557c5790890bd79334305061b066dc6700bc34",
+          "canonicalGeometrySignature": "52e92156a27382fdbd7a4b208f1207f66e945c27ad9c2054d0da843cadba0831"
+        },
+        {
+          "profileId": 5,
+          "seed": 11080,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "baa1dcc8141e811dfd03fa69aa95a3658aafa4f61ec32b3957f9f0f50faf19b9",
+          "canonicalGeometrySignature": "ba632b8f39a8ed035c085b4fd5e66851a7ee59683a3041f62b46ad57d7005ff6"
+        },
+        {
+          "profileId": 6,
+          "seed": 11097,
+          "cards": 261,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "a1034a8a56d49cc593806b5c3e24f4e2a5b351dc161a8a7d3369694b729cac47",
+          "canonicalGeometrySignature": "e1683e9faa3dff5cd2b745fa4da15c451ae776f5024a35c85b060626916ae697"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-X01",
+      "category": "cross",
+      "categoryLabel": "十字交错型",
+      "name": "正十字",
+      "feature": "横臂与竖臂交替叠压",
+      "structureSignature": "d92b2d37e45da62ecf35ae6e8cd0f2ad5de0fc88da9da180a73e4531101aded1",
+      "zones": [
+        "north",
+        "south",
+        "west",
+        "east",
+        "center"
+      ],
+      "shapes": [
+        "cross",
+        "blob",
+        "cross",
+        "wedge",
+        "cross"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 291,
+        "layers": 69,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 20,
+        "structureSignature": "214dc472808dbdc3e4038f7bd39009efc0771e335f533b6bfe85a649b327160b",
+        "canonicalGeometrySignature": "89e00044d9ef02c03cfaa03bc8d82c98af2ddb66727c1a277a564c30d6b0241d"
+      },
+      "cases": [
+        {
+          "profileId": 5,
+          "seed": 11194,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "214dc472808dbdc3e4038f7bd39009efc0771e335f533b6bfe85a649b327160b",
+          "canonicalGeometrySignature": "89e00044d9ef02c03cfaa03bc8d82c98af2ddb66727c1a277a564c30d6b0241d"
+        },
+        {
+          "profileId": 6,
+          "seed": 11211,
+          "cards": 261,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "cd207798926fc51e1d7c460ab9396161e2a516e5e2fbe3b3821a90d07d54e0ed",
+          "canonicalGeometrySignature": "4d4b795e8d20825ae56ef3384d7b1bb7ddeb18379615efce1956b769b4849b48"
+        },
+        {
+          "profileId": 7,
+          "seed": 11228,
+          "cards": 312,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "e4667791a2776565e984a2add7b2b17f3b49b2414de056f8665e2fdfe4359917",
+          "canonicalGeometrySignature": "0234895ecfe32062b68fb3a900e21648d08127bf41f159bbde4ceeabbbe771e6"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-X02",
+      "category": "cross",
+      "categoryLabel": "十字交错型",
+      "name": "斜十字",
+      "feature": "沿对角线展开的十字",
+      "structureSignature": "cea658f0534508b8161fb500a63515295c0c3810551314be28e9d038642097a9",
+      "zones": [
+        "nw",
+        "ne",
+        "sw",
+        "se",
+        "center"
+      ],
+      "shapes": [
+        "cross",
+        "blob",
+        "cross",
+        "wedge",
+        "cross"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 261,
+        "layers": 66,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 24,
+        "structureSignature": "b293ee2493d6c55c79ea4da17471c80a3faa3a7b8f72331eea98a6906583e5ab",
+        "canonicalGeometrySignature": "3fa9a8f024294d47a3ec46c946e1df8c23a792d2af4453ceb21803c2f4e886d8"
+      },
+      "cases": [
+        {
+          "profileId": 6,
+          "seed": 11325,
+          "cards": 261,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "b293ee2493d6c55c79ea4da17471c80a3faa3a7b8f72331eea98a6906583e5ab",
+          "canonicalGeometrySignature": "3fa9a8f024294d47a3ec46c946e1df8c23a792d2af4453ceb21803c2f4e886d8"
+        },
+        {
+          "profileId": 7,
+          "seed": 11342,
+          "cards": 312,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "0ec367174c3853e81018957994e3bdd59f13ed64e6c48e2e0cc640289d353269",
+          "canonicalGeometrySignature": "c53c06b2fd4e0f450b8687e191b49c51dde0ddb95a9192176c2cec5d6b0ba998"
+        },
+        {
+          "profileId": 8,
+          "seed": 11359,
+          "cards": 192,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "94db54559747b6d70671552dfc197c919fcbac9d1087a795edf2e765d000415d",
+          "canonicalGeometrySignature": "d5de11dd3bf1293d316abdf96b4cd20b187e125088841f7b53bdafa199f29f33"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-X03",
+      "category": "cross",
+      "categoryLabel": "十字交错型",
+      "name": "双横一竖",
+      "feature": "两条横带被一条竖带贯穿",
+      "structureSignature": "24d609a867b6145b1922fd8db4dcd631150d61de99d473e4b0976e8278a753d5",
+      "zones": [
+        "north",
+        "south",
+        "center"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 20,
+        "structureSignature": "ed167e97b1cdd9e0fac6f674755d5e60d3b9cabdff0ba506a55ed670883b99f4",
+        "canonicalGeometrySignature": "2280f671356abe7bc4711b735ca8cd1fdcefba090126aa6d036bd888b86930c4"
+      },
+      "cases": [
+        {
+          "profileId": 7,
+          "seed": 11456,
+          "cards": 312,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "ed167e97b1cdd9e0fac6f674755d5e60d3b9cabdff0ba506a55ed670883b99f4",
+          "canonicalGeometrySignature": "2280f671356abe7bc4711b735ca8cd1fdcefba090126aa6d036bd888b86930c4"
+        },
+        {
+          "profileId": 8,
+          "seed": 11473,
+          "cards": 192,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "502d3ac123b65086b5b9be25b0cbfe8b7511809e8f943a3b77054e84d69fe3f4",
+          "canonicalGeometrySignature": "5db7f7120af5d6e61a03c71dddd9a1268aafe54e1243877cf14edf8100e9913c"
+        },
+        {
+          "profileId": 9,
+          "seed": 11490,
+          "cards": 255,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "a51a4414d702049eb7d8c229bab15f82f1c6e1444643dd0812d561bd83c3ad5f",
+          "canonicalGeometrySignature": "713873c78312c6ef58daf929a9714cb106bf413788d8c2258bc0f31b0a88a0f2"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-X04",
+      "category": "cross",
+      "categoryLabel": "十字交错型",
+      "name": "楔形交错",
+      "feature": "楔形与十字形状交错",
+      "structureSignature": "8b06509f1c5bc9fa1338294599766cadd46848443e02c6c56bd2b55401f8e0e9",
+      "zones": [
+        "west",
+        "center",
+        "east"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 192,
+        "layers": 59,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "c9b38d5bbd92edc950be512804d297be83599988702f9f9980a29b6eea976fe4",
+        "canonicalGeometrySignature": "c0c4bfc9693e6f4cb86cbc1e0f632a3aa212ee74235f133d6f29c8eb007d456b"
+      },
+      "cases": [
+        {
+          "profileId": 8,
+          "seed": 11587,
+          "cards": 192,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "c9b38d5bbd92edc950be512804d297be83599988702f9f9980a29b6eea976fe4",
+          "canonicalGeometrySignature": "c0c4bfc9693e6f4cb86cbc1e0f632a3aa212ee74235f133d6f29c8eb007d456b"
+        },
+        {
+          "profileId": 9,
+          "seed": 11604,
+          "cards": 255,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "64e8b4b5fbf089def613c23bfe27869930f50fd74aa848372f1d319835dd0cc2",
+          "canonicalGeometrySignature": "6f7df691fd28e42ce4e1e3c487e5c804f394bc4829fd23c5224be8b59a199af8"
+        },
+        {
+          "profileId": 0,
+          "seed": 11621,
+          "cards": 321,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "e27aa95426a609385620a9c1be3653c562c895b0d51d7ef6ffc3ff3a05601128",
+          "canonicalGeometrySignature": "fe538a2300b2d6593706513262951987f98321b6e712727d09d7c1a240ddc8b6"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-X05",
+      "category": "cross",
+      "categoryLabel": "十字交错型",
+      "name": "十字嵌套",
+      "feature": "外层十字框嵌套内层十字",
+      "structureSignature": "7025e9146943a3298d70eb5be7ea4205814a356ae66cb4074e0dcf0fb35d61e6",
+      "zones": [
+        "center",
+        "north",
+        "east",
+        "south",
+        "west"
+      ],
+      "shapes": [
+        "nest",
+        "shell",
+        "nest",
+        "ring",
+        "nest"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        1,
+        1.6,
+        2.2,
+        1.6,
+        1
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 255,
+        "layers": 64,
+        "regions": 9,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "21c0240caa94411d11d4b6ac7fb912e518025f16abc457262f533ff23bdfa34d",
+        "canonicalGeometrySignature": "e98c0a1a1a9ecfc5b00df9831f3e748d87bc1fb423470aab4801ef5919011cfa"
+      },
+      "cases": [
+        {
+          "profileId": 9,
+          "seed": 11718,
+          "cards": 255,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "21c0240caa94411d11d4b6ac7fb912e518025f16abc457262f533ff23bdfa34d",
+          "canonicalGeometrySignature": "e98c0a1a1a9ecfc5b00df9831f3e748d87bc1fb423470aab4801ef5919011cfa"
+        },
+        {
+          "profileId": 0,
+          "seed": 11735,
+          "cards": 321,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "8cb1a472efdb276a1fff8930e576d0fd08d6e6811925996ae236a54b92770208",
+          "canonicalGeometrySignature": "bc86292a0a519e2ab3b74570d6e4b1a96617f94d978c067a0420e9d06402f1f8"
+        },
+        {
+          "profileId": 1,
+          "seed": 11752,
+          "cards": 282,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "6064ae69200cc0ec44f742b449ae98da6e74f25bb08d9a935da3ffa58885a1d3",
+          "canonicalGeometrySignature": "24208b502001391f44256fd6dac52630a23f868fe2b2444bd0ca8f299ceb439f"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-T01",
+      "category": "stair",
+      "categoryLabel": "阶梯递进型",
+      "name": "右降阶梯",
+      "feature": "层中心自左上向右下逐级递降",
+      "structureSignature": "62e41feee980ac9224756c833f4a0a44c90cdf94a198f9697a35e46b616d2cfe",
+      "zones": [
+        "nw",
+        "center",
+        "se"
+      ],
+      "shapes": [
+        "stair",
+        "wedge",
+        "stair",
+        "fan",
+        "stair"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 321,
+        "layers": 72,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 22,
+        "structureSignature": "893d146020ee3357936dda74968841115f18548bd635bd8f4a11cd3238b93e3f",
+        "canonicalGeometrySignature": "c6df1554764597d83a8a4d381d9c6a055f8b3ceaccbf65bafaee1bae446f154a"
+      },
+      "cases": [
+        {
+          "profileId": 0,
+          "seed": 11849,
+          "cards": 321,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "893d146020ee3357936dda74968841115f18548bd635bd8f4a11cd3238b93e3f",
+          "canonicalGeometrySignature": "c6df1554764597d83a8a4d381d9c6a055f8b3ceaccbf65bafaee1bae446f154a"
+        },
+        {
+          "profileId": 1,
+          "seed": 11866,
+          "cards": 282,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "fde1e4fd03bd6f88064040cfffa9b2ac1596cdceee5701d226fadc4a1475599b",
+          "canonicalGeometrySignature": "c5f837409af2343658b7ce39438474692774989311f83bd16b15f0c2ee5193dd"
+        },
+        {
+          "profileId": 2,
+          "seed": 11883,
+          "cards": 300,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "8edee8dc33fa89da8112e5570d79aa92b3d7b7496d03fdf186e9921ca44b9a4d",
+          "canonicalGeometrySignature": "6efe72b28b0ebf112ea06178a2cb1f1e0bf50aaacbcff25589194d5d3e29fd4f"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-T02",
+      "category": "stair",
+      "categoryLabel": "阶梯递进型",
+      "name": "左升阶梯",
+      "feature": "层中心自右上向左下递降",
+      "structureSignature": "aadfc1facf2535bdfc141238be89d13eb1c5dab5ebbb4769884e7c1c279f6e7d",
+      "zones": [
+        "ne",
+        "center",
+        "sw"
+      ],
+      "shapes": [
+        "stair",
+        "wedge",
+        "stair",
+        "fan",
+        "stair"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        2.5,
+        2.1,
+        1.7,
+        1.35,
+        1
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 282,
+        "layers": 68,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "3b4e3d8dcd4aa7e7db78d5f0e954e3c05ba8f05db9cf5fb7cbe088329930cbda",
+        "canonicalGeometrySignature": "a60d61e9b571492134c810d677e33f2ba2337671affd43163bf0e027d2a9a5ae"
+      },
+      "cases": [
+        {
+          "profileId": 1,
+          "seed": 11980,
+          "cards": 282,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "3b4e3d8dcd4aa7e7db78d5f0e954e3c05ba8f05db9cf5fb7cbe088329930cbda",
+          "canonicalGeometrySignature": "a60d61e9b571492134c810d677e33f2ba2337671affd43163bf0e027d2a9a5ae"
+        },
+        {
+          "profileId": 2,
+          "seed": 11997,
+          "cards": 300,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "c8a92a946a2525fd2c62a47ce96159c00d08a94ece7b789ac2127435e2abd0c6",
+          "canonicalGeometrySignature": "bd1f7a710ecaf026950b5096f911e08539a96e3a4ccb31435f0c535596802b46"
+        },
+        {
+          "profileId": 3,
+          "seed": 12014,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 12,
+          "installOk": true,
+          "structureSignature": "ae02b7637c3fc603a46a7482c005c80acc6efd1096b903bdb01851a3a6fa1ccc",
+          "canonicalGeometrySignature": "75fe0a65697d359a9fb2062b4418bc4765c8ced70b46eda07fef3e2d68741e9c"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-T03",
+      "category": "stair",
+      "categoryLabel": "阶梯递进型",
+      "name": "折线阶梯",
+      "feature": "阶梯方向逐段折返",
+      "structureSignature": "02689780d1d863ef5ccf027eb94e79634c16a253cd6d1005b038c6a87c30d15b",
+      "zones": [
+        "west",
+        "north",
+        "east",
+        "south"
+      ],
+      "shapes": [
+        "comb",
+        "fan",
+        "comb",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 300,
+        "layers": 70,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 24,
+        "structureSignature": "d10b042516fbacdfc7c0fdce99e569f75a3952625088e6a713bf005c0bd68b38",
+        "canonicalGeometrySignature": "9585b11b5427af6de2d626d8ebff06e322f12dc93ff598afa655d6c59be2bb41"
+      },
+      "cases": [
+        {
+          "profileId": 2,
+          "seed": 12111,
+          "cards": 300,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "d10b042516fbacdfc7c0fdce99e569f75a3952625088e6a713bf005c0bd68b38",
+          "canonicalGeometrySignature": "9585b11b5427af6de2d626d8ebff06e322f12dc93ff598afa655d6c59be2bb41"
+        },
+        {
+          "profileId": 3,
+          "seed": 12128,
+          "cards": 312,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "88cb06ac3fc10032c2b08547f770a8966fb0d9ac719c9151735ac1637e62944f",
+          "canonicalGeometrySignature": "683edb0613a93f4d7656c407d671b556cae9df523f626f6df5b562c4fd107882"
+        },
+        {
+          "profileId": 4,
+          "seed": 12145,
+          "cards": 273,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "5ac1ce2eeb5285d0d28793155bc4bc76893b7d987075080ca6041c1000efb181",
+          "canonicalGeometrySignature": "f7818761f4f375d6aaf1bc5ac11864357715f40c9efec4a938f0c8a8e8d3ce02"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-T04",
+      "category": "stair",
+      "categoryLabel": "阶梯递进型",
+      "name": "宽台阶梯",
+      "feature": "每级阶梯都是宽平台",
+      "structureSignature": "022023bd891f486daabb8c6c7d6be38483411d46a8c866448358112e580991bc",
+      "zones": [
+        "center",
+        "midBottom"
+      ],
+      "shapes": [
+        "band",
+        "arc",
+        "band",
+        "comb",
+        "band"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 19,
+        "structureSignature": "e26324d44a9ead67bd9f1b4cd28123fc8dd3c822320437422315fa117c8fc1cf",
+        "canonicalGeometrySignature": "85694ae77f4ce7bd49384968c21b1490e6a9af8a6fb20652f4008055c19ef8f5"
+      },
+      "cases": [
+        {
+          "profileId": 3,
+          "seed": 12242,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 12,
+          "installOk": true,
+          "structureSignature": "e26324d44a9ead67bd9f1b4cd28123fc8dd3c822320437422315fa117c8fc1cf",
+          "canonicalGeometrySignature": "85694ae77f4ce7bd49384968c21b1490e6a9af8a6fb20652f4008055c19ef8f5"
+        },
+        {
+          "profileId": 4,
+          "seed": 12259,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "ba6fa86d9f743520186e07bc08dce10082df86f64b76f3e0fd794342e5855a08",
+          "canonicalGeometrySignature": "fee5d394ad4d03350f9e2c29d184d174ceb0fbb6f5928e0052a57a0ce30dafa6"
+        },
+        {
+          "profileId": 5,
+          "seed": 12276,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "5d8ba9eb78c736daf9c2121c1b38cf9592ac8e6275b177dc166a97447b9be0f3",
+          "canonicalGeometrySignature": "8d5dfa9bf699a13b2b1014edc5c6de9bf1dc1949a9e52ce7ad9ecb3887cce604"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-T05",
+      "category": "stair",
+      "categoryLabel": "阶梯递进型",
+      "name": "嵌套阶梯",
+      "feature": "阶梯与嵌套框交替",
+      "structureSignature": "bca16ba31c8af5732f3b47d6b235ede03a51928bf7eb0b8ae0bb2a7052dbea01",
+      "zones": [
+        "nw",
+        "ne",
+        "sw",
+        "se"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "stair",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 273,
+        "layers": 67,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 24,
+        "structureSignature": "5a133077d5acded12663b785b9dba4138f56cdcbec7426c34d805d3a66a0a555",
+        "canonicalGeometrySignature": "6d1b8d80426400cbffd88281aa260cc65ce0f2f0300d3ef9e7b39afc4120e5b1"
+      },
+      "cases": [
+        {
+          "profileId": 4,
+          "seed": 12373,
+          "cards": 273,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "5a133077d5acded12663b785b9dba4138f56cdcbec7426c34d805d3a66a0a555",
+          "canonicalGeometrySignature": "6d1b8d80426400cbffd88281aa260cc65ce0f2f0300d3ef9e7b39afc4120e5b1"
+        },
+        {
+          "profileId": 5,
+          "seed": 12390,
+          "cards": 291,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "dea2742ca99a79ac0624c21297ee45054e4ef277503de748b14668ffa9a090ab",
+          "canonicalGeometrySignature": "2579d13f708d879989e0c405953b17782e03e748509256091fc74d934f7f6bcd"
+        },
+        {
+          "profileId": 6,
+          "seed": 12407,
+          "cards": 261,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "bdbaf8da28b7bd5541c691c85caba76d67fea699da59eac90461461cf3b17744",
+          "canonicalGeometrySignature": "17158ff4c775f23bd7a998bd7b63db5565b4884afca648f53040cefa60272f7c"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-N01",
+      "category": "nest",
+      "categoryLabel": "多层嵌套型",
+      "name": "方框套核",
+      "feature": "外框逐层向内收缩、顶层加冠形成宽口",
+      "structureSignature": "c14176c196532d79491f14cb332d96be40570d4ad997c621d98b4b003757e223",
+      "zones": [
+        "center"
+      ],
+      "shapes": [
+        "nest",
+        "shell",
+        "nest",
+        "ring",
+        "nest"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        1,
+        1.25,
+        1.5,
+        2,
+        3
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 291,
+        "layers": 69,
+        "regions": 5,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "98d656ef263ab9a829ac427a317717968ca665e3d77513aa73a47a922bb170cd",
+        "canonicalGeometrySignature": "f0304652836ef5152564a0d7f492f5581fd77a5e416f688e5c8ca820d855ea3a"
+      },
+      "cases": [
+        {
+          "profileId": 5,
+          "seed": 12504,
+          "cards": 291,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "98d656ef263ab9a829ac427a317717968ca665e3d77513aa73a47a922bb170cd",
+          "canonicalGeometrySignature": "f0304652836ef5152564a0d7f492f5581fd77a5e416f688e5c8ca820d855ea3a"
+        },
+        {
+          "profileId": 6,
+          "seed": 12521,
+          "cards": 261,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "07f0edc2831fb1bddca940a163d8777d75bcf28729ae803093127ad7a69eb147",
+          "canonicalGeometrySignature": "f5e4278e7aaae39c7c7c40cad848ec1107608b4c9fe553861b11de30c68203b9"
+        },
+        {
+          "profileId": 7,
+          "seed": 12538,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "274a358faf4820386f75edeb1786c4ee111a39e9424f96e685f48d664a7c834d",
+          "canonicalGeometrySignature": "2bf792865d8e1047be6c55e2b8c9fe774009dd8a93ca356d293acb8dceae3bc2"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-N02",
+      "category": "nest",
+      "categoryLabel": "多层嵌套型",
+      "name": "壳层包裹",
+      "feature": "壳层 + 内核交替",
+      "structureSignature": "5a83f5578062fa101052e5901f8c64c75c41ac703cdee9fdd5c04baf686c8780",
+      "zones": [
+        "center",
+        "midTop",
+        "midBottom"
+      ],
+      "shapes": [
+        "shell",
+        "nest",
+        "ring",
+        "shell",
+        "nest"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 261,
+        "layers": 66,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "bce7965733b49586be6a6af10b701d9636fa825fbcff60e7ca452c0438696f78",
+        "canonicalGeometrySignature": "2316dc369819ae6b799f218681fdf10096b1c86842f305b817813b2ddd6deccd"
+      },
+      "cases": [
+        {
+          "profileId": 6,
+          "seed": 12635,
+          "cards": 261,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "bce7965733b49586be6a6af10b701d9636fa825fbcff60e7ca452c0438696f78",
+          "canonicalGeometrySignature": "2316dc369819ae6b799f218681fdf10096b1c86842f305b817813b2ddd6deccd"
+        },
+        {
+          "profileId": 7,
+          "seed": 12652,
+          "cards": 312,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "c54bcdba708e88f4d3b10b13760379d65957b0d09d039cbf1e81f7456e302e75",
+          "canonicalGeometrySignature": "61813ee47175795c66a8b4d06ebf9cce8d1d0fdbc02dbb804213b67e65281fc8"
+        },
+        {
+          "profileId": 8,
+          "seed": 12669,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "e4e63eba56a9fb1c14a6b1fb6297bace9190f920f3be9fff4495ddd08f28a071",
+          "canonicalGeometrySignature": "a6bb258a394313c5a8b41f51dff4839a65ba480bd503da83839826805e48b58d"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-N03",
+      "category": "nest",
+      "categoryLabel": "多层嵌套型",
+      "name": "同心菱",
+      "feature": "同心菱形轮廓逐层缩放",
+      "structureSignature": "8124d84306547db40c803775ab302e1a748c4bc4d7f8b893ea3a14c8faeaf2a5",
+      "zones": [
+        "center"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 5,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 24,
+        "structureSignature": "393f2c4b099a0cdb51e613019ebf729e2b304c76bee2b316a6f6ea52dff64d8c",
+        "canonicalGeometrySignature": "871b4ae1daa2f927e4ce578b48824874329f5e331d76225b18ca098619553df6"
+      },
+      "cases": [
+        {
+          "profileId": 7,
+          "seed": 12766,
+          "cards": 312,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 24,
+          "installOk": true,
+          "structureSignature": "393f2c4b099a0cdb51e613019ebf729e2b304c76bee2b316a6f6ea52dff64d8c",
+          "canonicalGeometrySignature": "871b4ae1daa2f927e4ce578b48824874329f5e331d76225b18ca098619553df6"
+        },
+        {
+          "profileId": 8,
+          "seed": 12783,
+          "cards": 192,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "8cae8a397fa5354280c234e1789c8940c1f20d8755d2ad5d3af2e7c6449b53d4",
+          "canonicalGeometrySignature": "c9e70d72f458d1fcf0ae193fd5d2955ded0d9e8079beb9c5ded47f6b3ac3b082"
+        },
+        {
+          "profileId": 9,
+          "seed": 12800,
+          "cards": 255,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "4f36d427b40b45ab0b70ee82d350b809bea40384bc39ff18e1cdb17bebbf92d1",
+          "canonicalGeometrySignature": "9fc97600ec53adfaeb4476b109b1a43eecc3bbbf0d3c7c4dc579e274c7bfd188"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-N04",
+      "category": "nest",
+      "categoryLabel": "多层嵌套型",
+      "name": "双层套嵌",
+      "feature": "两个套嵌中心各自成环",
+      "structureSignature": "b71b8b46b611519ca77c6b1301b8ef64ff1a4ffe73bc6124b18e6b1c02e115c9",
+      "zones": [
+        "coreA",
+        "coreB"
+      ],
+      "shapes": [
+        "ring",
+        "shell",
+        "ring",
+        "arc",
+        "ring"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 192,
+        "layers": 59,
+        "regions": 6,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 21,
+        "structureSignature": "0e77ddcf72fb1bb5e3e5172cf453e562eaec85b06696bee6222c16af1b52027b",
+        "canonicalGeometrySignature": "c32378dfb0d02504c2fbb8eb42b380340e4f3c24543dc96e44b316b6f66d370d"
+      },
+      "cases": [
+        {
+          "profileId": 8,
+          "seed": 12897,
+          "cards": 192,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "0e77ddcf72fb1bb5e3e5172cf453e562eaec85b06696bee6222c16af1b52027b",
+          "canonicalGeometrySignature": "c32378dfb0d02504c2fbb8eb42b380340e4f3c24543dc96e44b316b6f66d370d"
+        },
+        {
+          "profileId": 9,
+          "seed": 12914,
+          "cards": 255,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "f0eab300ff416ebbf5aec8ae4eade6b605a0517022aeef60daa682c90ddb3b51",
+          "canonicalGeometrySignature": "e9a6c7f7fee079bda93805911b4526dd5deefa58ad15148c8b078ec3eb5b5f87"
+        },
+        {
+          "profileId": 0,
+          "seed": 12931,
+          "cards": 321,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "0b19d998d092ab29553f2b073158260ac82f36a5bc03b939963fa928e235aa8f",
+          "canonicalGeometrySignature": "46a3bc93c6161aca38eb4acfd5c4cde6bfb40752baed8cc0d463494801a79ccd"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-N05",
+      "category": "nest",
+      "categoryLabel": "多层嵌套型",
+      "name": "阶梯套嵌",
+      "feature": "嵌套深度按层阶梯递进",
+      "structureSignature": "ea3434c42dfbaafe60ad00c68ad622b75513c56e61103108ca92f859c46c66ce",
+      "zones": [
+        "center",
+        "north",
+        "south"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "nest",
+      "layerCurve": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 255,
+        "layers": 64,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 21,
+        "structureSignature": "70f14f7a73f1134061903707bd9d20413c1c10021b530cfbd04b2e80cbafd0c9",
+        "canonicalGeometrySignature": "e8cd5959b8dc0f7e9514e52939fda1dc4537e4e58f8848e634494ac8df967636"
+      },
+      "cases": [
+        {
+          "profileId": 9,
+          "seed": 13028,
+          "cards": 255,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "70f14f7a73f1134061903707bd9d20413c1c10021b530cfbd04b2e80cbafd0c9",
+          "canonicalGeometrySignature": "e8cd5959b8dc0f7e9514e52939fda1dc4537e4e58f8848e634494ac8df967636"
+        },
+        {
+          "profileId": 0,
+          "seed": 13045,
+          "cards": 321,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "fc3f6619835c76f5002e5aa1b15d55ebcc90714d1c175ae16d55772480633059",
+          "canonicalGeometrySignature": "ced3152637c06e29afae3d200f4a5e94d0a1cb6fbbde27d8daf9d101f64de638"
+        },
+        {
+          "profileId": 1,
+          "seed": 13062,
+          "cards": 282,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 21,
+          "installOk": true,
+          "structureSignature": "b36653da306f11013613a90f08e786a79c0ec287af338d57b72bfa7488a18eac",
+          "canonicalGeometrySignature": "7816b0fee77e0c625df6c2b38930856d6054aedba4bb1fd7025af8aa954ca275"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-A01",
+      "category": "asym",
+      "categoryLabel": "非对称复杂叠层型",
+      "name": "左重右轻",
+      "feature": "左侧厚堆，右侧稀疏",
+      "structureSignature": "fe88ba0de123aeafbe54a9a26bba45f7fe3c7fae68ee50a69a213f16363cb448",
+      "zones": [
+        "west",
+        "center",
+        "east"
+      ],
+      "shapes": [
+        "split",
+        "dual",
+        "split",
+        "checker",
+        "split"
+      ],
+      "trajectory": "asym",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "left",
+      "representative": {
+        "cards": 321,
+        "layers": 72,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 20,
+        "structureSignature": "e731a0cdc7465644501f44e591fd673497efa785e56a49d00952ee06babf63af",
+        "canonicalGeometrySignature": "0d0b0e6ad6adc6483106cb0b7d6e88cc57d1c87b608a299ab5717b7b67a71542"
+      },
+      "cases": [
+        {
+          "profileId": 0,
+          "seed": 13159,
+          "cards": 321,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "e731a0cdc7465644501f44e591fd673497efa785e56a49d00952ee06babf63af",
+          "canonicalGeometrySignature": "0d0b0e6ad6adc6483106cb0b7d6e88cc57d1c87b608a299ab5717b7b67a71542"
+        },
+        {
+          "profileId": 1,
+          "seed": 13176,
+          "cards": 282,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "3161e42d264242cba17e1f4f45430f2245e23bcc033b08722040caa43e7650f8",
+          "canonicalGeometrySignature": "d0fa9c6f9a688489ffd0a53634497c3dc3fbaedee46c11cf57ec6fa68c5e602e"
+        },
+        {
+          "profileId": 2,
+          "seed": 13193,
+          "cards": 300,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "b590ccca6636125af0848a6630cf5fd00e2a7975a831c52fd2275c6e6cbe0025",
+          "canonicalGeometrySignature": "6444fe11a675c4359a37d455ed1c997a34f111377dc7ec702b2a366f76b08ecd"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-A02",
+      "category": "asym",
+      "categoryLabel": "非对称复杂叠层型",
+      "name": "右重左轻",
+      "feature": "右侧厚堆，左侧稀疏",
+      "structureSignature": "de2ed035bc8da07c7ef249495b1faaef39dd6e7fa44c41b4becb7e5727d5277a",
+      "zones": [
+        "east",
+        "center",
+        "west"
+      ],
+      "shapes": [
+        "comb",
+        "fan",
+        "comb",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "asym",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "right",
+      "representative": {
+        "cards": 282,
+        "layers": 68,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 264,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 20,
+        "structureSignature": "e2caf78989266702e901f1f68717be87ba1e3e7a489d5ab484baaf1f72f93456",
+        "canonicalGeometrySignature": "500c816367179f6e06297035bbc1004a162b160128f185cdac1466ccf836c6cd"
+      },
+      "cases": [
+        {
+          "profileId": 1,
+          "seed": 13290,
+          "cards": 282,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "e2caf78989266702e901f1f68717be87ba1e3e7a489d5ab484baaf1f72f93456",
+          "canonicalGeometrySignature": "500c816367179f6e06297035bbc1004a162b160128f185cdac1466ccf836c6cd"
+        },
+        {
+          "profileId": 2,
+          "seed": 13307,
+          "cards": 300,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "f2a8bdfee98cbbfcff44a80463969e58484193e8a38a0675e932128e297d413e",
+          "canonicalGeometrySignature": "8aca56df5cbd741ba74dbea0a048616991f945fc9a9d31c145bb24268d0d5c32"
+        },
+        {
+          "profileId": 3,
+          "seed": 13324,
+          "cards": 312,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 15,
+          "installOk": true,
+          "structureSignature": "2633b2b290e06aeabb43a0d584cd8aed1804afabc9d0ea59a1f2ec7633bb669a",
+          "canonicalGeometrySignature": "7557c02c6de707cae08537b0ed307788bb8184875468229291a81ca0a0ff1a62"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-A03",
+      "category": "asym",
+      "categoryLabel": "非对称复杂叠层型",
+      "name": "偏置缺口",
+      "feature": "楔形缺口偏置到一侧",
+      "structureSignature": "ae0370196b44032445cc70fceafeac7f9d701f55558faa60cd1a1d99bec9a6f5",
+      "zones": [
+        "nw",
+        "center",
+        "se"
+      ],
+      "shapes": [
+        "wedge",
+        "stair",
+        "fan",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "asym",
+      "layerCurve": [
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 300,
+        "layers": 70,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 21,
+        "structureSignature": "26673491316e287a1dad3d0f19e02e88d4cce03575e55511adf1c8081ae40147",
+        "canonicalGeometrySignature": "3081e08081f5e7542bbb4a512dfe341bffade0f6bc6123135695a857422ff773"
+      },
+      "cases": [
+        {
+          "profileId": 2,
+          "seed": 13421,
+          "cards": 300,
+          "visible": 21,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 22,
+          "installOk": true,
+          "structureSignature": "26673491316e287a1dad3d0f19e02e88d4cce03575e55511adf1c8081ae40147",
+          "canonicalGeometrySignature": "3081e08081f5e7542bbb4a512dfe341bffade0f6bc6123135695a857422ff773"
+        },
+        {
+          "profileId": 3,
+          "seed": 13438,
+          "cards": 312,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "0ec2ef265c6e81e630a44b927885738cfada73e750f41775dbc6c7910eca3c3a",
+          "canonicalGeometrySignature": "678e7d895e8119cb3a6d4e774e8f5e4272d1f3328cdcdaefa095f69814926c75"
+        },
+        {
+          "profileId": 4,
+          "seed": 13455,
+          "cards": 273,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "9e0adc85f68c4a0a01adf2ec49590bdcf100ce22131a2ae745b6178760d74800",
+          "canonicalGeometrySignature": "c254f7c8aac4703a4c37c26ec0238c157f9dfb0bb51f797ac172af950cfbc953"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-A04",
+      "category": "asym",
+      "categoryLabel": "非对称复杂叠层型",
+      "name": "不规则扇面",
+      "feature": "扇形展开，厚薄不均",
+      "structureSignature": "783e517e59a4046b60057ecf167a80afe75df287148619aa988a7a36ad2359ee",
+      "zones": [
+        "sw",
+        "south",
+        "se",
+        "center"
+      ],
+      "shapes": [
+        "fan",
+        "arc",
+        "fan",
+        "wedge",
+        "fan"
+      ],
+      "trajectory": "asym",
+      "layerCurve": [
+        1,
+        1,
+        3,
+        1,
+        1
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 20,
+        "structureSignature": "ecd7212cabff68d4fc7cc01be6740616fb7ec1dc010367d398b766a1232f2f5e",
+        "canonicalGeometrySignature": "754142894e01b326a957f8aa62816349a83e90af64b9f579194a6a237a227586"
+      },
+      "cases": [
+        {
+          "profileId": 3,
+          "seed": 13552,
+          "cards": 312,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "ecd7212cabff68d4fc7cc01be6740616fb7ec1dc010367d398b766a1232f2f5e",
+          "canonicalGeometrySignature": "754142894e01b326a957f8aa62816349a83e90af64b9f579194a6a237a227586"
+        },
+        {
+          "profileId": 4,
+          "seed": 13569,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "81c05d58278ef9e160bf749fd3f944a792a9942303461df60cfbd2e3dc702ef2",
+          "canonicalGeometrySignature": "90840887b45941ff329debc7114fee7128c29ad50b8909bac8727982c22f5633"
+        },
+        {
+          "profileId": 5,
+          "seed": 13586,
+          "cards": 291,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "8603ab9c7ee513a4b9641d5a09231317bf238301dab5abe41f1ba4e95b327d3b",
+          "canonicalGeometrySignature": "6400e5398042872cafa93ad36f86f5ca79d0fda938695b69cce0dc311af9a599"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-A05",
+      "category": "asym",
+      "categoryLabel": "非对称复杂叠层型",
+      "name": "断桥叠层",
+      "feature": "棋盘式断点造成不规则遮挡链",
+      "structureSignature": "8f1ec882d34f393a23650199ca5e01a1ad2e1868e038699e349d5693d1eef687",
+      "zones": [
+        "west",
+        "east",
+        "center"
+      ],
+      "shapes": [
+        "checker",
+        "split",
+        "checker",
+        "comb",
+        "checker"
+      ],
+      "trajectory": "asym",
+      "layerCurve": [
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "env": {
+        "colsLo": 3,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 273,
+        "layers": 67,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 19,
+        "structureSignature": "8883d718d367333015ff421db459c0212fc922194f68abed1c36ab2fbaa7a1d5",
+        "canonicalGeometrySignature": "198c57c3226330bb4c858accf374f77027147b80ace2bcca5b96d155b9e1a27e"
+      },
+      "cases": [
+        {
+          "profileId": 4,
+          "seed": 13683,
+          "cards": 273,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "8883d718d367333015ff421db459c0212fc922194f68abed1c36ab2fbaa7a1d5",
+          "canonicalGeometrySignature": "198c57c3226330bb4c858accf374f77027147b80ace2bcca5b96d155b9e1a27e"
+        },
+        {
+          "profileId": 5,
+          "seed": 13700,
+          "cards": 291,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "71d4460057b381d929ee5b685fea92213c9b8bb0d5cebb4dbd31e2751550f1d1",
+          "canonicalGeometrySignature": "089fa409bda08d3fe002a08995bcad3e4182c18ad3a4db012bb30c107a2624a2"
+        },
+        {
+          "profileId": 6,
+          "seed": 13717,
+          "cards": 261,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 19,
+          "installOk": true,
+          "structureSignature": "150e9b9087cb98980ed698d4de190ecc884762bf31228e6412b5a25071a92118",
+          "canonicalGeometrySignature": "b945eee76c35d7dd7fc096c0df8a976942fb11f3e5d1735f8193fb790336ad4e"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-M01",
+      "category": "combo",
+      "categoryLabel": "组合异形型",
+      "name": "梳齿长墙",
+      "feature": "水平长墙 + 梳齿缺口",
+      "structureSignature": "b239908b2d082a29349ceef9a03a279623573d0bbb3684dfa3a21ab119600f56",
+      "zones": [
+        "west",
+        "center",
+        "east"
+      ],
+      "shapes": [
+        "comb",
+        "fan",
+        "comb",
+        "wedge",
+        "comb"
+      ],
+      "trajectory": "horizontal",
+      "layerCurve": [
+        1,
+        1.35,
+        1.7,
+        2.1,
+        2.5
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 291,
+        "layers": 69,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 308,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 572
+        },
+        "visible": 22,
+        "structureSignature": "c6d56fba63ca0228a72854821bc65e2c14fbc6652d6dccacae07a93cd86ba512",
+        "canonicalGeometrySignature": "61aeecc55c33dfd2c8ac7045937f2e8217d034ffc22ce447ba5c3108ed5bbdf8"
+      },
+      "cases": [
+        {
+          "profileId": 5,
+          "seed": 13814,
+          "cards": 291,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 16,
+          "installOk": true,
+          "structureSignature": "c6d56fba63ca0228a72854821bc65e2c14fbc6652d6dccacae07a93cd86ba512",
+          "canonicalGeometrySignature": "61aeecc55c33dfd2c8ac7045937f2e8217d034ffc22ce447ba5c3108ed5bbdf8"
+        },
+        {
+          "profileId": 6,
+          "seed": 13831,
+          "cards": 261,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "54fe06033eadd28739f0ef1375f455a955e9fad2c834fd2342f2e2556701b1a8",
+          "canonicalGeometrySignature": "444effc3f03d9d1633b63c169bec4ad2b63a1275a3429e503b35745f36a2b866"
+        },
+        {
+          "profileId": 7,
+          "seed": 13848,
+          "cards": 312,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "9a6c0d634297ee81bf9ac9ba9ee9b5bdbc86bf5bc7e99c616c7acdfcf5ad3163",
+          "canonicalGeometrySignature": "96a004865ec20c210199388d25b39e7330d1b09b626fed13bc10886a3b23f1d9"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-M02",
+      "category": "combo",
+      "categoryLabel": "组合异形型",
+      "name": "弧带环绕",
+      "feature": "弧带沿上缘环绕",
+      "structureSignature": "f4a4396eebe25dd8ee8dd6303e0ee2df71b3037e696bad0445c7201fac6db0d4",
+      "zones": [
+        "nw",
+        "north",
+        "ne",
+        "center"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "ring",
+      "layerCurve": [
+        1,
+        1.6,
+        2.2,
+        1.6,
+        1
+      ],
+      "env": {
+        "colsLo": 7,
+        "colsHi": 10,
+        "rowsMax": 3
+      },
+      "offsets": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 261,
+        "layers": 66,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 836,
+          "w": 660,
+          "h": 616
+        },
+        "visible": 20,
+        "structureSignature": "3c9037229aa862d25d4e49315259d76a7cd89f221067a9f1b7032afba8f2ab25",
+        "canonicalGeometrySignature": "7138093e2bf565007c043c587488ec8a49455d04e24c8af225403731d9c37870"
+      },
+      "cases": [
+        {
+          "profileId": 6,
+          "seed": 13945,
+          "cards": 261,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "3c9037229aa862d25d4e49315259d76a7cd89f221067a9f1b7032afba8f2ab25",
+          "canonicalGeometrySignature": "7138093e2bf565007c043c587488ec8a49455d04e24c8af225403731d9c37870"
+        },
+        {
+          "profileId": 7,
+          "seed": 13962,
+          "cards": 312,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "9f22b31510aa75ecc416d373b4600a3296a849e1ff74d7425f23fbef615cdef7",
+          "canonicalGeometrySignature": "0ae1018bc0bad8289acd2dd6d93a18da8360160e60322523edd094ff3793f9c8"
+        },
+        {
+          "profileId": 8,
+          "seed": 13979,
+          "cards": 192,
+          "visible": 24,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 12,
+          "installOk": true,
+          "structureSignature": "c7c60b8199eb2486baee6966468b31544ecb666ab7137279884a1c98828cd62b",
+          "canonicalGeometrySignature": "ef9c032f90b810b8b1257cc114a7ab15802d252f6f69443e96e5490701a5fe2c"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-M03",
+      "category": "combo",
+      "categoryLabel": "组合异形型",
+      "name": "菱形叠压",
+      "feature": "菱形轮廓沿纵向叠压",
+      "structureSignature": "b64bb6b6af705d2f922582a9041022d84ae329e9d34323d91b9ce907a643f555",
+      "zones": [
+        "center",
+        "north",
+        "south"
+      ],
+      "shapes": [
+        "arc",
+        "shell",
+        "arc",
+        "diamond",
+        "arc"
+      ],
+      "trajectory": "vertical",
+      "layerCurve": [
+        2.2,
+        1.6,
+        1,
+        1.6,
+        2.2
+      ],
+      "env": {
+        "colsLo": 4,
+        "colsHi": 6,
+        "rowsMax": 5
+      },
+      "offsets": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "pin": "none",
+      "representative": {
+        "cards": 312,
+        "layers": 71,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 19,
+        "structureSignature": "4b7b27e86942ab9b8c3299e2ca89da25fb363306e39d5c66b3a626d6d23a60f4",
+        "canonicalGeometrySignature": "281c43778626f9d42206b6eb7c35bef490c3ade358e957fa6954a78cd8489164"
+      },
+      "cases": [
+        {
+          "profileId": 7,
+          "seed": 14076,
+          "cards": 312,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "4b7b27e86942ab9b8c3299e2ca89da25fb363306e39d5c66b3a626d6d23a60f4",
+          "canonicalGeometrySignature": "281c43778626f9d42206b6eb7c35bef490c3ade358e957fa6954a78cd8489164"
+        },
+        {
+          "profileId": 8,
+          "seed": 14093,
+          "cards": 192,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 14,
+          "installOk": true,
+          "structureSignature": "24a90a9b1357d93e418c6fdfce59a6ed9362479fb38fa4b07b793a5c19b7715d",
+          "canonicalGeometrySignature": "27c1d5a52963410828a6ad2066f85f944f50f9ace8a6e471a4290ab23fbefbd2"
+        },
+        {
+          "profileId": 9,
+          "seed": 14110,
+          "cards": 255,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 10,
+          "installOk": true,
+          "structureSignature": "1b124da568497da122314f676c737afe30c926e317b75dca7f227ab94c31efc6",
+          "canonicalGeometrySignature": "e212d00f8b937de9e4eb311f54dfce3a4762e3d28957adced412228b82a1515e"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-M04",
+      "category": "combo",
+      "categoryLabel": "组合异形型",
+      "name": "螺旋外扩",
+      "feature": "层中心沿螺旋向外扩张",
+      "structureSignature": "e8287b4bf8d2582118029f1af5d87a1a4985de8d51ed47eb5f87e1a8a678d489",
+      "zones": [
+        "center",
+        "nw",
+        "ne",
+        "se",
+        "sw"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "spiral",
+      "layerCurve": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3
+      ],
+      "env": {
+        "colsLo": 5,
+        "colsHi": 8,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "pin": "corners",
+      "representative": {
+        "cards": 192,
+        "layers": 59,
+        "regions": 8,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 23,
+        "structureSignature": "cc9b366b9845787fa52e6703809a58ccb3012d972c0dccb7450ea0edf1373d06",
+        "canonicalGeometrySignature": "0069673cc787a7af521ea9d148ea5926a34645ccc4285cb75486ec8b381eeaf6"
+      },
+      "cases": [
+        {
+          "profileId": 8,
+          "seed": 14207,
+          "cards": 192,
+          "visible": 23,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 20,
+          "installOk": true,
+          "structureSignature": "cc9b366b9845787fa52e6703809a58ccb3012d972c0dccb7450ea0edf1373d06",
+          "canonicalGeometrySignature": "0069673cc787a7af521ea9d148ea5926a34645ccc4285cb75486ec8b381eeaf6"
+        },
+        {
+          "profileId": 9,
+          "seed": 14224,
+          "cards": 255,
+          "visible": 25,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 18,
+          "installOk": true,
+          "structureSignature": "14c5b4e38df67f955b1b15fd2c1f2fc68b43d7ab3633963fb30126e13fd9c9d8",
+          "canonicalGeometrySignature": "d484b4d19be865582f85dfdad646211e93efa121c062f2c878748515dff92e60"
+        },
+        {
+          "profileId": 0,
+          "seed": 14241,
+          "cards": 321,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "396699c01d8dfb930d1e4216f95a5a63562421680a175d0952ea1412edeabc63",
+          "canonicalGeometrySignature": "4cdeae24c59aa3ab8640e0665465706481fd497bc066429b055fbd09e311671c"
+        }
+      ]
+    },
+    {
+      "templateId": "L2-M05",
+      "category": "combo",
+      "categoryLabel": "组合异形型",
+      "name": "沙漏交错",
+      "feature": "宽窄层交错 + 十字错位",
+      "structureSignature": "2fe2f43a5e402e46be047c161582ace91e7dc8f8682fb30833fc7293768484dd",
+      "zones": [
+        "midTop",
+        "center",
+        "midBottom"
+      ],
+      "shapes": [
+        "blob",
+        "band",
+        "ring",
+        "cross",
+        "stair",
+        "diamond"
+      ],
+      "trajectory": "cross",
+      "layerCurve": [
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "env": {
+        "colsLo": 8,
+        "colsHi": 10,
+        "rowsMax": 4
+      },
+      "offsets": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "pin": "edges",
+      "representative": {
+        "cards": 255,
+        "layers": 64,
+        "regions": 7,
+        "box": {
+          "minX": 33,
+          "minY": 220,
+          "maxX": 693,
+          "maxY": 880,
+          "w": 660,
+          "h": 660
+        },
+        "visible": 22,
+        "structureSignature": "364216dc5ff9f29b51348eb73356b2b8216107d1affe401717f0d878286d9df6",
+        "canonicalGeometrySignature": "6e53106e5297ca9a747949fa91c1788f7a543f6d7a3cde2fdce8345410d28628"
+      },
+      "cases": [
+        {
+          "profileId": 9,
+          "seed": 14338,
+          "cards": 255,
+          "visible": 22,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 13,
+          "installOk": true,
+          "structureSignature": "364216dc5ff9f29b51348eb73356b2b8216107d1affe401717f0d878286d9df6",
+          "canonicalGeometrySignature": "6e53106e5297ca9a747949fa91c1788f7a543f6d7a3cde2fdce8345410d28628"
+        },
+        {
+          "profileId": 0,
+          "seed": 14355,
+          "cards": 321,
+          "visible": 20,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 17,
+          "installOk": true,
+          "structureSignature": "005f0bacfe3bf8f0dd09e7d1deef48b50c4361e2f528e3f519188d9da9b37ab6",
+          "canonicalGeometrySignature": "4f2248dd1ffb60e1deb742a1e74fcdb59b19500e91a59d27764248d4f64911e2"
+        },
+        {
+          "profileId": 1,
+          "seed": 14372,
+          "cards": 282,
+          "visible": 19,
+          "floatingCount": 0,
+          "strictFloating": 0,
+          "exposedAfterRemove": 11,
+          "installOk": true,
+          "structureSignature": "b566e505e76be3d5a12b6c0d12412e507e5899f3b0d3683620992a09a15ed8ba",
+          "canonicalGeometrySignature": "c3be451607b843e060118658d1eadf210982c9a7c109f17ee5f33598edd10fb5"
+        }
+      ]
+    }
+  ],
+  "pairStats": {
+    "pairs": 1225,
+    "maxStructureSimilarity": 0.43544277783408214,
+    "maxLayoutSimilarity": 0.4426497211842929,
+    "overThreshold": 0,
+    "distinctLayerShapes": 36,
+    "distinctRegionShapes": 49,
+    "distinctBoxes": 4,
+    "distinctSilhouettes": 50
+  }
+}

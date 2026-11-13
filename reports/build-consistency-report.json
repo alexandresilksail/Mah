@@ -1,58 +1,58 @@
 {
-  "generatedAt": "2026-11-12T14:00:49.089Z",
-  "gitCommit": "cb43412f6f7bca753833448d5823a1f9aad56cda",
+  "generatedAt": "2026-11-13T06:37:39.580Z",
+  "gitCommit": "a4340d167ff6b185a0f59ee0ecda7d3901b82cf8",
   "command": "node test-build-consistency.js",
   "assertions": {
-    "pass": 71,
+    "pass": 110,
     "fail": 0
   },
   "exitCode": 0,
   "files": {
     "modern": {
       "path": "dist/MahLeMah.html",
-      "bytes": 9885845,
-      "sha256": "5ab697cd761c15808f212051ad587fe6fe8bb3d1f4f5e8b9b113eb02b0d2797f"
+      "bytes": 9924128,
+      "sha256": "61eb93fc932cd5f29524f1fc64ccd7fd40e0d9ae66af9070dc3efdb13eddb9b2"
     },
     "legacy": {
       "path": "dist/MahLeMah-legacy.html",
-      "bytes": 9919967,
-      "sha256": "6dfec65af7ee49acdf7c0f8c0697c9bca2c3fd10e64987110ac877a36a10dc5c"
+      "bytes": 9958241,
+      "sha256": "0d5c00475d929545e50b5149cab3bb6d8e8e6fd4a7cb1c3c608c8778519e2f8c"
     }
   },
   "bundle": {
     "modern": {
-      "bytes": 9883713,
-      "sha256": "60f8d75ed17f458540e6f4be59c4db8edeed4a81d75a72e63a038f21768a0e43",
+      "bytes": 9921996,
+      "sha256": "69ecbe87fabfcbc2fefaa3728baf8afd05bfd364d883d90b106ca0f51471a2d1",
       "identical": true
     },
     "legacy": {
-      "bytes": 9889625,
-      "sha256": "431922f4ef1762a6600a24894080c23e7e46278dd2a312e8605ab34ddc953ec7",
+      "bytes": 9927899,
+      "sha256": "6b4b00f19b85879c185a9deb15b498da02bcc9153ee79e12e479f48457210dae",
       "identical": true,
       "minified": true
     }
   },
   "buildInfo": {
     "modern": {
-      "buildVersion": "2.0.0-cb43412",
-      "gitCommit": "cb43412f6f7bca753833448d5823a1f9aad56cda",
-      "sourceHash": "7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576",
-      "buildTimestamp": "2026-11-12T13:39:56.668Z",
-      "sourceFiles": 33
+      "buildVersion": "2.0.0-a4340d1",
+      "gitCommit": "a4340d167ff6b185a0f59ee0ecda7d3901b82cf8",
+      "sourceHash": "f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335",
+      "buildTimestamp": "2026-11-13T06:33:51.731Z",
+      "sourceFiles": 37
     },
     "legacy": {
-      "buildVersion": "2.0.0-cb43412",
-      "gitCommit": "cb43412f6f7bca753833448d5823a1f9aad56cda",
-      "sourceHash": "7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576",
-      "buildTimestamp": "2026-11-12T13:40:06.551Z",
-      "sourceFiles": 33
+      "buildVersion": "2.0.0-a4340d1",
+      "gitCommit": "a4340d167ff6b185a0f59ee0ecda7d3901b82cf8",
+      "sourceHash": "f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335",
+      "buildTimestamp": "2026-11-13T06:33:57.383Z",
+      "sourceFiles": 37
     },
     "live": {
-      "buildVersion": "2.0.0-cb43412",
-      "gitCommit": "cb43412f6f7bca753833448d5823a1f9aad56cda",
-      "sourceHash": "7585b01a137a66b1adac54b7d5b3c2dde2ef57e3db4b2f7ff314dd5fcb255576",
-      "buildTimestamp": "2026-11-12T14:00:48.540Z",
-      "sourceFiles": 33
+      "buildVersion": "2.0.0-a4340d1",
+      "gitCommit": "a4340d167ff6b185a0f59ee0ecda7d3901b82cf8",
+      "sourceHash": "f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335",
+      "buildTimestamp": "2026-11-13T06:37:38.830Z",
+      "sourceFiles": 37
     }
   },
   "markers": {
@@ -100,6 +100,46 @@
       "modern": true,
       "legacy": true
     }
+  },
+  "l2TemplateMarkers": {
+    "dist/MahLeMah.html|MAH-L2-STRUCT-v1/SHA-256": true,
+    "dist/MahLeMah.html|MAH-L2-CANON-v1/SHA-256": true,
+    "dist/MahLeMah.html|MAH-L2-DEDUP-v1": true,
+    "dist/MahLeMah.html|canonicalGeometrySignature": true,
+    "dist/MahLeMah.html|structureSignature": true,
+    "dist/MahLeMah.html|TEMPLATE_POOL_EXHAUSTED": true,
+    "dist/MahLeMah.html|templateId": true,
+    "dist/MahLeMah.html|level2RecentGames": true,
+    "dist/MahLeMah-legacy.html|MAH-L2-STRUCT-v1/SHA-256": true,
+    "dist/MahLeMah-legacy.html|MAH-L2-CANON-v1/SHA-256": true,
+    "dist/MahLeMah-legacy.html|MAH-L2-DEDUP-v1": true,
+    "dist/MahLeMah-legacy.html|canonicalGeometrySignature": true,
+    "dist/MahLeMah-legacy.html|structureSignature": true,
+    "dist/MahLeMah-legacy.html|TEMPLATE_POOL_EXHAUSTED": true,
+    "dist/MahLeMah-legacy.html|templateId": true,
+    "dist/MahLeMah-legacy.html|level2RecentGames": true,
+    "dist/index.html|MAH-L2-STRUCT-v1/SHA-256": true,
+    "dist/index.html|MAH-L2-CANON-v1/SHA-256": true,
+    "dist/index.html|MAH-L2-DEDUP-v1": true,
+    "dist/index.html|canonicalGeometrySignature": true,
+    "dist/index.html|structureSignature": true,
+    "dist/index.html|TEMPLATE_POOL_EXHAUSTED": true,
+    "dist/index.html|templateId": true,
+    "dist/index.html|level2RecentGames": true,
+    "dist/Mah了个Mah.html|MAH-L2-STRUCT-v1/SHA-256": true,
+    "dist/Mah了个Mah.html|MAH-L2-CANON-v1/SHA-256": true,
+    "dist/Mah了个Mah.html|MAH-L2-DEDUP-v1": true,
+    "dist/Mah了个Mah.html|canonicalGeometrySignature": true,
+    "dist/Mah了个Mah.html|structureSignature": true,
+    "dist/Mah了个Mah.html|TEMPLATE_POOL_EXHAUSTED": true,
+    "dist/Mah了个Mah.html|templateId": true,
+    "dist/Mah了个Mah.html|level2RecentGames": true
+  },
+  "l2TemplateIdSets": {
+    "dist/MahLeMah.html": "L2-A01,L2-A02,L2-A03,L2-A04,L2-A05,L2-C01,L2-C02,L2-C03,L2-C04,L2-C05,L2-D01,L2-D02,L2-D03,L2-D04,L2-D05,L2-E01,L2-E02,L2-E03,L2-E04,L2-E05,L2-M01,L2-M02,L2-M03,L2-M04,L2-M05,L2-N01,L2-N02,L2-N03,L2-N04,L2-N05,L2-R01,L2-R02,L2-R03,L2-R04,L2-R05,L2-S01,L2-S02,L2-S03,L2-S04,L2-S05,L2-T01,L2-T02,L2-T03,L2-T04,L2-T05,L2-X01,L2-X02,L2-X03,L2-X04,L2-X05",
+    "dist/MahLeMah-legacy.html": "L2-A01,L2-A02,L2-A03,L2-A04,L2-A05,L2-C01,L2-C02,L2-C03,L2-C04,L2-C05,L2-D01,L2-D02,L2-D03,L2-D04,L2-D05,L2-E01,L2-E02,L2-E03,L2-E04,L2-E05,L2-M01,L2-M02,L2-M03,L2-M04,L2-M05,L2-N01,L2-N02,L2-N03,L2-N04,L2-N05,L2-R01,L2-R02,L2-R03,L2-R04,L2-R05,L2-S01,L2-S02,L2-S03,L2-S04,L2-S05,L2-T01,L2-T02,L2-T03,L2-T04,L2-T05,L2-X01,L2-X02,L2-X03,L2-X04,L2-X05",
+    "dist/index.html": "L2-A01,L2-A02,L2-A03,L2-A04,L2-A05,L2-C01,L2-C02,L2-C03,L2-C04,L2-C05,L2-D01,L2-D02,L2-D03,L2-D04,L2-D05,L2-E01,L2-E02,L2-E03,L2-E04,L2-E05,L2-M01,L2-M02,L2-M03,L2-M04,L2-M05,L2-N01,L2-N02,L2-N03,L2-N04,L2-N05,L2-R01,L2-R02,L2-R03,L2-R04,L2-R05,L2-S01,L2-S02,L2-S03,L2-S04,L2-S05,L2-T01,L2-T02,L2-T03,L2-T04,L2-T05,L2-X01,L2-X02,L2-X03,L2-X04,L2-X05",
+    "dist/Mah了个Mah.html": "L2-A01,L2-A02,L2-A03,L2-A04,L2-A05,L2-C01,L2-C02,L2-C03,L2-C04,L2-C05,L2-D01,L2-D02,L2-D03,L2-D04,L2-D05,L2-E01,L2-E02,L2-E03,L2-E04,L2-E05,L2-M01,L2-M02,L2-M03,L2-M04,L2-M05,L2-N01,L2-N02,L2-N03,L2-N04,L2-N05,L2-R01,L2-R02,L2-R03,L2-R04,L2-R05,L2-S01,L2-S02,L2-S03,L2-S04,L2-S05,L2-T01,L2-T02,L2-T03,L2-T04,L2-T05,L2-X01,L2-X02,L2-X03,L2-X04,L2-X05"
   },
   "uniqueProfileTotals": [
     24,

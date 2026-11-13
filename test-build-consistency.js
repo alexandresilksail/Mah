@@ -225,6 +225,42 @@ for (const [f, h] of musicVersions) {
   ok(/media-src[^;]*data:[^;]*blob:/.test(conf), 'Tauri CSP 放行 data:/blob: 音频（旧 media-src none 会拦住播放）');
 }
 
+line('\n[7] 第二关 50 套模板与最近 10 局去重逻辑进入全部正式产物（本轮新增）');
+const l2Markers = [
+  'MAH-L2-STRUCT-v1/SHA-256',
+  'MAH-L2-CANON-v1/SHA-256',
+  'MAH-L2-DEDUP-v1',
+  'canonicalGeometrySignature',
+  'structureSignature',
+  'TEMPLATE_POOL_EXHAUSTED',
+  'templateId',
+  'level2RecentGames',
+];
+const l2Versions = musicVersions.slice();
+const l2MarkerResult = {};
+const idSets = {};
+for (const [f, h] of l2Versions) {
+  for (const m of l2Markers) {
+    const hit = h.indexOf(m) >= 0;
+    const key = f + '|' + m;
+    l2MarkerResult[key] = hit;
+    ok(hit, `${f} 含第二关升级标记「${m}」`);
+  }
+  const ids = new Set(h.match(/L2-[A-Z]\d{2}/g) || []);
+  idSets[f] = Array.from(ids).sort().join(',');
+  ok(ids.size === 50, `${f} 内嵌全部 50 个 templateId（实测 ${ids.size}）`);
+}
+ok(new Set(Object.values(idSets)).size === 1,
+  '4 个正式 HTML 内嵌的 50 个 templateId 集合完全一致');
+ok(readFileSync(join(root, 'dist/index.html'), 'utf8') === modernHtml &&
+  readFileSync(join(root, 'dist/Mah了个Mah.html'), 'utf8') === modernHtml,
+  '网页版 3 个 HTML 副本与 dist/MahLeMah.html 逐字节相同');
+ok(readFileSync(join(root, 'src/game/l2_templates.js'), 'utf8').indexOf('L2-C01') >= 0 &&
+  readFileSync(join(root, 'src/game/l2_geometry.js'), 'utf8').indexOf('generateTemplateLayout') >= 0 &&
+  readFileSync(join(root, 'src/game/l2_structure.js'), 'utf8').indexOf('canonicalGeometrySignature') >= 0 &&
+  readFileSync(join(root, 'src/game/l2_recent.js'), 'utf8').indexOf('checkL2DualDedup') >= 0,
+  '4 个第二关新模块源码齐备，均被同源打包函数纳入 sourceHash');
+
 const report = {
   generatedAt: new Date().toISOString(),
   gitCommit: head,
@@ -241,6 +277,8 @@ const report = {
   },
   buildInfo: { modern: modernBuild, legacy: legacyBuild, live: liveInfo },
   markers: markerResult,
+  l2TemplateMarkers: l2MarkerResult,
+  l2TemplateIdSets: idSets,
   uniqueProfileTotals: uniqueTotals,
   method: '逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断',
 };
@@ -271,6 +309,12 @@ let md = `# HTML ↔ src 构建一致性报告\n\n` +
   Object.keys(markerResult).map((k) => `| \`${k}\` | ${markerResult[k].modern ? 'PASS' : 'FAIL'} | ${markerResult[k].legacy ? 'PASS' : 'FAIL'} |`).join('\n') +
   `\n\n真实档位的总牌数（运行时由 mainCount + queueCount 得出，从 config 读取）：${uniqueTotals.join(' / ')} 张；` +
   `其主堆张数常量 ${mainCounts.join(' / ')} 全部同时存在于两个 bundle（逐字节比对才是主判定）。\n\n` +
+  `## 第二关 50 套模板 / 双重去重一致性\n\n` +
+  `4 个正式 HTML 均内嵌 50 个唯一 \`templateId\`、结构签名算法、等价几何算法、` +
+  `双重去重判定与模板池耗尽报错；网页版 3 个副本逐字节相同。\n\n` +
+  '| 产物 | 模板 ID 数 | 关键标记 |\n|---|---:|---|\n' +
+  l2Versions.map(([f, h]) => `| ${f} | ${(h.match(/L2-[A-Z]\\d{2}/g) || []).length ? new Set(h.match(/L2-[A-Z]\\d{2}/g) || []).size : 0} | ` +
+    `${l2Markers.every((m) => h.indexOf(m) >= 0) ? '全部命中' : '缺失'} |`).join('\n') + '\n\n' +
   `## 旧版残留\n\n两个 HTML 均无 \`src="main.js"\` / \`href="styles.css"\` 外链、无「240 张 / 48 张」旧版固定文案；` +
   `\`main.js\` 的所有新开局入口都不再调用 \`startNewRun()\` / \`restartLevel()\` / \`startLevel()\` 各自实现，统一走 \`createNewGame()\`。\n\n` +
   (fail ? `\n## 失败项\n\n${failLabels.map((x) => '- ' + x).join('\n')}\n` : '\n**全部一致性断言通过。**\n');

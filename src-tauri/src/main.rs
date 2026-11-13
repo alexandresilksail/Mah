@@ -29,29 +29,42 @@ use std::path::{Path, PathBuf};
 /// 与 exe 同级的数据目录名（对外承诺的唯一落点）
 const DATA_DIR: &str = "MahLeMah_Data";
 
-/// 存档大小上限：64 KB（每关只存最近 5 条元数据，远小于该上限；本轮不放宽）
+/// 存档大小上限：64 KB（L1 最近 3 条 / L2 最近 10 条元数据，远小于该上限；本轮不放宽）
 const MAX_SAVE_BYTES: usize = 64 * 1024;
 
 /// 存档 JSON 字段白名单：出现任何未知字段一律拒绝
-/// p1 / p2 = 两关当前档位 id；level1RecentGames / level2RecentGames = 各关最近五局历史；
-/// musicMap = 背景音乐映射（场景 → 文件名数组），本轮新增。
-/// 旧存档（v1/v2/v3）缺这些字段时按缺省处理，不判非法。
+/// p1 / p2 = 两关当前档位 id；level1RecentGames / level2RecentGames = 各关最近牌局历史；
+/// musicMap = 背景音乐映射（场景 → 文件名数组）。
+/// 旧存档（v1/v2/v3/v4）缺这些字段时按缺省处理，不判非法。
 const SAVE_FIELDS: [&str; 12] = [
     "v", "level", "best", "sound", "sfxVol", "music", "musicVol", "p1", "p2",
     "level1RecentGames", "level2RecentGames", "musicMap",
 ];
 
-/// 单条历史记录的字段白名单（与 src/game/recent_games.js 的 RECORD_FIELDS 一一对应）
-const RECORD_FIELDS: [&str; 12] = [
+/// 单条历史记录的字段白名单（与 src/game/recent_games.js 的 L2_RECORD_FIELDS 一一对应）
+const RECORD_FIELDS: [&str; 15] = [
+    "gameId", "level", "difficultyId", "seed", "totalTiles", "tileTypeCount",
+    "layoutSignature", "geometrySignature", "distributionSignature",
+    "generatedAt", "generationReason", "validationResult",
+    "templateId", "structureSignature", "canonicalGeometrySignature",
+];
+/// 必填的 12 个基础字段：旧档 v1–v4 只有这些，新增 3 个字段是可选的
+const REQUIRED_RECORD_FIELDS: [&str; 12] = [
     "gameId", "level", "difficultyId", "seed", "totalTiles", "tileTypeCount",
     "layoutSignature", "geometrySignature", "distributionSignature",
     "generatedAt", "generationReason", "validationResult",
 ];
+/// 只属于第二关的可选字段：模板 ID + 两种几何签名（旧档缺失合法）
+const L2_OPTIONAL_RECORD_FIELDS: [&str; 3] = [
+    "templateId", "structureSignature", "canonicalGeometrySignature",
+];
 const GENERATION_REASONS: [&str; 4] = [
     "application_restart", "title_screen_restart", "failure_restart", "new_game",
 ];
-/// 每关保留最近 3 局（本轮规格；与 src/game/recent_games.js 的 HISTORY_LIMIT 一致）
-const HISTORY_LIMIT: usize = 3;
+/// 第一关窗口冻结为 3 局（与 src/game/recent_games.js 的 HISTORY_LIMIT 一致）；
+/// 第二关独立维护最近 10 局（与 L2_HISTORY_LIMIT 一致）。
+const HISTORY_LIMIT_L1: usize = 3;
+const HISTORY_LIMIT_L2: usize = 10;
 
 /* ---- 背景音乐（第 4.4 节）白名单与上限，与 src/game/music_store.js 逐条对应 ---- */
 /// 固定 6 个场景，存档里的 musicMap 只允许这些 key
@@ -95,21 +108,24 @@ pub fn data_dir() -> Result<PathBuf, String> {
 /* IPC 命令                                                            */
 /* ------------------------------------------------------------------ */
 
-/// 最近五局历史校验：
-///  · 必须是数组、最多 5 条（防止存档无限制膨胀）；
-///  · 每条记录的字段必须在白名单内，且 12 个字段全部存在（拒绝半写入记录）；
+/// 最近牌局历史校验：
+///  · 必须是数组；第一关最多 3 条、第二关最多 10 条（防止存档无限制膨胀）；
+///  · 每条记录的字段必须在白名单内，且 12 个基础字段全部存在（拒绝半写入记录）；
+///  · 第二关额外的 3 个字段可选（旧档缺失合法），出现时必须严格校验格式；
+///  · 第一关不允许出现模板字段（第一关完全冻结）；
 ///  · 字符串长度、签名格式、整数范围、reason 枚举、校验结果严格检查；
 ///  · 损坏记录一律拒绝整份存档，绝不让非法布局数据进入游戏。
 fn validate_history_field(
     obj: &serde_json::Map<String, serde_json::Value>,
     key: &str,
+    limit: usize,
 ) -> Result<(), String> {
     let arr = match obj.get(key) {
         Some(v) => v.as_array().ok_or_else(|| format!("{key} 必须是数组"))?,
         None => return Ok(()), // 旧存档无历史字段：合法
     };
-    if arr.len() > HISTORY_LIMIT {
-        return Err(format!("{key} 最多 {HISTORY_LIMIT} 条，实际 {}", arr.len()));
+    if arr.len() > limit {
+        return Err(format!("{key} 最多 {limit} 条，实际 {}", arr.len()));
     }
     for (i, rec) in arr.iter().enumerate() {
         let r = rec
@@ -120,9 +136,35 @@ fn validate_history_field(
                 return Err(format!("{key}[{i}] 包含未知字段: {k}"));
             }
         }
-        for f in RECORD_FIELDS {
+        for f in REQUIRED_RECORD_FIELDS {
             if !r.contains_key(f) {
                 return Err(format!("{key}[{i}] 缺少字段 {f}（疑似半写入）"));
+            }
+        }
+        // 第二关的可选字段：存在即校验；第一关出现即拒绝（冻结边界）
+        for f in L2_OPTIONAL_RECORD_FIELDS {
+            if let Some(v) = r.get(f) {
+                if key == "level1RecentGames" {
+                    return Err(format!("{key}[{i}] 第一关历史不得包含模板字段 {f}"));
+                }
+                let s = v
+                    .as_str()
+                    .ok_or_else(|| format!("{key}[{i}].{f} 必须是字符串"))?;
+                if f == "templateId" {
+                    let ok_id = s.len() >= 4
+                        && s.len() <= 32
+                        && s.starts_with("L2-")
+                        && s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-');
+                    if !ok_id {
+                        return Err(format!("{key}[{i}].templateId 格式非法: {s}"));
+                    }
+                } else {
+                    let hex = s.len() == 64
+                        && s.bytes().all(|b| b.is_ascii_digit() || (b'a' <= b && b <= b'f'));
+                    if !hex {
+                        return Err(format!("{key}[{i}].{f} 不是 64 位小写 SHA-256"));
+                    }
+                }
             }
         }
         let game_id = r["gameId"]
@@ -258,7 +300,7 @@ fn validate_music_map(obj: &serde_json::Map<String, serde_json::Value>) -> Resul
 ///   3. 字段白名单（未知字段直接拒绝）；
 ///   4. 版本号 v ∈ {1, 2, 3}（v1/v2 = 旧档兼容，v3 = 含最近三局历史）；
 ///   5. 各字段类型 / 数值范围严格检查，任何异常数据一律拒绝；
-///   6. 两关历史各自独立校验，最多 3 条、字段完整、签名格式合法。
+///   6. 两关历史各自独立校验：L1 最多 3 条、L2 最多 10 条，字段完整、签名合法。
 fn validate_save_json(data: &str) -> Result<(), String> {
     if data.len() > MAX_SAVE_BYTES {
         return Err(format!("存档过大：{} 字节 > 上限 {MAX_SAVE_BYTES}", data.len()));
@@ -325,9 +367,9 @@ fn validate_save_json(data: &str) -> Result<(), String> {
         }
     }
 
-    // 两关历史：独立校验，损坏 / 半写入 / 超量一律拒绝
-    validate_history_field(obj, "level1RecentGames")?;
-    validate_history_field(obj, "level2RecentGames")?;
+    // 两关历史：独立校验（窗口不同），损坏 / 半写入 / 超量一律拒绝
+    validate_history_field(obj, "level1RecentGames", HISTORY_LIMIT_L1)?;
+    validate_history_field(obj, "level2RecentGames", HISTORY_LIMIT_L2)?;
     // 背景音乐映射（本轮新增；旧存档没有该字段时跳过）
     validate_music_map(obj)?;
     Ok(())
