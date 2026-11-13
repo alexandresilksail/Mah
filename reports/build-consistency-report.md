@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-13T06:37:39.580Z
-- Git commit：`a4340d167ff6b185a0f59ee0ecda7d3901b82cf8`
+- 运行时间：2026-11-13T06:54:18.584Z
+- Git commit：`c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`
 - 断言：通过 **110**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -25,8 +25,8 @@
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-a4340d1 | 2.0.0-a4340d1 | 2.0.0-a4340d1 |
-| gitCommit | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 |
+| buildVersion | 2.0.0-a4340d1 | 2.0.0-a4340d1 | 2.0.0-c410239 |
+| gitCommit | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | a4340d167ff6b185a0f59ee0ecda7d3901b82cf8 | c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801 |
 | sourceHash | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` | `f6d0bbf4fd6932a11295932b618ef88c6542a00c761856e3186a29e49db17335` |
 | sourceFiles | 37 | 37 | 37 |
 

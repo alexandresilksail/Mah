@@ -2,7 +2,7 @@
 
 **项目**：MahLeMah（`mah-le-mah/`）
 **日期**：2026-11-13
-**本轮提交**：`COMMIT_ID_PLACEHOLDER`（完整哈希 `COMMIT_FULL_PLACEHOLDER`），已推送 `origin/main`
+**本轮提交**：`c410239`（完整哈希 `c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`），已推送 `origin/main`
 **口径**：只改第二关生成 / 去重 / 历史持久化及其测试、产物、文档；**第一关完全冻结**，只允许回归测试。
 **上一轮基线**：`a4340d1`（背景音乐集成 + 双关卡布局修复收尾）
 
@@ -105,4 +105,4 @@
 | `cargo check` / `cargo build` | **尝试后失败**（缺 MSVC `link.exe`） |
 | 桌面版 / Windows 安装版重建与真机播放 | **未运行** |
 
-本轮提交：`COMMIT_ID_PLACEHOLDER`（`COMMIT_FULL_PLACEHOLDER`）。
+本轮提交：`c410239`（`c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`）。

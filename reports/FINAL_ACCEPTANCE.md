@@ -4,7 +4,7 @@
 **范围**：只修改与第二关布局模板 / 去重 / 历史持久化直接相关的代码；**第一关完全冻结**，
 只允许回归测试；不改变核心玩法、牌数配置、难度体系、背景音乐与音效链路。
 **流程**：先审计 → 再修改 → 再测试 → 再构建 → 最后验收。
-**本轮提交**：`COMMIT_ID_PLACEHOLDER`（提交后回填，见文末）。
+**本轮提交**：`c410239`（提交后回填，见文末）。
 
 ---
 
@@ -243,4 +243,4 @@ npm run build:all                     # 重建 4 个 HTML
 ```
 
 修改文件清单见 `reports/MODIFIED_FILES.md`。
-本轮提交：`COMMIT_ID_PLACEHOLDER`（完整哈希 `COMMIT_FULL_PLACEHOLDER`），已推送 `origin/main`。
+本轮提交：`c410239`（完整哈希 `c410239b1ca9e9b4c3e3c0d969bc4adad5ec2801`），已推送 `origin/main`。
