@@ -1,0 +1,17 @@
+第二关渲染前校验（第三道）行为取证 · Edge headless + CDP · dist/index.html
+生成时间：本轮最终验收前（见 git log）
+
+【1】正常开局：game.startLevel(2, 987654, 'L2-P05')
+  ok=true · templateId=L2-P05 · 牌数=192
+  画布 (2,2) 像素 = rgb(237,226,209)  → 正常牌桌背景，牌面正常绘制
+
+【2】人为破坏几何：cards[0].x 330 → 370（+40，脱离半格晶格）+ boardRev+1
+  画布 (2,2) 像素 = rgb(27,15,12)  → 整屏错误页底色 #1b0f0c，牌面一张都没画
+  控制台 error（仅记一次，逐帧不刷屏）：
+    第二关渲染前校验失败：牌桌布局与模板 L2-P05 的缩略图不一致
+    （LATTICE:1 张牌不在半格晶格上 / LAYER_FORM:1 层与规格不一致：第 0 层格集合与规格不同（4,1 vs 4,0））
+  uncaught exceptions = 0（错误被主循环捕获并显式呈现，不会悄悄保留上一帧画面）
+  帧循环存活：requestAnimationFrame 仍在跑，level=2 / templateId=L2-P05 状态未被污染
+
+结论：渲染前校验在「牌位被篡改」时确实拦下来了，表现为「整屏明确报错」而不是
+「继续把上一局 / 错误布局画在牌桌上」；同时不会把 requestAnimationFrame 打死。

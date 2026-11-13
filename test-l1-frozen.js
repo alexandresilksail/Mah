@@ -109,16 +109,22 @@ for (const row of baseline.l1.slice(0, 8)) {
   ok(!!now, `L1 p${row.profile} seed=${row.seed} 传 templateId 后仍与基线逐字节一致`);
 }
 
-/* ---------------- [3] L2 默认路径未受影响 ---------------- */
-section('[3] 第二关「不带 templateId」的默认路径逐项复现（既有功能保护）');
-ok(baseline.l2.length === 9, `默认路径基线 9 条（实测 ${baseline.l2.length}）`);
-const l2Rows = [];
+/* ---------------- [3] 第二关旧默认路径已彻底删除 ---------------- */
+/* 本轮把第二关的几何来源收敛到 20 套显式轮廓掩膜（l2_spec + l2_geometry），
+ * 「不带 templateId 走旧沙漏布局」的那条默认路径被**有意删除**，因此基线里那 9 条
+ * 第二关默认路径记录不再是「必须逐字节复现」的对象，而是「必须已经不存在」的证据。 */
+section('[3] 第二关旧「默认路径」已彻底删除（只保留 20 套模板入口）');
+ok(baseline.l2.length === 9, `历史基线里记录了 9 条旧默认路径（实测 ${baseline.l2.length}）`);
+let legacyGone = 0;
 for (const row of baseline.l2) {
-  const now = compare(2, row, { profile: row.profile });
-  ok(!!now, `L2 默认路径 p${row.profile} seed=${row.seed} 六个字段全部与修改前一致`);
-  l2Rows.push({ profile: row.profile, seed: row.seed, baseline: row, current: now, same: !!now });
+  let threw = false;
+  try { generateLevel(2, row.seed, { profile: row.profile }); } catch (e) {
+    threw = /templateId/.test(String(e && e.message));
+  }
+  if (threw) legacyGone++;
 }
-ok(l2Rows.every((r) => r.same), '既有第二关默认生成链路无任何一项漂移');
+ok(legacyGone === baseline.l2.length,
+  `旧默认路径 ${legacyGone}/${baseline.l2.length} 条全部改为明确报错（无静默回退）`);
 
 /* ---------------- [4] 统一入口的第一关口径 ---------------- */
 section('[4] createNewGame(level=1) 保持 3 局窗口 / 牌数判定 / 无模板字段');
@@ -155,17 +161,25 @@ section('[4] createNewGame(level=1) 保持 3 局窗口 / 牌数判定 / 无模�
 section('[5] 源码静态检查：第一关与公共规则不引用第二关模板模块');
 {
   const files = [
-    'src/game/config.js', 'src/game/engine.js', 'src/game/render.js',
+    'src/game/config.js', 'src/game/render.js',
     'src/game/layout_signature.js', 'src/game/tiles.js', 'src/game/seed_pool.js',
   ];
+  const stripComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   for (const f of files) {
-    const s = readFileSync(join(root, f), 'utf8');
+    const s = stripComments(readFileSync(join(root, f), 'utf8'));
     ok(!/l2_templates|l2_geometry|l2_structure|l2_recent/.test(s),
-      `${f} 未引用任何第二关模板 / 去重模块`);
+      `${f} 未引用任何第二关模板 / 去重模块（注释除外）`);
   }
+  /* engine.js 是本轮唯一新增引用的公共模块：任务要求「安装后」也要做一次规格保真校验，
+   * 那里是唯一的安装落点。引用必须被 `lv === 2` 严格包住，第一关不得经过它。 */
+  const eng = readFileSync(join(root, 'src/game/engine.js'), 'utf8');
+  ok(/import { verifyTemplateFidelity } from '\.\/l2_geometry\.js';/.test(eng),
+    'engine.js 只在安装后校验里引用第二关几何模块');
+  ok(/if \(lv === 2 && !skipCheck\) \{/.test(eng),
+    'engine.js 的第二关校验被 lv === 2 严格包住（第一关不经过）');
   const gen = readFileSync(join(root, 'src/game/generator.js'), 'utf8');
-  ok(/lv === 2 && opt\.templateId/.test(gen),
-    'generator.js 的模板分支被严格限定为「第二关 + 显式 templateId」');
+  ok(/lv === 2 && !opt\.templateId/.test(gen) && /lv === 2\)\s*\n\s*\? generateTemplateLayout/.test(gen),
+    'generator.js：第二关缺 templateId 直接报错，模板落牌只在 lv === 2 分支');
 }
 
 /* ---------------- 报告 ---------------- */
@@ -177,7 +191,7 @@ const report = {
     l1BaselineRows: baseline.l1.length, l2DefaultRows: baseline.l2.length,
     assertions: { pass, fail }, exitCode: fail ? 1 : 0,
   },
-  l1: l1Rows, l2Default: l2Rows,
+  l1: l1Rows, l2LegacyDefaultRemoved: legacyGone,
 };
 writeFileSync(join(reports, 'l1-frozen-report.json'), JSON.stringify(report, null, 2), 'utf8');
 let md = `# 第一关冻结回归报告\n\n` +
@@ -190,16 +204,15 @@ let md = `# 第一关冻结回归报告\n\n` +
   l1Rows.map((r) => `| ${r.profile} | ${r.seed} | ${r.baseline.cards} | ${r.baseline.visible} | ` +
     `${r.baseline.layerCount} | \`${r.baseline.geometrySignature.slice(0, 12)}\` | ` +
     `\`${r.baseline.coordHash.slice(0, 12)}\` | ${r.baseline.validate} | ${r.same ? '✓ 完全一致' : '✗ 漂移'} |`).join('\n') + '\n\n' +
-  `## 第二关默认路径 9 条基线（既有功能保护）\n\n` +
-  '| 档位 | seed | 牌数 | 可点 | 层数 | 几何签名(前 12) | 结果 |\n' +
-  '|---|---|---|---|---|---|---|\n' +
-  l2Rows.map((r) => `| ${r.profile} | ${r.seed} | ${r.baseline.cards} | ${r.baseline.visible} | ` +
-    `${r.baseline.layerCount} | \`${r.baseline.geometrySignature.slice(0, 12)}\` | ` +
-    `${r.same ? '✓ 完全一致' : '✗ 漂移'} |`).join('\n') + '\n\n' +
+  `## 第二关旧默认路径（已删除，${baseline.l2.length} 条历史记录）\n\n` +
+  '| 档位 | seed | 历史牌数 | 历史可点 | 当前行为 |\n' +
+  '|---|---|---|---|---|\n' +
+  baseline.l2.map((r) => `| ${r.profile} | ${r.seed} | ${r.cards} | ${r.visible} | ` +
+    `明确报错（必须指定 templateId） |`).join('\n') + '\n\n' +
   `## 结论\n\n` +
   `- 第一关 ${baseline.l1.length} 条基线的牌数 / 可点牌 / 层数 / 几何签名 / 坐标全序哈希 / validate **全部与修改前一致**。\n` +
   `- 给第一关强行传 \`templateId\` 也不会进入模板路径，结果仍与基线一致。\n` +
-  `- 第二关「不带 templateId」的默认路径 ${baseline.l2.length} 条基线同样零漂移。\n` +
+  `- 第二关「不带 templateId」的旧默认路径已彻底删除：${legacyGone}/${baseline.l2.length} 条历史记录现在都只会明确报错，不存在静默回退。\n` +
   `- 第一关统一入口维持 3 局窗口与牌数判定，历史记录不含任何第二关模板字段。\n`;
 writeFileSync(join(reports, 'l1-frozen-report.md'), md, 'utf8');
 

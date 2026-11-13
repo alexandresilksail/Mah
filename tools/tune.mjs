@@ -32,7 +32,7 @@ for (const lv of [1, 2]) {
     for (let i = 0; i < N; i++) {
       const seed = (SEED0 + i * 2654435761) >>> 0;
       const d = lv === 2
-        ? generateLevel(2, POOL[i % POOL.length])
+        ? generateLevel(2, POOL[i % POOL.length], { templateId: 'L2-P01' })
         : generateLevel(1, seed);
       if (verify(d) && d.certificate.ok) certOK++;
       visibles.push(d.visible);

@@ -63,6 +63,18 @@ let fail = 0;
 const failLabels = [];
 
 function line(s) { logs.push(s); console.log(s); }
+/**
+ * 测试用生成包装：第二关只认 20 套模板，这里按 seed 确定性地指定一套，
+ * 「按 seed 遍历」的旧断言因此仍然成立（同一 seed 永远同一套模板）。
+ */
+function gen(level, seed, opt) {
+  const o = Object.assign({}, opt || {});
+  if (level === 2 && !o.templateId) {
+    o.templateId = L2_TEMPLATE_IDS[(seed >>> 0) % L2_TEMPLATE_IDS.length];
+  }
+  return generateLevel(level, seed, o);
+}
+
 function ok(cond, label) {
   if (cond) { pass++; }
   else { fail++; failLabels.push(label); line('  ✗ ' + label); }
@@ -117,7 +129,7 @@ for (const lv of [1, 2]) {
     const seeds = [];
     for (let k = 0; k < SEED_SAMPLES; k++) {
       const seed = (0x10000000 + k * 2654435761 + p.id * 7919 + lv * 104729) >>> 0;
-      const d = generateLevel(lv, seed, { profile: p.id });
+      const d = gen(lv, seed, { profile: p.id });
       const sig = calculateLayoutSignature(d);
       seen.add(sig.geometrySignature);
       seeds.push({ seed, geom: sig.geometrySignature, tiles: d.cards.length });
@@ -132,15 +144,15 @@ for (const lv of [1, 2]) {
 }
 // 同档位换 seed 的几何签名必须不同（直接取一个档位做显式断言）
 for (const lv of [1, 2]) {
-  const a = calculateLayoutSignature(generateLevel(lv, 1111, { profile: 0 }));
-  const b = calculateLayoutSignature(generateLevel(lv, 2222, { profile: 0 }));
+  const a = calculateLayoutSignature(gen(lv, 1111, { profile: 0 }));
+  const b = calculateLayoutSignature(gen(lv, 2222, { profile: 0 }));
   ok(a.geometrySignature !== b.geometrySignature,
     `L${lv} 同档位换 seed 的几何签名必须不同（几何由 seed 决定）`);
-  const c = calculateLayoutSignature(generateLevel(lv, 1111, { profile: 1 }));
+  const c = calculateLayoutSignature(gen(lv, 1111, { profile: 1 }));
   ok(a.geometrySignature !== c.geometrySignature, `L${lv} 不同档位的几何签名不同`);
   ok(a.layoutSignature.length === 64 && a.algorithm === SIGNATURE_ALGORITHM,
     `L${lv} 布局签名为 64 位 SHA-256`);
-  ok(a.layoutSignature === calculateLayoutSignature(generateLevel(lv, 1111, { profile: 0 })).layoutSignature,
+  ok(a.layoutSignature === calculateLayoutSignature(gen(lv, 1111, { profile: 0 })).layoutSignature,
     `L${lv} 同一 seed + 同一档位可精确重放（历史记录能还原牌面）`);
 }
 ok(sanitizeRecord({ gameId: 'x' }) === null, '损坏历史记录被丢弃而不是抛异常');

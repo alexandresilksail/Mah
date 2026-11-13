@@ -244,7 +244,7 @@ try {
           main: mainStackCards(cards),
           structureSignature: st.structureSignature,
           canonicalGeometrySignature: st.canonicalGeometrySignature,
-          desc: describeTemplateLayout(cards, tpl),
+          desc: describeTemplateLayout(cards, tpl, d.visible),
         });
       }
     }
@@ -287,13 +287,16 @@ ok(pairs === 190, `两两组合数 = 190（实测 ${pairs}）`);
 ok(overThreshold === 0,
   `190 对全部 < ${SIMILARITY_THRESHOLD}（结构 sim 最大 ${maxStruct.toFixed(4)} / 布局 sim 最大 ${maxLayout.toFixed(4)} / 越界 ${overThreshold} 对）`,
   worstPair);
+/* 【口径变化（本轮）】每层张数现在由**档位**（layerPlanFor 沙漏曲线）唯一决定，
+ * 模板只决定「每层占哪些格」——因此 20 套模板在同一档位下的层张数必须完全相同，
+ * 这正是「缩略图 = 唯一几何标准、不得自行重设比例」的体现，是更强的断言而不是更弱。 */
 const layerShapes = new Set(representatives.map((r) => JSON.stringify(r.desc.layerCounts)));
-const regionShapes = new Set(representatives.map((r) => JSON.stringify(r.desc.regionCounts)));
+const regionShapes = new Set(L2_TEMPLATES.map((t) => t.maskRegionCount));
 const boxes = new Set(representatives.map((r) => r.desc.box.w + 'x' + r.desc.box.h));
 const silhouettes = new Set(representatives.map((r) =>
   r.main.map((c) => c.layer + ':' + c.x + ':' + c.y).sort().join('|')));
-ok(layerShapes.size >= 6, `各层牌数分布明显不同（${layerShapes.size} 种）`);
-ok(regionShapes.size >= 4, `区域结构分布明显不同（${regionShapes.size} 种）`);
+ok(layerShapes.size === 1, `各层牌数由档位唯一决定，20 套模板完全一致（实测 ${layerShapes.size} 种）`);
+ok(regionShapes.size >= 4, `掩膜区域结构分布明显不同（${regionShapes.size} 种区域数）`);
 ok(silhouettes.size >= 16,
   `主堆逐层占位格轮廓明显不同（${silhouettes.size}/20 种互不相同的真实轮廓）`);
 line(`   结构 sim 最大 ${maxStruct.toFixed(4)} · 主堆布局 sim 最大 ${maxLayout.toFixed(4)} · 越界 ${overThreshold}/190`);
@@ -465,6 +468,7 @@ const report = {
       layers: representatives[i].desc.layers,
       regions: representatives[i].desc.regions,
       box: representatives[i].desc.box,
+      mainBox: representatives[i].desc.mainBox,
       visible: representatives[i].desc.visible,
       structureSignature: representatives[i].structureSignature,
       canonicalGeometrySignature: representatives[i].canonicalGeometrySignature,
@@ -490,11 +494,11 @@ let md = `# 第二关 20 套布局模板专项验收报告\n\n` +
   '| 形状族 | 套数 | 可观察布局特征 |\n|---|---|---|\n' +
   report.categories.map((c) => `| ${c.label} | ${c.count} | ${c.feature} |`).join('\n') + '\n\n' +
   `## 20 套模板 ID 清单\n\n` +
-  '| # | templateId | 名称 | 形状族 | 代表布局牌数 | 层数 | 区域数 | 包围盒 | 开局可点 | 结构签名(前 12) |\n' +
+  '| # | templateId | 名称 | 形状族 | 代表布局牌数 | 层数 | 区域数 | 主堆包围盒 | 开局可点 | 结构签名(前 12) |\n' +
   '|---|---|---|---|---|---|---|---|---|---|\n' +
   report.templates.map((t, i) => `| ${i + 1} | \`${t.templateId}\` | ${t.name} | ${t.categoryLabel} | ` +
     `${t.representative.cards} | ${t.representative.layers} | ${t.representative.regions} | ` +
-    `${t.representative.box.w}×${t.representative.box.h} | ${t.representative.visible} | ` +
+    `${t.representative.mainBox.w}×${t.representative.mainBox.h} | ${t.representative.visible} | ` +
     `\`${t.representative.structureSignature.slice(0, 12)}\` |`).join('\n') + '\n\n' +
   `## 显式轮廓掩膜（每套独立定义，5 行 × 9 列）\n\n` +
   '| templateId | 掩膜（# 可落牌 / @ 高密度 / . 禁止） | 可落牌格 | 区域数 | 生长轨迹 | 层形状 | 层级曲线 |\n' +

@@ -96,7 +96,7 @@ for (const t of TYPE_LIST) {
 
 // 两关画面
 for (let lv = 1; lv <= 2; lv++) {
-  g.startLevel(lv, 9000 + lv);
+  g.startLevel(lv, 9000 + lv, lv === 2 ? 'L2-P01' : undefined);
   const ui = R.getUI(g);
   R.drawBoard(ctx, g);
   R.drawSlot(ctx, g, ui);
@@ -108,7 +108,7 @@ for (let lv = 1; lv <= 2; lv++) {
 }
 
 // 毕业画面（第 2 关胜利）
-g.startLevel(2, 4242);
+g.startLevel(2, 4242, 'L2-P01');
 g.status = 'win';
 g.graduated = true;
 R.drawOverlay(ctx, g, R.getUI(g));
@@ -166,7 +166,7 @@ let uiFail = 0;
   console.log('  [PASS] 卸载说明面板绘制无异常');
 
   ug.uninstallAsk = false;
-  ug.startLevel(2, 7);
+  ug.startLevel(2, 7, 'L2-P01');
   ug.paused = true;
   const pm = R.getUI(ug);
   if (pm.buttons.some((b) => b.id === 'uninstall' && b.label === '如何卸载')) {
@@ -257,7 +257,7 @@ if (process.argv.includes('--shots')) {
 
   for (const seed of seeds) {
     const evalRes = await send('Runtime.evaluate', {
-      expression: `window.__mah.game.startLevel(2, ${seed}); JSON.stringify({seed:${seed},cards:window.__mah.game.cards.length,free:window.__mah.game.cards.filter(c=>c.state==='board'&&!c.blocked).length})`,
+      expression: `window.__mah.game.startLevel(2, ${seed}, 'L2-P01'); JSON.stringify({seed:${seed},cards:window.__mah.game.cards.length,free:window.__mah.game.cards.filter(c=>c.state==='board'&&!c.blocked).length})`,
       returnByValue: true,
     });
     await wait(700);

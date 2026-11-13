@@ -335,9 +335,14 @@ export function generateLevel(level, seed, opt = {}) {
   for (let round = 0; round < LAYOUT_ROUNDS && !built; round++) {
     roundsUsed = round + 1;
     const layoutSeed = round === 0 ? s : ((s ^ Math.imul(round, 0x9e3779b9)) >>> 0);
-    // 只有第二关显式带 templateId 时才走 20 套掩膜模板；第一关与不带模板的第二关
-    // 仍走既有 generateProfileLayout，几何与难度基线逐字节不变。
-    const src = (lv === 2 && opt.templateId)
+    // 第二关只有**一个**生成入口：20 套显式轮廓掩膜模板（l2_spec 规格 + l2_geometry 落牌）。
+    // 缺失 templateId 时直接报错 —— 旧的 50 套模板与 generateProfileLayout 回退分支
+    // 已彻底退出第二关，绝不允许静默回退到旧布局冒充新布局。
+    if (lv === 2 && !opt.templateId) {
+      throw new Error('第二关生成失败：必须显式指定 20 套模板之一（templateId），' +
+        '旧布局生成路径已废弃');
+    }
+    const src = (lv === 2)
       ? generateTemplateLayout(layoutSeed, profile, opt.templateId)
       : generateProfileLayout(layoutSeed, profile);
     const cards = src.map(baseCard);
@@ -410,10 +415,14 @@ export function generateLevel(level, seed, opt = {}) {
     layerCount,
     profile,
     profileId: profile.id,
-    // 第二关模板 ID（null = 既有默认路径）；写入 data 供历史重放与调试面板使用
-    templateId: lv === 2 && opt.templateId ? opt.templateId : null,
+    // 第二关模板 ID（旧路径已删除，第二关必为 20 套之一；第一关恒为 null）
+    templateId: lv === 2 ? opt.templateId : null,
     // 模板路径的悬空牌修补统计（0 = 主堆全部有支撑；默认路径恒为 0）
     floatingCount: src.floatingCount || 0,
+    // 模板规格保真校验结果（生成后这一道；安装后 / 渲染前另有两道）
+    fidelity: src.fidelity || null,
+    specSignature: src.specSignature || '',
+    specFillRot: src.specFillRot === undefined ? 0 : src.specFillRot,
     solution: solution ? solution.slice() : null,
     requireSolution: needSolvable,
     solvable: !!solution,

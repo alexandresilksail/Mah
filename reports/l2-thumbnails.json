@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T07:50:46.092Z",
+  "generatedAt": "2026-11-13T10:11:21.387Z",
   "profileId": 0,
   "templates": [
     {
@@ -13,7 +13,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 33,
-      "visible": 21,
+      "visible": 24,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -42,7 +42,7 @@
       "layers": 28,
       "regions": 2,
       "maskCellCount": 40,
-      "visible": 22,
+      "visible": 25,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -71,7 +71,7 @@
       "layers": 28,
       "regions": 3,
       "maskCellCount": 30,
-      "visible": 21,
+      "visible": 20,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -100,7 +100,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 30,
-      "visible": 19,
+      "visible": 23,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -129,7 +129,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 33,
-      "visible": 24,
+      "visible": 23,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -158,14 +158,14 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 27,
-      "visible": 20,
+      "visible": 25,
       "floating": 0,
       "box": {
         "minX": 33,
         "minY": 220,
-        "maxX": 660,
+        "maxX": 627,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [
@@ -187,7 +187,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 27,
-      "visible": 20,
+      "visible": 22,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -216,14 +216,14 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 32,
-      "visible": 22,
+      "visible": 21,
       "floating": 0,
       "box": {
         "minX": 33,
         "minY": 220,
-        "maxX": 660,
+        "maxX": 627,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [
@@ -245,14 +245,14 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 32,
-      "visible": 21,
+      "visible": 25,
       "floating": 0,
       "box": {
-        "minX": 33,
+        "minX": 66,
         "minY": 220,
         "maxX": 660,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [
@@ -274,14 +274,14 @@
       "layers": 28,
       "regions": 2,
       "maskCellCount": 36,
-      "visible": 22,
+      "visible": 25,
       "floating": 0,
       "box": {
-        "minX": 33,
+        "minX": 66,
         "minY": 220,
         "maxX": 660,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [
@@ -303,7 +303,7 @@
       "layers": 28,
       "regions": 2,
       "maskCellCount": 28,
-      "visible": 20,
+      "visible": 21,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -335,11 +335,11 @@
       "visible": 24,
       "floating": 0,
       "box": {
-        "minX": 33,
+        "minX": 66,
         "minY": 220,
-        "maxX": 660,
+        "maxX": 627,
         "maxY": 704,
-        "w": 627,
+        "w": 561,
         "h": 484
       },
       "mask": [
@@ -361,7 +361,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 29,
-      "visible": 21,
+      "visible": 22,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -390,14 +390,14 @@
       "layers": 28,
       "regions": 2,
       "maskCellCount": 30,
-      "visible": 22,
+      "visible": 19,
       "floating": 0,
       "box": {
         "minX": 33,
         "minY": 220,
-        "maxX": 660,
+        "maxX": 627,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [
@@ -419,7 +419,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 31,
-      "visible": 19,
+      "visible": 25,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -448,7 +448,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 35,
-      "visible": 19,
+      "visible": 24,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -506,7 +506,7 @@
       "layers": 28,
       "regions": 4,
       "maskCellCount": 32,
-      "visible": 22,
+      "visible": 24,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -535,7 +535,7 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 29,
-      "visible": 19,
+      "visible": 22,
       "floating": 0,
       "box": {
         "minX": 33,
@@ -564,14 +564,14 @@
       "layers": 28,
       "regions": 1,
       "maskCellCount": 37,
-      "visible": 23,
+      "visible": 25,
       "floating": 0,
       "box": {
-        "minX": 33,
+        "minX": 66,
         "minY": 220,
         "maxX": 660,
         "maxY": 704,
-        "w": 627,
+        "w": 594,
         "h": 484
       },
       "mask": [

@@ -12,6 +12,8 @@ import {
   fetchDataDir,
 } from './game/store.js';
 import { generateLevel, verify } from './game/generator.js';
+import { verifyTemplateFidelity } from './game/l2_geometry.js';
+import { L2_TEMPLATE_IDS } from './game/l2_templates.js';
 import { makeSaveData, applySaveToGame } from './game/save_data.js';
 import { createNewGame } from './game/new_game.js';
 import { historyFor } from './game/recent_games.js';
@@ -559,6 +561,69 @@ let prev = nowMs();
 let perfFrames = 0;
 let perfAcc = 0;
 let perfOn = false;
+/** 已做过「渲染前」保真校验的 boardRev（同一副牌只校验一次） */
+let fidelityCheckedRev = -1;
+/** 该 boardRev 的校验结论（不一致时是 Error，供逐帧重抛 / 画面上报错） */
+let fidelityError = null;
+/** 已打过日志的 boardRev（同一副错牌只往控制台报一次） */
+let fidelityLoggedRev = -1;
+
+/**
+ * 第三道（渲染前）规格保真校验。
+ *
+ * 每装上一局新牌局（boardRev 变化）只算一次：拿牌桌上真实的牌位，对着
+ * templateId 的规格重新展开计划逐格比对。60fps 下逐帧重算没有意义也不划算，
+ * 而「同一份 boardRev 只可能被画同一副牌」，一次性校验已足够覆盖
+ * 「生成 → 安装 → 渲染」三段之间的任何篡改或错配。
+ *
+ * 不一致时直接抛错（不是画个警告继续）—— 明确报错，绝不把错布局画上牌桌。
+ * 只有「真的装上了第二关牌局」（带 templateId）才需要校验：第二关任何正规入口
+ * 都会先拿到 20 套模板之一并写进 templateId，缺它说明这一局根本不是第二关牌局。
+ */
+function assertLevel2FidelityBeforeDraw(g) {
+  if (!g || g.level !== 2 || g.screen === 'title' || !g.templateId) return;
+  const rev = g.boardRev | 0;
+  if (fidelityCheckedRev === rev) {
+    // 同一副牌：结论缓存复用，不一致就继续抛同一个错（逐帧重抛，不会退回旧画面）
+    if (fidelityError) throw fidelityError;
+    return;
+  }
+  fidelityCheckedRev = rev;
+  fidelityError = null;
+  const f = verifyTemplateFidelity(g.cards, g.templateId, g.layoutProfile, g.specFillRot);
+  if (!f.ok) {
+    const detail = (f.violations || []).map((v) => v.code + ':' + v.detail).join(' / ');
+    fidelityError = new Error('第二关渲染前校验失败：牌桌布局与模板 ' +
+      (g.templateId || '<缺失>') + ' 的缩略图不一致（' + detail + '）');
+    throw fidelityError;
+  }
+}
+
+/** 校验失败时的整屏报错画面：宁可白屏写清楚，也不把错布局当成新牌局画出来 */
+function drawFidelityError(err) {
+  const msg = String((err && err.message) || err);
+  ctx.fillStyle = '#1b0f0c';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#2a1512';
+  ctx.fillRect(40, 420, W - 80, 400);
+  ctx.strokeStyle = '#d9534f';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(40, 420, W - 80, 400);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ff8a80';
+  ctx.font = '700 40px "Segoe UI", "Microsoft YaHei", system-ui, sans-serif';
+  ctx.fillText('第二关布局校验失败', W / 2, 480);
+  ctx.fillStyle = '#ffd9d4';
+  ctx.font = '400 22px "Segoe UI", "Microsoft YaHei", system-ui, sans-serif';
+  const lines = msg.match(/.{1,34}/g) || [msg];
+  for (let i = 0; i < lines.length && i < 10; i++) {
+    ctx.fillText(lines[i], W / 2, 540 + i * 30);
+  }
+  ctx.fillStyle = '#c9a9a3';
+  ctx.font = '400 20px "Segoe UI", "Microsoft YaHei", system-ui, sans-serif';
+  ctx.fillText('本局不会渲染任何牌面，请重新开始一局。', W / 2, 800);
+}
 
 function frame(now) {
   const dt = Math.min(0.05, (now - prev) / 1000);
@@ -580,7 +645,26 @@ function frame(now) {
   const ui = R.getUI(game);
   syncMusic();
 
-  if (domView) {
+  // 第三道校验：渲染前，两条渲染通道（Canvas / DOM 降级）都先过一遍
+  let fidError = null;
+  try {
+    assertLevel2FidelityBeforeDraw(game);
+  } catch (e) {
+    fidError = e;
+    if (fidelityLoggedRev !== fidelityCheckedRev) {
+      fidelityLoggedRev = fidelityCheckedRev;
+      console.error(e);
+    }
+  }
+
+  if (fidError) {
+    // 明确报错：Canvas 画整屏错误页，不画任何牌；DOM 降级版直接文字报错
+    if (ctx) {
+      drawFidelityError(fidError);
+    } else if (stage) {
+      stage.textContent = '第二关布局校验失败：' + fidError.message;
+    }
+  } else if (domView) {
     // 无 Canvas：DOM 渲染器只重画离散状态变化，悬停只改边框
     domView.render(game, ui);
   } else if (ctx) {
@@ -600,8 +684,8 @@ function frame(now) {
   }
 
   // 卸载确认框 / 设置面板永远画在最上层（标题页 / 暂停面板之上）
-  if (ctx && game.uninstallAsk) R.drawUninstallConfirm(ctx, game, ui);
-  if (ctx && game.settingsAsk) R.drawSettingsPanel(ctx, game, ui);
+  if (ctx && !fidError && game.uninstallAsk) R.drawUninstallConfirm(ctx, game, ui);
+  if (ctx && !fidError && game.settingsAsk) R.drawSettingsPanel(ctx, game, ui);
 
   if (game.screen === 'play' && game.status === 'win') persist(true);
   // 调试面板跟随真实 meta 变化刷新（不是每帧重画）
@@ -639,7 +723,8 @@ function boot() {
   // 启动自检：第 1 关校验可解性；第 2 关只做"发牌是否合法"的体检（不校验可解）
   try {
     const l1 = generateLevel(1, 1234, { profile: game.profile.l1 });
-    const l2 = generateLevel(2, 5678, { profile: game.profile.l2 });
+    // 第二关没有「不带模板」的路径：自检固定用第一套模板，只为体检发牌是否合法
+    const l2 = generateLevel(2, 5678, { profile: game.profile.l2, templateId: L2_TEMPLATE_IDS[0] });
     const kinds = new Set(l2.cards.map((c) => c.type)).size;
     const legal = l2.cards.length % 3 === 0;
     console.info(

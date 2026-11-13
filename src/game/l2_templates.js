@@ -390,5 +390,3 @@ export function templateCategoryStats() {
   return out;
 }
 
-/** 兼容旧引用：几何层已改用掩膜，不再使用区域锚点 */
-export var ZONE_ANCHORS = { center: [330, 396] };

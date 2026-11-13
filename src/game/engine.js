@@ -31,6 +31,7 @@ import {
   RETRY_KEEPS_PROFILE,
 } from './config.js';
 import { generateLevel, refreshBlocked, isCovered } from './generator.js';
+import { verifyTemplateFidelity } from './l2_geometry.js';
 
 /** 时间源：浏览器优先 performance，老浏览器 / Node 自动降级 */
 function nowMs() {
@@ -155,11 +156,20 @@ export class Game {
   /**
    * 第 2.5 节：每局都按当前关卡的档位生成，层数 / 牌种类 / 张数全部来自档位；
    * 不传 seed 时从第 2 关当前档位的 seed 池抽（第 1 关随机），保证重开必换 seed。
+   *
+   * 【第二关必须给 templateId】20 套掩膜模板是第二关唯一的几何来源，旧布局生成路径
+   * 已删除。UI 的新开局全部走 createNewGame（内含最近 10 局去重与三段校验），
+   * 本方法只服务测试 / 工具，因此要求调用方显式写明用哪一套模板。
    */
-  startLevel(level, seed) {
+  startLevel(level, seed, templateId) {
     const lv = Math.min(LEVEL_COUNT, Math.max(1, level | 0));
     const pid = lv <= 1 ? this.profile.l1 : this.profile.l2;
-    const data = generateLevel(lv, seed === undefined ? undefined : seed, { profile: pid });
+    if (lv === 2 && !templateId) {
+      throw new Error('第二关 startLevel 必须显式传入 templateId（20 套模板之一）；' +
+        '正式开局请走 createNewGame()');
+    }
+    const opt = lv === 2 ? { profile: pid, templateId: templateId } : { profile: pid };
+    const data = generateLevel(lv, seed === undefined ? undefined : seed, opt);
     // 兼容旧调用（test.js 的历史断言 / 旧工具）：仍走 generateLevel，
     // 但安装逻辑只有 installLevelData 一份，UI 的新开局全部由 createNewGame 调用它。
     this.installLevelData(data, null);
@@ -170,14 +180,33 @@ export class Game {
    * 一次性装进 Game，不再二次生成，也不再重抽 seed / 档位。
    * meta 携带 gameId / 布局签名 / 最近三局检查等调试面板所需的真实运行数据。
    */
-  installLevelData(data, meta) {
+  installLevelData(data, meta, opt) {
     const lv = Math.min(LEVEL_COUNT, Math.max(1, data.params.level | 0));
     const pid = data.profileId;
+    /* 第二道（安装后）规格保真校验：拿**即将上桌的真实牌位**，对着 templateId 的
+     * 规格重新展开一次计划逐格比对。不过就抛错 —— 不装、不清历史、不保留上一局。
+     *
+     * opt.skipFidelityCheck 只给测试构造的**合成小牌局**用（手工拼的 6 张牌不可能满足
+     * 档位张数与掩膜，它验证的是通关流程而非布局）。正式开局一律不传，走完整校验。 */
+    const skipCheck = !!(opt && opt.skipFidelityCheck);
+    if (lv === 2 && !skipCheck) {
+      const f = verifyTemplateFidelity(data.cards, data.templateId, data.profile, data.specFillRot);
+      if (!f.ok) {
+        const detail = (f.violations || []).map((v) => v.code + ':' + v.detail).join(' / ');
+        throw new Error('第二关布局安装失败：与模板 ' + (data.templateId || '<缺失>') +
+          ' 的缩略图不一致（' + detail + '）');
+      }
+      this.fidelity = f;
+    }
     if (typeof console !== 'undefined' && console.info) {
       console.info(`[mah] level=${lv} profileId=${pid} seed=${data.seed}` +
         (meta ? ` gameId=${meta.gameId} reason=${meta.generationReason} tiles=${meta.totalTiles} sig=${meta.layoutSignature.slice(0, 12)}` : ''));
     }
     this.cards = data.cards;
+    // 本局所用的第二关模板与档位对象（渲染前那一道校验要用它们重新展开规格）
+    this.templateId = data.templateId || null;
+    this.layoutProfile = data.profile || null;
+    this.specFillRot = data.specFillRot === undefined ? 0 : data.specFillRot;
     this.layersMeta = data.layers || [];
     this.solution = data.solution;
     this.seed = data.seed;
@@ -233,10 +262,12 @@ export class Game {
    * RETRY_KEEPS_PROFILE=false：重抽档位 + 换 seed；true：保持档位、只换 seed。
    * main.js 调用后再 persist(true) 写 p1/p2。
    */
-  restartLevel(rand = Math.random) {
+  restartLevel(rand = Math.random, templateId) {
     this.paused = false;
     if (!RETRY_KEEPS_PROFILE) this.rollCurrentProfile(rand);
-    this.startLevel(this.level); // 不传 seed → 从当前档位池重抽 / L1 随机，必换 seed
+    // 不传 seed → 从当前档位池重抽 / L1 随机，必换 seed
+    // 第二关还必须给出 templateId（20 套模板是唯一几何来源，没有默认模板）
+    this.startLevel(this.level, undefined, templateId);
   }
 
   refresh(withIntro = false) {

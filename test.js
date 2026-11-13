@@ -54,6 +54,8 @@ import {
 import {
   generateProfileLayout, describeProfileLayout, VISIBLE_MIN, VISIBLE_MAX, QUEUE_SHAPE,
 } from './src/game/layout_profiles.js';
+import { specFor } from './src/game/l2_spec.js';
+import { verifyTemplateFidelity } from './src/game/l2_geometry.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot } from './src/game/robots.js';
 import { Game, slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
@@ -93,6 +95,19 @@ import { createHash } from 'node:crypto';
 
 let pass = 0;
 let fail = 0;
+/**
+ * 测试用生成包装：第二关只认 20 套模板，这里按 seed **确定性地**指定一套，
+ * 让「按 seed 遍历」的旧断言继续成立（同一 seed 永远同一套模板，不引入随机性）。
+ * 需要显式指定模板的用例仍直接调 generateLevel(2, seed, { templateId })。
+ */
+function gen(level, seed, opt) {
+  const o = Object.assign({}, opt || {});
+  if (level === 2 && !o.templateId) {
+    o.templateId = L2_TEMPLATE_IDS[(seed >>> 0) % L2_TEMPLATE_IDS.length];
+  }
+  return generateLevel(level, seed, o);
+}
+
 const ok = (cond, msg) => {
   if (cond) pass++;
   else { fail++; console.error('  ✗ ' + msg); }
@@ -228,107 +243,124 @@ ok(suitsFor(1).length === 16 && suitsFor(2).length === 16 && SUITS_L1.length ===
 ok(TYPE_IDS.every((id) => TYPE_BY_ID[id] && typeof TYPE_MAP[id] !== 'undefined'), '注册表 ID 与绘制层一一对应');
 line('   ' + TILE_TYPES.map((t) => t.short + '(' + t.id + ')').join(' '));
 
-/* ---------------- [3] 第二关 seed 驱动布局 ---------------- */
-line('\n[3] 第二关 seed 驱动布局：沙漏主堆 + 半格晶格 + 四条盲盒链（30 seed × 10 档位）');
+/* ---------------- [3] 第二关 20 套模板：缩略图 = 唯一几何标准 ---------------- */
+line('\n[3] 第二关 20 套掩膜模板：缩略图 ↔ 实际布局一一对应（20 套 × 10 档位 = 200 局）');
 const GEO_SEEDS = 30;
-let l2Codes = 0, l2W = 1e9, l2H = 1e9, l2VisMin = 999, l2VisMax = 0;
-let l2TopCols = [99, 0], l2MidCols = [99, 0], l2CoreCols = [99, 0], l2CoreRows = [99, 0];
-let l2LayerCountMismatch = 0, l2ChainBad = 0, l2SameSeedSameGeom = 0, l2MainCompBad = 0;
-for (const p of LEVEL2_PROFILES) {
-  for (let i = 0; i < GEO_SEEDS; i++) {
-    const seed = (9000 + i * 2654435761 + p.id * 7919) >>> 0;
-    const src = generateProfileLayout(seed, p);
-    const cards = src.map((c, k) => ({
-      id: k, x: c.x, y: c.y, w: TILE_W, h: TILE_H, layer: c.layer, z: k,
-      type: null, state: 'board', blocked: false,
-      seg: c.seg, chain: c.chain, chainIndex: c.chainIndex, chainLen: c.chainLen,
-      region: c.region, gridW: c.gridW, gridH: c.gridH,
-    }));
-    // 张数必须等于档位（主堆 + 队列），层数必须等于 layerPlanFor
-    if (cards.length !== p.mainCount + p.queueCount) l2Codes++;
-    const plan = layerPlanFor(p);
-    const mainLayers = groupLayers(cards.filter((c) => c.seg !== 'queue'));
-    if (mainLayers.size !== plan.length) l2LayerCountMismatch++;
-    // 每层张数严格等于层计划
-    for (let li = 0; li < plan.length; li++) {
-      const arr = mainLayers.get(li) || [];
-      if (arr.length !== plan[li]) l2LayerCountMismatch++;
-    }
-    const bb = bbox(cards);
-    l2W = Math.min(l2W, bb.w);
-    l2H = Math.min(l2H, bb.h);
-    const g = buildBlockerGraph(cards);
-    const vis = cards.filter((c) => g.blockers[c.id].length === 0).length;
-    l2VisMin = Math.min(l2VisMin, vis);
-    l2VisMax = Math.max(l2VisMax, vis);
-    if (bb.left < BOARD_BAND.left || bb.right > BOARD_BAND.right
-      || bb.top < BOARD_BAND.top || bb.bottom > BOARD_BAND.bottom) l2Codes++;
-    if (!isHalfLattice(cards)) l2Codes++;
-    if (sameLayerOverlapCount(cards) !== 0) l2Codes++;
-    if (vis < VISIBLE_MIN || vis > VISIBLE_MAX) l2Codes++;
-    // 每层：整格对齐 + 层内连通 + 段列数包络（包络 = 该层网格宽度 gridW）
-    for (const [li, arr] of mainLayers) {
-      const mx = arr[0].x % TILE_W, my = arr[0].y % TILE_H;
-      if (arr.some((c) => c.x % TILE_W !== mx || c.y % TILE_H !== my)) l2Codes++;
-      if (mx !== 0 && mx !== LATTICE_X) l2Codes++;
-      if (my !== 0 && my !== LATTICE_Y) l2Codes++;
-      if (!layerConnected(arr)) l2Codes++;
-      const cols = arr[0].gridW;
-      const rows = arr[0].gridH;
-      const occupied = new Set(arr.map((c) => c.x)).size;
-      const seg = arr[0].seg;
-      if (seg === 'top') { l2TopCols[0] = Math.min(l2TopCols[0], cols); l2TopCols[1] = Math.max(l2TopCols[1], cols); }
-      if (seg === 'mid') { l2MidCols[0] = Math.min(l2MidCols[0], cols); l2MidCols[1] = Math.max(l2MidCols[1], cols); }
-      if (seg === 'core') {
-        l2CoreCols[0] = Math.min(l2CoreCols[0], cols); l2CoreCols[1] = Math.max(l2CoreCols[1], cols);
-        l2CoreRows[0] = Math.min(l2CoreRows[0], rows); l2CoreRows[1] = Math.max(l2CoreRows[1], rows);
+{
+  const GRID_X0 = 33, GRID_Y0 = 220;
+  const cellOf = (c) => Math.floor(((c.x - GRID_X0) / LATTICE_X) / 2) + ','
+    + Math.floor(((c.y - GRID_Y0) / LATTICE_Y) / 2);
+
+  let t3Threw = [];
+  let t3FidBad = 0, t3RecheckBad = 0, t3FloatBad = 0, t3VisBad = 0;
+  let t3CountBad = 0, t3LayerBad = 0, t3MaskBad = 0, t3BandBad = 0;
+  let t3LatticeBad = 0, t3SameBad = 0, t3ChainBad = 0, t3QueueBad = 0;
+  let t3VisMin = 999, t3VisMax = 0;
+  let t3CellMin = 1e9, t3CellMax = 0;
+  const t3Sigs = new Set();
+  const t3CellCounts = [];
+
+  for (const tpl of L2_TEMPLATES) {
+    const spec = specFor(tpl.templateId);
+    t3Sigs.add(spec.signature);
+    const maskKeys = new Set(spec.maskCells.map((c) => c.k));
+    t3CellCounts.push(spec.maskCellCount);
+    t3CellMin = Math.min(t3CellMin, spec.maskCellCount);
+    t3CellMax = Math.max(t3CellMax, spec.maskCellCount);
+
+    for (const p of LEVEL2_PROFILES) {
+      const seed = (51000 + p.id * 7919 + tpl.templateId.length * 131) >>> 0;
+      let d;
+      try {
+        d = generateLevel(2, seed, { profile: p.id, templateId: tpl.templateId });
+      } catch (e) {
+        t3Threw.push([tpl.templateId, p.id, String(e && e.message)]);
+        continue;
       }
-      if (seg === 'top' && (cols < 3 || cols > 5)) l2Codes++;
-      if (seg === 'mid' && (cols < 8 || cols > 10)) l2Codes++;
-      if (seg === 'core' && (cols < 4 || cols > 5 || rows > 4)) l2Codes++;
-      if (occupied > cols) l2Codes++;
-      void li;
-    }
-    // 主堆必须单连通；队列是独立区域，链内连通即可（不与主堆混为一谈）
-    const mainCards = cards.filter((c) => c.seg !== 'queue');
-    if (countComponents(mainCards) !== 1) l2MainCompBad++;
-    // 队列：恰好 44 张 / 4 条链 / 每条链只有队首（chainIndex 最大）可点
-    const queue = cards.filter((c) => c.seg === 'queue');
-    if (queue.length !== 44) l2Codes++;
-    const chains = new Map();
-    for (const c of queue) {
-      if (!chains.has(c.chain)) chains.set(c.chain, []);
-      chains.get(c.chain).push(c);
-    }
-    if (chains.size !== 4) l2ChainBad++;
-    for (const arr of chains.values()) {
-      const open = arr.filter((c) => g.blockers[c.id].length === 0);
-      if (open.length !== 1) l2ChainBad++;
-      else if (open[0].chainIndex !== open[0].chainLen - 1) l2ChainBad++;
+
+      // ① 生成后那一道：规格保真
+      if (!d.fidelity || !d.fidelity.ok) t3FidBad++;
+      // ② 用**牌桌真实牌位**再复核一次（安装后 / 渲染前用的是同一实现）
+      const re = verifyTemplateFidelity(d.cards, d.templateId, d.profile, d.specFillRot);
+      if (!re.ok) t3RecheckBad++;
+
+      if ((d.floatingCount || 0) !== 0) t3FloatBad++;
+      if (d.visible < VISIBLE_MIN || d.visible > VISIBLE_MAX) t3VisBad++;
+      t3VisMin = Math.min(t3VisMin, d.visible);
+      t3VisMax = Math.max(t3VisMax, d.visible);
+
+      // ③ 张数 / 层数 / 逐层张数
+      if (d.cards.length !== p.mainCount + p.queueCount) t3CountBad++;
+      const plan = layerPlanFor(p);
+      const mainCards = d.cards.filter((c) => c.seg !== 'queue');
+      const byLayer = new Map();
+      for (const c of mainCards) {
+        if (!byLayer.has(c.layer)) byLayer.set(c.layer, []);
+        byLayer.get(c.layer).push(c);
+      }
+      if (byLayer.size !== plan.length) t3LayerBad++;
+      for (let li = 0; li < plan.length; li++) {
+        const arr = byLayer.get(li) || [];
+        if (arr.length !== plan[li]) t3LayerBad++;
+      }
+
+      // ④ 俯视轮廓（全部层格位的并集）必须**逐格等于**该模板的掩膜
+      const usedCells = new Set(mainCards.map(cellOf));
+      if (usedCells.size !== maskKeys.size) t3MaskBad++;
+      else {
+        for (const k of usedCells) if (!maskKeys.has(k)) { t3MaskBad++; break; }
+        for (const k of maskKeys) if (!usedCells.has(k)) { t3MaskBad++; break; }
+      }
+
+      // ⑤ 牌桌边界 / 半格晶格 / 同层零重叠
+      const bb = bbox(mainCards);
+      if (bb.left < BOARD_BAND.left || bb.right > BOARD_BAND.right
+        || bb.top < BOARD_BAND.top || bb.bottom > BOARD_BAND.bottom) t3BandBad++;
+      if (!isHalfLattice(d.cards)) t3LatticeBad++;
+      if (sameLayerOverlapCount(d.cards) !== 0) t3SameBad++;
+
+      // ⑥ 44 张盲盒队列：4 条链，每条链只有队首（chainIndex 最大）可点
+      const queue = d.cards.filter((c) => c.seg === 'queue');
+      if (queue.length !== 44) t3QueueBad++;
+      const g = buildBlockerGraph(d.cards);
+      const chains = new Map();
+      for (const c of queue) {
+        if (!chains.has(c.chain)) chains.set(c.chain, []);
+        chains.get(c.chain).push(c);
+      }
+      if (chains.size !== 4) t3ChainBad++;
+      for (const arr of chains.values()) {
+        const open = arr.filter((c) => g.blockers[c.id].length === 0);
+        if (open.length !== 1) t3ChainBad++;
+        else if (open[0].chainIndex !== open[0].chainLen - 1) t3ChainBad++;
+      }
     }
   }
-  // 同档位不同 seed 的几何必须不同（第 2.4 节）
-  const gset = new Set();
-  for (let i = 0; i < GEO_SEEDS; i++) {
-    const seed = (9000 + i * 2654435761 + p.id * 7919) >>> 0;
-    const src = generateProfileLayout(seed, p);
-    gset.add(src.map((c) => c.layer + ':' + c.x + ':' + c.y).join('|'));
-  }
-  if (gset.size !== GEO_SEEDS) l2SameSeedSameGeom += GEO_SEEDS - gset.size;
+
+  ok(t3Threw.length === 0,
+    `200 局（20 套 × 10 档位）全部生成成功（失败 ${t3Threw.length}：${JSON.stringify(t3Threw.slice(0, 3))}）`);
+  ok(t3FidBad === 0, `生成后规格保真校验 200/200 通过（异常 ${t3FidBad}）`);
+  ok(t3RecheckBad === 0, `牌桌真实牌位复核 200/200 与缩略图一致（异常 ${t3RecheckBad}）`);
+  ok(t3FloatBad === 0, `主堆零悬空 200/200（异常 ${t3FloatBad}）`);
+  ok(t3VisBad === 0, `开局可点 ${VISIBLE_MIN}–${VISIBLE_MAX} 全部命中（越界 ${t3VisBad}，实测 ${t3VisMin}~${t3VisMax}）`);
+  ok(t3CountBad === 0, `总张数 = 档位主堆 + 44 张盲盒（异常 ${t3CountBad}）`);
+  ok(t3LayerBad === 0, `层数 / 逐层张数严格等于 layerPlanFor（异常 ${t3LayerBad}）`);
+  ok(t3MaskBad === 0, `俯视轮廓逐格等于模板掩膜，无一格简化或越界（异常 ${t3MaskBad}）`);
+  ok(t3BandBad === 0, `主堆全部落在牌桌边界内（异常 ${t3BandBad}）`);
+  ok(t3LatticeBad === 0, `全部牌位在半格晶格上（异常 ${t3LatticeBad}）`);
+  ok(t3SameBad === 0, `同层零重叠（异常 ${t3SameBad}）`);
+  ok(t3QueueBad === 0, `盲盒队列恒为 44 张（异常 ${t3QueueBad}）`);
+  ok(t3ChainBad === 0, `四条盲盒链每条只有队首可点（异常 ${t3ChainBad}）`);
+  ok(t3Sigs.size === 20, `20 套模板的规格签名两两不同（实测 ${t3Sigs.size} 种）`);
+  ok(Math.min(...t3CellCounts) >= 24, `每套掩膜至少 24 格（实测最少 ${t3CellMin} 格）`);
+  line(`   20 套 × 10 档位 = 200 局全通过 · 掩膜 ${t3CellMin}~${t3CellMax} 格 · 可点 ${t3VisMin}~${t3VisMax}`);
+
+  /* 旧路径必须彻底退出：不带 templateId 直接报错，不存在「悄悄回退」 */
+  let fallbackThrew = false;
+  try { generateLevel(2, 20260101, { profile: 0 }); } catch (e) { fallbackThrew = /templateId/.test(String(e && e.message)); }
+  ok(fallbackThrew, '不带 templateId 生成第二关会明确报错（旧布局路径已删除，禁止静默回退）');
 }
-ok(l2Codes === 0, `L2 30×10 组布局全部满足几何契约（异常 ${l2Codes}）`);
-ok(l2MainCompBad === 0, `主堆（不含队列）30×10 组全部单连通（异常 ${l2MainCompBad}）`);
-ok(l2LayerCountMismatch === 0, `每层张数严格等于 layerPlanFor（异常 ${l2LayerCountMismatch}）`);
-ok(l2ChainBad === 0, `四条盲盒链每条只有队首可点（异常 ${l2ChainBad}）`);
-ok(l2W >= 560 && l2H >= 440, `主堆包围盒 ≥560×440（实测最小 ${l2W}×${l2H}）`);
-ok(l2VisMin >= VISIBLE_MIN && l2VisMax <= VISIBLE_MAX,
-  `开局可点 ${VISIBLE_MIN}–${VISIBLE_MAX}（实测 ${l2VisMin}~${l2VisMax}）`);
-ok(l2SameSeedSameGeom === 0, `同档位 30 个不同 seed 生成 30 种不同几何（重复 ${l2SameSeedSameGeom}）`);
-ok(l2TopCols[0] >= 3 && l2TopCols[1] <= 5, `顶部 25% 层网格 3–5 列（实测 ${l2TopCols[0]}~${l2TopCols[1]}）`);
-ok(l2MidCols[0] >= 8 && l2MidCols[1] <= 10, `中段 36% 层网格 8–10 列（实测 ${l2MidCols[0]}~${l2MidCols[1]}）`);
-ok(l2CoreCols[0] >= 4 && l2CoreCols[1] <= 5 && l2CoreRows[1] <= 4,
-  `底部 39% 核心层网格 4–5 列 × ≤4 行（实测 ${l2CoreCols[0]}~${l2CoreCols[1]} 列 / ≤${l2CoreRows[1]} 行）`);
-line(`   L2 包围盒最小 ${l2W}×${l2H} · 可点 ${l2VisMin}~${l2VisMax} · 顶部 ${l2TopCols.join('~')} 列 / 中段 ${l2MidCols.join('~')} 列 / 核心 ${l2CoreCols.join('~')} 列 × ≤${l2CoreRows[1]} 行`);
+
 
 /* ---------------- [3b] 第一关 seed 驱动布局 ---------------- */
 line('\n[3b] 第一关 seed 驱动布局：紧凑堆 / 每层连通团块 / 列数 5–7 随机（30 seed × 4 档位）');
@@ -431,7 +463,7 @@ for (let i = 0; i < 12; i++) {
   const seed = (40000 + i * 2654435761) >>> 0;
   for (const level of [1, 2]) {
     const p = level === 1 ? LEVEL1_PROFILES[i % 4] : LEVEL2_PROFILES[i % 10];
-    const d = generateLevel(level, seed, { profile: p.id });
+    const d = gen(level, seed, { profile: p.id });
     const v = validateLevel(d);
     if (!v.ok) dealCodes++;
     // 每种花色张数必须是 3 的倍数，且总数 = 档位张数
@@ -447,7 +479,7 @@ for (let i = 0; i < 12; i++) {
 ok(dealCodes === 0, `12×2 关发牌全部合法（异常 ${dealCodes}）`);
 ok(openingKindsMin >= 4, `开局可点花色数最小值 ${openingKindsMin} ≥ 4`);
 ok(solvableL1 === 12, `第一关 12/12 都有真实通关路径证书（实测 ${solvableL1}）`);
-const g2 = generateLevel(2, 9000, { profile: 0 });
+const g2 = gen(2, 9000, { profile: 0 });
 ok(g2.requireSolution === false && g2.solvable === false && g2.certificate.ok === false,
   '第二关如实标记 requireSolution=false / solvable=false（整池均匀洗牌后不保证完整解）');
 line(`   开局花色最少 ${openingKindsMin} 种 · 第一关证书 ${solvableL1}/12 · 第二关 solvable=false（如实记录）`);
@@ -516,7 +548,7 @@ ok(slot2.length === SLOT_CAPACITY, '槽位可装满 7 格');
 ok(LEVEL_SPEC[2].props.shuffle === 3 && LEVEL_SPEC[2].props.undo === 3 && LEVEL_SPEC[2].props.remove === 3,
   '第 2 关三种道具各 3 次');
 ok(LEVEL_SPEC[2].reviveMax === 1, '第 2 关 1 次复活');
-const dCheck = generateLevel(2, 9000, { profile: 0 });
+const dCheck = gen(2, 9000, { profile: 0 });
 ok(countVisible(dCheck.cards) === dCheck.visible, 'countVisible 与关卡 visible 一致');
 refreshBlocked(dCheck.cards);
 ok(dCheck.cards.every((c) => typeof c.blocked === 'boolean'), 'refreshBlocked 写入全量 blocked 标记');
@@ -825,7 +857,7 @@ ok(distHtml.every((h) => /musicPlayer\.unlock|unlock\(\)/.test(h) || h.indexOf('
 line('\n[9] 运行时生成耗时');
 const t0 = Date.now();
 const N_GEN = 20;
-for (let i = 0; i < N_GEN; i++) generateLevel(2, (31000 + i * 7919) >>> 0, { profile: i % 10 });
+for (let i = 0; i < N_GEN; i++) gen(2, (31000 + i * 7919) >>> 0, { profile: i % 10 });
 const genMs = (Date.now() - t0) / N_GEN;
 const t1 = Date.now();
 for (let i = 0; i < 20; i++) generateLevel(1, (31000 + i * 7919) >>> 0, { profile: i % 4 });
@@ -845,7 +877,7 @@ for (const p of LEVEL2_PROFILES) {
   const errs = [];
   let visMin = 999, visMax = 0, pressMin = Infinity, chainMin = Infinity;
   for (const seed of seeds) {
-    const d = generateLevel(2, seed, { profile: p.id });
+    const d = gen(2, seed, { profile: p.id });
     levels.push({ seed, data: d });
     const v = validateLevel(d);
     if (!v.ok) errs.push(`${seed}:validate:${v.issues.join('/')}`);
@@ -859,7 +891,14 @@ for (const p of LEVEL2_PROFILES) {
     if (d.visible < 19 || d.visible > 25) errs.push(`${seed}:可点${d.visible}`);
     if (d.topKinds < 10) errs.push(`${seed}:开局花色${d.topKinds}`);
     if (!isHalfLattice(d.cards)) errs.push(`${seed}:晶格`);
-    if (countComponents(d.cards) !== 1) errs.push(`${seed}:连通`);
+    /* 主堆的连通分量数必须等于**该模板掩膜**的连通分量数：
+     * 20 套里有多岛/围合模板，主堆本来就不是单连通的，旧口径「主堆单连通」已失效；
+     * 但也不允许凭空多出/少掉一个牌岛。 */
+    const mainOnly = d.cards.filter((c) => c.seg !== 'queue');
+    const wantComp = specFor(d.templateId).maskRegionCount;
+    if (countComponents(mainOnly) !== wantComp) {
+      errs.push(`${seed}:连通${countComponents(mainOnly)}≠${wantComp}(${d.templateId})`);
+    }
     if (sameLayerOverlapCount(d.cards) !== 0) errs.push(`${seed}:同层重叠`);
     if (!d.crossOcclusion || d.crossOcclusion.pairs <= 0) errs.push(`${seed}:跨区遮挡`);
     const press = pressureStats(d.cards).avgPressDepth;
@@ -995,11 +1034,11 @@ try {
   // 100 次连续重开本关：档位每次都变；seed 始终来自「当前档位」的分库
   {
     const g = new Game(null);
-    g.startLevel(2, SEED_POOL['L2-0'][0]);
+    g.startLevel(2, SEED_POOL['L2-0'][0], L2_TEMPLATE_IDS[0]);
     let changed = 0, poolOk = 0;
     for (let i = 0; i < 100; i++) {
       const before = g.profile.l2;
-      g.restartLevel(Math.random);
+      g.restartLevel(Math.random, L2_TEMPLATE_IDS[i % L2_TEMPLATE_IDS.length]);
       if (g.profile.l2 !== before) changed++;
       const key = 'L2-' + g.profile.l2;
       if (SEED_POOL[key] && SEED_POOL[key].indexOf(g.seed) >= 0) poolOk++;
@@ -1069,7 +1108,9 @@ try {
     };
     const g = new Game(null);
     g.profile.l1 = 0; g.profile.l2 = 0;
-    g.installLevelData(tiny, null);
+    // 合成小牌局只验证「最后一关真实通关 → 毕业」的流程，不满足第二关模板规格，
+    // 因此显式跳过安装后的规格保真校验（正式开局不跳过）。
+    g.installLevelData(tiny, null, { skipFidelityCheck: true });
     let pickFail = 0;
     for (const id of tiny.solution) if (!g.pick(g.cards[id])) pickFail++;
     if (g.pendingMatch) g.flushResolve();
@@ -1177,9 +1218,9 @@ line('\n[14] 统一生成入口 / 布局签名 / 最近三局差异化（真实�
 
   // 几何现在由 seed 决定：同档位换 seed 几何必须不同，同 seed 复算必须相同
   for (const lv of [1, 2]) {
-    const d0 = generateLevel(lv, 1111, { profile: 0 });
-    const d1 = generateLevel(lv, 2222, { profile: 0 });
-    const d2 = generateLevel(lv, 1111, { profile: 1 });
+    const d0 = gen(lv, 1111, { profile: 0 });
+    const d1 = gen(lv, 2222, { profile: 0 });
+    const d2 = gen(lv, 1111, { profile: 1 });
     const s0 = calculateLayoutSignature(d0);
     const s1 = calculateLayoutSignature(d1);
     const s2 = calculateLayoutSignature(d2);
@@ -1573,7 +1614,7 @@ line('\n[17] sceneOf 覆盖 6 种状态（第 4.1 节）');
   ok(sceneOf(g) === 'title', 'Game 初始状态 → title');
   g.startLevel(1, 12345);
   ok(sceneOf(g) === 'level1', '进入第一关 → level1');
-  g.startLevel(2, SEED_POOL['L2-0'][0]);
+  g.startLevel(2, SEED_POOL['L2-0'][0], L2_TEMPLATE_IDS[0]);
   ok(sceneOf(g) === 'level2', '进入第二关 → level2');
   g.status = 'win'; g.graduated = true;
   ok(sceneOf(g) === 'graduated', 'graduated 优先于 win → graduated');

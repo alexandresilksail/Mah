@@ -5,6 +5,92 @@
 
 ---
 
+## 2026-11-13 · 第二关布局改为「规格驱动 + 三段几何校验」，旧生成路径彻底删除
+
+> 承接同日上一节：20 套模板与掩膜不变，**变的是「掩膜 → 真实牌位」这一段**。
+> 上一版靠逐张打分（形状分 + 生长轨迹 + 层号扰动）逐层挑格，同一模板换个 seed 就能
+> 长出不同轮廓，缩略图与实际牌局只在「大致形状」上相符。本版把「每层占哪些格」
+> 抽成与 seed 无关的显式规格 `l2_spec.js`（`MAH-L2-SPEC-v2`），生成、安装、渲染三段
+> 都拿同一份规格逐格比对，不一样就明确报错。
+
+### 新增
+
+- `src/game/l2_spec.js`（`MAH-L2-SPEC-v2`）：把「第 L 层占哪些格、每张牌落在格的哪个
+  四分之一」提升为**显式规格**，只由「模板掩膜 + 档位层数」决定，与随机种子无关。
+  - `buildSpec()`：掩膜格 → 4 邻接图 → **多源 BFS 游走序**（`multiSeeds()` 最远点采样，
+    最多 5 个起点、半径 10）。长走廊（L2-P13 蛇形直径 28 步、档位仅 15 层）此前铺不满，
+    多起点把最长走廊压到 5 步内。
+  - 逐格相位 + 半格错位极性：上层压住左侧子格 → 下层同格必须 `px=0`，压右侧 → `px=1`，
+    上下同理 `py`；极性位编码 `bit0=px0 / bit1=px1 / bit2=py0 / bit3=py1`，
+    用 `needMask()` / `phaseBits()` / `popcount(needMask & phaseBits)` 打分。
+  - `polarityUrgency()`：叶子格（度数 1）的落牌相位被唯一邻格唯一决定，必须最先满足
+    （权重 100 / 10 / 1），否则会出现「最后一格怎么摆都冲突」。
+  - `specPlan(spec, profile, { fillRot, tailPhase })`：真正决定每层格集合；尾段用
+    `tailBlocksFor()` 走位窗口（≤16 层 2 块、否则 3 块，块间隔 `size/4` / `size/2`，
+    相位逐轮 `PHASES[cycle % 4]` 轮转）把压深抬到门槛以上。
+  - `checkFidelity(cards, spec, plan, profile)`：逐格比对实际牌位与规格（晶格 / 层形状 /
+    区域 / 张数 / 同层零重叠 / 可点 / 悬空 / 牌桌边界）。
+  - `specSummary()`：报告与调试用的规格摘要（掩膜格数 / 区域数 / 走位序 / 规格签名）。
+- `reports/l2-render-guard-output.txt`：第三道（渲染前）校验的行为取证——人为把一张牌
+  挪出半格晶格后，画布变成整屏错误页（像素 `rgb(27,15,12)`）、一张牌都不画、
+  未捕获异常 0、rAF 循环存活。
+
+### 修改
+
+- `src/game/l2_geometry.js`：生成改为规格驱动（`specPlan()` 直接给出每层格集合，
+  不再逐张打分挑格）；`buildCandidate` 接受时把 `specFillRot` 写进牌局，
+  复核时复用同一 rot（否则 `LAYER_FORM` 会因「格集合同、每层分配不同」误判）；
+  新增 `verifyTemplateFidelity(cards, templateId, profile, fillRot)`——从 templateId + 档位
+  **重新展开**计划再逐格比对，安装后与渲染前共用这一实现；
+  `describeTemplateLayout()` 增 `mainBox`（主堆包围盒，避免盲盒队列把 20 套形状差异抹平）
+  与 `visible`（开局可点张数）。
+- `src/game/generator.js`：第二关**必须显式**传 `templateId`，缺失直接抛错
+  （`第二关生成失败：必须显式指定 20 套模板之一（templateId），旧布局生成路径已废弃`）；
+  返回对象新增 `specFillRot` / `templateId`。
+- `src/game/engine.js`：`startLevel(level, seed, templateId)` / `restartLevel(rand, templateId)`
+  第二关缺 templateId 抛错；`installLevelData()` **安装后**再校验一次，不一致抛错并带上
+  违规项；记录 `templateId` / `layoutProfile` / `specFillRot` / `fidelity`；
+  合成测试牌局可显式 `{ skipFidelityCheck: true }`。
+- `src/main.js`：新增第三道（**渲染前**）校验 `assertLevel2FidelityBeforeDraw()`，
+  按 `boardRev` 一次性缓存结论；失败时画整屏红色错误页并写明模板 ID 与违规项
+  （不画任何牌、不保留上一帧冒充新牌局），错误只往控制台报一次、不把 `requestAnimationFrame`
+  打死；DOM 降级通道输出文字报错。仅当确实装上了第二关牌局（有 `templateId`）才校验。
+- `src/game/new_game.js`：无 `templateId` 的旧记录**不再重放**（`replayOk=false`，不静默回退）；
+  校验结果新增 `fidelityOk`，失败时记录 `violations` 明细或 `NO_FIDELITY`。
+- `src/game/config.js` / `src/game/l2_templates.js`：删除已无引用的 `ZONE_ANCHORS` 与指向
+  已删模块的失效注释。20 套模板的 `growth` / `layerShape` / `curve` / `offsets` / `density`
+  字段保留为**形状说明性元数据**，落牌不再读取它们。
+- 测试与工具：`test.js` [3] 重写为「20 套 × 10 档位 = 200 局」三段保真验收、[10] 连通性
+  口径改为「主堆连通分量数 == 掩膜区域数」、[12] 补 templateId；`test-l1-frozen.js` [3]
+  改为「第二关旧默认路径已彻底删除（9 条历史记录必须全部报错）」、[5] 静态检查先剥注释；
+  `test-l2-templates.js` 口径改为「层张数由档位唯一决定」并把主堆包围盒 / 可点张数写进报告；
+  `test-random-generation.js` 与 `tools/{test_render,stress_release,tune,tune_pool}.mjs`
+  补 `templateId`。
+
+### 测试（真实运行，最终态）
+
+`node test.js` **631/0**（含第二关 20 套 × 10 档位 = 200 局三段保真、L2 平均 8.50 ms/局、
+压深最低档 L2-8 ≥ **4.23**（门槛 0.28 × 15 = 4.20））；`node test-l2-templates.js` **262/0**
+（60 局、190 对结构 sim 最大 **0.4438**、主堆布局 sim 最大 **0.4284**、越界 0 对）；
+`node test-random-generation.js` **7788/0**（双关各 100 局）；`node test-l1-frozen.js` **56/0**；
+`node test-layout-position.js` **35/0**；`node test-music-playback.js` **69/0**；
+`node test-build-consistency.js` **110/0**；`node tools/test_render.mjs` 27/27；
+`node tools/browser_smoke.mjs` `allPassed=true`；`node tools/music_real_playback.mjs` **54/54**。
+
+200 局中：生成抛错 0、保真失败 0、悬空 0、开局可点全部落在 19–25、掩膜 27–40 格；
+20 套规格签名两两互异。4 个 HTML 产物由当前 `src/` 重建（`buildVersion=2.0.0-66fe78b`），
+均内嵌 20 个 `templateId`。
+
+### 未运行（如实标注）
+
+- `cargo check` / `cargo build` **未运行成功**：本机缺 MSVC `link.exe`（Git Bash 下还被
+  GNU `link` 遮蔽），Rust 依赖 build script 无法链接。这是环境限制，不是源码编译错误。
+- 桌面版 exe / `Setup.exe` / `Portable.zip` / `SHA256SUMS.txt` **未用本版源码重建**；
+  桌面版真机音乐播放与真机安装**未运行**。
+- 本轮未重跑 `npm run test:release`（12000 局发布压力测试）。
+
+---
+
 ## 2026-11-13 · 第二关改按「20 套指定全局形状」重做（显式轮廓掩膜）
 
 > 本版**取代**同日的「50 套参数化结构模板」版本。50 套版是参数化（zones / shapes /

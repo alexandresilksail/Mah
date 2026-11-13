@@ -1,7 +1,112 @@
-第二关连续 100 局 · 最近 10 局双重去重（最终代码实测）
-生成失败=0 最大重试=2 累计尝试=103 最终历史长度=10 用时ms=4489
-窗口内重复：template=0 canonical=0 structure=0 geometry=0
-窗口内最大相似度：结构=0.4319 布局=0.3682
+第二关连续 100 局 · 最近 10 局双重去重（最终代码实测 · tools/l2_100_games.mjs）
+生成失败=0 最大重试=1 累计尝试=104 最终历史长度=10 用时ms=3934
+窗口内重复：template=0 canonical=0 structure=0 geometry=0（逐局独立复核，见下表明细）
+窗口内最大相似度：结构=0.5460 布局=0.5130（阈值 0.60）
 任意连续 10 局模板全不同：PASS
 可点范围=19-25
-模板使用分布={"L2-P02":6,"L2-P14":2,"L2-P09":3,"L2-P17":5,"L2-P19":5,"L2-P04":5,"L2-P12":7,"L2-P18":4,"L2-P01":4,"L2-P03":6,"L2-P15":5,"L2-P13":4,"L2-P16":6,"L2-P07":4,"L2-P11":6,"L2-P08":6,"L2-P06":5,"L2-P05":5,"L2-P10":6,"L2-P20":6}
+模板使用分布={"L2-P13":5,"L2-P07":7,"L2-P16":6,"L2-P15":6,"L2-P19":6,"L2-P10":6,"L2-P04":5,"L2-P20":7,"L2-P09":5,"L2-P11":5,"L2-P02":5,"L2-P18":5,"L2-P06":3,"L2-P08":4,"L2-P01":4,"L2-P03":4,"L2-P05":5,"L2-P17":5,"L2-P12":4,"L2-P14":3}
+20 套是否全部用到：是（20/20）
+独立复核问题数=0
+
+# | reason | templateId | 档位 | 张数 | 可点 | 结构sim | 布局sim | 尝试
+---:|---|---|---:|---:|---:|---:|---:|---:
+1 | new_game | L2-P13 | 2 | 300 | 22 | 0.000 | 0.000 | 1
+2 | failure_restart | L2-P07 | 7 | 312 | 24 | 0.307 | 0.189 | 1
+3 | title_screen_restart | L2-P16 | 8 | 192 | 23 | 0.235 | 0.200 | 1
+4 | application_restart | L2-P15 | 4 | 273 | 24 | 0.325 | 0.230 | 1
+5 | new_game | L2-P19 | 7 | 312 | 20 | 0.398 | 0.318 | 1
+6 | failure_restart | L2-P10 | 9 | 255 | 24 | 0.238 | 0.243 | 1
+7 | title_screen_restart | L2-P04 | 1 | 282 | 24 | 0.377 | 0.237 | 1
+8 | application_restart | L2-P20 | 5 | 291 | 24 | 0.404 | 0.291 | 1
+9 | new_game | L2-P09 | 0 | 321 | 21 | 0.386 | 0.324 | 1
+10 | failure_restart | L2-P11 | 3 | 312 | 24 | 0.283 | 0.252 | 1
+11 | title_screen_restart | L2-P02 | 6 | 261 | 22 | 0.373 | 0.336 | 1
+12 | application_restart | L2-P18 | 7 | 312 | 24 | 0.292 | 0.347 | 1
+13 | new_game | L2-P13 | 9 | 255 | 20 | 0.330 | 0.245 | 1
+14 | failure_restart | L2-P07 | 0 | 321 | 24 | 0.413 | 0.347 | 1
+15 | title_screen_restart | L2-P06 | 6 | 261 | 22 | 0.400 | 0.367 | 1
+16 | application_restart | L2-P08 | 3 | 312 | 21 | 0.408 | 0.325 | 1
+17 | new_game | L2-P10 | 9 | 255 | 24 | 0.378 | 0.359 | 1
+18 | failure_restart | L2-P01 | 8 | 192 | 20 | 0.297 | 0.273 | 1
+19 | title_screen_restart | L2-P03 | 1 | 282 | 24 | 0.308 | 0.254 | 1
+20 | application_restart | L2-P09 | 9 | 255 | 25 | 0.373 | 0.289 | 1
+21 | new_game | L2-P16 | 7 | 312 | 23 | 0.355 | 0.291 | 1
+22 | failure_restart | L2-P05 | 4 | 273 | 25 | 0.393 | 0.346 | 1
+23 | title_screen_restart | L2-P18 | 0 | 321 | 24 | 0.275 | 0.339 | 1
+24 | application_restart | L2-P02 | 9 | 255 | 24 | 0.356 | 0.329 | 1
+25 | new_game | L2-P17 | 2 | 300 | 19 | 0.350 | 0.327 | 1
+26 | failure_restart | L2-P12 | 1 | 282 | 21 | 0.514 | 0.489 | 1
+27 | title_screen_restart | L2-P08 | 2 | 300 | 21 | 0.434 | 0.400 | 1
+28 | application_restart | L2-P20 | 3 | 312 | 23 | 0.429 | 0.314 | 1
+29 | new_game | L2-P11 | 4 | 273 | 22 | 0.343 | 0.263 | 1
+30 | failure_restart | L2-P10 | 5 | 291 | 21 | 0.344 | 0.351 | 2
+31 | title_screen_restart | L2-P03 | 7 | 312 | 21 | 0.304 | 0.266 | 1
+32 | application_restart | L2-P07 | 0 | 321 | 22 | 0.463 | 0.334 | 1
+33 | new_game | L2-P15 | 3 | 312 | 24 | 0.356 | 0.318 | 1
+34 | failure_restart | L2-P19 | 9 | 255 | 22 | 0.356 | 0.327 | 2
+35 | title_screen_restart | L2-P05 | 8 | 192 | 20 | 0.423 | 0.414 | 1
+36 | application_restart | L2-P01 | 6 | 261 | 23 | 0.525 | 0.513 | 1
+37 | new_game | L2-P04 | 7 | 312 | 23 | 0.371 | 0.260 | 1
+38 | failure_restart | L2-P12 | 9 | 255 | 25 | 0.417 | 0.378 | 1
+39 | title_screen_restart | L2-P14 | 5 | 291 | 24 | 0.349 | 0.276 | 1
+40 | application_restart | L2-P08 | 9 | 255 | 25 | 0.388 | 0.322 | 1
+41 | new_game | L2-P10 | 2 | 300 | 24 | 0.372 | 0.385 | 1
+42 | failure_restart | L2-P18 | 4 | 273 | 25 | 0.345 | 0.370 | 2
+43 | title_screen_restart | L2-P20 | 9 | 255 | 20 | 0.514 | 0.417 | 1
+44 | application_restart | L2-P09 | 0 | 321 | 25 | 0.387 | 0.357 | 1
+45 | new_game | L2-P19 | 2 | 300 | 21 | 0.435 | 0.378 | 1
+46 | failure_restart | L2-P15 | 0 | 321 | 22 | 0.356 | 0.266 | 1
+47 | title_screen_restart | L2-P05 | 8 | 192 | 23 | 0.349 | 0.284 | 1
+48 | application_restart | L2-P17 | 9 | 255 | 19 | 0.411 | 0.344 | 1
+49 | new_game | L2-P07 | 3 | 312 | 24 | 0.442 | 0.360 | 1
+50 | failure_restart | L2-P02 | 5 | 291 | 25 | 0.433 | 0.336 | 1
+51 | title_screen_restart | L2-P11 | 7 | 312 | 21 | 0.340 | 0.249 | 1
+52 | application_restart | L2-P08 | 6 | 261 | 22 | 0.370 | 0.358 | 1
+53 | new_game | L2-P14 | 0 | 321 | 19 | 0.406 | 0.359 | 1
+54 | failure_restart | L2-P16 | 4 | 273 | 24 | 0.347 | 0.321 | 1
+55 | title_screen_restart | L2-P20 | 2 | 300 | 23 | 0.459 | 0.396 | 1
+56 | application_restart | L2-P04 | 8 | 192 | 19 | 0.258 | 0.194 | 1
+57 | new_game | L2-P19 | 2 | 300 | 20 | 0.374 | 0.364 | 1
+58 | failure_restart | L2-P15 | 9 | 255 | 24 | 0.399 | 0.349 | 1
+59 | title_screen_restart | L2-P18 | 3 | 312 | 24 | 0.378 | 0.376 | 1
+60 | application_restart | L2-P17 | 9 | 255 | 21 | 0.332 | 0.271 | 1
+61 | new_game | L2-P06 | 7 | 312 | 24 | 0.521 | 0.394 | 2
+62 | failure_restart | L2-P07 | 5 | 291 | 19 | 0.373 | 0.297 | 1
+63 | title_screen_restart | L2-P03 | 4 | 273 | 22 | 0.279 | 0.274 | 1
+64 | application_restart | L2-P01 | 6 | 261 | 24 | 0.394 | 0.356 | 1
+65 | new_game | L2-P16 | 8 | 192 | 24 | 0.297 | 0.263 | 1
+66 | failure_restart | L2-P02 | 0 | 321 | 20 | 0.343 | 0.359 | 1
+67 | title_screen_restart | L2-P10 | 4 | 273 | 25 | 0.341 | 0.342 | 1
+68 | application_restart | L2-P20 | 1 | 282 | 21 | 0.453 | 0.342 | 1
+69 | new_game | L2-P15 | 9 | 255 | 25 | 0.363 | 0.314 | 1
+70 | failure_restart | L2-P05 | 6 | 261 | 24 | 0.498 | 0.487 | 1
+71 | title_screen_restart | L2-P17 | 2 | 300 | 22 | 0.401 | 0.340 | 1
+72 | application_restart | L2-P06 | 9 | 255 | 23 | 0.453 | 0.410 | 1
+73 | new_game | L2-P13 | 2 | 300 | 23 | 0.395 | 0.285 | 1
+74 | failure_restart | L2-P12 | 3 | 312 | 24 | 0.546 | 0.504 | 1
+75 | title_screen_restart | L2-P11 | 2 | 300 | 24 | 0.385 | 0.303 | 1
+76 | application_restart | L2-P09 | 3 | 312 | 25 | 0.396 | 0.365 | 1
+77 | new_game | L2-P16 | 8 | 192 | 20 | 0.336 | 0.242 | 1
+78 | failure_restart | L2-P19 | 5 | 291 | 23 | 0.530 | 0.425 | 1
+79 | title_screen_restart | L2-P02 | 7 | 312 | 22 | 0.353 | 0.344 | 1
+80 | application_restart | L2-P15 | 2 | 300 | 25 | 0.343 | 0.292 | 1
+81 | new_game | L2-P07 | 6 | 261 | 21 | 0.440 | 0.402 | 1
+82 | failure_restart | L2-P18 | 1 | 282 | 22 | 0.293 | 0.309 | 1
+83 | title_screen_restart | L2-P20 | 9 | 255 | 25 | 0.356 | 0.352 | 1
+84 | application_restart | L2-P13 | 7 | 312 | 23 | 0.338 | 0.219 | 1
+85 | new_game | L2-P05 | 6 | 261 | 24 | 0.484 | 0.365 | 1
+86 | failure_restart | L2-P04 | 0 | 321 | 21 | 0.328 | 0.233 | 1
+87 | title_screen_restart | L2-P17 | 1 | 282 | 23 | 0.455 | 0.345 | 1
+88 | application_restart | L2-P03 | 3 | 312 | 25 | 0.270 | 0.243 | 1
+89 | new_game | L2-P14 | 2 | 300 | 25 | 0.366 | 0.286 | 1
+90 | failure_restart | L2-P16 | 4 | 273 | 22 | 0.428 | 0.317 | 1
+91 | title_screen_restart | L2-P19 | 0 | 321 | 22 | 0.434 | 0.352 | 1
+92 | application_restart | L2-P12 | 4 | 273 | 23 | 0.455 | 0.327 | 1
+93 | new_game | L2-P10 | 2 | 300 | 24 | 0.323 | 0.335 | 1
+94 | failure_restart | L2-P20 | 3 | 312 | 22 | 0.420 | 0.382 | 1
+95 | title_screen_restart | L2-P11 | 1 | 282 | 22 | 0.388 | 0.313 | 1
+96 | application_restart | L2-P07 | 8 | 192 | 19 | 0.295 | 0.307 | 1
+97 | new_game | L2-P13 | 1 | 282 | 20 | 0.354 | 0.222 | 1
+98 | failure_restart | L2-P09 | 5 | 291 | 21 | 0.405 | 0.339 | 1
+99 | title_screen_restart | L2-P04 | 8 | 192 | 20 | 0.292 | 0.199 | 1
+100 | application_restart | L2-P01 | 2 | 300 | 24 | 0.463 | 0.363 | 1

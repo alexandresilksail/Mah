@@ -26,6 +26,7 @@ import {
   buildBlockerGraph,
 } from '../src/game/layout.js';
 import { VERSION, LEVEL2_PROFILES } from '../src/game/config.js';
+import { L2_TEMPLATE_IDS } from '../src/game/l2_templates.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CANDIDATES = Math.max(40, parseInt(process.argv[2] || '120', 10));
@@ -80,7 +81,11 @@ for (const p of LEVEL2_PROFILES) {
   for (let i = 0; i < CANDIDATES; i++) {
     const seed = (SEED0 + p.id * 1000003 + i * 2654435761) >>> 0;
     let d;
-    try { d = generateLevel(2, seed, { profile: p.id }); } catch (e) { reject.generate++; continue; }
+    try {
+      // 第二关按 seed 稳定地挑一套模板（与生成器口径一致：同一 seed 永远同一套）
+      const tid = L2_TEMPLATE_IDS[(seed >>> 0) % L2_TEMPLATE_IDS.length];
+      d = generateLevel(2, seed, { profile: p.id, templateId: tid });
+    } catch (e) { reject.generate++; continue; }
     const v = validateLevel(d);
     if (!v.ok) { reject.validate++; continue; }
     if (d.cards.length !== p.mainCount + p.queueCount) { reject.validate++; continue; }

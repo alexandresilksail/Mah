@@ -1,4 +1,4 @@
-# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 内置背景音乐 / 双 Windows 产物）+ 2026-11-13 本轮增量（第二关 20 套指定全局形状 / 最近 10 局去重）
+# 交付说明 · v2.0.0（16 牌型 / 双关卡 / 内置背景音乐 / 双 Windows 产物）+ 2026-11-13 本轮增量（第二关规格驱动生成 / 三段几何校验 / 旧布局生成路径删除）
 
 > 本文件是交付的权威说明。代码的唯一真实来源是仓库源文件，本文件不贴源码全文。
 > **牌数口径**：旧版的「第一关固定 24 张 / 第二关 222 张、8/15 种牌型、葫芦单堆」是
@@ -8,7 +8,60 @@
 
 ---
 
-## 0.0 2026-11-13 本轮增量（第二关 20 套指定全局形状 + 最近 10 局双重去重）
+## 0.00 2026-11-13 本轮增量（第二关规格驱动生成 + 三段几何校验 + 旧路径删除）
+
+> 20 套模板与掩膜不变，**变的是「掩膜 → 真实牌位」这一段**：上一版逐张打分挑格，
+> 同一模板换 seed 就能长成另一个轮廓；本版把「每层占哪些格、落在格的哪个四分之一」
+> 抽成与 seed 无关的显式规格，生成 / 安装 / 渲染三段都拿同一份规格逐格比对。
+> 旧的第二关默认生成路径已删除，缺 `templateId` 一律明确报错。
+
+| 类别 | 文件 | 说明 |
+|---|---|---|
+| 规格层（新增） | `src/game/l2_spec.js` | `MAH-L2-SPEC-v2`：掩膜 → 4 邻接图 → 多源 BFS 走位序（最多 5 起点、半径 10）→ 逐格相位 + 半格错位极性 → `specPlan()` 给出每层格集合；`checkFidelity()` 逐格比对；`specSummary()` 供报告取证 |
+| 生成 | `src/game/l2_geometry.js` | 完全按 `specPlan()` 落牌（不再逐张打分）；接受时写入 `specFillRot`；新增 `verifyTemplateFidelity()`（安装后 / 渲染前共用，从 templateId + 档位重新展开再比对）；`describeTemplateLayout()` 增 `mainBox` / `visible` |
+| 入口 | `src/game/generator.js` | 第二关**必须显式** `templateId`，缺失即抛错；返回 `templateId` / `specFillRot` |
+| 引擎 | `src/game/engine.js` | `startLevel` / `restartLevel` 第二关缺 templateId 抛错；`installLevelData()` 安装后再校验一次，不一致抛错并列出违规项 |
+| 渲染 | `src/main.js` | 第三道（渲染前）校验，按 `boardRev` 缓存；失败整屏错误页写明模板与违规项，不画牌、不保留上一帧；错误只报一次控制台，不打死 rAF |
+| 存档校验 | `src/game/new_game.js` | 无 `templateId` 的旧记录不再重放；校验新增 `fidelityOk`，失败记 `violations` / `NO_FIDELITY` |
+| 清理 | `src/game/config.js` / `l2_templates.js` | 删除无引用的 `ZONE_ANCHORS` 与失效注释；`growth` / `layerShape` / `curve` 等字段保留为形状说明性元数据，不再参与落牌 |
+| 取证 | `reports/l2-render-guard-output.txt` | 人为把一张牌挪出半格晶格后：整屏错误页、零牌绘制、未捕获异常 0、rAF 存活 |
+
+**真实运行结果（本轮最终复跑，全部 EXIT=0）**
+
+| 命令 | 结果 |
+|---|---|
+| `node test.js` | **631 通过 / 0 失败**（含第二关 20 套 × 10 档位 = 200 局三段保真；L2 平均 8.50 ms/局；压深最低档 L2-8 ≥ 4.23 ≥ 门槛 4.20） |
+| `node test-random-generation.js` | **7788 / 0**（第一关 100 局 + 第二关 100 局） |
+| `node test-l2-templates.js` | **262 / 0**（60 局、190 对：结构 sim 最大 0.4438、主堆布局 sim 最大 0.4284、越界 0） |
+| `node test-l1-frozen.js` | **56 / 0**（第一关基线零漂移 + 「9 条旧第二关记录必须全部报错」） |
+| `node test-layout-position.js` | **35 / 0** |
+| `node test-music-playback.js` | **69 / 0** |
+| `node test-build-consistency.js` | **110 / 0**（4 个 HTML 的 templateId 集合与源码一致） |
+| `node tools/test_render.mjs` | 27/27 场景 |
+| `node tools/browser_smoke.mjs` | `allPassed=true` |
+| `node tools/music_real_playback.mjs` | 54/54（网页版 / 独立 HTML / ES5 legacy） |
+
+200 局中：生成抛错 0、保真失败 0、悬空 0、开局可点全部 19–25、掩膜 27–40 格、
+20 套规格签名两两互异；4 个 HTML 产物由当前 `src/` 重建（`buildVersion=2.0.0-66fe78b`）。
+
+**未运行 / 未重建（如实标注）**
+
+- `cargo check` / `cargo build` **未运行成功**：本机缺 MSVC `link.exe`
+  （Git Bash 下还被 GNU `link` 遮蔽），Rust 依赖 build script 无法链接。
+- 桌面版 exe / Windows 安装版 / Portable zip / Setup.exe / SHA256SUMS.txt
+  **未用本轮源码重建**，仍是旧冻结产物；桌面版真机音乐播放未运行。
+- 本轮未重跑 `npm run test:release`（12000 局发布压力测试）。
+
+---
+
+## 0.0 2026-11-13 增量（第二关 20 套指定全局形状 + 最近 10 局双重去重）
+
+> 本节描述的 20 套模板 / 掩膜体系仍然有效，但「掩膜 → 牌位」的落牌算法已被上面
+> 0.00 节的**规格驱动 + 三段校验**取代（`growth` / `layerShape` / `curve` 不再参与落牌）。
+> **本节下列数值是上一版口径**（`test.js` 625/0、`test-l1-frozen.js` 64/0、结构 sim 0.4104 /
+> 布局 sim 0.3560、9 条 L2 默认路径「零漂移」），与当前状态不同：当前为 631/0、56/0、
+> 0.4438 / 0.4284，且那 9 条旧记录现在必须**报错**。以 `## 0.00` 与
+> `reports/FINAL_ACCEPTANCE.md` 为准。
 
 > 本版取代同日早些时候的「50 套参数化结构模板」版本：不再靠 zones / shapes / trajectory
 > 参数拼差异，而是每套模板一份 **5 行 × 9 列显式轮廓掩膜**，轮廓、区域分布、层级遮挡

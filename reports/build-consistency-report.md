@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-13T08:06:10.853Z
-- Git commit：`f17b73bce482fae522a43c1df8cd2ca6ebf51b34`
+- 运行时间：2026-11-13T10:21:02.863Z
+- Git commit：`66fe78bb82954e5efa9551a11234b0d1025a94df`
 - 断言：通过 **110**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -11,24 +11,24 @@
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 9916421 | `61f322e503b256a6e66e487d311574a7f5e2cef29fb4bda6c931588a6fddb3fd` |
-| dist/MahLeMah-legacy.html | 9950536 | `d9dac7d73741585082853fcf529bccf2a7030084bfd71e6e4a53babaeb852f73` |
+| dist/MahLeMah.html | 9925831 | `03507abf477aa6389af4977baaf53b46be13475c1051d4e5dba244cbdaa3f5a8` |
+| dist/MahLeMah-legacy.html | 9960000 | `b99c16d0c6d371092bcf277be764aa630ef867ca06bf31c7218a77f9cb6dec2f` |
 
 ## bundle 逐字节比对
 
 | 版本 | HTML 内嵌字节 | 现场打包字节 | 相同 |
 |---|---:|---:|---|
-| 现代版 | 9914289 | 9914289 | PASS |
-| legacy | 9920194 | 9920194 | PASS |
+| 现代版 | 9923699 | 9923699 | PASS |
+| legacy | 9929658 | 9929658 | PASS |
 
 ## 构建元信息
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-f17b73b | 2.0.0-f17b73b | 2.0.0-f17b73b |
-| gitCommit | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 | f17b73bce482fae522a43c1df8cd2ca6ebf51b34 |
-| sourceHash | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` | `e3f1aba2f8dd2b3eff999a2209fe5b231fa412ebbc9d66d03bb12e4100326e5c` |
-| sourceFiles | 37 | 37 | 37 |
+| buildVersion | 2.0.0-66fe78b | 2.0.0-66fe78b | 2.0.0-66fe78b |
+| gitCommit | 66fe78bb82954e5efa9551a11234b0d1025a94df | 66fe78bb82954e5efa9551a11234b0d1025a94df | 66fe78bb82954e5efa9551a11234b0d1025a94df |
+| sourceHash | `78be7c6f08311bf1da7bb8003a2e9aa54d266717646f042bfde6597d8fbc40d0` | `78be7c6f08311bf1da7bb8003a2e9aa54d266717646f042bfde6597d8fbc40d0` | `78be7c6f08311bf1da7bb8003a2e9aa54d266717646f042bfde6597d8fbc40d0` |
+| sourceFiles | 38 | 38 | 38 |
 
 > 两个 HTML 的 buildTimestamp 允许相差数秒（两次独立构建），其余字段必须完全一致。
 

@@ -1,61 +1,16 @@
-MahLeMah · 2026-11-13 最终真实运行汇总（第二关 20 套指定全局形状 + 最近 10 局双重去重）
-生成时间: 2026-11-13T08:06:28.463Z
-生成方式: 从 reports/FINAL_*.txt 真实运行日志中解析断言数与关键指标，非手写
+MahLeMah · 本轮最终一次全套真实运行汇总（2026-11-13 18:20:27）
+全部命令都由当前 src/ 与当前 dist/ 现场执行，输出文件见同名 FINAL_*.txt
 
-===== FINAL_test.txt =====
-  断言：通过 625 项，失败 0 项  [11343 B]
-  [3] 第二关 seed 驱动布局：沙漏主堆 + 半格晶格 + 四条盲盒链（30 seed × 10 档位）
-  L1 100 局 · sim 均值 0.257 · P95 0.523 · 最大 0.5934 · 重试合计 7 次 · 窗口对 295 · 耗时 1.0s
-  L2 100 局 · sim 均值 0.253 · P95 0.365 · 最大 0.4554 · 重试合计 3 次 · 窗口对 4215 · 耗时 7.5s
+node test.js  →   断言：通过 631 项，失败 0 项
+node test-l2-templates.js  →   断言：通过 262 项，失败 0 项
+node test-l1-frozen.js  →   断言：通过 56 项，失败 0 项
+node test-layout-position.js  →   断言：通过 35 项，失败 0 项
+node test-music-playback.js  →   断言：通过 69 项，失败 0 项
+node test-build-consistency.js  →   断言：通过 110 项，失败 0 项
+node test-random-generation.js  →   断言：通过 7788 项，失败 0 项
+node tools/test_render.mjs  →  render smoke OK：27 个场景全部绘制通过（无异常）
+node tools/browser_smoke.mjs  →  [browser] 报告 reports/browser-smoke-report.json · allPassed=true
+node tools/music_real_playback.mjs  →  [mah] 真实播放验证：54/54 通过 · allPassed=true
+node tools/l2_100_games.mjs  →  生成失败=0 最大重试=1 累计尝试=104 最终历史长度=10 用时ms=3934
 
-===== FINAL_test-random-generation.txt =====
-  断言：通过 7788 项，失败 0 项  [30677 B]
-  重启模拟：恢复 3 条历史，额外生成 1 局 reason=application_restart，牌数 24，sim 最大 0.4193
-  L1 三局滑窗 sim：均值 0.2480 · P95 0.4950 · 最大 0.5841 · 对数 294
-  重启模拟：恢复 10 条历史，额外生成 1 局 reason=application_restart，牌数 312，sim 最大 0.3928
-  L2 三局滑窗 sim：均值 0.2434 · P95 0.3607 · 最大 0.4865 · 对数 945
-
-===== FINAL_test-l2-templates.txt =====
-  断言：通过 262 项，失败 0 项  [2816 B]
-  [0] 20 套模板定义：唯一 ID / 形状族 / 显式轮廓掩膜
-  结构 sim 最大 0.4104 · 主堆布局 sim 最大 0.3560 · 越界 0/190
-  层分布 18 种 · 区域分布 15 种 · 占位格轮廓 20/20 种 · 包围盒 2 种
-
-===== FINAL_test-l1-frozen.txt =====
-  断言：通过 64 项，失败 0 项  [1030 B]
-
-===== FINAL_test-layout-position.txt =====
-  断言：通过 35 项，失败 0 项  [1445 B]
-
-===== FINAL_test-music-playback.txt =====
-  断言：通过 69 项，失败 0 项  [744 B]
-
-===== FINAL_test-build-consistency.txt =====
-  断言：通过 110 项，失败 0 项  [1257 B]
-
-===== FINAL_render.txt =====
-  render smoke OK：27 个场景全部绘制通过（无异常）
-
-===== FINAL_browser_smoke.txt =====
-  [browser] 报告 reports/browser-smoke-report.json · allPassed=true
-  本轮浏览器中真实生成的 L2 模板: L2-P02 L2-P03 L2-P04 L2-P06 L2-P09 L2-P16 L2-P18 L2-P20
-
-===== FINAL_music_real_playback.txt =====
-  [mah] 真实播放验证：54/54 通过 · allPassed=true
-  [mah] 桌面版真机播放：未运行（Rust 编译环境不可用，exe 未重建）
-
-===== l2-100-games.txt =====
-  第二关连续 100 局 · 最近 10 局双重去重（最终代码实测）
-  生成失败=0 最大重试=2 累计尝试=103 最终历史长度=10 用时ms=4489
-  窗口内重复：template=0 canonical=0 structure=0 geometry=0
-  窗口内最大相似度：结构=0.4319 布局=0.3682
-  任意连续 10 局模板全不同：PASS
-  可点范围=19-25
-  模板使用分布={"L2-P02":6,"L2-P14":2,"L2-P09":3,"L2-P17":5,"L2-P19":5,"L2-P04":5,"L2-P12":7,"L2-P18":4,"L2-P01":4,"L2-P03":6,"L2-P15":5,"L2-P13":4,"L2-P16":6,"L2-P07":4,"L2-P11":6,"L2-P08":6,"L2-P06":5,"L2-P05":5,"L2-P10":6,"L2-P20":6}
-
-===== 合计 =====
-  Node 断言：通过 8953 项，失败 0 项
-  渲染冒烟：27 个场景全部通过
-  浏览器冒烟：allPassed=true
-  音乐真机：54/54
-  未运行：cargo check / cargo build（缺 MSVC link.exe）；桌面 exe / Setup.exe / Portable.zip / SHA256SUMS.txt 未重建；桌面版真机播放未运行
+未运行：cargo check / cargo build（缺 MSVC link.exe）、桌面版 exe 与 Windows 安装包重建、真机桌面播放、npm run test:release。

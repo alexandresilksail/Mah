@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T07:51:14.859Z",
+  "generatedAt": "2026-11-13T10:19:30.893Z",
   "browser": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   "executed": true,
   "pages": [
@@ -15,17 +15,17 @@
         {
           "label": "首次点击完成解锁并开始真实播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.764401,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.081161,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "currentTime > 0（音频真的在解码播放，不只是 play() 被调用）",
           "pass": true,
-          "detail": "currentTime=0.764401"
+          "detail": "currentTime=1.081161"
         },
         {
           "label": "currentTime 随时间前进",
           "pass": true,
-          "detail": "0.764401 → 1.981089"
+          "detail": "1.081161 → 2.296214"
         },
         {
           "label": "标题场景曲目正确",
@@ -35,37 +35,37 @@
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":2.646259,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":2.979072,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "场景 level1 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.496866,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.484333,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
         },
         {
           "label": "场景 level2 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.531687,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.527351,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 pause 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.196555,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.197849,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 win 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.537565,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.546588,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
         },
         {
           "label": "场景 lose 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.546556,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.535562,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
         },
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.523111,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.517344,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
         },
         {
           "label": "场景 graduated 自动切换且静音 / 单实例",
@@ -75,7 +75,7 @@
         {
           "label": "音乐音量独立可调",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.393587,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.375082,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
         },
         {
           "label": "修改音乐音量不影响音效音量",
@@ -90,7 +90,7 @@
         {
           "label": "重新开启按当前场景恢复播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.512789,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.476424,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
         },
         {
           "label": "页面无未捕获 JS 异常",
@@ -109,7 +109,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 2.646259,
+            "currentTime": 2.979072,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -128,7 +128,7 @@
             "track": "第一关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.496866,
+            "currentTime": 0.484333,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -147,7 +147,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.531687,
+            "currentTime": 0.527351,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -166,7 +166,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 1.196555,
+            "currentTime": 1.197849,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -185,7 +185,7 @@
             "track": "过关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.537565,
+            "currentTime": 0.546588,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -204,7 +204,7 @@
             "track": "失败场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.546556,
+            "currentTime": 0.535562,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -223,7 +223,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.523111,
+            "currentTime": 0.517344,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -267,17 +267,17 @@
         {
           "label": "首次点击完成解锁并开始真实播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.463017,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.460047,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "currentTime > 0（音频真的在解码播放，不只是 play() 被调用）",
           "pass": true,
-          "detail": "currentTime=1.463017"
+          "detail": "currentTime=1.460047"
         },
         {
           "label": "currentTime 随时间前进",
           "pass": true,
-          "detail": "1.463017 → 2.683815"
+          "detail": "1.460047 → 2.685652"
         },
         {
           "label": "标题场景曲目正确",
@@ -287,37 +287,37 @@
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":3.356319,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":3.359264,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "场景 level1 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.523787,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.511494,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
         },
         {
           "label": "场景 level2 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.540786,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.528358,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 pause 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.208048,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.196235,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 win 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.546579,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.578015,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
         },
         {
           "label": "场景 lose 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.522058,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.533953,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
         },
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.477044,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.555021,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
         },
         {
           "label": "场景 graduated 自动切换且静音 / 单实例",
@@ -327,7 +327,7 @@
         {
           "label": "音乐音量独立可调",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.396186,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.389614,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
         },
         {
           "label": "修改音乐音量不影响音效音量",
@@ -342,7 +342,7 @@
         {
           "label": "重新开启按当前场景恢复播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.516036,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.494978,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
         },
         {
           "label": "页面无未捕获 JS 异常",
@@ -361,7 +361,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 3.356319,
+            "currentTime": 3.359264,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -380,7 +380,7 @@
             "track": "第一关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.523787,
+            "currentTime": 0.511494,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -399,7 +399,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.540786,
+            "currentTime": 0.528358,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -418,7 +418,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 1.208048,
+            "currentTime": 1.196235,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -437,7 +437,7 @@
             "track": "过关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.546579,
+            "currentTime": 0.578015,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -456,7 +456,7 @@
             "track": "失败场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.522058,
+            "currentTime": 0.533953,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -475,7 +475,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.477044,
+            "currentTime": 0.555021,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -519,17 +519,17 @@
         {
           "label": "首次点击完成解锁并开始真实播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.411358,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.367903,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "currentTime > 0（音频真的在解码播放，不只是 play() 被调用）",
           "pass": true,
-          "detail": "currentTime=1.411358"
+          "detail": "currentTime=1.367903"
         },
         {
           "label": "currentTime 随时间前进",
           "pass": true,
-          "detail": "1.411358 → 2.621431"
+          "detail": "1.367903 → 2.586231"
         },
         {
           "label": "标题场景曲目正确",
@@ -539,37 +539,37 @@
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":3.278636,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":3.265712,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":1,\"trackCount\":5}"
         },
         {
           "label": "场景 level1 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.521161,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.511598,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":2,\"trackCount\":5}"
         },
         {
           "label": "场景 level2 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.544675,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.542221,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 pause 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.221636,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level2\",\"track\":\"第二关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":1.207588,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":3,\"trackCount\":5}"
         },
         {
           "label": "场景 win 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.561239,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"win\",\"track\":\"过关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.542234,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":4,\"trackCount\":5}"
         },
         {
           "label": "场景 lose 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.564795,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"lose\",\"track\":\"失败场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.5449,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":5,\"trackCount\":5}"
         },
         {
           "label": "场景 title 自动切换并播放 / 单实例",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.516118,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"title\",\"track\":\"标题场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.505056,\"volume\":0.6,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":6,\"trackCount\":5}"
         },
         {
           "label": "场景 graduated 自动切换且静音 / 单实例",
@@ -579,7 +579,7 @@
         {
           "label": "音乐音量独立可调",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.389297,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.383938,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":7,\"trackCount\":5}"
         },
         {
           "label": "修改音乐音量不影响音效音量",
@@ -594,7 +594,7 @@
         {
           "label": "重新开启按当前场景恢复播放",
           "pass": true,
-          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.502617,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
+          "detail": "{\"enabled\":true,\"unlocked\":true,\"scene\":\"level1\",\"track\":\"第一关场景音乐.wav\",\"playing\":true,\"instances\":1,\"currentTime\":0.508743,\"volume\":0.2,\"lastError\":\"\",\"playErrors\":0,\"switchCount\":8,\"trackCount\":5}"
         },
         {
           "label": "页面无未捕获 JS 异常",
@@ -613,7 +613,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 3.278636,
+            "currentTime": 3.265712,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -632,7 +632,7 @@
             "track": "第一关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.521161,
+            "currentTime": 0.511598,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -651,7 +651,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.544675,
+            "currentTime": 0.542221,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -670,7 +670,7 @@
             "track": "第二关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 1.221636,
+            "currentTime": 1.207588,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -689,7 +689,7 @@
             "track": "过关场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.561239,
+            "currentTime": 0.542234,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -708,7 +708,7 @@
             "track": "失败场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.564795,
+            "currentTime": 0.5449,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,
@@ -727,7 +727,7 @@
             "track": "标题场景音乐.wav",
             "playing": true,
             "instances": 1,
-            "currentTime": 0.516118,
+            "currentTime": 0.505056,
             "volume": 0.6,
             "lastError": "",
             "playErrors": 0,

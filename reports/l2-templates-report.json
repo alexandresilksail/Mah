@@ -1,14 +1,14 @@
 {
   "meta": {
-    "generatedAt": "2026-11-13T08:06:00.088Z",
-    "gitCommit": "f17b73bce482fae522a43c1df8cd2ca6ebf51b34",
+    "generatedAt": "2026-11-13T10:13:56.459Z",
+    "gitCommit": "66fe78bb82954e5efa9551a11234b0d1025a94df",
     "command": "node test-l2-templates.js",
     "templateCount": 20,
     "perTemplateCases": 3,
     "totalGenerated": 60,
     "pairCount": 190,
-    "maxStructureSimilarity": 0.4104415778139901,
-    "maxLayoutSimilarity": 0.35595450301332654,
+    "maxStructureSimilarity": 0.4438293292133106,
+    "maxLayoutSimilarity": 0.4283590805329936,
     "similarityThreshold": 0.6,
     "l2HistoryLimit": 10,
     "assertions": {
@@ -117,55 +117,59 @@
       "representative": {
         "cards": 321,
         "layers": 72,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 21,
-        "structureSignature": "391d9354b52f0c46a90ac1e09692fe39380e3163c921aff0f81d09c9f006132e",
-        "canonicalGeometrySignature": "d60372ead98acda4ff102d8d1bc739ea111efcf4f91cd184cd39e694e141d22d"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 22,
+        "structureSignature": "3310d1a8d14130a0d05b42443edc9d40c44954b2c405587764520e91c8e05d1a",
+        "canonicalGeometrySignature": "b6264cd51ca03bac6fd1882133d91f44f612ae7cea4745389f2c42cf9d0f0b90"
       },
       "cases": [
         {
           "profileId": 0,
           "seed": 7919,
           "cards": 321,
-          "visible": 21,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 25,
           "installOk": true,
-          "structureSignature": "391d9354b52f0c46a90ac1e09692fe39380e3163c921aff0f81d09c9f006132e",
-          "canonicalGeometrySignature": "d60372ead98acda4ff102d8d1bc739ea111efcf4f91cd184cd39e694e141d22d"
+          "structureSignature": "3310d1a8d14130a0d05b42443edc9d40c44954b2c405587764520e91c8e05d1a",
+          "canonicalGeometrySignature": "b6264cd51ca03bac6fd1882133d91f44f612ae7cea4745389f2c42cf9d0f0b90"
         },
         {
           "profileId": 1,
           "seed": 7936,
           "cards": 282,
-          "visible": 21,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 12,
           "installOk": true,
-          "structureSignature": "d5e682c2553eff03fea447a7f8456102b0c2bc564baaad84060299db22858d0e",
-          "canonicalGeometrySignature": "6be8bf86049eae0545cdb2011b992a3138e30c05fa0f3b32c054d30ed4bb6ecc"
+          "structureSignature": "113433de5d2089197208ad7d23261d3e3e737cbf6d2d829557d26aa5f18d9503",
+          "canonicalGeometrySignature": "77a98632eefcfa66f798894dd9f94fae4232dfea348050acd98f4e87a3601325"
         },
         {
           "profileId": 2,
           "seed": 7953,
           "cards": 300,
-          "visible": 22,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "376dfa7fce588cc475eeef64e7227ccc0656b14d8402625a68cd6fc294f739ec",
-          "canonicalGeometrySignature": "fa90ec23334b7883caf1c0abafa18e093fc931e5b510729c9cda2374ef6b7357"
+          "structureSignature": "dbfa86246aa5120c1b3b652716a2c60e2f5c64601c031c385e1b353ff6f283b0",
+          "canonicalGeometrySignature": "163fd2258ad28309a44fda40b204fa7d7c56414417e141cd54ff6c054123be85"
         }
       ]
     },
@@ -224,55 +228,59 @@
       "representative": {
         "cards": 282,
         "layers": 68,
-        "regions": 6,
+        "regions": 2,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 20,
-        "structureSignature": "dc8cc458cfe82c10a22fa1e1cc548a58cfa8a0740ee3892c6e7202d97df875f9",
-        "canonicalGeometrySignature": "9c6527f4ccd29ec81eecf3509088eb6899c38eed33f0998178596e27d8e41cab"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 21,
+        "structureSignature": "55ba56814efcc8b232e3a4aa86dc04c99d100fb7b77e63e9febbfa7b4bd69da5",
+        "canonicalGeometrySignature": "95e0e6fdf006c7a073a83d684a9d65b253ec6ed1b1cc52dd6cf4098c6d0bfe56"
       },
       "cases": [
         {
           "profileId": 1,
           "seed": 8050,
           "cards": 282,
-          "visible": 20,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "dc8cc458cfe82c10a22fa1e1cc548a58cfa8a0740ee3892c6e7202d97df875f9",
-          "canonicalGeometrySignature": "9c6527f4ccd29ec81eecf3509088eb6899c38eed33f0998178596e27d8e41cab"
+          "structureSignature": "55ba56814efcc8b232e3a4aa86dc04c99d100fb7b77e63e9febbfa7b4bd69da5",
+          "canonicalGeometrySignature": "95e0e6fdf006c7a073a83d684a9d65b253ec6ed1b1cc52dd6cf4098c6d0bfe56"
         },
         {
           "profileId": 2,
           "seed": 8067,
           "cards": 300,
-          "visible": 22,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "328178539e8c90998b8253599724e42db9566add93d378fd37554fc93eee483a",
-          "canonicalGeometrySignature": "ee2f099e632e134a4946cc73772ed3002d682109d0bffa589b508ca0b800900b"
+          "structureSignature": "97acd28e5a249a4c5f288cc65b1224d49fb7ea0df9de17df172ab297c5827241",
+          "canonicalGeometrySignature": "c40c75e23421362459d42ba07c3534ce5940107a2d873db69427df5d202fe42e"
         },
         {
           "profileId": 3,
           "seed": 8084,
           "cards": 312,
-          "visible": 21,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 27,
           "installOk": true,
-          "structureSignature": "fb97f17e0776707b7838d2fe66ed5ad352f7bfe2eb1b8672697073c4a06ffd82",
-          "canonicalGeometrySignature": "7c596b56d667f7aad47965f118820f8256592ebb02dababf73a5904add14b1e5"
+          "structureSignature": "852de032e28f8e1f981a3f294c039e268f30e07f00b1bc0efcb6f9918ab4b567",
+          "canonicalGeometrySignature": "364e2919698e14a3ee5b2e285aea8b6f470dfe4306bea09cab8f6d45540c7239"
         }
       ]
     },
@@ -331,43 +339,47 @@
       "representative": {
         "cards": 300,
         "layers": 70,
-        "regions": 7,
+        "regions": 3,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "ea43f9c08b2c7661ca3958ae9b951c29b63295001c18f1156d6c3428ab2369b4",
-        "canonicalGeometrySignature": "b03e92d2f6e7a2c807975ae10753797c3a5738e967512ff98910c997e66556d0"
+        "mainBox": {
+          "w": 561,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 23,
+        "structureSignature": "03650e1daeedb37a3401ac2fc3a868c7208f837a02da8de608f1619eea5147e9",
+        "canonicalGeometrySignature": "7bd70c2d21ecf6a0737b9eff39931dc1dd4af959224fd1152ff80b9a809bdc16"
       },
       "cases": [
         {
           "profileId": 2,
           "seed": 8181,
           "cards": 300,
-          "visible": 19,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "ea43f9c08b2c7661ca3958ae9b951c29b63295001c18f1156d6c3428ab2369b4",
-          "canonicalGeometrySignature": "b03e92d2f6e7a2c807975ae10753797c3a5738e967512ff98910c997e66556d0"
+          "structureSignature": "03650e1daeedb37a3401ac2fc3a868c7208f837a02da8de608f1619eea5147e9",
+          "canonicalGeometrySignature": "7bd70c2d21ecf6a0737b9eff39931dc1dd4af959224fd1152ff80b9a809bdc16"
         },
         {
           "profileId": 3,
           "seed": 8198,
           "cards": 312,
-          "visible": 19,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "21bca1d671033246a7a5685afd51f59eafd4693198f8e494968f4ed422f216de",
-          "canonicalGeometrySignature": "f0c88f1886634806a47762391d0ad4170dd9432d78af56617357ae38f5b13a34"
+          "structureSignature": "45f645dacbe3eda43694bdfd14c7fc99f89eb22e410f50db76e641cf4d7b982d",
+          "canonicalGeometrySignature": "d428a63ecf9a03033610e37b7d7ba3f803fb44c34630d4a040545b51fd9e2ffe"
         },
         {
           "profileId": 4,
@@ -376,10 +388,10 @@
           "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "8e4e4241214ee0ade8e0bb6cccc529c7aa0b1f8c72a0a68e05cc72e4d6d4307f",
-          "canonicalGeometrySignature": "79195edc94e7cb927fd9234dfdfb932f87c5e7d61a75c9e7cf0c1bba2c3b87a5"
+          "structureSignature": "fd5a6ab70a584df441f773d49a7b667f7d6f3d658a002a729a74ac4c5586ae19",
+          "canonicalGeometrySignature": "b285c9a0f5bc66eb67384fd0c68fbcc81ce406313f809141bc42e6836ae407ed"
         }
       ]
     },
@@ -442,55 +454,59 @@
       "representative": {
         "cards": 312,
         "layers": 71,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "39c3f69f51f5435e9de23e33b57da666b0583970c7e83d27a3325d77ab5fa848",
-        "canonicalGeometrySignature": "332c9916553f662e226b3f3ebda875ef4bd8edb50254ccc137c1fb44dc1fffe1"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 24,
+        "structureSignature": "8bac3031de768300ebb496b017701c4d56cff7211bd26b584638d95b724759cb",
+        "canonicalGeometrySignature": "010a116a43e3c3392b3aed61194699928ab0d4c79686c082679dce670e2163e7"
       },
       "cases": [
         {
           "profileId": 3,
           "seed": 8312,
           "cards": 312,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "39c3f69f51f5435e9de23e33b57da666b0583970c7e83d27a3325d77ab5fa848",
-          "canonicalGeometrySignature": "332c9916553f662e226b3f3ebda875ef4bd8edb50254ccc137c1fb44dc1fffe1"
+          "structureSignature": "8bac3031de768300ebb496b017701c4d56cff7211bd26b584638d95b724759cb",
+          "canonicalGeometrySignature": "010a116a43e3c3392b3aed61194699928ab0d4c79686c082679dce670e2163e7"
         },
         {
           "profileId": 4,
           "seed": 8329,
           "cards": 273,
-          "visible": 19,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "7418d66f18416d0cfb6eefc8600bc3ccc5d4c1365bdf032761f1b0ad8bbf9a62",
-          "canonicalGeometrySignature": "7b40d923113b8436de42da21d9f74377086a63ebb60413ff01e40c3e6e2588a0"
+          "structureSignature": "338a199e63e026f9fca554e4044ba3e9f1348b2cdc0af64131e661a07275e94c",
+          "canonicalGeometrySignature": "e60acb399effcea46c7fed814b429621c7524bd78385645436a8148d13b6e9db"
         },
         {
           "profileId": 5,
           "seed": 8346,
           "cards": 291,
-          "visible": 21,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "f7429f82c076dba72563bf743b2b9dbe2108d0bf6dc10ac3b9a95b06cd2515eb",
-          "canonicalGeometrySignature": "1439830c331cfb6e1f930dff24f41534b5f42f5531ac1cdd32ed63eea06753e7"
+          "structureSignature": "e3f9d53dda4bd7b0257b065d7a796cb1101447087033a34d95c36a508dbc191c",
+          "canonicalGeometrySignature": "7b7e3d0f9dd17635c7c72d9a276255023b56f9360bb5c827aa9dfb5454cfbe53"
         }
       ]
     },
@@ -553,55 +569,59 @@
       "representative": {
         "cards": 273,
         "layers": 67,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "ca347ba28f8f6cca6c3c781afded775f1bf1cb299f51269e669d71b37d19188e",
-        "canonicalGeometrySignature": "8d2db26b4d376c1e98e91fbf446ca34b52091b35314d19af847afa13d30ff664"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 21,
+        "structureSignature": "b8b1d5692bf0e1fa3707485a1e6d3974e632df4402c9731ca276f08dd0492fbb",
+        "canonicalGeometrySignature": "c52823967a7491f2229a1fa29d9e5eccde792a419e5d93bd67167a6b25cbba46"
       },
       "cases": [
         {
           "profileId": 4,
           "seed": 8443,
           "cards": 273,
-          "visible": 22,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "ca347ba28f8f6cca6c3c781afded775f1bf1cb299f51269e669d71b37d19188e",
-          "canonicalGeometrySignature": "8d2db26b4d376c1e98e91fbf446ca34b52091b35314d19af847afa13d30ff664"
+          "structureSignature": "b8b1d5692bf0e1fa3707485a1e6d3974e632df4402c9731ca276f08dd0492fbb",
+          "canonicalGeometrySignature": "c52823967a7491f2229a1fa29d9e5eccde792a419e5d93bd67167a6b25cbba46"
         },
         {
           "profileId": 5,
           "seed": 8460,
           "cards": 291,
-          "visible": 20,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "09e02bfc77521cb1537ac2487123c8e46fe6559734a001602068d220687908a6",
-          "canonicalGeometrySignature": "c14b400af2b4061d23c24e25ff030b65296cd68ad7d23cc7e6044d622aac52fc"
+          "structureSignature": "d8d7ec91335b3d2d6615cd4ec584e76624075b20af113df4913726871bd242d6",
+          "canonicalGeometrySignature": "2547f269fb751981d5935b6b02b20958b28cf3dcde6113831f7c0101d33d7ee9"
         },
         {
           "profileId": 6,
           "seed": 8477,
           "cards": 261,
-          "visible": 22,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "6f6c80b3eca8ed0025348e2d8c45dbd807484ab986fc42b2865a140dc039b6ba",
-          "canonicalGeometrySignature": "3dabff0c5c8caf0f81276d8e9e20bd850e3c874467680fb85ce3be9ef0d83384"
+          "structureSignature": "fb575792345c84c6bd297620b770be2bd78cf0cc8a4bddca5d175575c538b4e4",
+          "canonicalGeometrySignature": "c39be1129f192a925336c64bcd3063f254499c12e27d5345b6111e3b04a0f04a"
         }
       ]
     },
@@ -660,55 +680,59 @@
       "representative": {
         "cards": 291,
         "layers": 69,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "0f4ab79a335acc71f9804d958dc16472f8263405cac776c5b808cacc05feb285",
-        "canonicalGeometrySignature": "55174a260a875a4560c103f81a49b0b94cf31365dda26416ef7365b86d5468a0"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 24,
+        "structureSignature": "07a6df83666227920fb19a116c09270ee472b7942762646b7526070808e5ef31",
+        "canonicalGeometrySignature": "9fe358fa14712f70b2f00ca2b63061f7df4d3c2fd6d3c3a7c35b5e761f3df86b"
       },
       "cases": [
         {
           "profileId": 5,
           "seed": 8574,
           "cards": 291,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "0f4ab79a335acc71f9804d958dc16472f8263405cac776c5b808cacc05feb285",
-          "canonicalGeometrySignature": "55174a260a875a4560c103f81a49b0b94cf31365dda26416ef7365b86d5468a0"
+          "structureSignature": "07a6df83666227920fb19a116c09270ee472b7942762646b7526070808e5ef31",
+          "canonicalGeometrySignature": "9fe358fa14712f70b2f00ca2b63061f7df4d3c2fd6d3c3a7c35b5e761f3df86b"
         },
         {
           "profileId": 6,
           "seed": 8591,
           "cards": 261,
-          "visible": 20,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "b93ae76b96f252d1c8995e66502be3cd488c68cf6a38283d6b0fe0fdb35a5de1",
-          "canonicalGeometrySignature": "2df5a389302a15b5ff2990dfc56fb5127af0e1536db312e33cbc745a1bf53ca6"
+          "structureSignature": "08e7e6b91a72c6a43233d97314af1cba71067554530f18c281022afbc86ea2b1",
+          "canonicalGeometrySignature": "a7d1775bf092a9955ab694e01f7c61a667585f9e63ddbae765efc816937e8438"
         },
         {
           "profileId": 7,
           "seed": 8608,
           "cards": 312,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "f85863209aa8b94f05c6007ce983dea09c0d66ccc0ed02d573afc1f48c628206",
-          "canonicalGeometrySignature": "2c3187daf543ff71e41aff020bf8f3aee98f1a80acd852d67e7ea2ab987a05b1"
+          "structureSignature": "d797c5742c4344d3e0fe975f05bb253be60aa9f4d8cf049ea918f4ab8dbe3a87",
+          "canonicalGeometrySignature": "046e219b1982f0058cbc9493eb450919cd7dc983023269d348f04ded8f62ecb0"
         }
       ]
     },
@@ -767,43 +791,47 @@
       "representative": {
         "cards": 261,
         "layers": 66,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "bcf4b22d7e0255c073032deec4c34f266cef8491e8dc0c70126bab50cfb30941",
-        "canonicalGeometrySignature": "0d616d785d0894792d6658a1b2047cb36305fd571ec465c35e4893ffcf749498"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 24,
+        "structureSignature": "eab9258de6176992d0590470db849812dd1b80cf8e01ec19621352ba9130e873",
+        "canonicalGeometrySignature": "b6c80868d96de60157accf77e78761099545a76919c1a5e2b2e449c20cef7e27"
       },
       "cases": [
         {
           "profileId": 6,
           "seed": 8705,
           "cards": 261,
-          "visible": 22,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "bcf4b22d7e0255c073032deec4c34f266cef8491e8dc0c70126bab50cfb30941",
-          "canonicalGeometrySignature": "0d616d785d0894792d6658a1b2047cb36305fd571ec465c35e4893ffcf749498"
+          "structureSignature": "eab9258de6176992d0590470db849812dd1b80cf8e01ec19621352ba9130e873",
+          "canonicalGeometrySignature": "b6c80868d96de60157accf77e78761099545a76919c1a5e2b2e449c20cef7e27"
         },
         {
           "profileId": 7,
           "seed": 8722,
           "cards": 312,
-          "visible": 19,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "0a7fb59de594f96b8a8f900ae952968442d46d09146efd4d529d0a3d185622b8",
-          "canonicalGeometrySignature": "7baaa79ba2763507d41e0614f1dc25eac7ab1c45c225401df66b6b6fb224a84e"
+          "structureSignature": "2b8250a886c573459b835d53bacc85593dd3645a97eb4eea8e017738eb580f28",
+          "canonicalGeometrySignature": "9c15f786a8e76e4bebe6805b542824c835704b01a247b72f2627664359e76b3c"
         },
         {
           "profileId": 8,
@@ -812,10 +840,10 @@
           "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 11,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "0eb7c78bc5b184dbf1b0aab01b94069a0811c5ed20ed2aecc090469eb4fe0250",
-          "canonicalGeometrySignature": "0cc293f98a1d179babd5322261685cae6d9d5eab25ef51b7803aa0446c1c3df1"
+          "structureSignature": "1ae86efbe1bc5efb5a5e6ee6dc5ae6bc9aa9fb7cedd64a45efc7a4d8fdd161cc",
+          "canonicalGeometrySignature": "468c176e872b796ed7bd463fdc1054cdf7593bc9017c927beb529c9cb49e070a"
         }
       ]
     },
@@ -874,18 +902,22 @@
       "representative": {
         "cards": 312,
         "layers": 71,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
+        },
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
         },
         "visible": 20,
-        "structureSignature": "2b2b3565440b8b9a32df1e3938a9d396d6024d01dac526835773042bdb9bc9ed",
-        "canonicalGeometrySignature": "5526f538599a001b13048590a2d6b53039a01ac11a2a61a4bc9bfd947af9a562"
+        "structureSignature": "bb6013c11fae061ce5329f58a7257e90b53d4eb71f2950650ffff3ef3d677a78",
+        "canonicalGeometrySignature": "379997a80d33f3cefe9d13e32641e13de18b1ee211a4e3a1281b5586d11616e8"
       },
       "cases": [
         {
@@ -895,10 +927,10 @@
           "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "2b2b3565440b8b9a32df1e3938a9d396d6024d01dac526835773042bdb9bc9ed",
-          "canonicalGeometrySignature": "5526f538599a001b13048590a2d6b53039a01ac11a2a61a4bc9bfd947af9a562"
+          "structureSignature": "bb6013c11fae061ce5329f58a7257e90b53d4eb71f2950650ffff3ef3d677a78",
+          "canonicalGeometrySignature": "379997a80d33f3cefe9d13e32641e13de18b1ee211a4e3a1281b5586d11616e8"
         },
         {
           "profileId": 8,
@@ -909,20 +941,20 @@
           "strictFloating": 0,
           "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "b1f8287aa42cb25eb9da2b5227a534505949a73de1e53ae35c5dc025fd87d4b4",
-          "canonicalGeometrySignature": "6d2d39475365f9d1134b62a26ea6648394579662a5b7ad3ff29e591b3d1bc355"
+          "structureSignature": "b6d495743830ddc867d7a3d6b3ed99c18a3ed6664e88825bda0ab1369be8f2dc",
+          "canonicalGeometrySignature": "19ff3ba8e59c92451010bc3ca18ba5ca7780c6bf6f1052cd501a7906f904f47d"
         },
         {
           "profileId": 9,
           "seed": 8870,
           "cards": 255,
-          "visible": 20,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 11,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "3c3fe438c357be564e9ea8225022ee36c3127917abbbd5a5b01f240a51af2db6",
-          "canonicalGeometrySignature": "995b81e64b3fc2066a1e66351fe99b85956864d8bdc6afc047be99f9d582bc9f"
+          "structureSignature": "9eb9675a907706a05693df4b3129db4e2e8d0f043901848ff362ef7b2143191c",
+          "canonicalGeometrySignature": "6f3ec66ed0cb6d60106d95186a5dd080fc423441da087886a587fcb60599c376"
         }
       ]
     },
@@ -981,31 +1013,35 @@
       "representative": {
         "cards": 192,
         "layers": 59,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 836,
           "w": 660,
-          "h": 616
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "c317abc5017046d6ec4aca79a3ee7f31369f28c61a20893b8dee9aaeb8330128",
-        "canonicalGeometrySignature": "b9e46b5183a13296b87d4f8b2cf618d6e4a8d44074afa798adf67a980e64e5fb"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 66,
+          "minY": 220
+        },
+        "visible": 21,
+        "structureSignature": "6aee93d8814eb8d80590e47fb2ffd919d210ce50f8fea2906255911443d7c1a1",
+        "canonicalGeometrySignature": "770d55058f67c42b51d2e9f21b19951929d995221eb4369ef4843b295ade9b88"
       },
       "cases": [
         {
           "profileId": 8,
           "seed": 8967,
           "cards": 192,
-          "visible": 19,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "c317abc5017046d6ec4aca79a3ee7f31369f28c61a20893b8dee9aaeb8330128",
-          "canonicalGeometrySignature": "b9e46b5183a13296b87d4f8b2cf618d6e4a8d44074afa798adf67a980e64e5fb"
+          "structureSignature": "6aee93d8814eb8d80590e47fb2ffd919d210ce50f8fea2906255911443d7c1a1",
+          "canonicalGeometrySignature": "770d55058f67c42b51d2e9f21b19951929d995221eb4369ef4843b295ade9b88"
         },
         {
           "profileId": 9,
@@ -1014,22 +1050,22 @@
           "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 13,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "c9d4e9df3fb14731abfe31e83d893d19f457fb248982fe5bf21503217531cb28",
-          "canonicalGeometrySignature": "6465a9d0ba57d25db5adb3fe17129de8ee5a75a31e27d2fe6ff0e8fda0df4c7b"
+          "structureSignature": "75269084d105b3486bcfa5ba4f28e254c0b4fa8b5de00037b0d2267392ae2bde",
+          "canonicalGeometrySignature": "3849ffaef40c97a62cd8637651636a4bd76af5d8029264ba41d79ba4dd5e1cf2"
         },
         {
           "profileId": 0,
           "seed": 9001,
           "cards": 321,
-          "visible": 20,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "1c28e498c657734c75788bade3ed76efca6bf293411bd2955223405e947f3de5",
-          "canonicalGeometrySignature": "8d03ebaebf89aef7f5c355ef3f120e69e607fdd48863c20a0c76c97412a4a9c0"
+          "structureSignature": "ff75b93a2ce37ee0fb6e37cd42391c62cb3f1bd4857fbfff9620648bd7fac526",
+          "canonicalGeometrySignature": "3ebc24863b1c82fa763c2e6269aa247a1a9afffc5b44b5ecdf87264074de31a2"
         }
       ]
     },
@@ -1088,55 +1124,59 @@
       "representative": {
         "cards": 255,
         "layers": 64,
-        "regions": 6,
+        "regions": 2,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 20,
-        "structureSignature": "b317ca0d0c57fd6d0c9fa28f5b00342a50ed1abdf1ceef769a1809800aefc0aa",
-        "canonicalGeometrySignature": "ea0f708b0f67f53ea7cf394230bcdd5a03bfaad5f26206216b21364e7bb0e6e3"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 66,
+          "minY": 220
+        },
+        "visible": 25,
+        "structureSignature": "bd94ba1d6ea70ac4710d4d333e73f1d73a2761f54d2b03cb0030efdde52290a0",
+        "canonicalGeometrySignature": "a2b47787b192709cd07648046fdd91b2c76cdb04e2fab86eb89be8be037ed094"
       },
       "cases": [
         {
           "profileId": 9,
           "seed": 9098,
           "cards": 255,
-          "visible": 20,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 26,
           "installOk": true,
-          "structureSignature": "b317ca0d0c57fd6d0c9fa28f5b00342a50ed1abdf1ceef769a1809800aefc0aa",
-          "canonicalGeometrySignature": "ea0f708b0f67f53ea7cf394230bcdd5a03bfaad5f26206216b21364e7bb0e6e3"
+          "structureSignature": "bd94ba1d6ea70ac4710d4d333e73f1d73a2761f54d2b03cb0030efdde52290a0",
+          "canonicalGeometrySignature": "a2b47787b192709cd07648046fdd91b2c76cdb04e2fab86eb89be8be037ed094"
         },
         {
           "profileId": 0,
           "seed": 9115,
           "cards": 321,
-          "visible": 21,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "9e1781de629ce515e715519c7d75ff8c8aa4eac43090dbd386360975db4cb85c",
-          "canonicalGeometrySignature": "5ecd96e2aabaf3a557953d343002d18c9b99ebbe76f02a42d6824f62520e0f80"
+          "structureSignature": "b31cc2ba1ed197c37551dce9848cfffd543b92d97d5bb26b6212a18c0411c1b6",
+          "canonicalGeometrySignature": "c80da8c0b8950e53c45be8fa4be5bc0eef37a5073f22306d5a38ba391af4ecaa"
         },
         {
           "profileId": 1,
           "seed": 9132,
           "cards": 282,
-          "visible": 22,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "09a9832802b05eedb89e609e1bf655bc167f76120b55b7f2795bf027b920b049",
-          "canonicalGeometrySignature": "bfc5ed2563e07c5abed965e7ce61978588c352ff9dc367d88893dbf28a04585a"
+          "structureSignature": "39735d0cdba6d548173e9ef015223f6b94fec2b11d74a9175391b0037af7366d",
+          "canonicalGeometrySignature": "616c01acff4d8e547114493dbb9adaafd7f6ef50345feb2a530380c361fb6483"
         }
       ]
     },
@@ -1195,55 +1235,59 @@
       "representative": {
         "cards": 321,
         "layers": 72,
-        "regions": 6,
+        "regions": 2,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "4abb81e9cc26a0fb9e449256491cfd6a53420d83144aeaf72b854d7cefbe2172",
-        "canonicalGeometrySignature": "ac97558dbd8e1dff8f32552be5b7602f0b8b3d12b82a69d7e0bf016191b05a70"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 25,
+        "structureSignature": "bd39491812b4178ffc16b611e4d5a6444fdf1d9ca494787229bc23f998b112c1",
+        "canonicalGeometrySignature": "3d99ea8afa5ba1ce8b71a70ebaa3374c33c6d9ca82115176b572a25515cbbb4f"
       },
       "cases": [
         {
           "profileId": 0,
           "seed": 9229,
           "cards": 321,
-          "visible": 22,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "4abb81e9cc26a0fb9e449256491cfd6a53420d83144aeaf72b854d7cefbe2172",
-          "canonicalGeometrySignature": "ac97558dbd8e1dff8f32552be5b7602f0b8b3d12b82a69d7e0bf016191b05a70"
+          "structureSignature": "bd39491812b4178ffc16b611e4d5a6444fdf1d9ca494787229bc23f998b112c1",
+          "canonicalGeometrySignature": "3d99ea8afa5ba1ce8b71a70ebaa3374c33c6d9ca82115176b572a25515cbbb4f"
         },
         {
           "profileId": 1,
           "seed": 9246,
           "cards": 282,
-          "visible": 19,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "d2cb6991ae616c7adc0035add145164bcad1898df427312872f3239f3e376cb2",
-          "canonicalGeometrySignature": "9408570956493d17c4cc2b5dfa3200d98f868b4a6a23d02c46a229b6c129d9de"
+          "structureSignature": "65a8375365c1b002dd428c5b009005984a208a4d61616482d95aa95ee3f296dd",
+          "canonicalGeometrySignature": "523e8b37eea4114aaa13f4345c1678716ab5cf4d2fe2e4c2b121f2ad781a1a26"
         },
         {
           "profileId": 2,
           "seed": 9263,
           "cards": 300,
-          "visible": 20,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "0b374dd22188c253b75961a255eda30c7b6d766c9a08e83a1e6cc78a822c1f5c",
-          "canonicalGeometrySignature": "b1fde33fcdbcc9b7f947bc181bf6a76eabce822232790a22ea9976947cbe390b"
+          "structureSignature": "a4fbd5c518e817dca14e1bd638179e8171372dd8dd01e90332163b27eac9ca5a",
+          "canonicalGeometrySignature": "5ab0a67586510af307c8ff459252026f200c80e820c4884e9df1362908472b51"
         }
       ]
     },
@@ -1306,55 +1350,59 @@
       "representative": {
         "cards": 282,
         "layers": 68,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "d850860586d2eca2c93245de9d9337011d9728356d1ff295d76a2ac1bbf8f038",
-        "canonicalGeometrySignature": "9f802d9a117d2dafb2636cc0ed70f58c42fe4a4192e106da5a24df7c70602171"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 23,
+        "structureSignature": "f7d14aab329e7996d6cfaa1cfbfa3f298858b6197ff1b83ac9c5ece4ebc6cfe6",
+        "canonicalGeometrySignature": "7b844aa152e1d90ad2e539f7a6681cb2ed59bcd3129a8483162ce8cfd1688a0e"
       },
       "cases": [
         {
           "profileId": 1,
           "seed": 9360,
           "cards": 282,
-          "visible": 22,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "d850860586d2eca2c93245de9d9337011d9728356d1ff295d76a2ac1bbf8f038",
-          "canonicalGeometrySignature": "9f802d9a117d2dafb2636cc0ed70f58c42fe4a4192e106da5a24df7c70602171"
+          "structureSignature": "f7d14aab329e7996d6cfaa1cfbfa3f298858b6197ff1b83ac9c5ece4ebc6cfe6",
+          "canonicalGeometrySignature": "7b844aa152e1d90ad2e539f7a6681cb2ed59bcd3129a8483162ce8cfd1688a0e"
         },
         {
           "profileId": 2,
           "seed": 9377,
           "cards": 300,
-          "visible": 22,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "7365a675f07b702f0f00d303e3c0e18b16f0f2b5352f59bafd58204fdb80e595",
-          "canonicalGeometrySignature": "2b06d89c07ce6c49960f4036abfbbf672ea6b8e54be9e09b30014ac831ff195e"
+          "structureSignature": "48653d8228d487ebd44576c4062c696f5ddf8fcf66a1fb2c52e275fc46c530ca",
+          "canonicalGeometrySignature": "3310b592c9cfc49acdf23f99837eac18cabe39c23892194de752b248ee106623"
         },
         {
           "profileId": 3,
           "seed": 9394,
           "cards": 312,
-          "visible": 20,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "329b855c68ff8ca13d69c5324c4a50efc30f656dbe06afb76620e1fd282985a0",
-          "canonicalGeometrySignature": "5e6692ff019f21712254d8844191d97cf133cb3a3924a07ca68b6b5fb4085a3a"
+          "structureSignature": "c66c098b1f68bd76871ad7e00763ca54bbdf47a7c9576743f2cc994dde29df65",
+          "canonicalGeometrySignature": "1f5a9acd926908bbbe2b417506aacd481b4e9f0838e0f4d25dad20d39a5d651b"
         }
       ]
     },
@@ -1413,55 +1461,59 @@
       "representative": {
         "cards": 300,
         "layers": 70,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 20,
-        "structureSignature": "8d033cafbc31b7920162b25e191b09bc5a4263dd2cc5ba3da548b9f09216342a",
-        "canonicalGeometrySignature": "c8531b283ac3b078b1517f290c7356e6d31b6f5d961f2362b63443c0c113116d"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 23,
+        "structureSignature": "34ed21329a83a7c083a4abd7a2fd1c8e195a1239c8cdd695ad55719e193336ff",
+        "canonicalGeometrySignature": "1d16578eec190f392afaf4ea4059b39130e7d9911016de3153215141581a6ee6"
       },
       "cases": [
         {
           "profileId": 2,
           "seed": 9491,
           "cards": 300,
-          "visible": 20,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "8d033cafbc31b7920162b25e191b09bc5a4263dd2cc5ba3da548b9f09216342a",
-          "canonicalGeometrySignature": "c8531b283ac3b078b1517f290c7356e6d31b6f5d961f2362b63443c0c113116d"
+          "structureSignature": "34ed21329a83a7c083a4abd7a2fd1c8e195a1239c8cdd695ad55719e193336ff",
+          "canonicalGeometrySignature": "1d16578eec190f392afaf4ea4059b39130e7d9911016de3153215141581a6ee6"
         },
         {
           "profileId": 3,
           "seed": 9508,
           "cards": 312,
-          "visible": 19,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "a467e02abd09d9f217045fb92badfd4d1fdc6be8a3994825e8d45576275e8e85",
-          "canonicalGeometrySignature": "99f0d5c90dc23b897fcd0ef42e9c0c7a3442eee134103a462e16b6f3b9940046"
+          "structureSignature": "9b82a4188d05bc6de15fa81bc22e12361cb6f4c3d0dceed6d3d5d429f420175e",
+          "canonicalGeometrySignature": "cd91c4cc67b6e21b0b4d692fdaa2de3f65fd71b37d363e496e79572e2e3bb527"
         },
         {
           "profileId": 4,
           "seed": 9525,
           "cards": 273,
-          "visible": 20,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "37ea9b3bb4909a204f34251b49712f5fd2bca21150120d3f942288b1beb8633b",
-          "canonicalGeometrySignature": "4aaff71614b59d1b5aa13e9fbbc8594cff9520be1539b5582f38b542a710f460"
+          "structureSignature": "ecd230e7ec2c890dbfeaa861bb2984f0f1c8942b34ef711e5f2ac66ac964a473",
+          "canonicalGeometrySignature": "9d1f06677e8cc06db00b084a4b4976f2b2f2454a65784e6cab4bb06aab7b872f"
         }
       ]
     },
@@ -1520,55 +1572,59 @@
       "representative": {
         "cards": 312,
         "layers": 71,
-        "regions": 6,
+        "regions": 2,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 20,
-        "structureSignature": "478ce5a2d64c9dc7c8dbcd9b65c1645cbf196feb1176114affea1559545d2806",
-        "canonicalGeometrySignature": "3eb94fbaaf655d368d4ebbd7aa209665a07292d8198d0535f83ad0d47dd40edb"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 22,
+        "structureSignature": "d6324b5331e9cbfd302dcc79e12446143414f2425412d89ec1850cd6ff664f06",
+        "canonicalGeometrySignature": "dc26b5a51ac1be60406edf7cadfe72cd2933b18884a44ce25278a98abe2662b1"
       },
       "cases": [
         {
           "profileId": 3,
           "seed": 9622,
           "cards": 312,
-          "visible": 20,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "478ce5a2d64c9dc7c8dbcd9b65c1645cbf196feb1176114affea1559545d2806",
-          "canonicalGeometrySignature": "3eb94fbaaf655d368d4ebbd7aa209665a07292d8198d0535f83ad0d47dd40edb"
+          "structureSignature": "d6324b5331e9cbfd302dcc79e12446143414f2425412d89ec1850cd6ff664f06",
+          "canonicalGeometrySignature": "dc26b5a51ac1be60406edf7cadfe72cd2933b18884a44ce25278a98abe2662b1"
         },
         {
           "profileId": 4,
           "seed": 9639,
           "cards": 273,
-          "visible": 20,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "d097ff1813dbb98d21a9c81bc1a1e1e8a682ddf6193dbe7d08ca882783144421",
-          "canonicalGeometrySignature": "b1e2c80164ff582885d6be960f059cae17546075c97861cdc7f004b6fc24bff8"
+          "structureSignature": "62eb39fbbfd1bbaad84e932c9b0844bcae816570c68f10a9047d328f801df0a8",
+          "canonicalGeometrySignature": "b7098a46d8664de904d69b358e2244685d6999a03e20aed9093badf7164042ee"
         },
         {
           "profileId": 5,
           "seed": 9656,
           "cards": 291,
-          "visible": 19,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "8f1874c86b0097e2bdfa8dedb148f9b0a8904183355f480a2b58d44ba661a7cd",
-          "canonicalGeometrySignature": "fe80b80be59c3df84bde415cdd6b3ea90b10cca1a6884790ea7d89bc2a13d309"
+          "structureSignature": "f90ff78670d406a008454cecedbbab3e2b130ba593254cc7491c5aee0bc7143c",
+          "canonicalGeometrySignature": "6c542bf696f39655d091c5d5854a067c1ca5c75e596df0f83fc5871ddc44014e"
         }
       ]
     },
@@ -1627,55 +1683,59 @@
       "representative": {
         "cards": 273,
         "layers": 67,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "f83b939877ea38e98edcaa92d2641c981b0828e09e11c840c6dfca60391240cf",
-        "canonicalGeometrySignature": "51c9a9b1cec41dc94bdd7477c8f6fe071ca06d9fe877dfa653510a61dff01742"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 20,
+        "structureSignature": "b92a4a0b68dc31a27d4ea8427b1e35e193bf0a812b19169cc96d0aeb71ea39cc",
+        "canonicalGeometrySignature": "82a36a95d9b3ef8600a53465f0a9fa30f8a4a941033c39bc1438a0f3668cab26"
       },
       "cases": [
         {
           "profileId": 4,
           "seed": 9753,
           "cards": 273,
-          "visible": 19,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "f83b939877ea38e98edcaa92d2641c981b0828e09e11c840c6dfca60391240cf",
-          "canonicalGeometrySignature": "51c9a9b1cec41dc94bdd7477c8f6fe071ca06d9fe877dfa653510a61dff01742"
+          "structureSignature": "b92a4a0b68dc31a27d4ea8427b1e35e193bf0a812b19169cc96d0aeb71ea39cc",
+          "canonicalGeometrySignature": "82a36a95d9b3ef8600a53465f0a9fa30f8a4a941033c39bc1438a0f3668cab26"
         },
         {
           "profileId": 5,
           "seed": 9770,
           "cards": 291,
-          "visible": 20,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "e4dfe1f53257628ea7ca6de79316f3bb12180d6755b5cc5d47989453aed29c08",
-          "canonicalGeometrySignature": "59115881e9e98c6a903731e2300f80c75a0a6574fd61c58de181998137374207"
+          "structureSignature": "1a087b853671fdb7c5e16d25b37fa56fbdaaf721470778cbfa3d755d8ac943fa",
+          "canonicalGeometrySignature": "00e018d4455b4eec3e50aba9e0f459dfd7d123a6bae22055200aad0f339b86a5"
         },
         {
           "profileId": 6,
           "seed": 9787,
           "cards": 261,
-          "visible": 21,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "86003338a3ce27f08a13b9c606273b4bf171adbb1bae9dd7e906078672bf87f0",
-          "canonicalGeometrySignature": "08df90d6e6f352c47596b2b2d8bd1fc0176c394ce60a08415ab4f1c06138062d"
+          "structureSignature": "d7332b0bae9972ef4299a116ea4531ac892c7fb675687ad94e6e550d36dbcdcf",
+          "canonicalGeometrySignature": "f6a198527a3f3fbf18676652e7b7477d25ef791050b52a426c7592f1c62b028d"
         }
       ]
     },
@@ -1738,55 +1798,59 @@
       "representative": {
         "cards": 291,
         "layers": 69,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 23,
-        "structureSignature": "7236de5e3a3bfb198bdc3f98381eaebd3e8c1bafc146cdc98bdded3601be54e8",
-        "canonicalGeometrySignature": "b5d9eb49ddc5697330ce4b5fc1916cfb445a3586ac73773b2ef3ddba82f57dc4"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 24,
+        "structureSignature": "2db5292b9183b0a7526cd2a2c7df6f345a50b0bbb5e774ff4bd18f938ef0ecac",
+        "canonicalGeometrySignature": "c262dbeaa9fa06793241cc9be988f31540a08670e0165cdf1d13f99716484ff9"
       },
       "cases": [
         {
           "profileId": 5,
           "seed": 9884,
           "cards": 291,
-          "visible": 23,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "7236de5e3a3bfb198bdc3f98381eaebd3e8c1bafc146cdc98bdded3601be54e8",
-          "canonicalGeometrySignature": "b5d9eb49ddc5697330ce4b5fc1916cfb445a3586ac73773b2ef3ddba82f57dc4"
+          "structureSignature": "2db5292b9183b0a7526cd2a2c7df6f345a50b0bbb5e774ff4bd18f938ef0ecac",
+          "canonicalGeometrySignature": "c262dbeaa9fa06793241cc9be988f31540a08670e0165cdf1d13f99716484ff9"
         },
         {
           "profileId": 6,
           "seed": 9901,
           "cards": 261,
-          "visible": 19,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "a5ae2009f34fa90744fd8368ce29d2460dbb11d6fa6b36d6a0ef175bb2d3e200",
-          "canonicalGeometrySignature": "44a50b774870de659c9ce1cd7071dc8d6768c0fceaf3d4b7442edba2b76cd1d4"
+          "structureSignature": "47c9bc8f8d9755cc07414221714a37c77541cee4fd1ea29e550659224b0fbefb",
+          "canonicalGeometrySignature": "9286804cd59ae3944fe25a729a5680cf4afff23d2e96cce9a2dd8c580acb4405"
         },
         {
           "profileId": 7,
           "seed": 9918,
           "cards": 312,
-          "visible": 24,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "d8e997aee8e514c7c271c4b109bc398828cfb483b76487d7386bd681545595fd",
-          "canonicalGeometrySignature": "2c26b14a6021a7073db8a20e33adb232f92a16e2b3ce141b0ab3639fe454f26d"
+          "structureSignature": "6db3adade1639b018138127740703545da6d9c872a2b991bde871227c5b6f124",
+          "canonicalGeometrySignature": "86f05c86e5339eaeb4e3ad9de4265b5e8252139a50d43c287e830a2cf5bf60b7"
         }
       ]
     },
@@ -1845,31 +1909,35 @@
       "representative": {
         "cards": 261,
         "layers": 66,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 19,
-        "structureSignature": "34c52e4aa4e8066962ad6625b53942280f404462b7b4e28d1ddedd60e7bab9a4",
-        "canonicalGeometrySignature": "e6397dcfa0088c90c8076013f7eab322d462b28df8b120ae8ee6b74bdd98f5e6"
+        "mainBox": {
+          "w": 594,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 24,
+        "structureSignature": "b31dc1cfae1d87e58047e07fbab9de8972dccc6dcb4983aa24935b1e1ac8f78e",
+        "canonicalGeometrySignature": "8aca19ea9746fc669848505f96ed8c7b048bad80b983d5a1621c12bfff6d5f3f"
       },
       "cases": [
         {
           "profileId": 6,
           "seed": 10015,
           "cards": 261,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "34c52e4aa4e8066962ad6625b53942280f404462b7b4e28d1ddedd60e7bab9a4",
-          "canonicalGeometrySignature": "e6397dcfa0088c90c8076013f7eab322d462b28df8b120ae8ee6b74bdd98f5e6"
+          "structureSignature": "b31dc1cfae1d87e58047e07fbab9de8972dccc6dcb4983aa24935b1e1ac8f78e",
+          "canonicalGeometrySignature": "8aca19ea9746fc669848505f96ed8c7b048bad80b983d5a1621c12bfff6d5f3f"
         },
         {
           "profileId": 7,
@@ -1878,22 +1946,22 @@
           "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 13,
           "installOk": true,
-          "structureSignature": "eea38538a584bb37f2186b18a2ec6fac1c84063f813320019f1ff54be373d93f",
-          "canonicalGeometrySignature": "160bcda339f7c0b3b2075a25b31a4f2c1cbd4219e2f5f819ac7ac05657178dbf"
+          "structureSignature": "ccb4b91cf8da969495100ea68ac77862e0e527e7bfff1baef831f939f0e4cc17",
+          "canonicalGeometrySignature": "2357135904f54e05ace032716b2b46ab882176de5263418c54c28aee31093ca2"
         },
         {
           "profileId": 8,
           "seed": 10049,
           "cards": 192,
-          "visible": 20,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "d3de0d5164b67228d18c1e92b48bd43688604727d9a9f50cd0c4a44d341cb4d5",
-          "canonicalGeometrySignature": "930f5eda2ec8984c9102caabe80fcc08759d49a1a4ae659efa5800c45960e1e2"
+          "structureSignature": "059d96f04e443b34fd8986e6b4169dc00f927c9c9b61bf8bad3f54f4cc35c693",
+          "canonicalGeometrySignature": "35712038228b6cd31776ac056a7790a4f3a6b808fa5c2b81c00e2a55d0b19d6c"
         }
       ]
     },
@@ -1952,55 +2020,59 @@
       "representative": {
         "cards": 312,
         "layers": 71,
-        "regions": 8,
+        "regions": 4,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 616,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "2cbeebcd1caebefeeb4887dd82b0b8b84a776f4d29844e01becc47f62bfae8ae",
-        "canonicalGeometrySignature": "47653543f31cd68803b466e2262ae3e935eb6fd5ea7f12ffe7facb413f86f685"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 23,
+        "structureSignature": "339f00f1bbaa6819ee1efa387594802a072f765e5f3525ca93d7679a77a03d12",
+        "canonicalGeometrySignature": "08433a53023668bb5de17c6e53d7a819b5b6b84d8e075f4478fe9343623587ba"
       },
       "cases": [
         {
           "profileId": 7,
           "seed": 10146,
           "cards": 312,
-          "visible": 22,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "2cbeebcd1caebefeeb4887dd82b0b8b84a776f4d29844e01becc47f62bfae8ae",
-          "canonicalGeometrySignature": "47653543f31cd68803b466e2262ae3e935eb6fd5ea7f12ffe7facb413f86f685"
+          "structureSignature": "339f00f1bbaa6819ee1efa387594802a072f765e5f3525ca93d7679a77a03d12",
+          "canonicalGeometrySignature": "08433a53023668bb5de17c6e53d7a819b5b6b84d8e075f4478fe9343623587ba"
         },
         {
           "profileId": 8,
           "seed": 10163,
           "cards": 192,
-          "visible": 19,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "f91ce17501f67f3c18fd1743d1c5eba2da9955e9f845163f9acf075b19bc68d0",
-          "canonicalGeometrySignature": "2d5a51f03612f3014ec7fbedee3b826abe49b28b0c1b9241bdb4da37a13eba4f"
+          "structureSignature": "c8d49c1d43275d505a66ece78657a8a3d3da747e9264000cac085a477f4047cc",
+          "canonicalGeometrySignature": "ef3261d40e1ecec2ae573ee127fc95aa0d47e28448320a48c9bd05552fc75807"
         },
         {
           "profileId": 9,
           "seed": 10180,
           "cards": 255,
-          "visible": 22,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "3e5a97afcda542c0c664659e8f546e530968cb13f48078504130e6b0b2e71a34",
-          "canonicalGeometrySignature": "f8ae5909e6b877c20e5e1bf0f8e20a6e7fbde2eb90dba95f024e905c57b10354"
+          "structureSignature": "1a87f9ec72a43a6022e103df98a2db8ee9d4a76e59c509ff4d2b37eb8916cf8e",
+          "canonicalGeometrySignature": "01aafbd96137c741ea87f54d364d2307dfb64598e4ad85fdb4452517f7fff6a1"
         }
       ]
     },
@@ -2059,55 +2131,59 @@
       "representative": {
         "cards": 192,
         "layers": 59,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 616,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 22,
-        "structureSignature": "70b5153ae060d0691f064557e0002d3fd58e825b41dcadd9cb098227dfe2cc40",
-        "canonicalGeometrySignature": "ca21986be6f22fd9ad53447922c6db7a3e059110262ce4268d141e131955a0d3"
+        "mainBox": {
+          "w": 561,
+          "h": 484,
+          "minX": 66,
+          "minY": 220
+        },
+        "visible": 20,
+        "structureSignature": "1c89b1822dd6acabeb665352cc262703f17b7b77fc9386c1211bd7b396204247",
+        "canonicalGeometrySignature": "dffe2c2ae1a49b3ddae3499a7dcb9885650730155963cc1b499ac38f1c074dac"
       },
       "cases": [
         {
           "profileId": 8,
           "seed": 10277,
           "cards": 192,
-          "visible": 22,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "70b5153ae060d0691f064557e0002d3fd58e825b41dcadd9cb098227dfe2cc40",
-          "canonicalGeometrySignature": "ca21986be6f22fd9ad53447922c6db7a3e059110262ce4268d141e131955a0d3"
+          "structureSignature": "1c89b1822dd6acabeb665352cc262703f17b7b77fc9386c1211bd7b396204247",
+          "canonicalGeometrySignature": "dffe2c2ae1a49b3ddae3499a7dcb9885650730155963cc1b499ac38f1c074dac"
         },
         {
           "profileId": 9,
           "seed": 10294,
           "cards": 255,
-          "visible": 25,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "1477d4d9c592277fc3874c5b49cbfdb06e1e8cece757cbef5ab3c795821520df",
-          "canonicalGeometrySignature": "d8e4abc9bc4dd874fb5c18d69f6a94fe57dff3ee9d128837b69c77a351e62643"
+          "structureSignature": "0a492aecf63a99b4b7d0bb205f1e5fa98e8feea965013fee53505c222b379f34",
+          "canonicalGeometrySignature": "fe6bf27b6a83c9f4cfae4d0ed26f8b248bae2a3779084dd170f33bf928c96b1d"
         },
         {
           "profileId": 0,
           "seed": 10311,
           "cards": 321,
-          "visible": 19,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "8fad1ad613ac2658c1e31c98c2243b36d3596d9bfda8d163de6ef93414784ec7",
-          "canonicalGeometrySignature": "5f074c78ad875a42e761de3ce89a35022f50992238819ee23206ffe3760e85f8"
+          "structureSignature": "0f418d668736d2941b53fb645d0c474b4d95ad2b82044b6b50b278aa0c5d7401",
+          "canonicalGeometrySignature": "99cab691386d6d9d349ed8e4c416590374331a8826bb567b2400cf6b3cc6e264"
         }
       ]
     },
@@ -2170,66 +2246,70 @@
       "representative": {
         "cards": 255,
         "layers": 64,
-        "regions": 5,
+        "regions": 1,
         "box": {
-          "minX": 33,
-          "minY": 220,
-          "maxX": 693,
-          "maxY": 880,
           "w": 660,
-          "h": 660
+          "h": 660,
+          "minX": 33,
+          "minY": 220
         },
-        "visible": 24,
-        "structureSignature": "52cc30530a3a9e6986bf88cc88f13976ac30bf6ed144899ded05d1066b23e8a6",
-        "canonicalGeometrySignature": "f53843eeed162c74e9acc1141aea9cf4604cfcc261d48d8da4a001978e0b8880"
+        "mainBox": {
+          "w": 627,
+          "h": 484,
+          "minX": 33,
+          "minY": 220
+        },
+        "visible": 21,
+        "structureSignature": "0337875b8f893d709fd48d762ad91ab713ccc2b79bd06c0fddcbd2dde03cb86c",
+        "canonicalGeometrySignature": "ab3f97c2e1060d69d6b7501f2b8197e3639cdc1d0ea776c821c3c2e925465062"
       },
       "cases": [
         {
           "profileId": 9,
           "seed": 10408,
           "cards": 255,
-          "visible": 24,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 24,
+          "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "52cc30530a3a9e6986bf88cc88f13976ac30bf6ed144899ded05d1066b23e8a6",
-          "canonicalGeometrySignature": "f53843eeed162c74e9acc1141aea9cf4604cfcc261d48d8da4a001978e0b8880"
+          "structureSignature": "0337875b8f893d709fd48d762ad91ab713ccc2b79bd06c0fddcbd2dde03cb86c",
+          "canonicalGeometrySignature": "ab3f97c2e1060d69d6b7501f2b8197e3639cdc1d0ea776c821c3c2e925465062"
         },
         {
           "profileId": 0,
           "seed": 10425,
           "cards": 321,
-          "visible": 25,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "032fd9d26c4a5d6435ef6d57da445fb8ea1c0597c9eb61082520cf9e407fe090",
-          "canonicalGeometrySignature": "1ce16b2a136cec9e2168e826d8a8f262af130723e864ead66c5613187ecfdf5d"
+          "structureSignature": "d0e5b227fbc6ef57987cc918ec9a2f1692dcb3d20f023c82c2b72999bbf60cae",
+          "canonicalGeometrySignature": "d165144bde7c4ae398555729d58aba79eb3d807783419d16f4a555b8903c58c0"
         },
         {
           "profileId": 1,
           "seed": 10442,
           "cards": 282,
-          "visible": 20,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 23,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "066715f1b64c4c1a204877317deb860272f877358e37cd7b4335c6949aebe089",
-          "canonicalGeometrySignature": "b6e526341e4dce81cbbd737f9a056a8aff4bddbe5f30d3ed115a57392588da91"
+          "structureSignature": "ea78fcb1f3e1893c2c3e4ada1a735c18f9bf69af644031f9bf186d416a7d61fa",
+          "canonicalGeometrySignature": "d6b30dbd6debd1f6a8910d2ec7753466a3c8abedbc66a30a29745142eb6f0bd2"
         }
       ]
     }
   ],
   "pairStats": {
     "pairs": 190,
-    "maxStructureSimilarity": 0.4104415778139901,
-    "maxLayoutSimilarity": 0.35595450301332654,
+    "maxStructureSimilarity": 0.4438293292133106,
+    "maxLayoutSimilarity": 0.4283590805329936,
     "overThreshold": 0,
-    "distinctLayerShapes": 18,
-    "distinctRegionShapes": 15,
+    "distinctLayerShapes": 1,
+    "distinctRegionShapes": 4,
     "distinctBoxes": 2,
     "distinctSilhouettes": 20
   }

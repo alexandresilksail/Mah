@@ -47,7 +47,10 @@ for (const level of LEVELS) {
   const spec = LEVEL_SPEC[level];
   line(`\n[L${level}] ${spec.cardCount} 张 / 16 种 / ${SEEDS} seed × ${ROBOT_MODES.length} 策略 = ${SEEDS * ROBOT_MODES.length} 局模拟`);
   const start = Date.now();
-  const suite = runDifficultySuite(level, (lv, s) => generateLevel(lv, s), SEEDS, {
+  const suite = runDifficultySuite(level,
+    // 第二关没有默认模板：压测固定用第一套，保证同一 (seed, 档位) 结果可复现
+    (lv, s) => (lv === 2 ? generateLevel(2, s, { templateId: 'L2-P01' }) : generateLevel(lv, s)),
+    SEEDS, {
     baseSeed: (0x51ee0000 + level * 7919) >>> 0,
     modes: ROBOT_MODES,
     makeRng: (s) => makeRng(s),

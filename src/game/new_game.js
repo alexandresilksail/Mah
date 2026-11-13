@@ -147,8 +147,11 @@ export function clearLayoutCache() {
 
 /**
  * 第二关历史重放：按记录里的 (level, difficultyId, seed, templateId) 精确重建
- * 那一局的**真实牌面**，用于几何级相似度比较。旧档记录没有 templateId 时，
- * 按既有默认路径重放，保证旧存档仍然能被正确对比。
+ * 那一局的**真实牌面**，用于几何级相似度比较。
+ *
+ * 旧档记录（本版本之前写入、没有 templateId）**不再重放**：第二关已不存在
+ * 「默认布局」这条路径，无法凭空还原当时的几何。这类记录 replayOk=false，
+ * 只按签名做去重判定（仍然能拒绝重复），不会因为重放失败而放行。
  * 缓存按 gameId 之外的确定性键保存，跨 100 局连续生成时每局只重放一次。
  */
 var l2LayoutCache = {};
@@ -159,15 +162,17 @@ function layoutOfRecordL2(record) {
   var key = '2|' + record.difficultyId + '|' + record.seed + '|' + (record.templateId || '-');
   if (Object.prototype.hasOwnProperty.call(l2LayoutCache, key)) return l2LayoutCache[key];
   var result = null;
-  try {
-    var opt = { profile: record.difficultyId };
-    if (record.templateId) opt.templateId = record.templateId;
-    var d = generateLevel(2, record.seed, opt);
-    if (d && d.cards && d.cards.length === record.totalTiles) {
-      result = { cards: d.cards, main: mainStackCards(d.cards) };
+  if (record.templateId) {
+    try {
+      var d = generateLevel(2, record.seed, {
+        profile: record.difficultyId, templateId: record.templateId,
+      });
+      if (d && d.cards && d.cards.length === record.totalTiles) {
+        result = { cards: d.cards, main: mainStackCards(d.cards) };
+      }
+    } catch (e) {
+      result = null;
     }
-  } catch (e) {
-    result = null;
   }
   if (l2LayoutCacheSize > L2_LAYOUT_CACHE_MAX) { l2LayoutCache = {}; l2LayoutCacheSize = 0; }
   l2LayoutCache[key] = result;
@@ -345,19 +350,26 @@ function createLevel2Game(o) {
       continue;
     }
 
-    /* 完整校验：牌型 / 三消 / 遮挡 / 几何 / 可操作性 / 开局可点区间 / 悬空 */
+    /* 完整校验：牌型 / 三消 / 遮挡 / 几何 / 可操作性 / 开局可点区间 / 悬空 / 规格保真 */
     var validation = validateLevel(data);
     var verifyOk = data.requireSolution === false ? true : !!verify(data);
     var geometryOk = sameLayerOverlapCount(data.cards) === 0 && !!isHalfLattice(data.cards);
     var floatingOk = (data.floatingCount || 0) === 0;
     var playableOk = data.visible >= 19 && data.visible <= 25 && sig.playableCount > 0;
-    if (!validation.ok || !verifyOk || !geometryOk || !floatingOk || !playableOk) {
+    /* 第一道（生成后）规格保真校验：实际几何必须与所选模板的缩略图逐格一致。
+     * 缺失 fidelity（旧路径残留）同样判失败 —— 绝不放行「没有校验过」的布局。 */
+    var fidelityOk = !!(data.fidelity && data.fidelity.ok === true);
+    if (!validation.ok || !verifyOk || !geometryOk || !floatingOk || !playableOk || !fidelityOk) {
       failures.push({
         attempt: attempts, templateId: templateId, difficultyId: difficultyId,
         seed: seed, totalTiles: totalTiles, reason: 'VALIDATION_FAILED',
         issues: validation.issues.slice(),
         verifyOk: verifyOk, geometryOk: geometryOk, floatingOk: floatingOk,
         playableOk: playableOk, visible: data.visible,
+        fidelityOk: fidelityOk,
+        fidelityFailed: data.fidelity
+          ? (data.fidelity.violations || []).map(function (v) { return v.code + ':' + v.detail; })
+          : ['NO_FIDELITY'],
       });
       continue;
     }
