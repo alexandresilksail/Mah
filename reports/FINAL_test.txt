@@ -46,9 +46,9 @@
 [8c] 内置背景音乐资源 / 四个产物一致 / 音效链路独立
 
 [9] 运行时生成耗时
-   L2 分档生成 20 次 · 平均 8.50 ms/局 · L1 平均 7.40 ms/局
-  ✓ L2 单局生成 < 400ms（实测 8.50ms）
-  ✓ L1 单局生成 < 400ms（实测 7.40ms，含几何 × 洗牌拒采样）
+   L2 分档生成 20 次 · 平均 7.15 ms/局 · L1 平均 6.95 ms/局
+  ✓ L2 单局生成 < 400ms（实测 7.15ms）
+  ✓ L1 单局生成 < 400ms（实测 6.95ms，含几何 × 洗牌拒采样）
 
 [10] 分档关卡构造与几何验收（10 个 L2 档位 × 40 个池内 seed + 4 个 L1 档位）
    L2-0 N=28 T=15 张=321 · 可点 19~25 · 压深 ≥8.50 · 链 ≥27 · 全局层 36
@@ -61,7 +61,7 @@
    L2-7 N=27 T=14 张=312 · 可点 19~25 · 压深 ≥8.07 · 链 ≥26 · 全局层 35
    L2-8 N=15 T=15 张=192 · 可点 19~24 · 压深 ≥4.23 · 链 ≥15 · 全局层 23
    L2-9 N=20 T=15 张=255 · 可点 19~25 · 压深 ≥5.76 · 链 ≥21 · 全局层 28
-   几何验收耗时 4.7s
+   几何验收耗时 5.1s
 
 [11] 分档机器人难度验收（每档 5 种机器人各 400 局，池内种子循环 10 轮）
    说明：greedy 单独用于第 1.4 节「4 个第一关档位 greedy ≥95%」，L2 的 5 种机器人取其余 5 种。
@@ -93,7 +93,7 @@
      montecarlo    4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
      search        4000 局 · 通关     0 · 通关率 0.00% · Wilson 上界 0.10%
      合计 20000 局 · 通关 0 · 通关率 0.00% · 95% Wilson 上界 0.02% · 阈值 ≤1% ✓
-   机器人仿真耗时 115.4s
+   机器人仿真耗时 121.7s
 
 [11b] 4 个第一关档位 greedy 通关率 ≥95%（每档 400 局）
    L1-0 2 层 / 8 种 / 24 张 · greedy 100.00% (400/400)
@@ -104,30 +104,30 @@
 [12] rollProfile / 100 次重开 / 通关流程 / 旧存档
    L2 100 次重开：档位变化 100/100 · seed 命中当前档位池 100/100
    开关 true：档位保持 100/100 · seed 变化 100/100
-   通关存档 {"v":4,"level":1,"best":2,"sound":true,"sfxVol":1,"music":true,"musicVol":0.6,"musicMap":{},"p1":0,"p2":0,"level1RecentGames":[],"level2RecentGames":[]} · startNewRun 档位 0/0 → 2/8
+   通关存档 {"v":4,"level":1,"best":2,"sound":true,"sfxVol":1,"music":true,"musicVol":0.6,"musicMap":{},"p1":0,"p2":0,"level1RecentGames":[],"level2RecentGames":[]} · startNewRun 档位 0/0 → 3/3
 
 [13] 界面文案与源码一致性
 
 [14] 统一生成入口 / 布局签名 / 最近三局差异化（真实运行）
-[mah] level=1 profileId=3 seed=144098937 gameId=g1-mwetk9e4-1-e0le16-application_restart reason=application_restart tiles=48 sig=ef80dbd2c39a
-[mah] level=1 profileId=2 seed=3667852193 gameId=g1-mwetk9eg-2-1vox0ub-title_screen_restart reason=title_screen_restart tiles=36 sig=1e38428d0a0e
-[mah] level=1 profileId=0 seed=1433328328 gameId=g1-mwetk9en-3-13a49dy-failure_restart reason=failure_restart tiles=24 sig=8c1ba4d848c3
-[mah] level=1 profileId=1 seed=2654053293 gameId=g1-mwetk9es-4-1fzjc6v-new_game reason=new_game tiles=30 sig=96c4e3765275
-[mah] level=1 profileId=3 seed=1411310957 gameId=g1-mwetk9g2-5-1etvkux-application_restart reason=application_restart tiles=48 sig=863431e618a2
-[mah] level=1 profileId=2 seed=2454540539 gameId=g1-mwetk9he-6-7klddp-title_screen_restart reason=title_screen_restart tiles=36 sig=6c6b68984c80
-[mah] level=2 profileId=7 seed=1943391606 gameId=g2-mwetk9ik-7-e6smtb-application_restart reason=application_restart tiles=312 sig=cfc04ac1c191
-[mah] level=2 profileId=8 seed=1761543875 gameId=g2-mwetk9jh-8-1hjrnwl-title_screen_restart reason=title_screen_restart tiles=192 sig=14315f3f302a
-[mah] level=2 profileId=7 seed=2717945440 gameId=g2-mwetk9ln-9-y88wkp-failure_restart reason=failure_restart tiles=312 sig=e262e04401a1
-[mah] level=2 profileId=8 seed=2240244659 gameId=g2-mwetk9mq-a-zi1d94-new_game reason=new_game tiles=192 sig=d40d55dead6f
-[mah] level=2 profileId=6 seed=1555114686 gameId=g2-mwetk9nr-b-14w94g4-application_restart reason=application_restart tiles=261 sig=a27148b6db2e
-[mah] level=2 profileId=1 seed=2085318113 gameId=g2-mwetk9pc-c-7j1eqi-title_screen_restart reason=title_screen_restart tiles=282 sig=3db66dd181ae
-[mah] level=1 profileId=2 seed=471672852 gameId=g1-mwetk9q5-e-phlt67-new_game reason=new_game tiles=36 sig=780720dbbc83
-[mah] level=1 profileId=1 seed=2448656194 gameId=g1-mwetk9qd-f-q314bh-new_game reason=new_game tiles=30 sig=e31594502c10
-[mah] level=1 profileId=3 seed=2927479504 gameId=g1-mwetk9qr-g-wbdn4p-new_game reason=new_game tiles=48 sig=98bf15e00d01
-[mah] level=1 profileId=0 seed=3383996395 gameId=g1-mwetk9r5-h-u8v0ld-new_game reason=new_game tiles=24 sig=0365f5d68b32
-[mah] level=1 profileId=2 seed=2813963607 gameId=g1-mwetk9rc-i-1dci83r-new_game reason=new_game tiles=36 sig=bf8ad5cf2759
-[mah] level=1 profileId=1 seed=4273077101 gameId=g1-mwetk9rk-j-1uxq0rx-new_game reason=new_game tiles=30 sig=83baf9f7900d
-[mah] level=1 profileId=3 seed=3987568225 gameId=g1-mwetk9rw-k-1eb6ijl-new_game reason=new_game tiles=48 sig=6ad090463f07
+[mah] level=1 profileId=2 seed=269774993 gameId=g1-mweys1of-1-6de9j-application_restart reason=application_restart tiles=36 sig=84e9c75d9040
+[mah] level=1 profileId=3 seed=228238913 gameId=g1-mweys1ox-2-rz9uz5-title_screen_restart reason=title_screen_restart tiles=48 sig=093fd7f809ed
+[mah] level=1 profileId=0 seed=2819619483 gameId=g1-mweys1pa-3-1n9qixd-failure_restart reason=failure_restart tiles=24 sig=f5ecb80021cf
+[mah] level=1 profileId=1 seed=1354216663 gameId=g1-mweys1ph-4-li5pt9-new_game reason=new_game tiles=30 sig=0dfd6edc1673
+[mah] level=1 profileId=2 seed=604957681 gameId=g1-mweys1pv-5-1o65749-application_restart reason=application_restart tiles=36 sig=eea4b451579b
+[mah] level=1 profileId=3 seed=1264191659 gameId=g1-mweys1qh-6-fm8b9m-title_screen_restart reason=title_screen_restart tiles=48 sig=5ed11cc7e794
+[mah] level=2 profileId=2 seed=3670346993 gameId=g2-mweys1rw-7-1dfl83k-application_restart reason=application_restart tiles=300 sig=42a4c0779e3a
+[mah] level=2 profileId=1 seed=2028815455 gameId=g2-mweys1ta-8-qv3isd-title_screen_restart reason=title_screen_restart tiles=282 sig=e140701201b4
+[mah] level=2 profileId=0 seed=2710945419 gameId=g2-mweys1up-9-58veky-failure_restart reason=failure_restart tiles=321 sig=4e0d615ef06e
+[mah] level=2 profileId=4 seed=539210454 gameId=g2-mweys1wb-a-1ji4yx6-new_game reason=new_game tiles=273 sig=12543e0e0f56
+[mah] level=2 profileId=0 seed=2175741977 gameId=g2-mweys1y5-b-8hf0cz-application_restart reason=application_restart tiles=321 sig=28d989266339
+[mah] level=2 profileId=8 seed=3345572752 gameId=g2-mweys1z8-c-fmcrqc-title_screen_restart reason=title_screen_restart tiles=192 sig=0b465333d5c2
+[mah] level=1 profileId=3 seed=2502306277 gameId=g1-mweys1zz-e-jm616t-new_game reason=new_game tiles=48 sig=4e75a9268e9c
+[mah] level=1 profileId=2 seed=3239835130 gameId=g1-mweys20b-f-kqg923-new_game reason=new_game tiles=36 sig=8e05d9d42a0c
+[mah] level=1 profileId=0 seed=3667904095 gameId=g1-mweys20h-g-85g7g3-new_game reason=new_game tiles=24 sig=768b9a65cc1a
+[mah] level=1 profileId=1 seed=776644334 gameId=g1-mweys20o-h-tpup59-new_game reason=new_game tiles=30 sig=bfd0e5687081
+[mah] level=1 profileId=3 seed=2287460807 gameId=g1-mweys212-i-16e8gog-new_game reason=new_game tiles=48 sig=ec3b9a169cd7
+[mah] level=1 profileId=2 seed=3278031030 gameId=g1-mweys21f-j-1y4kr34-new_game reason=new_game tiles=36 sig=04c039806d39
+[mah] level=1 profileId=0 seed=2094779157 gameId=g1-mweys21n-k-1b4yo5t-new_game reason=new_game tiles=24 sig=4765fa053ac1
 
 [15] matchScene 表驱动（第 4.2 节）
 
@@ -140,11 +140,11 @@
 [18] 文件名净化 / musicMap 清洗 / MusicPlayer 行为（第 4.4 / 4.5 节）
 
 [19] 差异化统计（每关 100 局：L1 最近 3 局 / L2 最近 10 局）
-   L1 100 局 · sim 均值 0.253 · P95 0.497 · 最大 0.5970 · 重试合计 8 次 · 窗口对 295 · 耗时 1.1s
-      最大相似度出现在 g1-mwetkadl-2h-331y4k-application_restart / g1-mwetkadx-2i-ygg77t-title_screen_restart
-   L2 100 局 · sim 均值 0.275 · P95 0.403 · 最大 0.5284 · 重试合计 2 次 · 窗口对 4215 · 耗时 6.4s
-      最大相似度出现在 g2-mwetkdsv-53-1iofnk-failure_restart / g2-mwetke2n-59-t7xqpn-application_restart
+   L1 100 局 · sim 均值 0.240 · P95 0.453 · 最大 0.5523 · 重试合计 11 次 · 窗口对 295 · 耗时 1.3s
+      最大相似度出现在 g1-mweys2zc-2x-1crxusz-application_restart / g1-mweys30b-2y-pv7va4-title_screen_restart
+   L2 100 局 · sim 均值 0.275 · P95 0.403 · 最大 0.5284 · 重试合计 2 次 · 窗口对 4215 · 耗时 7.3s
+      最大相似度出现在 g2-mweys6kw-53-1iofnk-failure_restart / g2-mweys6vi-59-t7xqpn-application_restart
 
 ============================================================================
- 断言：通过 631 项，失败 0 项
+ 断言：通过 632 项，失败 0 项
 ============================================================================

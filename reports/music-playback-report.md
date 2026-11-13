@@ -8,10 +8,10 @@
 
 | 版本 | 文件 | 字节 | 内嵌载荷 | 载荷逐字节一致 | 映射一致 | 解锁链路 | 无外链路径 |
 |---|---|---:|---:|---|---|---|---|
-| 网页版 | dist/index.html | 9925831 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
-| 独立 HTML 版 | dist/MahLeMah.html | 9925831 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
-| 中文名副本 | dist/Mah了个Mah.html | 9925831 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
-| ES5 legacy 版 | dist/MahLeMah-legacy.html | 9960000 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
+| 网页版 | dist/index.html | 9926380 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
+| 独立 HTML 版 | dist/MahLeMah.html | 9926380 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
+| 中文名副本 | dist/Mah了个Mah.html | 9926380 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
+| ES5 legacy 版 | dist/MahLeMah-legacy.html | 9960549 | 5 | ✓ (5/5) | ✓ | ✓ | ✓ |
 | 桌面版前端（静态集成检查） | src/main.js + tauri.conf.json | — | 同一 manifest | ✓ | ✓ | ✓ | ✓ |
 
 ## 说明

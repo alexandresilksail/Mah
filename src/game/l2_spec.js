@@ -772,6 +772,8 @@ export function planLayerKeys(plan) {
  *   LATTICE      半格晶格
  *   LAYER_COUNT  层数与档位规格一致
  *   LAYER_FORM   每一层的格集合与规格计划逐格相同（顺序无关）
+ *   PHASE        每一张牌的半格相位（px/py）与计划逐张相同（翻转后仍在同一格 /
+ *               同一晶格，CELL_OUT/LATTICE/LAYER_FORM 抓不到，必须显式比对）
  *   SILHOUETTE   全部层格集合并集 == 掩膜全集（俯视轮廓不被简化 / 变形）
  *   REGION_COVER 每个连通区域都有牌
  *   SAME_LAYER   同层零重叠
@@ -851,6 +853,39 @@ export function checkFidelity(cards, spec, plan, profile) {
   }
   checks.layerForm = formMismatch === 0;
   if (!checks.layerForm) bad('LAYER_FORM', formMismatch + ' 层与规格不一致：' + formDetail);
+
+  /* 相位（半格错位）检查：缩略图按真实 (x,y) 绘制，相位不同则牌在牌桌上的
+   * 实际像素位置不同 —— 与缩略图不再一一对应。相位只取 0/1（px/py），翻转后
+   * 仍在半格晶格内、同一个格 key，因此「CELL_OUT / LATTICE / LAYER_FORM」都
+   * 抓不到它，必须显式逐张比对。计划里每层每格都带期望相位，直接逐项对照。
+   *
+   * 只校验「铺设段（kind==='fill'）」的相位：铺设段相位是规格求解出来的（保证
+   * 支撑），与 templateId + 档位 + fillRot 一一对应，是模板身份的一部分；尾段
+   * （kind==='tail'）相位是生成时按「开局可点 19–25」挑的自由旋转（4 选 1），
+   * 不是模板身份，verifyTemplateFidelity 用默认相位重展开会与之不同，故不校验。 */
+  var expectPhase = {};
+  for (var lp = 0; lp < plan.layerCount; lp++) {
+    if (plan.layers[lp].kind !== 'fill') continue;
+    var lc = plan.layers[lp].cells;
+    for (var ci = 0; ci < lc.length; ci++) {
+      expectPhase[lp + '|' + lc[ci].k] = lc[ci].phase;
+    }
+  }
+  var badPhase = 0;
+  for (var qp = 0; qp < main.length; qp++) {
+    var cp = main[qp];
+    var planLayer = plan.layers[cp.layer];
+    if (!planLayer || planLayer.kind !== 'fill') continue;
+    var ccol = Math.floor(((cp.x - GRID_X0) / LATTICE_X) / 2);
+    var crow = Math.floor(((cp.y - GRID_Y0) / LATTICE_Y) / 2);
+    var ckey = cellKey(ccol, crow);
+    var cpx = (((Math.round((cp.x - GRID_X0) / LATTICE_X)) % 2) + 2) % 2;
+    var cpy = (((Math.round((cp.y - GRID_Y0) / LATTICE_Y)) % 2) + 2) % 2;
+    var exp = expectPhase[cp.layer + '|' + ckey];
+    if (!exp || exp[0] !== cpx || exp[1] !== cpy) badPhase++;
+  }
+  checks.phase = badPhase === 0;
+  if (!checks.phase) bad('PHASE', badPhase + ' 张牌的铺设段相位与规格不符');
 
   var used = {};
   for (var li = 0; li < layerIds.length; li++) {

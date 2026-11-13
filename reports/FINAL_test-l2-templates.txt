@@ -1,6 +1,6 @@
 ============================================================================
  MahLeMah · 第二关 20 套布局模板专项验收（真实运行）
- commit=66fe78bb82954e5efa9551a11234b0d1025a94df start=2026-11-13T10:13:54.139Z
+ commit=e71486e75c24154e6bffb64db509a30d0791f416 start=2026-11-13T12:39:56.545Z
 ============================================================================
 
 [0] 20 套模板定义：唯一 ID / 形状族 / 显式轮廓掩膜
@@ -15,18 +15,18 @@
 [3] 等价几何 / 牌面 / 模板级去重判定
 
 [4] 五种重开入口：连续 12 局第二关去重与历史持久化
-[mah] level=2 profileId=5 seed=2032815467 gameId=g2-mwetkhfl-1-1bohz0i-new_game reason=new_game tiles=291 sig=ac48ff9fa5eb
-[mah] level=2 profileId=0 seed=387283917 gameId=g2-mwetkhgv-2-13dy913-failure_restart reason=failure_restart tiles=321 sig=039c34c6c4c6
-[mah] level=2 profileId=7 seed=1795465081 gameId=g2-mwetkhid-3-1s57toc-title_screen_restart reason=title_screen_restart tiles=312 sig=de1ca08a0a90
-[mah] level=2 profileId=3 seed=3671346996 gameId=g2-mwetkhjx-4-1g6llx9-application_restart reason=application_restart tiles=312 sig=10063245d4e7
-[mah] level=2 profileId=4 seed=687136979 gameId=g2-mwetkhlg-5-1r4gt0d-new_game reason=new_game tiles=273 sig=27f6c7ecd34f
-[mah] level=2 profileId=3 seed=2030815461 gameId=g2-mwetkhmy-6-y2aw86-new_game reason=new_game tiles=312 sig=0a9c935ae2a4
-[mah] level=2 profileId=9 seed=1706041220 gameId=g2-mwetkhoe-7-g0czk7-failure_restart reason=failure_restart tiles=255 sig=54f53063f9c9
-[mah] level=2 profileId=3 seed=3727849654 gameId=g2-mwetkhpr-8-rrc0gr-title_screen_restart reason=title_screen_restart tiles=312 sig=136a9f15bbf1
-[mah] level=2 profileId=4 seed=151933537 gameId=g2-mwetkhr7-9-offlyo-application_restart reason=application_restart tiles=273 sig=55f38a77fc21
-[mah] level=2 profileId=3 seed=446786584 gameId=g2-mwetkhsn-a-1noukoc-new_game reason=new_game tiles=312 sig=92dec8f9452a
-[mah] level=2 profileId=8 seed=3162725018 gameId=g2-mwetkhto-b-651qjc-new_game reason=new_game tiles=192 sig=3ebce61823f7
-[mah] level=2 profileId=6 seed=2090318128 gameId=g2-mwetkhun-c-5lscbv-failure_restart reason=failure_restart tiles=261 sig=cc985b91785d
+[mah] level=2 profileId=5 seed=2032815467 gameId=g2-mweysanj-1-1bohz0i-new_game reason=new_game tiles=291 sig=ac48ff9fa5eb
+[mah] level=2 profileId=0 seed=387283917 gameId=g2-mweysapc-2-13dy913-failure_restart reason=failure_restart tiles=321 sig=039c34c6c4c6
+[mah] level=2 profileId=7 seed=1795465081 gameId=g2-mweysar5-3-1s57toc-title_screen_restart reason=title_screen_restart tiles=312 sig=de1ca08a0a90
+[mah] level=2 profileId=3 seed=3671346996 gameId=g2-mweysasr-4-1g6llx9-application_restart reason=application_restart tiles=312 sig=10063245d4e7
+[mah] level=2 profileId=4 seed=687136979 gameId=g2-mweysau4-5-1r4gt0d-new_game reason=new_game tiles=273 sig=27f6c7ecd34f
+[mah] level=2 profileId=3 seed=2030815461 gameId=g2-mweysavk-6-y2aw86-new_game reason=new_game tiles=312 sig=0a9c935ae2a4
+[mah] level=2 profileId=9 seed=1706041220 gameId=g2-mweysax5-7-g0czk7-failure_restart reason=failure_restart tiles=255 sig=54f53063f9c9
+[mah] level=2 profileId=3 seed=3727849654 gameId=g2-mweysayl-8-rrc0gr-title_screen_restart reason=title_screen_restart tiles=312 sig=136a9f15bbf1
+[mah] level=2 profileId=4 seed=151933537 gameId=g2-mweysb02-9-offlyo-application_restart reason=application_restart tiles=273 sig=55f38a77fc21
+[mah] level=2 profileId=3 seed=446786584 gameId=g2-mweysb1l-a-1noukoc-new_game reason=new_game tiles=312 sig=92dec8f9452a
+[mah] level=2 profileId=8 seed=3162725018 gameId=g2-mweysb2t-b-651qjc-new_game reason=new_game tiles=192 sig=3ebce61823f7
+[mah] level=2 profileId=6 seed=2090318128 gameId=g2-mweysb3w-c-5lscbv-failure_restart reason=failure_restart tiles=261 sig=cc985b91785d
 
 ============================================================================
  断言：通过 262 项，失败 0 项

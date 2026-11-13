@@ -246,19 +246,19 @@
 
 - 两个 HTML 内嵌 `<script id="mah-bundle">` 与现场重打包结果**逐字节比对**通过；
 - `sourceHash` = 现场对 `src/` 全量 **38** 个文件重算的 SHA-256 =
-  `78be7c6f08311bf1da7bb8003a2e9aa54d266717646f042bfde6597d8fbc40d0`（三处一致）；
+  `b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428`（三处一致）；
 - `[7]` 节：4 个正式 HTML 均内嵌 **20 个唯一 `templateId`（`L2-P01`…`L2-P20`）**、
   `MAH-L2-SPEC-v2` 规格层标记、双重去重标记与 `TEMPLATE_POOL_EXHAUSTED`；
 - legacy 通过 Babel + acorn 纯 ES5 语法校验。
 
 | 产物 | 字节 | SHA-256（本次最终构建） |
 |---|---:|---|
-| `dist/MahLeMah.html` | 9,925,831 | `03507abf477aa6389af4977baaf53b46be13475c1051d4e5dba244cbdaa3f5a8` |
-| `dist/index.html` | 9,925,831 | 同上（同内容副本） |
-| `dist/Mah了个Mah.html` | 9,925,831 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 9,960,000 | `b99c16d0c6d371092bcf277be764aa630ef867ca06bf31c7218a77f9cb6dec2f` |
+| `dist/MahLeMah.html` | 9,926,380 | `aa3d28f69c90958396a3881a24280852c6929c75711f34eccf34275598a2c01d` |
+| `dist/index.html` | 9,926,380 | 同上（同内容副本） |
+| `dist/Mah了个Mah.html` | 9,926,380 | 同上（同内容副本） |
+| `dist/MahLeMah-legacy.html` | 9,960,549 | `3f101399dfe0db31ee6887f04e5afd5c74a9dfd79b4cb5c21fa42e9af7c66558` |
 
-`buildVersion=2.0.0-66fe78b`、`gitCommit=66fe78bb82954e5efa9551a11234b0d1025a94df`
+`buildVersion=2.0.0-e71486e`、`gitCommit=e71486e75c24154e6bffb64db509a30d0791f416`
 （构建时 HEAD；产物不回写新提交，避免自指循环，一致性由实时重算保证）。
 > 每次构建的 `buildTimestamp` 不同，因此 HTML 的 SHA-256 只对「本次最终构建」有效；
 > 真正的可复现性由 `sourceHash`（源文件全量哈希，构建无关）+ 逐字节重打包比对保证。

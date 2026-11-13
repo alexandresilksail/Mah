@@ -56,13 +56,13 @@
 
 | 文件 | 字节 | SHA-256 |
 |---|---:|---|
-| `dist/MahLeMah.html` | 9,925,831 | `03507abf477aa6389af4977baaf53b46be13475c1051d4e5dba244cbdaa3f5a8` |
-| `dist/index.html` | 9,925,831 | 同上（同内容副本） |
-| `dist/Mah了个Mah.html` | 9,925,831 | 同上（同内容副本） |
-| `dist/MahLeMah-legacy.html` | 9,960,000 | `b99c16d0c6d371092bcf277be764aa630ef867ca06bf31c7218a77f9cb6dec2f` |
+| `dist/MahLeMah.html` | 9,926,380 | `aa3d28f69c90958396a3881a24280852c6929c75711f34eccf34275598a2c01d` |
+| `dist/index.html` | 9,926,380 | 同上（同内容副本） |
+| `dist/Mah了个Mah.html` | 9,926,380 | 同上（同内容副本） |
+| `dist/MahLeMah-legacy.html` | 9,960,549 | `3f101399dfe0db31ee6887f04e5afd5c74a9dfd79b4cb5c21fa42e9af7c66558` |
 
-`sourceHash=78be7c6f08311bf1da7bb8003a2e9aa54d266717646f042bfde6597d8fbc40d0`（38 个源文件）、
-`buildVersion=2.0.0-66fe78b`。4 个产物均内嵌 20 个 `templateId`（`L2-P01`…`L2-P20`）、
+`sourceHash=b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428`（38 个源文件）、
+`buildVersion=2.0.0-e71486e`。4 个产物均内嵌 20 个 `templateId`（`L2-P01`…`L2-P20`）、
 `MAH-L2-SPEC-v2` 规格层与 5 首内置背景音乐，由 `npm run build:all` 从当前 `src/` 重建。
 
 ## 7. 新增 / 刷新的报告

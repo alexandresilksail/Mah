@@ -1,0 +1,6 @@
+[music] 网页版: 18/18 通过
+[music] 独立 HTML 版: 18/18 通过
+[music] ES5 legacy 版: 18/18 通过
+
+[mah] 真实播放验证：54/54 通过 · allPassed=true
+[mah] 桌面版真机播放：未运行（Rust 编译环境不可用，exe 未重建）

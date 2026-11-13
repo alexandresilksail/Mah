@@ -54,7 +54,7 @@ import {
 import {
   generateProfileLayout, describeProfileLayout, VISIBLE_MIN, VISIBLE_MAX, QUEUE_SHAPE,
 } from './src/game/layout_profiles.js';
-import { specFor } from './src/game/l2_spec.js';
+import { specFor, specPlan } from './src/game/l2_spec.js';
 import { verifyTemplateFidelity } from './src/game/l2_geometry.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot } from './src/game/robots.js';
@@ -255,6 +255,7 @@ const GEO_SEEDS = 30;
   let t3FidBad = 0, t3RecheckBad = 0, t3FloatBad = 0, t3VisBad = 0;
   let t3CountBad = 0, t3LayerBad = 0, t3MaskBad = 0, t3BandBad = 0;
   let t3LatticeBad = 0, t3SameBad = 0, t3ChainBad = 0, t3QueueBad = 0;
+  let t3PhaseBad = 0, t3PhaseSample = 0;
   let t3VisMin = 999, t3VisMax = 0;
   let t3CellMin = 1e9, t3CellMax = 0;
   const t3Sigs = new Set();
@@ -334,6 +335,22 @@ const GEO_SEEDS = 30;
         if (open.length !== 1) t3ChainBad++;
         else if (open[0].chainIndex !== open[0].chainLen - 1) t3ChainBad++;
       }
+
+      // ⑦ 相位篡改检测（审计项 06）：翻转任一「铺设段(fill)」牌的半格相位，
+      //    verifyTemplateFidelity 必须报 PHASE 失败。相位只取 0/1，翻转后仍在
+      //    半格晶格、同一个格 key，CELL_OUT / LATTICE / LAYER_FORM 都抓不到它。
+      const spec2 = specFor(tpl.templateId);
+      const plan2 = specPlan(spec2, d.profile, { fillRot: d.specFillRot });
+      const fillCard = mainCards.find((c) => plan2.layers[c.layer] && plan2.layers[c.layer].kind === 'fill');
+      if (fillCard) {
+        t3PhaseSample++;
+        const c3 = JSON.parse(JSON.stringify(d.cards));
+        const t = c3.find((x) => x.layer === fillCard.layer && x.x === fillCard.x && x.y === fillCard.y);
+        const px = (((Math.round((t.x - GRID_X0) / LATTICE_X)) % 2) + 2) % 2;
+        t.x = t.x - px * LATTICE_X + (1 - px) * LATTICE_X;
+        const f3 = verifyTemplateFidelity(c3, d.templateId, d.profile, d.specFillRot);
+        if (f3.ok) t3PhaseBad++;
+      }
     }
   }
 
@@ -351,6 +368,7 @@ const GEO_SEEDS = 30;
   ok(t3SameBad === 0, `同层零重叠（异常 ${t3SameBad}）`);
   ok(t3QueueBad === 0, `盲盒队列恒为 44 张（异常 ${t3QueueBad}）`);
   ok(t3ChainBad === 0, `四条盲盒链每条只有队首可点（异常 ${t3ChainBad}）`);
+  ok(t3PhaseBad === 0, `铺设段相位篡改被 100% 拦截（漏报 ${t3PhaseBad}/${t3PhaseSample}）`);
   ok(t3Sigs.size === 20, `20 套模板的规格签名两两不同（实测 ${t3Sigs.size} 种）`);
   ok(Math.min(...t3CellCounts) >= 24, `每套掩膜至少 24 格（实测最少 ${t3CellMin} 格）`);
   line(`   20 套 × 10 档位 = 200 局全通过 · 掩膜 ${t3CellMin}~${t3CellMax} 格 · 可点 ${t3VisMin}~${t3VisMax}`);
