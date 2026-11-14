@@ -19,10 +19,10 @@
  *  · 层中心在核心中心 ±1.5 格内随机游走，层间错位向量从
  *    {(W/2,H/2), (0,H/2), (W/2,0)} 取（= config.LAYER_OFFSETS）。
  *
- * 盲盒队列（第 1.3 节）：主堆下方，左右各 2 条（一竖一横），共 44 张。
- * 每条链的牌按半格步进扇形叠放，链内 z 递增，于是**只有队首（链尾那张）可点**，
- * 其余被前一张以 >10% 面积压住 —— 纯几何实现，不需要额外的规则分支。
- * 队列整体再做 ±1 格的 seed 偏移。
+ * 【本轮重构】本文件现在**只负责第一关**布局。第二关的固定四链盲盒队列
+ * （QUEUE_SHAPE / buildQueue，左竖 7 + 右竖 7 + 中横 15 + 底横 15）已彻底删除：
+ * 第二关改由 l2_templates.js / l2_spec.js / l2_geometry.js 的 20 套完整模板规格生成，
+ * 原 44 张牌位全部融入各套模板自己的外廓布局。第一关生成逻辑一字未动。
  */
 import {
   TILE_W, TILE_H, LATTICE_X, LATTICE_Y, OVERLAP_THRESHOLD, TILE_AREA,
@@ -31,8 +31,7 @@ import {
 import { makeRng } from './rng.js';
 import { countComponents } from './layout.js';
 
-const QUEUE = 44;
-/** 第 1.5 节：第二关开局可点牌区间 */
+/** 第 1.5 节：第二关开局可点牌区间（供 l2_geometry.js 的完整模板布局使用） */
 export const VISIBLE_MIN = 19;
 export const VISIBLE_MAX = 25;
 
@@ -269,66 +268,6 @@ function buildMainStack(rng, plan, opts) {
   return out;
 }
 
-/* ==================== 盲盒队列 ==================== */
-
-/**
- * 四条链：左右各一条竖向（7 张）+ 一条横向（15 张），共 44 张。
- *
- * 布局约束（第 1.3 节，硬约束）：
- *   · 四条链占据**互不重叠**的矩形区，链与链之间至少留 0 格缝隙，
- *     否则一条链的队首会被另一条链压住 → 盲盒永远翻不开；
- *   · 竖向链放在主堆两侧边列（x=33 / x=627，占 x∈[33,99] 与 [627,693]）；
- *   · 横向链只允许落在两条竖向链之间（x∈[99,627]，15 张跨 462px 正好填满），
- *     且上下错开一档（y=616 与 y=748，各自 ±1 格）；
- *   · 链内每张牌单独占一个 layer，z 沿链递增 → 链尾那张是唯一可点的队首。
- *
- * 「队列位置由 seed 做 ±1 格偏移」（第 1.3 节）：偏移量由 seed 决定，但方向
- * 受邻居约束——竖向链只能向上偏（否则越出 BOARD_BAND 下沿），左侧横链只能
- * 向上偏、右侧横链只能向下偏（否则两条横链会相撞）。四种组合 × 两条竖向
- * 各自独立抽取，因此不同 seed 的队列位置确实不同，且永远不会互相压死。
- */
-const QUEUE_SHAPE = [
-  { name: 'queueLeftV', dir: 'v', x: 33, y: 528, dy: [0, -1], n: 7 },
-  { name: 'queueRightV', dir: 'v', x: 627, y: 528, dy: [0, -1], n: 7 },
-  { name: 'queueLeftH', dir: 'h', x: 99, y: 616, dy: [0, -1], n: 15 },
-  { name: 'queueRightH', dir: 'h', x: 99, y: 748, dy: [0, 1], n: 15 },
-];
-
-/** 导出给 l2_geometry.js 复用：44 张盲盒队列的几何规则必须与第一关/旧第二关完全一致 */
-export function buildQueue(rng, baseLayer, scale) {
-  const out = [];
-  let layer = baseLayer;
-  let total = 0;
-  for (let qi = 0; qi < QUEUE_SHAPE.length; qi++) {
-    const q = QUEUE_SHAPE[qi];
-    const n = Math.max(1, Math.round(q.n * scale));
-    const spanX = q.dir === 'h' ? (n - 1) * LATTICE_X : 0;
-    const spanY = q.dir === 'v' ? (n - 1) * LATTICE_Y : 0;
-    const step = q.dy[rng.int(0, q.dy.length - 1)];
-    const bx = clamp(q.x, X_MIN, X_MAX - spanX);
-    const by = clamp(q.y + step * LATTICE_Y, Y_MIN, Y_MAX - spanY);
-    for (let k = 0; k < n; k++) {
-      out.push({
-        x: q.dir === 'h' ? bx + k * LATTICE_X : bx,
-        y: q.dir === 'v' ? by + k * LATTICE_Y : by,
-        layer: layer++,
-        region: q.name,
-        zoneLayer: qi,
-        seg: 'queue',
-        chain: qi,
-        chainIndex: k,
-        chainLen: n,
-        gridW: 1,
-        gridH: 1,
-        gaps: 0,
-        pinned: '',
-      });
-      total++;
-    }
-  }
-  return { cards: out, total, layers: layer - baseLayer };
-}
-
 /* ==================== 几何验收工具 ==================== */
 
 const THRESH_AREA = OVERLAP_THRESHOLD * TILE_AREA;
@@ -394,9 +333,14 @@ function buildOnce(rngSeed, profile) {
   const plan = layerPlanFor(profile);
   const N = plan.length;
   const isL1 = profile.queueCount === 0;
+  /* 第二关不再有「主堆 + 固定 44 张四链队列」这条路径：直接拒绝，
+   * 由 generator.js 统一走 20 套完整模板布局。第一关（isL1）分支原样保留。 */
+  if (!isL1) {
+    throw new Error('第二关固定四链队列已取消：请使用 l2_geometry.generateTemplateLayout 的完整模板布局');
+  }
   let out;
 
-  if (isL1) {
+  {
     // 第 1.4 节：第一关同样由 seed 生成紧凑堆，列数 5–7 随机、每层团块随机生长。
     // 层数 / 牌数仍按档位。
     //
@@ -435,41 +379,6 @@ function buildOnce(rngSeed, profile) {
     });
     // 生成后再按本局真实包围盒做一次动态居中（不是固定 Y 偏移）
     centerStackVertically(out);
-  } else {
-    const n1 = Math.max(1, Math.round(N * 0.25));
-    const n2 = Math.max(1, Math.round(N * 0.36));
-    const midEnd = Math.min(N, n1 + n2) - 1;
-    out = buildMainStack(rng, plan, {
-      region: 'core',
-      segment: segmentOf,
-      envelope: ENVELOPE,
-      topCy: 280,
-      botCy: 480,
-      yMin: STACK_TOP,
-      yMax: STACK_BOTTOM,
-      xMin: X_MIN,
-      xMax: X_MAX,
-      cxMin: 330 - 1.5 * LATTICE_X,
-      cxMax: 330 + 1.5 * LATTICE_X,
-      walkX: 0.6 * LATTICE_X,
-      walkY: 0.6 * LATTICE_Y,
-      xAlign: TILE_W,
-      guardMargins: true,
-      // 中段首尾两层分别钉在左右极限 → 包围盒宽度恒为 xMax+66-xMin = 660 ≥ 560
-      pinLeft: n1,
-      pinRight: midEnd,
-      offsets: [[1, 1], [0, 1], [1, 0]],
-    });
-    const sumMain = plan.reduce((a, b) => a + b, 0);
-    if (out.length !== sumMain) {
-      throw new Error('主堆张数 ' + out.length + ' ≠ ' + sumMain);
-    }
-    const q = buildQueue(rng, N, profile.queueCount / QUEUE);
-    if (q.total !== profile.queueCount) {
-      throw new Error('队列张数 ' + q.total + ' ≠ 档位 ' + profile.queueCount);
-    }
-    out = out.concat(q.cards);
-    out.layerCount = N + q.layers;
   }
 
   // 半格晶格 / 版面边界硬校验
@@ -513,6 +422,11 @@ function buildOnce(rngSeed, profile) {
  */
 export function generateProfileLayout(seed, profile) {
   if (!profile) throw new Error('generateProfileLayout 需要 profile');
+  /* 第二关固定四链队列已取消：本入口只服务第一关（queueCount === 0）。 */
+  if (profile.queueCount !== 0) {
+    throw new Error('第二关固定四链队列已取消：generateProfileLayout 只服务第一关，' +
+      '第二关请走 l2_geometry.generateTemplateLayout 的 20 套完整模板布局');
+  }
   const base = ((seed >>> 0) ^ 0x50def1ce) >>> 0;
   if (profile.queueCount === 0) {
     /**
@@ -533,17 +447,8 @@ export function generateProfileLayout(seed, profile) {
     }
     return best;
   }
-
-  let best = null;
-  let bestScore = Infinity;
-  for (let k = 0; k < 16; k++) {
-    const cards = buildOnce((base ^ Math.imul(k + 1, 0x9e3779b9)) >>> 0, profile);
-    const v = countVisible(cards);
-    const score = v < VISIBLE_MIN ? VISIBLE_MIN - v : (v > VISIBLE_MAX ? v - VISIBLE_MAX : 0);
-    if (score === 0) return cards;
-    if (score < bestScore) { bestScore = score; best = cards; }
-  }
-  return best;
+  /* 不可达：第二关档位已在函数入口被拒绝 */
+  throw new Error('generateProfileLayout 只服务第一关');
 }
 
 /** 档位布局说明（UI / 测试用） */
@@ -565,8 +470,10 @@ export function describeProfileLayout(profile) {
     plan,
     planMax: maxPlan,
     planMin: minPlan,
-    globalLayers: profile.layers + (profile.queueCount ? QUEUE_SHAPE.reduce((a, q) => a + q.n, 0) : 0),
+    /* 第二关 44 张牌位已融入 20 套模板各自的完整外廓布局，层数由模板规格决定；
+       这里不再有「固定 4 条链、每张队列牌各占一层」的 globalLayers 口径。 */
+    mainLayers: profile.layers,
+    outerTiles: profile.queueCount,
+    layoutMode: profile.queueCount ? 'L2-full-template' : 'L1-seed-stack',
   };
 }
-
-export { QUEUE_SHAPE };

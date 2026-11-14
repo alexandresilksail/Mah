@@ -591,8 +591,10 @@ function paintBoard(ctx, game, alive, now) {
       playable: !c.blocked,
       scale,
       alpha,
-      // 第 1.3 节：盲盒队列里除队首外一律显示牌背；队首被点走后下一张自动翻开
-      back: c.seg === 'queue' && c.blocked,
+      /* 模板外廓段被上层牌压住时显示牌背，剥开后自动翻开。
+       * 旧的固定四链盲盒队列已取消；这里只是完整布局里外廓塔群的遮挡表现，
+       * 点击命中区域与可点判定完全由几何（z + 重叠面积）决定，与段名无关。 */
+      back: c.seg === 'outer' && c.blocked,
     });
   }
 }

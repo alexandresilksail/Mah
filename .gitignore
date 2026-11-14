@@ -15,3 +15,10 @@ target-gnu/
 .shots/
 .build/
 *.log
+
+# 本地过程性产物（截图 / 调试 / 备份，可重建、体积大，不提交）
+reports/windows-desktop-smoke/
+reports/windows-release-backup/
+reports/windows-release-test-logs/
+reports/l2-visual-screenshots/
+reports/l2-visual-diff/

@@ -33,15 +33,23 @@
  * 第一关永远不经过本文件。
  */
 import { sha256Hex } from './sha256.js';
-import { TILE_W, TILE_H, LATTICE_X, LATTICE_Y, layerPlanFor } from './config.js';
-import { templateById, MASK_COLS, MASK_ROWS } from './l2_templates.js';
+import {
+  TILE_W, TILE_H, TILE_AREA, OVERLAP_THRESHOLD,
+  LATTICE_X, LATTICE_Y, layerPlanFor, BOARD_BAND,
+} from './config.js';
+import { templateById, MASK_COLS, MASK_ROWS, OUTER_SEG, OUTER_TILE_COUNT } from './l2_templates.js';
 import { hasSupport } from './layout.js';
 
-export var SPEC_ALGORITHM = 'MAH-L2-SPEC-v2';
+/** v3：规格升级为「主体规格 + 每模板独有外廓完整牌位规格」，固定四链队列彻底移除 */
+export var SPEC_ALGORITHM = 'MAH-L2-SPEC-v3';
 
 /** 全局 9×5 整格网原点（与 l2_geometry 共用同一组常量，避免两处漂移） */
 export var GRID_X0 = 33;
-export var GRID_Y0 = 220;
+/* 第二关整体布局垂直居中：原 220 偏上（中心 y≈462，牌桌中心 557）。
+ * 改为 308（44 的倍数，满足半格晶格）后，主体+外廓包围盒中心回到 ~550≈557，
+ * 落在 BOARD_BAND[196,918] 中线，P05 最高也只到 880（余 38px）。水平 33 已是
+ * 半格晶格下的最优居中（右移 66 反而令 17/20 套更偏右）。 */
+export var GRID_Y0 = 308;
 
 /** 单层最大张数（第二关各档位 layerPlanFor 实测 6–16，取 18 留余量） */
 export var SPEC_FORM_SIZE = 18;
@@ -262,9 +270,27 @@ function buildSpec(tpl) {
 
   var silhouette = walk.map(function (c) { return c.k; }).slice().sort();
 
+  /* 每模板独有的完整外廓牌位规格：与主体共用同一套 (c,r) 晶格口径，
+   * 但整格行 r=5/6，格 key 与主体 r=0..4 不冲突。 */
+  var outer = tpl.outer;
+  var outerCells = outer.cells.map(function (c) {
+    return { c: c.c, r: c.r, k: c.k, region: c.region };
+  });
+  var outerRegion = {};
+  var seenOuterReg = {};
+  var outerRegionCount = 0;
+  for (var oi = 0; oi < outerCells.length; oi++) {
+    var ok = outerCells[oi].k;
+    var org = outerCells[oi].region;
+    outerRegion[ok] = org;
+    if (!seenOuterReg[org]) { seenOuterReg[org] = 1; outerRegionCount++; }
+  }
+  var outerSilhouette = outerCells.map(function (c) { return c.k; }).sort();
+
+  /* 规格签名同时绑定主体游走序与本套外廓完整牌位定义 —— 20 套必然两两不同 */
   var signature = sha256Hex(SPEC_ALGORITHM + '|' + tpl.templateId + '|' + walk.map(function (c) {
     return c.k + '@' + c.region;
-  }).join(';'));
+  }).join(';') + '|OUTER|' + outer.signature);
 
   return {
     templateId: tpl.templateId,
@@ -281,6 +307,12 @@ function buildSpec(tpl) {
     walkIndex: walkIndex,
     formSize: Math.min(SPEC_FORM_SIZE, cells.length),
     silhouette: silhouette,
+    outer: outer,
+    outerCells: outerCells,
+    outerCellCount: outerCells.length,
+    outerRegion: outerRegion,
+    outerRegionCount: outerRegionCount,
+    outerSilhouette: outerSilhouette,
     signature: signature,
   };
 }
@@ -760,6 +792,70 @@ export function planLayerKeys(plan) {
   return out;
 }
 
+/* ==================== 外廓牌位计划（完整布局的第二段） ==================== */
+
+var OUTER_PLAN_CACHE = {};
+
+/**
+ * 把一套模板自带的外廓定义展开成逐层牌位计划（纯函数、零随机、结果缓存）。
+ *
+ *  · 第 k 层取「中心优先格池」的前 layers[k] 个格；layers 非递减 ⇒ 层集合严格嵌套
+ *    ⇒ 低层每张牌必然被高层同格牌压住，只有最顶层的那几张可点；
+ *  · 每层相位按 (turn + k) 在 4 种半格相位里轮转 ⇒ 相邻层同格牌至少重叠 25%
+ *    （>10% 遮挡阈值），形成真实的层间遮挡链；
+ *  · 层号接在主堆 L 层之后（layer = L + k），因此 z 全序不变、绘制顺序不变。
+ *
+ * 这是**模板身份的一部分**：任何一层的格集合、坐标、相位都与 templateId 一一
+ * 对应，checkFidelity 会逐张复核。它不依赖 seed，也不依赖档位以外的随机量。
+ */
+export function outerPlanFor(spec, profile) {
+  var ck = spec.templateId + '|' + profile.id;
+  var cached = OUTER_PLAN_CACHE[ck];
+  if (cached) return cached;
+  var outer = spec.outer;
+  var L = layerPlanFor(profile).length;
+  var layers = [];
+  var total = 0;
+  for (var k = 0; k < outer.layerCount; k++) {
+    var cnt = outer.layers[k];
+    if (cnt > spec.outerCellCount) {
+      throw new Error('模板 ' + spec.templateId + ' 外廓第 ' + k + ' 层 ' + cnt +
+        ' 张 > 可落牌格 ' + spec.outerCellCount);
+    }
+    var ph = PHASES[(outer.turn + k) % PHASES.length];
+    var cells = [];
+    for (var i = 0; i < cnt; i++) {
+      var c = spec.outerCells[i];
+      cells.push({ c: c.c, r: c.r, k: c.k, region: c.region, phase: ph.slice() });
+    }
+    layers.push({ index: k, layer: L + k, kind: 'outer', phase: ph.slice(), cells: cells });
+    total += cnt;
+  }
+  if (total !== OUTER_TILE_COUNT || total !== profile.queueCount) {
+    throw new Error('模板 ' + spec.templateId + ' 外廓张数 ' + total + ' ≠ 档位配额 ' + profile.queueCount);
+  }
+  var maxCnt = outer.layers[outer.layerCount - 1];
+  var usedReg = {};
+  for (var ur = 0; ur < maxCnt; ur++) {
+    usedReg[spec.outerRegion[spec.outerCells[ur].k] || 'O1'] = 1;
+  }
+  var plan = {
+    templateId: spec.templateId,
+    profileId: profile.id,
+    baseLayer: L,
+    layerCount: outer.layerCount,
+    totalLayerCount: L + outer.layerCount,
+    total: total,
+    turn: outer.turn,
+    layers: layers,
+    silhouette: spec.outerCells.slice(0, maxCnt).map(function (c) { return c.k; }).sort(),
+    regionCount: Object.keys(usedReg).length,
+    signature: outer.signature,
+  };
+  OUTER_PLAN_CACHE[ck] = plan;
+  return plan;
+}
+
 /* ==================== 保真校验 ==================== */
 
 /**
@@ -777,8 +873,13 @@ export function planLayerKeys(plan) {
  *   SILHOUETTE   全部层格集合并集 == 掩膜全集（俯视轮廓不被简化 / 变形）
  *   REGION_COVER 每个连通区域都有牌
  *   SAME_LAYER   同层零重叠
+ *   OUTER_COUNT / OUTER_LATTICE / OUTER_BAND / OUTER_LAYER_COUNT
+ *   OUTER_FORM / OUTER_PHASE / OUTER_SILHOUETTE / OUTER_REGION_COVER
+ *   OUTER_SAME_LAYER / OUTER_PLAYABLE
+ *                 模板独有外廓段的 44 张牌位：逐张坐标、半格相位、逐层格集合、
+ *                 占位轮廓、区域覆盖、同层零重叠、开局可点分布全部与规格一致
  *
- * @param {Array} cards 实际牌位（含 queue 段）
+ * @param {Array} cards 实际牌位（主体掩膜牌 + 模板独有外廓段）
  * @param {object} spec specFor(templateId)
  * @param {object} plan specPlan(spec, profile)
  * @param {object} profile 档位
@@ -791,16 +892,21 @@ export function checkFidelity(cards, spec, plan, profile) {
     violations.push({ code: code, detail: detail });
   }
 
+  /* 完整布局分两段：主体掩膜牌（main）与模板独有的外廓牌（OUTER_SEG）。
+   * 旧的 'queue' 四链段已彻底取消，第二关不再有任何共享固定队列牌。 */
   var main = [];
+  var outerCards = [];
   for (var i = 0; i < (cards || []).length; i++) {
-    if (cards[i].seg !== 'queue') main.push(cards[i]);
+    if (cards[i].seg === OUTER_SEG) outerCards.push(cards[i]);
+    else main.push(cards[i]);
   }
 
   checks.count = (cards || []).length === profile.mainCount + profile.queueCount &&
-    main.length === profile.mainCount;
+    main.length === profile.mainCount && outerCards.length === profile.queueCount;
   if (!checks.count) {
     bad('COUNT', '总张数 ' + (cards || []).length + '/' +
-      (profile.mainCount + profile.queueCount) + '，主堆 ' + main.length + '/' + profile.mainCount);
+      (profile.mainCount + profile.queueCount) + '，主堆 ' + main.length + '/' + profile.mainCount +
+      '，模板外廓 ' + outerCards.length + '/' + profile.queueCount);
   }
 
   var maskKeys = {};
@@ -927,6 +1033,132 @@ export function checkFidelity(cards, spec, plan, profile) {
   checks.sameLayer = overlap === 0;
   if (!checks.sameLayer) bad('SAME_LAYER', overlap + ' 对同层牌重叠');
 
+  /* ==================== 完整布局：模板独有外廓段的逐张保真 ==================== */
+  var op = null;
+  try {
+    op = outerPlanFor(spec, profile);
+  } catch (eOuter) {
+    bad('OUTER_PLAN', String(eOuter && eOuter.message));
+  }
+  if (op) {
+    checks.outerCount = outerCards.length === op.total;
+    if (!checks.outerCount) bad('OUTER_COUNT', '外廓牌 ' + outerCards.length + ' ≠ 模板规格 ' + op.total);
+
+    var oThresh = OVERLAP_THRESHOLD * TILE_AREA;
+    var oByLayer = {};
+    var oUsed = {};
+    var oRegions = {};
+    var oLatticeBad = 0, oBandBad = 0, oCellBad = 0, oPhaseBad = 0;
+    for (var oi2 = 0; oi2 < outerCards.length; oi2++) {
+      var oc = outerCards[oi2];
+      if (oc.x % LATTICE_X !== 0 || oc.y % LATTICE_Y !== 0) oLatticeBad++;
+      if (oc.x < BOARD_BAND.left || oc.y < BOARD_BAND.top ||
+          oc.x + TILE_W > BOARD_BAND.right || oc.y + TILE_H > BOARD_BAND.bottom) oBandBad++;
+      var occ = Math.floor(((oc.x - GRID_X0) / LATTICE_X) / 2);
+      var ocr = Math.floor(((oc.y - GRID_Y0) / LATTICE_Y) / 2);
+      var ock = cellKey(occ, ocr);
+      oUsed[ock] = 1;
+      oRegions[spec.outerRegion[ock] || 'O1'] = 1;
+      if (!oByLayer[oc.layer]) oByLayer[oc.layer] = [];
+      oByLayer[oc.layer].push({ key: ock, card: oc });
+      var opl = op.layers[oc.layer - op.baseLayer];
+      if (!opl) { oCellBad++; continue; }
+      var owant = null;
+      for (var ow = 0; ow < opl.cells.length; ow++) {
+        if (opl.cells[ow].k === ock) { owant = opl.cells[ow]; break; }
+      }
+      if (!owant) { oCellBad++; continue; }
+      var opx = (((Math.round((oc.x - GRID_X0) / LATTICE_X)) % 2) + 2) % 2;
+      var opy = (((Math.round((oc.y - GRID_Y0) / LATTICE_Y)) % 2) + 2) % 2;
+      if (owant.phase[0] !== opx || owant.phase[1] !== opy) oPhaseBad++;
+    }
+    checks.outerLattice = oLatticeBad === 0;
+    if (!checks.outerLattice) bad('OUTER_LATTICE', oLatticeBad + ' 张外廓牌不在半格晶格上');
+    checks.outerBand = oBandBad === 0;
+    if (!checks.outerBand) bad('OUTER_BAND', oBandBad + ' 张外廓牌越出牌桌');
+
+    var oLayerIds = Object.keys(oByLayer).map(Number).sort(function (a, b) { return a - b; });
+    checks.outerLayerCount = oLayerIds.length === op.layerCount &&
+      oLayerIds[0] === op.baseLayer &&
+      oLayerIds[oLayerIds.length - 1] === op.totalLayerCount - 1;
+    if (!checks.outerLayerCount) {
+      bad('OUTER_LAYER_COUNT', '外廓实际 ' + oLayerIds.length + ' 层，规格 ' + op.layerCount + ' 层');
+    }
+
+    var oFormBad = 0, oFormDetail = '无';
+    for (var ol = 0; ol < op.layerCount; ol++) {
+      var ogot = (oByLayer[op.layers[ol].layer] || []).map(function (o) { return o.key; }).sort();
+      var owantKeys = op.layers[ol].cells.map(function (c2) { return c2.k; }).sort();
+      if (ogot.length !== owantKeys.length) {
+        oFormBad++;
+        if (oFormDetail === '无') oFormDetail = '外廓第 ' + ol + ' 层 ' + ogot.length + ' 格 ≠ 规格 ' + owantKeys.length + ' 格';
+        continue;
+      }
+      for (var oz = 0; oz < owantKeys.length; oz++) {
+        if (ogot[oz] !== owantKeys[oz]) {
+          oFormBad++;
+          if (oFormDetail === '无') oFormDetail = '外廓第 ' + ol + ' 层格集合与规格不同';
+          break;
+        }
+      }
+    }
+    checks.outerForm = oFormBad === 0 && oCellBad === 0;
+    if (!checks.outerForm) bad('OUTER_FORM', (oFormBad + oCellBad) + ' 项外廓格位与规格不符：' + oFormDetail);
+    checks.outerPhase = oPhaseBad === 0;
+    if (!checks.outerPhase) bad('OUTER_PHASE', oPhaseBad + ' 张外廓牌半格相位与规格不符');
+
+    var oUsedKeys = Object.keys(oUsed).sort();
+    var oSilOK = oUsedKeys.length === op.silhouette.length;
+    for (var os = 0; oSilOK && os < op.silhouette.length; os++) {
+      if (oUsedKeys[os] !== op.silhouette[os]) oSilOK = false;
+    }
+    checks.outerSilhouette = oSilOK;
+    if (!checks.outerSilhouette) {
+      bad('OUTER_SILHOUETTE', '外廓占位格 ' + oUsedKeys.length + ' 个 ≠ 规格 ' + op.silhouette.length + ' 个');
+    }
+    var oRegCount = Object.keys(oRegions).length;
+    checks.outerRegionCover = oRegCount === op.regionCount;
+    if (!checks.outerRegionCover) {
+      bad('OUTER_REGION_COVER', '外廓覆盖 ' + oRegCount + '/' + op.regionCount + ' 个连通区域');
+    }
+
+    var oOverlap = 0;
+    for (var olj = 0; olj < oLayerIds.length; olj++) {
+      var olist = oByLayer[oLayerIds[olj]];
+      for (var oa = 0; oa < olist.length; oa++) {
+        for (var ob = oa + 1; ob < olist.length; ob++) {
+          var oA = olist[oa].card, oB = olist[ob].card;
+          var oix = Math.min(oA.x + TILE_W, oB.x + TILE_W) - Math.max(oA.x, oB.x);
+          var oiy = Math.min(oA.y + TILE_H, oB.y + TILE_H) - Math.max(oA.y, oB.y);
+          if (oix > 0 && oiy > 0) oOverlap++;
+        }
+      }
+    }
+    checks.outerSameLayer = oOverlap === 0;
+    if (!checks.outerSameLayer) bad('OUTER_SAME_LAYER', oOverlap + ' 对外廓同层牌重叠');
+
+    /* 开局可点击分布：外廓只有最顶层的牌可点，且恰好等于规格顶层张数 */
+    var oTopLayer = op.layers[op.layerCount - 1].layer;
+    var oPlayable = 0, oNonTopPlayable = 0;
+    for (var opa = 0; opa < outerCards.length; opa++) {
+      var ocard = outerCards[opa];
+      var oblk = false;
+      for (var opb = 0; opb < (cards || []).length; opb++) {
+        var oother = cards[opb];
+        if (oother === ocard || oother.z <= ocard.z) continue;
+        var oix2 = Math.min(ocard.x + TILE_W, oother.x + TILE_W) - Math.max(ocard.x, oother.x);
+        var oiy2 = Math.min(ocard.y + TILE_H, oother.y + TILE_H) - Math.max(ocard.y, oother.y);
+        if (oix2 > 0 && oiy2 > 0 && oix2 * oiy2 > oThresh) { oblk = true; break; }
+      }
+      if (!oblk) { oPlayable++; if (ocard.layer !== oTopLayer) oNonTopPlayable++; }
+    }
+    checks.outerPlayable = oPlayable === op.layers[op.layerCount - 1].cells.length && oNonTopPlayable === 0;
+    if (!checks.outerPlayable) {
+      bad('OUTER_PLAYABLE', '外廓可点 ' + oPlayable + ' 张（规格顶层 ' +
+        op.layers[op.layerCount - 1].cells.length + ' 张），非顶层可点 ' + oNonTopPlayable + ' 张');
+    }
+  }
+
   return {
     ok: violations.length === 0,
     templateId: spec.templateId,
@@ -934,6 +1166,9 @@ export function checkFidelity(cards, spec, plan, profile) {
     checks: checks,
     violations: violations,
     algorithm: SPEC_ALGORITHM,
+    outerTiles: outerCards.length,
+    outerLayerCount: op ? op.layerCount : 0,
+    outerSignature: op ? op.signature : '',
   };
 }
 
@@ -949,6 +1184,11 @@ export function specSummary(spec) {
     walk: spec.walk.map(function (c) { return c.k; }),
     walkLength: spec.walk.length,
     silhouetteCovered: spec.silhouette.length,
+    outerCellCount: spec.outerCellCount,
+    outerLayerCount: spec.outer.layerCount,
+    outerTileCount: spec.outer.total,
+    outerSilhouetteCovered: spec.outerSilhouette.length,
+    outerSignature: spec.outer.signature,
     signature: spec.signature,
   };
 }

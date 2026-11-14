@@ -35,7 +35,7 @@ import {
   HISTORY_LIMIT, L2_HISTORY_LIMIT, historyLimitFor,
 } from './src/game/recent_games.js';
 import { structureSimilarity, mainStackCards } from './src/game/l2_structure.js';
-import { L2_TEMPLATE_IDS } from './src/game/l2_templates.js';
+import { L2_TEMPLATE_IDS, OUTER_SEG, OUTER_TILE_COUNT } from './src/game/l2_templates.js';
 import { makeSaveData, applySaveToGame, SAVE_VERSION } from './src/game/save_data.js';
 import {
   LEVEL1_PROFILES, LEVEL2_PROFILES, profilesFor, profileFor,
@@ -237,10 +237,12 @@ function validateGenerated(level, r) {
     const zones = new Set(mainCards.map((c) => String(c.region)));
     labels.push(ok(zones.size >= 1, `L2 主堆带真实区域标记（${zones.size} 个区域）`));
   }
-  // 盲盒队列：44 张、每条链只有队首可点
-  const queueCards = cards.filter((c) => c.seg === 'queue');
-  labels.push(ok(queueCards.length === profileFor(level, rec.difficultyId).queueCount,
-    `L${level} 盲盒队列张数与档位一致（${queueCards.length} 张）`));
+  // 第二关原 44 张盲盒队列已融入 20 套模板各自的完整外廓布局（seg=outer）；
+  // 第一关没有外廓牌。这里校验外廓牌数与档位配置一致。
+  const outerCards = cards.filter((c) => c.seg === OUTER_SEG);
+  const expectOuter = level === 2 ? OUTER_TILE_COUNT : 0;
+  labels.push(ok(outerCards.length === expectOuter,
+    `L${level} 外廓牌（原盲盒 44 张 / L1 为 0）与档位一致（${outerCards.length} 张）`));
   // 遮挡标记与几何一致
   let blockerOk = true;
   const g = d._graph;

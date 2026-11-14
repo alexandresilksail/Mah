@@ -4,7 +4,7 @@
  * 本轮（内置背景音乐 + 第一关布局居中 + 双关卡最近三局差异化）覆盖：
  *   [1]  单一常量源 / 版本号 / 几何常量 / 本轮规格常量
  *   [2]  16 种牌型唯一注册表
- *   [3]  seed 驱动布局：第二关沙漏主堆 + 四条盲盒链（30 seed × 10 档位）
+ *   [3]  第二关 20 套完整模板布局（20 套 × 10 档位，固定四链盲盒队列已彻底取消）
  *   [3b] seed 驱动布局：第一关紧凑堆（30 seed × 4 档位）
  *   [3c] layoutSimilarity 纯函数（第 2.2 节）
  *   [4]  发牌一律整池 Fisher–Yates（第 3.2 节），无三带 / 波次 / order 分配
@@ -52,10 +52,15 @@ import {
   buildBlockerGraph,
 } from './src/game/layout.js';
 import {
-  generateProfileLayout, describeProfileLayout, VISIBLE_MIN, VISIBLE_MAX, QUEUE_SHAPE,
+  generateProfileLayout, describeProfileLayout, VISIBLE_MIN, VISIBLE_MAX,
 } from './src/game/layout_profiles.js';
-import { specFor, specPlan } from './src/game/l2_spec.js';
-import { verifyTemplateFidelity } from './src/game/l2_geometry.js';
+import {
+  specFor, specPlan, outerPlanFor, checkFidelity, SPEC_ALGORITHM,
+  GRID_X0, GRID_Y0,
+} from './src/game/l2_spec.js';
+import {
+  verifyTemplateFidelity, generateTemplateLayout, describeTemplateLayout,
+} from './src/game/l2_geometry.js';
 import { TYPE_LIST, TYPE_MAP, SUITS_L1, SUITS_L2, suitsFor } from './src/game/tiles.js';
 import { ROBOT_MODES, simulateRobot } from './src/game/robots.js';
 import { Game, slotInsert, slotMatchTypes, resolveSlot } from './src/game/engine.js';
@@ -75,8 +80,13 @@ import {
   GENERATION_REASONS, sanitizeHistory, sanitizeRecord,
   historyFor, checkAgainstRecent, previousFrom,
 } from './src/game/recent_games.js';
-import { structureSimilarity } from './src/game/l2_structure.js';
-import { L2_TEMPLATES, L2_TEMPLATE_IDS } from './src/game/l2_templates.js';
+import {
+  structureSimilarity, calculateStructureSignature, canonicalGeometrySignature,
+  mainStackCards,
+} from './src/game/l2_structure.js';
+import {
+  L2_TEMPLATES, L2_TEMPLATE_IDS, OUTER_SEG, OUTER_TILE_COUNT,
+} from './src/game/l2_templates.js';
 import { readBuildInfo } from './src/game/build_info.js';
 import {
   SCENES, SCENE_LABELS, isScene, sceneOf, matchScene, MAX_NAME_LEN,
@@ -216,10 +226,25 @@ ok(L2_TEMPLATES.length === 20 && L2_TEMPLATE_IDS.length === 20 &&
   new Set(L2_TEMPLATE_IDS).size === 20, '第二关布局模板 20 套且 ID 唯一');
 ok(VISIBLE_MIN === 19 && VISIBLE_MAX === 25, '第二关开局可点区间 19–25');
 ok(SIMILARITY_THRESHOLD === 0.6, '布局相似度阈值 = 0.60');
-ok(QUEUE_SHAPE.length === 4 && QUEUE_SHAPE.reduce((a, q) => a + q.n, 0) === 44,
-  '盲盒队列 = 4 条链共 44 张（左竖 7 + 右竖 7 + 左横 15 + 右横 15）');
-ok(QUEUE_SHAPE.filter((q) => q.dir === 'v').length === 2 && QUEUE_SHAPE.filter((q) => q.dir === 'h').length === 2,
-  '左右各一条竖向 + 一条横向');
+/* 本轮重构：固定 44 张四链盲盒队列彻底取消（源码级 + 数据级） */
+const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+const lpCode = stripComments(read('src/game/layout_profiles.js'));
+const geoCode = stripComments(read('src/game/l2_geometry.js'));
+const tplCode = stripComments(read('src/game/l2_templates.js'));
+ok(!/QUEUE_SHAPE/.test(lpCode) && !/\bbuildQueue\s*\(/.test(lpCode),
+  'layout_profiles.js 已删除 QUEUE_SHAPE 四链定义与 buildQueue()');
+ok(!/\bbuildQueue\s*\(/.test(geoCode) && !/QUEUE_SHAPE/.test(geoCode),
+  'l2_geometry.js 第二关生成路径不再 import/调用 buildQueue()');
+ok(!/seg:\s*['"]queue['"]/.test(lpCode + geoCode + tplCode),
+  '第二关源码不再产出 seg=queue 的固定队列牌');
+ok(OUTER_SEG === 'outer' && OUTER_TILE_COUNT === 44,
+  '原 44 张牌位改由每套模板的外廓段承载（OUTER_SEG=outer / 44 张）');
+ok(L2_TEMPLATES.length === 20 && L2_TEMPLATES.every((t) =>
+  t.outerTileCount === 44 && t.outerLayerCount >= 8 && t.outerCellCount >= 10),
+  '20 套模板各自带一份完整的 44 张外廓牌位定义');
+ok(new Set(L2_TEMPLATES.map((t) => t.outerSignature)).size === 20,
+  '20 套外廓完整牌位定义两两不同（不是共享底板）');
+ok(SPEC_ALGORITHM === 'MAH-L2-SPEC-v3', '规格层升级为 MAH-L2-SPEC-v3（主体 + 模板外廓完整布局）');
 ok(SCENES.length === 6 && SCENES.join(',') === 'title,level1,level2,win,lose,graduated',
   '音乐场景固定 6 个且顺序固定');
 ok(MUSIC_SCENES.join(',') === SCENES.join(','), 'music_store 的存档场景白名单与 music_match 一致');
@@ -247,7 +272,8 @@ line('   ' + TILE_TYPES.map((t) => t.short + '(' + t.id + ')').join(' '));
 line('\n[3] 第二关 20 套掩膜模板：缩略图 ↔ 实际布局一一对应（20 套 × 10 档位 = 200 局）');
 const GEO_SEEDS = 30;
 {
-  const GRID_X0 = 33, GRID_Y0 = 220;
+  // GRID_X0 / GRID_Y0 直接复用 l2_spec.js 的全局格网原点（与生成层、规格层同一份常量），
+  // 避免测试自行硬编码导致坐标漂移后误报。
   const cellOf = (c) => Math.floor(((c.x - GRID_X0) / LATTICE_X) / 2) + ','
     + Math.floor(((c.y - GRID_Y0) / LATTICE_Y) / 2);
 
@@ -260,6 +286,9 @@ const GEO_SEEDS = 30;
   let t3CellMin = 1e9, t3CellMax = 0;
   const t3Sigs = new Set();
   const t3CellCounts = [];
+  // 外廓坐标签名（只看 x|y，与档位无关）：用于证明 20 套模板的外廓布局互不相同，
+  // 不存在跨模板共享的固定四链 / 固定横排 / 左右固定竖列。
+  const t3OuterSigs = new Map();
 
   for (const tpl of L2_TEMPLATES) {
     const spec = specFor(tpl.templateId);
@@ -293,7 +322,7 @@ const GEO_SEEDS = 30;
       // ③ 张数 / 层数 / 逐层张数
       if (d.cards.length !== p.mainCount + p.queueCount) t3CountBad++;
       const plan = layerPlanFor(p);
-      const mainCards = d.cards.filter((c) => c.seg !== 'queue');
+      const mainCards = d.cards.filter((c) => c.seg !== OUTER_SEG);
       const byLayer = new Map();
       for (const c of mainCards) {
         if (!byLayer.has(c.layer)) byLayer.set(c.layer, []);
@@ -320,21 +349,33 @@ const GEO_SEEDS = 30;
       if (!isHalfLattice(d.cards)) t3LatticeBad++;
       if (sameLayerOverlapCount(d.cards) !== 0) t3SameBad++;
 
-      // ⑥ 44 张盲盒队列：4 条链，每条链只有队首（chainIndex 最大）可点
-      const queue = d.cards.filter((c) => c.seg === 'queue');
-      if (queue.length !== 44) t3QueueBad++;
+      // ⑥ 44 张外廓牌位：必须逐张等于该模板自己的完整布局规格，
+      //    且第二关不再有跨模板共享的固定四链（旧：左右各 7 张竖列 + 中/底各 15 张横排）。
+      //    判定改为"模板感知"：同一个模板跨档位的外廓坐标恒定、20 套互不相同、
+      //    且没有任何一套等于旧四链坐标集合 ⇒ 不存在共享固定链/横排/竖列。
+      const outer = d.cards.filter((c) => c.seg === OUTER_SEG);
+      if (outer.length !== 44) t3QueueBad++;
+      const op = outerPlanFor(spec, p);
+      const expectOuter = new Set();
+      for (const L of op.layers) {
+        for (const cc of L.cells) {
+          const ex = GRID_X0 + cc.c * TILE_W + cc.phase[0] * LATTICE_X;
+          const ey = GRID_Y0 + cc.r * TILE_H + cc.phase[1] * LATTICE_Y;
+          expectOuter.add(L.layer + '|' + ex + '|' + ey);
+        }
+      }
+      const gotOuter = new Set(outer.map((c) => c.layer + '|' + c.x + '|' + c.y));
+      if (gotOuter.size !== expectOuter.size) t3QueueBad++;
+      else { for (const kk of expectOuter) if (!gotOuter.has(kk)) { t3QueueBad++; break; } }
+      // 外廓坐标签名（x|y，与档位无关）：同一模板恒定，跨模板必须互异
+      const outerXY = outer.map((c) => c.x + '|' + c.y).sort().join(',');
+      if (!t3OuterSigs.has(tpl.templateId)) t3OuterSigs.set(tpl.templateId, outerXY);
+      else if (t3OuterSigs.get(tpl.templateId) !== outerXY) t3ChainBad++;
       const g = buildBlockerGraph(d.cards);
-      const chains = new Map();
-      for (const c of queue) {
-        if (!chains.has(c.chain)) chains.set(c.chain, []);
-        chains.get(c.chain).push(c);
-      }
-      if (chains.size !== 4) t3ChainBad++;
-      for (const arr of chains.values()) {
-        const open = arr.filter((c) => g.blockers[c.id].length === 0);
-        if (open.length !== 1) t3ChainBad++;
-        else if (open[0].chainIndex !== open[0].chainLen - 1) t3ChainBad++;
-      }
+      const topOuterLayer = op.layers[op.layerCount - 1].layer;
+      const openOuter = outer.filter((c) => g.blockers[c.id].length === 0);
+      if (openOuter.length !== op.layers[op.layerCount - 1].cells.length ||
+          openOuter.some((c) => c.layer !== topOuterLayer)) t3ChainBad++;
 
       // ⑦ 相位篡改检测（审计项 06）：翻转任一「铺设段(fill)」牌的半格相位，
       //    verifyTemplateFidelity 必须报 PHASE 失败。相位只取 0/1，翻转后仍在
@@ -360,14 +401,30 @@ const GEO_SEEDS = 30;
   ok(t3RecheckBad === 0, `牌桌真实牌位复核 200/200 与缩略图一致（异常 ${t3RecheckBad}）`);
   ok(t3FloatBad === 0, `主堆零悬空 200/200（异常 ${t3FloatBad}）`);
   ok(t3VisBad === 0, `开局可点 ${VISIBLE_MIN}–${VISIBLE_MAX} 全部命中（越界 ${t3VisBad}，实测 ${t3VisMin}~${t3VisMax}）`);
-  ok(t3CountBad === 0, `总张数 = 档位主堆 + 44 张盲盒（异常 ${t3CountBad}）`);
+  ok(t3CountBad === 0, `总张数 = 档位主堆 + 44 张模板外廓牌（异常 ${t3CountBad}）`);
   ok(t3LayerBad === 0, `层数 / 逐层张数严格等于 layerPlanFor（异常 ${t3LayerBad}）`);
   ok(t3MaskBad === 0, `俯视轮廓逐格等于模板掩膜，无一格简化或越界（异常 ${t3MaskBad}）`);
   ok(t3BandBad === 0, `主堆全部落在牌桌边界内（异常 ${t3BandBad}）`);
   ok(t3LatticeBad === 0, `全部牌位在半格晶格上（异常 ${t3LatticeBad}）`);
   ok(t3SameBad === 0, `同层零重叠（异常 ${t3SameBad}）`);
-  ok(t3QueueBad === 0, `盲盒队列恒为 44 张（异常 ${t3QueueBad}）`);
-  ok(t3ChainBad === 0, `四条盲盒链每条只有队首可点（异常 ${t3ChainBad}）`);
+  ok(t3QueueBad === 0, `44 张外廓牌逐张等于本模板完整布局规格（异常 ${t3QueueBad}）`);
+  ok(t3ChainBad === 0, `不存在固定四链结构、外廓可点牌恰为模板顶层（异常 ${t3ChainBad}）`);
+  // 20 套外廓坐标签名各不同 ⇒ 没有跨模板共享的固定链/横排/竖列
+  ok(t3OuterSigs.size === 20, `20 套模板的外廓布局坐标各不相同（实测 ${t3OuterSigs.size} 种，无共享固定链）`);
+  // 任何一套都不等于旧四链坐标集合（左竖 x=33、右竖 x=627、中横/底横 y=616/748）
+  const oldChainXY = (() => {
+    const s = new Set();
+    for (let y = 528; y <= 792; y += 44) { s.add('33|' + y); s.add('627|' + y); }
+    for (let x = 99; x <= 561; x += 66) { s.add(x + '|616'); s.add(x + '|748'); }
+    return s;
+  })();
+  let matchedOld = 0;
+  for (const sig of t3OuterSigs.values()) {
+    const set = new Set(sig.split(','));
+    // 旧四链含 x=627 的牌，本布局外廓永远不含 x=627 ⇒ 直接判不等
+    if ([...set].some((k) => k.startsWith('627|'))) matchedOld++;
+  }
+  ok(matchedOld === 0, `没有任何一套模板的外廓等于旧四链坐标集合（异常 ${matchedOld}）`);
   ok(t3PhaseBad === 0, `铺设段相位篡改被 100% 拦截（漏报 ${t3PhaseBad}/${t3PhaseSample}）`);
   ok(t3Sigs.size === 20, `20 套模板的规格签名两两不同（实测 ${t3Sigs.size} 种）`);
   ok(Math.min(...t3CellCounts) >= 24, `每套掩膜至少 24 格（实测最少 ${t3CellMin} 格）`);
@@ -646,11 +703,15 @@ ok(LEVEL1_PROFILES.every((p) => {
 }), 'L1 层张数 2 层 60/40、3 层 50/33/17（±2%）');
 for (const p of LEVEL2_PROFILES) {
   const desc = describeProfileLayout(p);
-  ok(desc.globalLayers === p.layers + 44 && desc.total === p.mainCount + p.queueCount,
-    `L2-${p.id} 布局说明：全局层 ${p.layers}+44（每张盲盒牌各占一层）、总张数来自档位`);
+  ok(desc.mainLayers === p.layers && desc.outerTiles === 44
+    && desc.total === p.mainCount + p.queueCount && desc.layoutMode === 'L2-full-template',
+    `L2-${p.id} 布局说明：主堆层 ${p.layers} + 外廓 44 张（层数由模板决定）、总张数来自档位`);
 }
-ok(generateProfileLayout(12345, LEVEL2_PROFILES[0]).length === LEVEL2_PROFILES[0].mainCount + 44,
-  'generateProfileLayout 张数 = 档位 mainCount + queueCount');
+/* 旧四链路径彻底退出：generateProfileLayout 对第二关显式拒绝，绝不静默回退 */
+let l2Reject = false;
+try { generateProfileLayout(12345, LEVEL2_PROFILES[0]); }
+catch (e) { l2Reject = /第二关/.test(String(e && e.message)); }
+ok(l2Reject, 'generateProfileLayout 对第二关显式拒绝（旧四链/旧布局路径已死）');
 
 /* ---------------- [8] 视觉 / 兼容 / 安全静态验收 ---------------- */
 line('\n[8] 视觉 / 兼容版 / Tauri 最小权限 / 版本号');
@@ -912,7 +973,7 @@ for (const p of LEVEL2_PROFILES) {
     /* 主堆的连通分量数必须等于**该模板掩膜**的连通分量数：
      * 20 套里有多岛/围合模板，主堆本来就不是单连通的，旧口径「主堆单连通」已失效；
      * 但也不允许凭空多出/少掉一个牌岛。 */
-    const mainOnly = d.cards.filter((c) => c.seg !== 'queue');
+    const mainOnly = d.cards.filter((c) => c.seg !== OUTER_SEG);
     const wantComp = specFor(d.templateId).maskRegionCount;
     if (countComponents(mainOnly) !== wantComp) {
       errs.push(`${seed}:连通${countComponents(mainOnly)}≠${wantComp}(${d.templateId})`);

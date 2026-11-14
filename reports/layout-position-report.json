@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-13T12:40:01.267Z",
+  "generatedAt": "2026-11-14T08:47:49.316Z",
   "boardBand": {
     "top": 196,
     "bottom": 918,
@@ -238,8 +238,8 @@
     "profiles": 10,
     "seedsPerProfile": 8,
     "bad": 0,
-    "minW": 660,
-    "minH": 616
+    "minW": 561,
+    "minH": 484
   },
   "summary": {
     "pass": 35,

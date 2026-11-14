@@ -20,18 +20,50 @@
  *   · phase       : 初始半格相位
  *
  * 20 套的 structureSignature 两两不同；seed 只在**同一套模板内部**决定
- * 层内抖动与队列偏移，绝不用于制造模板之间的差异。
+ * 半格相位候选，绝不用于制造模板之间的差异。
+ *
+ * 【本轮重构：彻底取消固定四链队列】主体掩膜（9×5）之下，每套模板还自带一份
+ * 显式、完整、只属于自己的「外廓牌位段」（9×2 掩膜 + 逐层张数 + 相位起点），
+ * 承载原 44 张牌位：格位置、层级分布、遮挡关系、可点区域全部由模板自己定义，
+ * 20 套互不相同，不再由任何共享 buildQueue()/QUEUE_SHAPE 追加。旧四链
+ * （左竖 7 / 右竖 7 / 中横 15 / 底横 15）已从源码中彻底删除。
  *
  * 【冻结边界】本文件只被第二关路径引用；第一关不 import、不读取、不受影响。
  *
- * 【牌数配置】模板只决定「每层在掩膜里的哪些格落牌」，总张数 / 层数 / 牌种数 /
- * 44 张盲盒队列 / 三消规则全部沿用 config.js 的既有档位，一个都不改。
+ * 【牌数配置】总张数 / 层数 / 牌种数 / 花色配额 / 三消规则全部沿用 config.js 的
+ * 既有档位，一个都不改；原 44 张牌位一张不少地融入各套模板的完整布局。
  */
 import { sha256Hex } from './sha256.js';
 
 /* 9 列 × 5 行的全局格网（与 l2_geometry.js 的 X_MIN/Y_MIN/TILE_W/TILE_H 对应） */
 export const MASK_COLS = 9;
 export const MASK_ROWS = 5;
+
+/* ==================== 完整布局：外廓牌位段 ==================== */
+/**
+ * 【本轮重构】第二关的 44 张牌不再来自共享的固定四链队列（QUEUE_SHAPE /
+ * buildQueue 已彻底删除）。每套模板在原有 9×5 主体掩膜之外，另带一份**显式、
+ * 完整、只属于自己**的外廓牌位定义：
+ *   · mask   : 2 行 × 9 列，'#' 可落牌、'.' 禁止；对应整格行 r=4、r=5
+ *              （y = 308+4*88=660 与 308+5*88=748，叠加半格相位后 y ≤ 792，
+ *               792+88=880 ≤ BOARD_BAND.bottom=918；整体垂直居中于牌桌）。
+ *              上沿与主体底行同高，因此外廓牌能真实压住主体底沿，
+ *              完整保留原有的跨段遮挡与开局可点数设计；
+ *   · layers : 外廓逐层张数（非递减，总和恒 44），层集合按「格池前缀」嵌套，
+ *             因此低层每张牌必然被高层同格牌以 ≥50% 面积压住；
+ *   · turn   : 该模板外廓层的相位轮转起点（0..3），逐层轮转形成遮挡链。
+ *
+ * 外廓格与主体格分属不同的整格行（r=5/6 vs r=0..4），格 key 不冲突；
+ * 主体掩膜、walk、specPlan 铺设段/尾段一律不动，只是「完整布局」多了一段
+ * 由模板自己定义、每套都不同的牌位结构。
+ */
+export const OUTER_COLS = 9;
+export const OUTER_ROWS = 2;
+export const OUTER_R0 = 4;
+/** 第二关完整布局里外廓牌的段标记（旧 'queue' 四链段已彻底取消） */
+export const OUTER_SEG = 'outer';
+/** 外廓牌位总数：与旧队列配额 profile.queueCount 完全相同，牌数不减 */
+export const OUTER_TILE_COUNT = 44;
 
 /* ==================== 形状族（仅用于报告分组） ==================== */
 
@@ -238,6 +270,126 @@ var DEFS = [
   }],
 ];
 
+/* ==================== 20 套完整布局的外廓牌位定义 ==================== */
+/**
+ * 每套模板的 44 张外廓牌位。mask 形状与主体轮廓呼应（金字塔 / 双核心 / 环形 /
+ * 阶梯 / 迷宫 / 棋盘 / 月牙 / 波浪 / 四角 …），layers 层数与逐层张数、turn 相位
+ * 起点三者也都按模板分别定义 —— 不是「主体 + 一份共享底板」，而是 20 份互不相同
+ * 的完整三维牌位结构。所有 layers 数组：非递减、总和 = 44、最大值 ≤ 该模板格数。
+ */
+var L11  = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+var L12a = [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4];
+var L12b = [2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+var L12c = [2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+var L12d = [1, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+var L13a = [2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4];
+var L13b = [2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4];
+var L13c = [2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4];
+var L14a = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4];
+var L14b = [2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4];
+var L14c = [2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4];
+var L15a = [2, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4];
+var L15b = [1, 2, 2, 2, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4, 4];
+var L16a = [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4];
+var L16c = [1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4];
+
+var OUTER_DEFS = {
+  'L2-P01': { mask: ['..#####..', '#########'], layers: L11,  turn: 0 },
+  'L2-P02': { mask: ['####.####', '####.####'], layers: L12a, turn: 1 },
+  'L2-P03': { mask: ['##.##.##.', '.##.##.##'], layers: L13a, turn: 2 },
+  'L2-P04': { mask: ['##.....##', '#########'], layers: L14a, turn: 3 },
+  'L2-P05': { mask: ['...###...', '#########'], layers: L15a, turn: 0 },
+  'L2-P06': { mask: ['##.###.##', '.########'], layers: L16a, turn: 1 },
+  'L2-P07': { mask: ['.########', '.....####'], layers: L12b, turn: 2 },
+  'L2-P08': { mask: ['######...', '####.....'], layers: L12c, turn: 3 },
+  'L2-P09': { mask: ['...######', '.....####'], layers: L13b, turn: 0 },
+  'L2-P10': { mask: ['#########', '##.###.##'], layers: L14b, turn: 1 },
+  'L2-P11': { mask: ['##.....##', '###...###'], layers: L15b, turn: 2 },
+  'L2-P12': { mask: ['#########', '...###...'], layers: L16c, turn: 3 },
+  'L2-P13': { mask: ['#########', '#.#.#.#.#'], layers: L12d, turn: 1 },
+  'L2-P14': { mask: ['###..###.', '.###..###'], layers: L13c, turn: 2 },
+  'L2-P15': { mask: ['.#######.', '####..###'], layers: L14c, turn: 3 },
+  'L2-P16': { mask: ['###...###', '#########'], layers: L11,  turn: 0 },
+  'L2-P17': { mask: ['######...', '...######'], layers: L12a, turn: 1 },
+  'L2-P18': { mask: ['####.####', '##.###.##'], layers: L13a, turn: 2 },
+  'L2-P19': { mask: ['..#####..', '.#######.'], layers: L14a, turn: 3 },
+  'L2-P20': { mask: ['.#######.', '####.####'], layers: L15a, turn: 0 },
+};
+
+/**
+ * 解析一套模板的外廓定义：可落牌格（中心优先排序 + 连通区域标签）、逐层张数、
+ * 相位起点。这里是**纯数据展开**，不含任何随机；同一 templateId 永远同一份结果。
+ */
+function parseOuter(cfg, id) {
+  if (!cfg || !cfg.mask || !cfg.layers) {
+    throw new Error('模板 ' + id + ' 缺少完整外廓牌位定义');
+  }
+  if (cfg.mask.length !== OUTER_ROWS) {
+    throw new Error('模板 ' + id + ' 外廓掩膜行数 ' + cfg.mask.length + ' ≠ ' + OUTER_ROWS);
+  }
+  var cells = [];
+  for (var r = 0; r < OUTER_ROWS; r++) {
+    var line = cfg.mask[r];
+    if (typeof line !== 'string' || line.length !== OUTER_COLS) {
+      throw new Error('模板 ' + id + ' 外廓第 ' + r + ' 行宽度 ' + (line ? line.length : 0) + ' ≠ ' + OUTER_COLS);
+    }
+    for (var c = 0; c < OUTER_COLS; c++) {
+      if (line.charAt(c) === '.') continue;
+      if (line.charAt(c) !== '#') {
+        throw new Error('模板 ' + id + ' 外廓掩膜含非法字符 "' + line.charAt(c) + '"');
+      }
+      cells.push({ c: c, r: r + OUTER_R0, k: c + ',' + (r + OUTER_R0) });
+    }
+  }
+  /* 确定性格池序（每层取前缀 ⇒ 层集合严格嵌套 ⇒ 低层必被高层压住）：
+   *  1) r 小者优先 —— 外廓上沿 y=660 与主体底行 y=616 有 44px 重叠，
+   *     于是外廓牌能真实压住主体底沿，维持原有遮挡与开局可点数设计；
+   *  2) 同一行按「离中心越远越优先」横向铺开，任意前缀都覆盖整幅牌桌宽度，
+   *     而不是把牌塔挤在中间一小块（那会让主体可点牌暴涨、越过 25 上限）。
+   * 这是一份**结构**排序，完全由模板掩膜决定，与 seed / 随机偏移无关。 */
+  var cc = (OUTER_COLS - 1) / 2;
+  cells.sort(function (a, b) {
+    if (a.r !== b.r) return a.r - b.r;
+    var ea = -Math.abs(a.c - cc);
+    var eb = -Math.abs(b.c - cc);
+    return ea - eb || a.c - b.c;
+  });
+  /* 外廓连通区域（4 邻接），标签用 O1/O2…，与主体 R1/R2… 区分 */
+  var reg = labelRegions(cells);
+  for (var ci = 0; ci < cells.length; ci++) {
+    cells[ci].region = (reg.labels[cells[ci].k] || 'R1').replace('R', 'O');
+  }
+  var layers = cfg.layers.slice();
+  var total = 0;
+  for (var li = 0; li < layers.length; li++) {
+    if (!(layers[li] >= 1) || layers[li] > cells.length) {
+      throw new Error('模板 ' + id + ' 外廓第 ' + li + ' 层张数 ' + layers[li] + ' 非法');
+    }
+    if (li && layers[li] < layers[li - 1]) {
+      throw new Error('模板 ' + id + ' 外廓层张数不是非递减（层集合无法嵌套）');
+    }
+    total += layers[li];
+  }
+  if (total !== OUTER_TILE_COUNT) {
+    throw new Error('模板 ' + id + ' 外廓总张数 ' + total + ' ≠ ' + OUTER_TILE_COUNT);
+  }
+  var turn = ((cfg.turn | 0) % 4 + 4) % 4;
+  var raw = {
+    mask: cfg.mask.slice(), layers: layers, turn: turn,
+    cells: cells.map(function (x) { return x.k + '@' + x.region; }),
+  };
+  return {
+    mask: cfg.mask.slice(),
+    cells: cells,
+    cellCount: cells.length,
+    layers: layers,
+    layerCount: layers.length,
+    total: total,
+    turn: turn,
+    signature: sha256Hex('MAH-L2-OUTER-v1|' + id + '|' + JSON.stringify(raw)),
+  };
+}
+
 /* ==================== 掩膜解析：格位 / 密度 / 连通区域 ==================== */
 
 /** 解析一张掩膜：返回可落牌格列表（含密度权重） */
@@ -318,6 +470,8 @@ function tpl(templateId, category, name, cfg) {
   }
   var regionInfo = labelRegions(cells);
   var box = maskBox(cells);
+  /* 每套模板自带一份完整外廓牌位定义（44 张），与主体共同构成本局完整布局 */
+  var outer = parseOuter(OUTER_DEFS[templateId], templateId);
   var structure = {
     mask: cfg.mask.slice(),
     growth: cfg.growth,
@@ -334,12 +488,19 @@ function tpl(templateId, category, name, cfg) {
     name: name,
     feature: cfg.feature,
     structure: structure,
-    structureSignature: sha256Hex('MAH-L2-TPL-v2|' + templateId + '|' + JSON.stringify(structure)),
+    /* v3：结构签名同时纳入主体参数与本套独有的完整外廓牌位定义 */
+    structureSignature: sha256Hex('MAH-L2-TPL-v3|' + templateId + '|' + JSON.stringify(structure) +
+      '|' + outer.signature),
     maskCells: cells,
     maskCellCount: cells.length,
     maskRegion: regionInfo.labels,
     maskRegionCount: regionInfo.count,
     maskBox: box,
+    outer: outer,
+    outerCellCount: outer.cellCount,
+    outerLayerCount: outer.layerCount,
+    outerTileCount: outer.total,
+    outerSignature: outer.signature,
   };
 }
 
@@ -377,6 +538,14 @@ export function templateSummary(t) {
     offsets: t.structure.offsets,
     density: t.structure.density,
     phase: t.structure.phase,
+    /* 本套模板的完整外廓牌位定义摘要 */
+    outerMask: t.outer.mask.slice(),
+    outerCellCount: t.outer.cellCount,
+    outerLayers: t.outer.layers.slice(),
+    outerLayerCount: t.outer.layerCount,
+    outerTileCount: t.outer.total,
+    outerTurn: t.outer.turn,
+    outerSignature: t.outer.signature,
   };
 }
 

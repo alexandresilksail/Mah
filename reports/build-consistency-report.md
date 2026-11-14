@@ -2,8 +2,8 @@
 
 > 由 `node test-build-consistency.js` **真实运行**生成。
 
-- 运行时间：2026-11-13T12:42:06.316Z
-- Git commit：`e71486e75c24154e6bffb64db509a30d0791f416`
+- 运行时间：2026-11-14T08:54:10.245Z
+- Git commit：`8a0c434ad1e4a4da2b906a5744105aeac883144a`
 - 断言：通过 **110**，失败 **0**
 - 判定方法：逐字节比对 HTML 内嵌 bundle 与构建脚本同源函数的现场产物；非文件大小/版本号判断
 
@@ -11,23 +11,23 @@
 
 | 文件 | 字节 | SHA256 |
 |---|---:|---|
-| dist/MahLeMah.html | 9926380 | `aa3d28f69c90958396a3881a24280852c6929c75711f34eccf34275598a2c01d` |
-| dist/MahLeMah-legacy.html | 9960549 | `3f101399dfe0db31ee6887f04e5afd5c74a9dfd79b4cb5c21fa42e9af7c66558` |
+| dist/MahLeMah.html | 9933546 | `55bd2d247089f7c10d314fdf2aa8951613669eeb17063ae3a81efbc17d24886a` |
+| dist/MahLeMah-legacy.html | 9967705 | `b568f6a8a2dbf938805a86cc9832b6b321d2609c62a1ee8be019d531def3e012` |
 
 ## bundle 逐字节比对
 
 | 版本 | HTML 内嵌字节 | 现场打包字节 | 相同 |
 |---|---:|---:|---|
-| 现代版 | 9924248 | 9924248 | PASS |
-| legacy | 9930207 | 9930207 | PASS |
+| 现代版 | 9931414 | 9931414 | PASS |
+| legacy | 9937363 | 9937363 | PASS |
 
 ## 构建元信息
 
 | 字段 | 现代版 | legacy | 现场计算 |
 |---|---|---|---|
-| buildVersion | 2.0.0-e71486e | 2.0.0-e71486e | 2.0.0-e71486e |
-| gitCommit | e71486e75c24154e6bffb64db509a30d0791f416 | e71486e75c24154e6bffb64db509a30d0791f416 | e71486e75c24154e6bffb64db509a30d0791f416 |
-| sourceHash | `b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428` | `b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428` | `b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428` |
+| buildVersion | 2.0.0-8a0c434 | 2.0.0-8a0c434 | 2.0.0-8a0c434 |
+| gitCommit | 8a0c434ad1e4a4da2b906a5744105aeac883144a | 8a0c434ad1e4a4da2b906a5744105aeac883144a | 8a0c434ad1e4a4da2b906a5744105aeac883144a |
+| sourceHash | `1c9e24c126eeca2bd255fa67a51210f9128ba194f417191fddc93c7cf9048f4e` | `1c9e24c126eeca2bd255fa67a51210f9128ba194f417191fddc93c7cf9048f4e` | `1c9e24c126eeca2bd255fa67a51210f9128ba194f417191fddc93c7cf9048f4e` |
 | sourceFiles | 38 | 38 | 38 |
 
 > 两个 HTML 的 buildTimestamp 允许相差数秒（两次独立构建），其余字段必须完全一致。

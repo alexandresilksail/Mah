@@ -28,7 +28,9 @@ import { execSync } from 'node:child_process';
 import {
   L2_TEMPLATES, L2_TEMPLATE_IDS, TEMPLATE_CATEGORIES,
   templateById, templateSummary, templateCategoryStats,
+  OUTER_SEG, OUTER_TILE_COUNT,
 } from './src/game/l2_templates.js';
+import { GRID_X0, GRID_Y0 } from './src/game/l2_spec.js';
 import { describeTemplateLayout } from './src/game/l2_geometry.js';
 import {
   calculateStructureSignature, canonicalGeometrySignature,
@@ -141,10 +143,10 @@ function exposesLower(cards) {
   return { clickable: clickable.length, newly: newly };
 }
 
-/** 牌心所在掩膜格（全局 9×5 晶格：x = 33 + (2c+px)*33，y = 220 + (2r+py)*44） */
+/** 牌心所在掩膜格（全局 9×5 晶格：原点复用 l2_spec.js 的 GRID_X0/GRID_Y0；相位不影响整格还原） */
 function maskCellOf(card) {
-  const col = Math.floor((card.x - 33) / 33 / 2);
-  const row = Math.floor((card.y - 220) / 44 / 2);
+  const col = Math.floor((card.x - GRID_X0) / TILE_W);
+  const row = Math.floor((card.y - GRID_Y0) / TILE_H);
   return col + ',' + row;
 }
 
@@ -181,7 +183,7 @@ try {
       let maskedOut = 0;
       const covered = new Set();
       for (const c of cards) {
-        if (c.seg === 'queue') continue;
+        if (c.seg === OUTER_SEG) continue;
         const key = maskCellOf(c);
         if (!maskCells.has(key)) maskedOut++;
         else covered.add(rmap[key]);

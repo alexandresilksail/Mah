@@ -1,14 +1,14 @@
 {
   "meta": {
-    "generatedAt": "2026-11-13T12:39:59.050Z",
-    "gitCommit": "e71486e75c24154e6bffb64db509a30d0791f416",
+    "generatedAt": "2026-11-14T09:07:22.648Z",
+    "gitCommit": "8a0c434ad1e4a4da2b906a5744105aeac883144a",
     "command": "node test-l2-templates.js",
     "templateCount": 20,
     "perTemplateCases": 3,
     "totalGenerated": 60,
     "pairCount": 190,
-    "maxStructureSimilarity": 0.4438293292133106,
-    "maxLayoutSimilarity": 0.4283590805329936,
+    "maxStructureSimilarity": 0.5043011161531252,
+    "maxLayoutSimilarity": 0.478717421797779,
     "similarityThreshold": 0.6,
     "l2HistoryLimit": 10,
     "assertions": {
@@ -68,7 +68,7 @@
       "categoryLabel": "核心聚拢型",
       "name": "中心金字塔",
       "feature": "底座铺满全宽、逐层向中央收拢，形成正金字塔",
-      "structureSignature": "66a37cb56176421f0c9308250bf7ac3ca711284a50d3908debee9a650f22be4c",
+      "structureSignature": "b96921af48c095164e87805bfbd64d6a52caa5927efe255599e93835c57868a9",
       "mask": [
         "...###...",
         "..#####..",
@@ -114,62 +114,84 @@
         0,
         0
       ],
+      "outerMask": [
+        "..#####..",
+        "#########"
+      ],
+      "outerCellCount": 14,
+      "outerLayers": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 11,
+      "outerTileCount": 44,
+      "outerTurn": 0,
+      "outerSignature": "cc96869ae08b0f614d1e9dcb2f3f4b87b7f562b4d95d7a179bc06fbdcd5de743",
       "representative": {
         "cards": 321,
-        "layers": 72,
+        "layers": 39,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 594,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 22,
-        "structureSignature": "3310d1a8d14130a0d05b42443edc9d40c44954b2c405587764520e91c8e05d1a",
-        "canonicalGeometrySignature": "b6264cd51ca03bac6fd1882133d91f44f612ae7cea4745389f2c42cf9d0f0b90"
+        "visible": 21,
+        "structureSignature": "1049d1caa2baf972f72b5e49200c5818bf20a747b148852c919e8a2ea812430e",
+        "canonicalGeometrySignature": "4f004a314a5e5bb22900542b2bea63153310f93e026f9d5a1ab68017a2efb661"
       },
       "cases": [
         {
           "profileId": 0,
           "seed": 7919,
           "cards": 321,
-          "visible": 22,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 25,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "3310d1a8d14130a0d05b42443edc9d40c44954b2c405587764520e91c8e05d1a",
-          "canonicalGeometrySignature": "b6264cd51ca03bac6fd1882133d91f44f612ae7cea4745389f2c42cf9d0f0b90"
+          "structureSignature": "1049d1caa2baf972f72b5e49200c5818bf20a747b148852c919e8a2ea812430e",
+          "canonicalGeometrySignature": "4f004a314a5e5bb22900542b2bea63153310f93e026f9d5a1ab68017a2efb661"
         },
         {
           "profileId": 1,
           "seed": 7936,
           "cards": 282,
-          "visible": 19,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 12,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "113433de5d2089197208ad7d23261d3e3e737cbf6d2d829557d26aa5f18d9503",
-          "canonicalGeometrySignature": "77a98632eefcfa66f798894dd9f94fae4232dfea348050acd98f4e87a3601325"
+          "structureSignature": "8657b3fd46b433d25b1e060587baf490a466b555c59d47237d1d1d7cf3fc021b",
+          "canonicalGeometrySignature": "fc7f829a20bfc85f2dbb2066ccd5445a68a4de7f34fac12c81853cd9b92ae9a8"
         },
         {
           "profileId": 2,
           "seed": 7953,
           "cards": 300,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "dbfa86246aa5120c1b3b652716a2c60e2f5c64601c031c385e1b353ff6f283b0",
-          "canonicalGeometrySignature": "163fd2258ad28309a44fda40b204fa7d7c56414417e141cd54ff6c054123be85"
+          "structureSignature": "38695fae01b026037d1500174483c83bc80dc7734678d26c7657c1fed6d7ed55",
+          "canonicalGeometrySignature": "cd464c38afc54782b27436ea3ee7c81530bede855503ef3c4b602ce8f31ec8a1"
         }
       ]
     },
@@ -179,7 +201,7 @@
       "categoryLabel": "核心聚拢型",
       "name": "双核心",
       "feature": "左右各一座 4×5 主牌堆，中间整列留空",
-      "structureSignature": "0d6d76d6d770c0c03d1a6cb4ed24f4d08a86fbe57285fc0404065ffbe75d66c5",
+      "structureSignature": "5e610efce75c0a164cb283f5b906a139329c0a6579a383e03711bab907829f80",
       "mask": [
         "####.####",
         "####.####",
@@ -225,50 +247,73 @@
         1,
         0
       ],
+      "outerMask": [
+        "####.####",
+        "####.####"
+      ],
+      "outerCellCount": 16,
+      "outerLayers": [
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 12,
+      "outerTileCount": 44,
+      "outerTurn": 1,
+      "outerSignature": "d1ea316f136e40201b55ddd79fda615154a586087fc1f30df0fc278f035eeccb",
       "representative": {
         "cards": 282,
-        "layers": 68,
+        "layers": 36,
         "regions": 2,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 21,
-        "structureSignature": "55ba56814efcc8b232e3a4aa86dc04c99d100fb7b77e63e9febbfa7b4bd69da5",
-        "canonicalGeometrySignature": "95e0e6fdf006c7a073a83d684a9d65b253ec6ed1b1cc52dd6cf4098c6d0bfe56"
+        "visible": 25,
+        "structureSignature": "5a6ac560f709b9c2313eec75423dc741755c0c6a0477c041a310fad00158431a",
+        "canonicalGeometrySignature": "e9a636694410872592c72e5c91eab9795e7295ee260415649e15fa3f822fba15"
       },
       "cases": [
         {
           "profileId": 1,
           "seed": 8050,
           "cards": 282,
-          "visible": 21,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "55ba56814efcc8b232e3a4aa86dc04c99d100fb7b77e63e9febbfa7b4bd69da5",
-          "canonicalGeometrySignature": "95e0e6fdf006c7a073a83d684a9d65b253ec6ed1b1cc52dd6cf4098c6d0bfe56"
+          "structureSignature": "5a6ac560f709b9c2313eec75423dc741755c0c6a0477c041a310fad00158431a",
+          "canonicalGeometrySignature": "e9a636694410872592c72e5c91eab9795e7295ee260415649e15fa3f822fba15"
         },
         {
           "profileId": 2,
           "seed": 8067,
           "cards": 300,
-          "visible": 24,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "97acd28e5a249a4c5f288cc65b1224d49fb7ea0df9de17df172ab297c5827241",
-          "canonicalGeometrySignature": "c40c75e23421362459d42ba07c3534ce5940107a2d873db69427df5d202fe42e"
+          "structureSignature": "ab712c09432d4a905486c3b49bf6a4f2eb36a1498438cc4d1097406e54055ba2",
+          "canonicalGeometrySignature": "c7cf928615917dcbab38c5261773ab33ee1d18bf6bcf65791b4250d5027e7a77"
         },
         {
           "profileId": 3,
@@ -277,10 +322,10 @@
           "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 27,
+          "exposedAfterRemove": 28,
           "installOk": true,
-          "structureSignature": "852de032e28f8e1f981a3f294c039e268f30e07f00b1bc0efcb6f9918ab4b567",
-          "canonicalGeometrySignature": "364e2919698e14a3ee5b2e285aea8b6f470dfe4306bea09cab8f6d45540c7239"
+          "structureSignature": "3f55de1b67150a350b42c156e519258b4f8b628c95373b314aa9144311e7ef9d",
+          "canonicalGeometrySignature": "d49d7006743ee488dff97f9ef77c46af48c5b5222fb32f13ed055d53766fa057"
         }
       ]
     },
@@ -290,7 +335,7 @@
       "categoryLabel": "多岛分离型",
       "name": "三岛屿",
       "feature": "三座 2×5 牌岛并立，岛间整列断开",
-      "structureSignature": "bb525322a22679921741a438ecbbe13eca02f08097949a6b482ed4dcc40308ce",
+      "structureSignature": "face09e3a011f2513203ba7edb06592af0c8ee8a5e382f250c394a064c572ec7",
       "mask": [
         "##.##.##.",
         "##.##.##.",
@@ -336,50 +381,74 @@
         0,
         1
       ],
+      "outerMask": [
+        "##.##.##.",
+        ".##.##.##"
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 13,
+      "outerTileCount": 44,
+      "outerTurn": 2,
+      "outerSignature": "05227cf6f59f2ad200e6ea76a044d41987034e09278bdfd8001dd46f0c33f7a1",
       "representative": {
         "cards": 300,
-        "layers": 70,
+        "layers": 39,
         "regions": 3,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 561,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 561,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 23,
-        "structureSignature": "03650e1daeedb37a3401ac2fc3a868c7208f837a02da8de608f1619eea5147e9",
-        "canonicalGeometrySignature": "7bd70c2d21ecf6a0737b9eff39931dc1dd4af959224fd1152ff80b9a809bdc16"
+        "visible": 25,
+        "structureSignature": "8d93da9abece6269ae5237aee8013046136926a2014569569bfa89c14d1f9d54",
+        "canonicalGeometrySignature": "55dc1300528f39242f3d6889411549a9ada54915f195cb94fdffea2ea94b9226"
       },
       "cases": [
         {
           "profileId": 2,
           "seed": 8181,
           "cards": 300,
-          "visible": 23,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "03650e1daeedb37a3401ac2fc3a868c7208f837a02da8de608f1619eea5147e9",
-          "canonicalGeometrySignature": "7bd70c2d21ecf6a0737b9eff39931dc1dd4af959224fd1152ff80b9a809bdc16"
+          "structureSignature": "8d93da9abece6269ae5237aee8013046136926a2014569569bfa89c14d1f9d54",
+          "canonicalGeometrySignature": "55dc1300528f39242f3d6889411549a9ada54915f195cb94fdffea2ea94b9226"
         },
         {
           "profileId": 3,
           "seed": 8198,
           "cards": 312,
-          "visible": 23,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "45f645dacbe3eda43694bdfd14c7fc99f89eb22e410f50db76e641cf4d7b982d",
-          "canonicalGeometrySignature": "d428a63ecf9a03033610e37b7d7ba3f803fb44c34630d4a040545b51fd9e2ffe"
+          "structureSignature": "688f27bd0797ad67fe0755a9da454f7d79f72d45ce1c461ff24d5fd3fb4b39b2",
+          "canonicalGeometrySignature": "fb0894ed8dc0f4cf1ef0bacf21c07f69e1b49dc6b2e010b9e7acebc7d3d9b2a1"
         },
         {
           "profileId": 4,
@@ -390,8 +459,8 @@
           "strictFloating": 0,
           "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "fd5a6ab70a584df441f773d49a7b667f7d6f3d658a002a729a74ac4c5586ae19",
-          "canonicalGeometrySignature": "b285c9a0f5bc66eb67384fd0c68fbcc81ce406313f809141bc42e6836ae407ed"
+          "structureSignature": "70a96ea75190a924e59b3f99fc28525c35fa64e45d2cd55b8da0125378ad4618",
+          "canonicalGeometrySignature": "e5845030c115ac516e246a334ed8b37f32d8431a138d9b0c6d71dbb084b6dfbb"
         }
       ]
     },
@@ -401,7 +470,7 @@
       "categoryLabel": "围合环抱型",
       "name": "环形围绕",
       "feature": "外圈闭合成环，中心 5×3 完全空心",
-      "structureSignature": "d0a12496c63a7d65f212b4c2be4f179193742c489170d7ef379fc942eb6fa484",
+      "structureSignature": "584d0200658a6857d706d711c615b80186391deb0fdee6c269d9ff61bedf3627",
       "mask": [
         "#########",
         "##.....##",
@@ -451,62 +520,87 @@
         0,
         0
       ],
+      "outerMask": [
+        "##.....##",
+        "#########"
+      ],
+      "outerCellCount": 13,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 14,
+      "outerTileCount": 44,
+      "outerTurn": 3,
+      "outerSignature": "2cbdc16753f4bb474ba4133cfa89b0d4d434553f2d7d23bb24ac5b746dff1f25",
       "representative": {
         "cards": 312,
-        "layers": 71,
+        "layers": 41,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 24,
-        "structureSignature": "8bac3031de768300ebb496b017701c4d56cff7211bd26b584638d95b724759cb",
-        "canonicalGeometrySignature": "010a116a43e3c3392b3aed61194699928ab0d4c79686c082679dce670e2163e7"
+        "visible": 25,
+        "structureSignature": "9227e799ef3ffb70ad93de370f594dc022aaee70aa5b25580b0207b4894e4905",
+        "canonicalGeometrySignature": "2cd0491f1fd550584d95726f7e64195b982047a1d2fd3809614cd75473fb89e5"
       },
       "cases": [
         {
           "profileId": 3,
           "seed": 8312,
           "cards": 312,
-          "visible": 24,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "8bac3031de768300ebb496b017701c4d56cff7211bd26b584638d95b724759cb",
-          "canonicalGeometrySignature": "010a116a43e3c3392b3aed61194699928ab0d4c79686c082679dce670e2163e7"
+          "structureSignature": "9227e799ef3ffb70ad93de370f594dc022aaee70aa5b25580b0207b4894e4905",
+          "canonicalGeometrySignature": "2cd0491f1fd550584d95726f7e64195b982047a1d2fd3809614cd75473fb89e5"
         },
         {
           "profileId": 4,
           "seed": 8329,
           "cards": 273,
-          "visible": 21,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "338a199e63e026f9fca554e4044ba3e9f1348b2cdc0af64131e661a07275e94c",
-          "canonicalGeometrySignature": "e60acb399effcea46c7fed814b429621c7524bd78385645436a8148d13b6e9db"
+          "structureSignature": "6dafd471f14f1496560fbfaa9190219548f99d18579ad64abf2538c59c777927",
+          "canonicalGeometrySignature": "8c9eab9398b692a0a1a2b79052dc3eb6966ad345fc9f8e6e1b8a81c6090314e3"
         },
         {
           "profileId": 5,
           "seed": 8346,
           "cards": 291,
-          "visible": 19,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "e3f9d53dda4bd7b0257b065d7a796cb1101447087033a34d95c36a508dbc191c",
-          "canonicalGeometrySignature": "7b7e3d0f9dd17635c7c72d9a276255023b56f9360bb5c827aa9dfb5454cfbe53"
+          "structureSignature": "072a9bb564d6c3a58b2e0a8089d4ae6b20e61b9455e4459e867727b0e8a719f7",
+          "canonicalGeometrySignature": "648e27c43b2ada0a25a3748ac3e8b044ec407d5ab3cf8cf29399fc765e4909ab"
         }
       ]
     },
@@ -516,7 +610,7 @@
       "categoryLabel": "围合环抱型",
       "name": "十字交叉",
       "feature": "中间三行全宽横臂 + 中列贯穿三行的竖臂",
-      "structureSignature": "165e395c25be8b2e1f58a93a1a343bdf687b86efe2b05d94bfd31e04e218e9ae",
+      "structureSignature": "ea3f3acbe76a46e7d3d6decbac6945c22970d3d7d501aa766e287e89be66ab02",
       "mask": [
         "...###...",
         "#########",
@@ -566,62 +660,88 @@
         1,
         1
       ],
+      "outerMask": [
+        "...###...",
+        "#########"
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 15,
+      "outerTileCount": 44,
+      "outerTurn": 0,
+      "outerSignature": "859b5b8e7815eea7779165942540628919b4de56aa73a2af788bdf51e75dc372",
       "representative": {
         "cards": 273,
-        "layers": 67,
+        "layers": 38,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 594,
+          "h": 572,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 21,
-        "structureSignature": "b8b1d5692bf0e1fa3707485a1e6d3974e632df4402c9731ca276f08dd0492fbb",
-        "canonicalGeometrySignature": "c52823967a7491f2229a1fa29d9e5eccde792a419e5d93bd67167a6b25cbba46"
+        "visible": 19,
+        "structureSignature": "b02f331a2722bc08d544f0a3ad1319cc7914d4ed1a048afcb276d13216cc1c00",
+        "canonicalGeometrySignature": "0634da283c63702dcea4023f96e4a3e4f34d3fcf24b562148c25f20ab35fad06"
       },
       "cases": [
         {
           "profileId": 4,
           "seed": 8443,
           "cards": 273,
-          "visible": 21,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 23,
           "installOk": true,
-          "structureSignature": "b8b1d5692bf0e1fa3707485a1e6d3974e632df4402c9731ca276f08dd0492fbb",
-          "canonicalGeometrySignature": "c52823967a7491f2229a1fa29d9e5eccde792a419e5d93bd67167a6b25cbba46"
+          "structureSignature": "b02f331a2722bc08d544f0a3ad1319cc7914d4ed1a048afcb276d13216cc1c00",
+          "canonicalGeometrySignature": "0634da283c63702dcea4023f96e4a3e4f34d3fcf24b562148c25f20ab35fad06"
         },
         {
           "profileId": 5,
           "seed": 8460,
           "cards": 291,
-          "visible": 24,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 22,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "d8d7ec91335b3d2d6615cd4ec584e76624075b20af113df4913726871bd242d6",
-          "canonicalGeometrySignature": "2547f269fb751981d5935b6b02b20958b28cf3dcde6113831f7c0101d33d7ee9"
+          "structureSignature": "9082e3da8f5b70c8e7b14b82f38d009289065daa5234b542c412301978f8203b",
+          "canonicalGeometrySignature": "03b1c90e05954199d8f957a060d6f04495b567ed75c0ea90b55440bb307b031d"
         },
         {
           "profileId": 6,
           "seed": 8477,
           "cards": 261,
-          "visible": 25,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "fb575792345c84c6bd297620b770be2bd78cf0cc8a4bddca5d175575c538b4e4",
-          "canonicalGeometrySignature": "c39be1129f192a925336c64bcd3063f254499c12e27d5345b6111e3b04a0f04a"
+          "structureSignature": "d9d6a8f5a69e6053f2ab6f41b6cefd52e6064278b7f0209e223f6e1e511c641c",
+          "canonicalGeometrySignature": "c4bc243fb96b608c74698971c9576bb98c9d1110b20d385b91a37e7d383f7cf7"
         }
       ]
     },
@@ -631,7 +751,7 @@
       "categoryLabel": "单向偏置型",
       "name": "阶梯上升",
       "feature": "斜向 3 格宽带自左下抬升到右上，台阶式轮廓",
-      "structureSignature": "3a4159e4de754a5b86317c47a97325cfc9589a4eb61861ec91a363db82539260",
+      "structureSignature": "1493883fa4ccf4107b58cc431aef8dafca12ed95a80e5b570b11fbaea7c86cdc",
       "mask": [
         "....####.",
         "..######.",
@@ -677,50 +797,77 @@
         0,
         0
       ],
+      "outerMask": [
+        "##.###.##",
+        ".########"
+      ],
+      "outerCellCount": 15,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 16,
+      "outerTileCount": 44,
+      "outerTurn": 1,
+      "outerSignature": "251629b94f687543743f45d7a7f516372593bfd527264d38a683eee845284528",
       "representative": {
         "cards": 291,
-        "layers": 69,
+        "layers": 41,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 24,
-        "structureSignature": "07a6df83666227920fb19a116c09270ee472b7942762646b7526070808e5ef31",
-        "canonicalGeometrySignature": "9fe358fa14712f70b2f00ca2b63061f7df4d3c2fd6d3c3a7c35b5e761f3df86b"
+        "visible": 20,
+        "structureSignature": "ace8c3d1ea3cdca8c671105b927d42884eb696306c2b51f3ccd382424af66321",
+        "canonicalGeometrySignature": "144a6a237a77cb486ecc508c52bae36a07f4543532eed73b8c9c2dea05cbe795"
       },
       "cases": [
         {
           "profileId": 5,
           "seed": 8574,
           "cards": 291,
-          "visible": 24,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "07a6df83666227920fb19a116c09270ee472b7942762646b7526070808e5ef31",
-          "canonicalGeometrySignature": "9fe358fa14712f70b2f00ca2b63061f7df4d3c2fd6d3c3a7c35b5e761f3df86b"
+          "structureSignature": "ace8c3d1ea3cdca8c671105b927d42884eb696306c2b51f3ccd382424af66321",
+          "canonicalGeometrySignature": "144a6a237a77cb486ecc508c52bae36a07f4543532eed73b8c9c2dea05cbe795"
         },
         {
           "profileId": 6,
           "seed": 8591,
           "cards": 261,
-          "visible": 24,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "08e7e6b91a72c6a43233d97314af1cba71067554530f18c281022afbc86ea2b1",
-          "canonicalGeometrySignature": "a7d1775bf092a9955ab694e01f7c61a667585f9e63ddbae765efc816937e8438"
+          "structureSignature": "95f4a1569cca8384aadd3afa69ed5ae81d216e45a2d5235f8630299ab0f87819",
+          "canonicalGeometrySignature": "5c3abaf61c3c0b28ec887f61dc84a9ed6b7472696dd21e3638f4449e3ae21630"
         },
         {
           "profileId": 7,
@@ -731,8 +878,8 @@
           "strictFloating": 0,
           "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "d797c5742c4344d3e0fe975f05bb253be60aa9f4d8cf049ea918f4ab8dbe3a87",
-          "canonicalGeometrySignature": "046e219b1982f0058cbc9493eb450919cd7dc983023269d348f04ded8f62ecb0"
+          "structureSignature": "7811402718ef57b5318e7df3c9dd0b74ef6182c687e5e171030c626c83b98e5d",
+          "canonicalGeometrySignature": "d053efae8f07d711fe9b473f92aeb0ad8b73b5df7321790a39c1efaeb67c3c59"
         }
       ]
     },
@@ -742,7 +889,7 @@
       "categoryLabel": "单向偏置型",
       "name": "阶梯下降",
       "feature": "斜向 3 格宽带自左上下降到右下，与上升阶梯镜像",
-      "structureSignature": "7d2799d763bbdfabab4efa2f5505d6d717e2ab5533957ba44a6daefbff070b49",
+      "structureSignature": "699a987009a725e54412785a59a9faf15261d04741dfc3cbc3832600b65cc802",
       "mask": [
         ".####....",
         ".######..",
@@ -788,25 +935,48 @@
         1,
         0
       ],
+      "outerMask": [
+        ".########",
+        ".....####"
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 12,
+      "outerTileCount": 44,
+      "outerTurn": 2,
+      "outerSignature": "c6319bf5dab408150a60748bba4b0eae6760e844849f7b3fb4bfe96ea69d3902",
       "representative": {
         "cards": 261,
-        "layers": 66,
+        "layers": 34,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "visible": 24,
-        "structureSignature": "eab9258de6176992d0590470db849812dd1b80cf8e01ec19621352ba9130e873",
-        "canonicalGeometrySignature": "b6c80868d96de60157accf77e78761099545a76919c1a5e2b2e449c20cef7e27"
+        "structureSignature": "a83a9571491b74491c2abd7e3c56084fbef832cee0ac26fa8b6d8411aaa8d087",
+        "canonicalGeometrySignature": "19980624f2a8fe3cbf5580928505ac81136d18bbd22088f1738b26c35920e084"
       },
       "cases": [
         {
@@ -818,20 +988,20 @@
           "strictFloating": 0,
           "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "eab9258de6176992d0590470db849812dd1b80cf8e01ec19621352ba9130e873",
-          "canonicalGeometrySignature": "b6c80868d96de60157accf77e78761099545a76919c1a5e2b2e449c20cef7e27"
+          "structureSignature": "a83a9571491b74491c2abd7e3c56084fbef832cee0ac26fa8b6d8411aaa8d087",
+          "canonicalGeometrySignature": "19980624f2a8fe3cbf5580928505ac81136d18bbd22088f1738b26c35920e084"
         },
         {
           "profileId": 7,
           "seed": 8722,
           "cards": 312,
-          "visible": 22,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 22,
+          "exposedAfterRemove": 27,
           "installOk": true,
-          "structureSignature": "2b8250a886c573459b835d53bacc85593dd3645a97eb4eea8e017738eb580f28",
-          "canonicalGeometrySignature": "9c15f786a8e76e4bebe6805b542824c835704b01a247b72f2627664359e76b3c"
+          "structureSignature": "f611898056fd40ffbfc6cc41f6c79111fe33cc4b49280b4d491488579579fa5c",
+          "canonicalGeometrySignature": "4e9f540c8d805b8672fd6afa096a3ca88115fdd56115e39e32440b2b98560b00"
         },
         {
           "profileId": 8,
@@ -840,10 +1010,10 @@
           "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "1ae86efbe1bc5efb5a5e6ee6dc5ae6bc9aa9fb7cedd64a45efc7a4d8fdd161cc",
-          "canonicalGeometrySignature": "468c176e872b796ed7bd463fdc1054cdf7593bc9017c927beb529c9cb49e070a"
+          "structureSignature": "5d131f751f3e09c9451d5f6f1ed8ff7c22d1d66597642eb343136b0c904780d9",
+          "canonicalGeometrySignature": "f3c768ad0c93a1e538c22c5ccd415800164d81e9705c205c0e152190d5010534"
         }
       ]
     },
@@ -853,7 +1023,7 @@
       "categoryLabel": "单向偏置型",
       "name": "左侧巨塔",
       "feature": "左 4 列厚实，向右逐层收窄，右下刻意留空",
-      "structureSignature": "6d79a8bc22aa6f29e95e946995eabbb9db8e7e096b84439f9b7f5f662c61b6a9",
+      "structureSignature": "e87758305103696f36a51a34e1e82dc5948a1780e8569e3e94b81a93b4a63ec0",
       "mask": [
         "####.....",
         "######...",
@@ -899,62 +1069,85 @@
         0,
         1
       ],
+      "outerMask": [
+        "######...",
+        "####....."
+      ],
+      "outerCellCount": 10,
+      "outerLayers": [
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 12,
+      "outerTileCount": 44,
+      "outerTurn": 3,
+      "outerSignature": "a0d642a74b131e4ef18359668d6fdbb9fa42bafa990293a8a6b92604e81499bb",
       "representative": {
         "cards": 312,
-        "layers": 71,
+        "layers": 39,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 594,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 20,
-        "structureSignature": "bb6013c11fae061ce5329f58a7257e90b53d4eb71f2950650ffff3ef3d677a78",
-        "canonicalGeometrySignature": "379997a80d33f3cefe9d13e32641e13de18b1ee211a4e3a1281b5586d11616e8"
+        "visible": 25,
+        "structureSignature": "5dca436ddb5614cca180a023f4f315254ba822798dc10c71ed64157b42be9b9e",
+        "canonicalGeometrySignature": "14f3a4e45cb2ae296e554d413287d93d363fa819c4222fdfec52736292ebdc96"
       },
       "cases": [
         {
           "profileId": 7,
           "seed": 8836,
           "cards": 312,
-          "visible": 20,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 23,
           "installOk": true,
-          "structureSignature": "bb6013c11fae061ce5329f58a7257e90b53d4eb71f2950650ffff3ef3d677a78",
-          "canonicalGeometrySignature": "379997a80d33f3cefe9d13e32641e13de18b1ee211a4e3a1281b5586d11616e8"
+          "structureSignature": "5dca436ddb5614cca180a023f4f315254ba822798dc10c71ed64157b42be9b9e",
+          "canonicalGeometrySignature": "14f3a4e45cb2ae296e554d413287d93d363fa819c4222fdfec52736292ebdc96"
         },
         {
           "profileId": 8,
           "seed": 8853,
           "cards": 192,
-          "visible": 21,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 12,
           "installOk": true,
-          "structureSignature": "b6d495743830ddc867d7a3d6b3ed99c18a3ed6664e88825bda0ab1369be8f2dc",
-          "canonicalGeometrySignature": "19ff3ba8e59c92451010bc3ca18ba5ca7780c6bf6f1052cd501a7906f904f47d"
+          "structureSignature": "ac4b953c513e8d6e1b479060fc6016bbee2f555d46d8a9e0002de522b98df2fd",
+          "canonicalGeometrySignature": "a7c8cd8c2f7e91d297c2388a7d31f04a7cd7fe648e49168fc36879df680567d3"
         },
         {
           "profileId": 9,
           "seed": 8870,
           "cards": 255,
-          "visible": 25,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "9eb9675a907706a05693df4b3129db4e2e8d0f043901848ff362ef7b2143191c",
-          "canonicalGeometrySignature": "6f3ec66ed0cb6d60106d95186a5dd080fc423441da087886a587fcb60599c376"
+          "structureSignature": "a4797648c74c75f3fa11415771f86c19c65d5315faeab010cd159125fbdcce8f",
+          "canonicalGeometrySignature": "12a1e33155b2e2301fbb1ab912d007bc931b2c0e7e013cc090770a632bec3f74"
         }
       ]
     },
@@ -964,7 +1157,7 @@
       "categoryLabel": "单向偏置型",
       "name": "右侧巨塔",
       "feature": "右 4 列厚实，向左逐层收窄，左下刻意留空",
-      "structureSignature": "8a7b366d7a20a584b6beeee92811e5a32242c3e37b9da29d1bc2b7155e8b9cbc",
+      "structureSignature": "b4c1404444e6babbf1faba72ab52b164e0e4216cf059db108e4f6115e08fe5a8",
       "mask": [
         ".....####",
         "...######",
@@ -1010,62 +1203,86 @@
         1,
         1
       ],
+      "outerMask": [
+        "...######",
+        ".....####"
+      ],
+      "outerCellCount": 10,
+      "outerLayers": [
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 13,
+      "outerTileCount": 44,
+      "outerTurn": 0,
+      "outerSignature": "d2a7f8245185fcb12134d207a740c9e7c975db71b2ae69128758ca600b77ad8b",
       "representative": {
         "cards": 192,
-        "layers": 59,
+        "layers": 28,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
-          "minX": 33,
-          "minY": 220
+          "w": 594,
+          "h": 484,
+          "minX": 66,
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 66,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 21,
-        "structureSignature": "6aee93d8814eb8d80590e47fb2ffd919d210ce50f8fea2906255911443d7c1a1",
-        "canonicalGeometrySignature": "770d55058f67c42b51d2e9f21b19951929d995221eb4369ef4843b295ade9b88"
+        "visible": 20,
+        "structureSignature": "a12c6db4471aff443550894424fe35f00e9fa9e16ca4f0eb8778540b3c4866c9",
+        "canonicalGeometrySignature": "881979522d191eacd1dad929955c28a6a5ec202e20a8e94ed26d65a7418000bf"
       },
       "cases": [
         {
           "profileId": 8,
           "seed": 8967,
           "cards": 192,
-          "visible": 21,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "6aee93d8814eb8d80590e47fb2ffd919d210ce50f8fea2906255911443d7c1a1",
-          "canonicalGeometrySignature": "770d55058f67c42b51d2e9f21b19951929d995221eb4369ef4843b295ade9b88"
+          "structureSignature": "a12c6db4471aff443550894424fe35f00e9fa9e16ca4f0eb8778540b3c4866c9",
+          "canonicalGeometrySignature": "881979522d191eacd1dad929955c28a6a5ec202e20a8e94ed26d65a7418000bf"
         },
         {
           "profileId": 9,
           "seed": 8984,
           "cards": 255,
-          "visible": 21,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "75269084d105b3486bcfa5ba4f28e254c0b4fa8b5de00037b0d2267392ae2bde",
-          "canonicalGeometrySignature": "3849ffaef40c97a62cd8637651636a4bd76af5d8029264ba41d79ba4dd5e1cf2"
+          "structureSignature": "70c894d2a5b91140eb09fdd32cb9ccb7fe83afff7d383d0c53fc7905a9b859c6",
+          "canonicalGeometrySignature": "24a4abee0e7b55450e088d75e9d482f891e60b4ada6cfdeb494c006a3701cd2e"
         },
         {
           "profileId": 0,
           "seed": 9001,
           "cards": 321,
-          "visible": 24,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "ff75b93a2ce37ee0fb6e37cd42391c62cb3f1bd4857fbfff9620648bd7fac526",
-          "canonicalGeometrySignature": "3ebc24863b1c82fa763c2e6269aa247a1a9afffc5b44b5ecdf87264074de31a2"
+          "structureSignature": "ff9f3e08e21e26b0a44ebad2eb4f2eae310c3757d3f2436188783d49eb63738a",
+          "canonicalGeometrySignature": "5ed4e27f1eb130574969fbd681c7f22cd5a1a65f78d21a97fb07ae842cd2c92b"
         }
       ]
     },
@@ -1075,7 +1292,7 @@
       "categoryLabel": "多岛分离型",
       "name": "上下双层岛",
       "feature": "上下两条 9×2 横带，中间整行断开",
-      "structureSignature": "4ff6e2619e122109636ca6223f3a9be24cd1a89bda32588d98338939b253347b",
+      "structureSignature": "782387f133f19e17c623cde88ddb58d8f6631a82028ce6e13b4ed2c4416d9b36",
       "mask": [
         "#########",
         "#########",
@@ -1121,25 +1338,50 @@
         0,
         0
       ],
+      "outerMask": [
+        "#########",
+        "##.###.##"
+      ],
+      "outerCellCount": 16,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 14,
+      "outerTileCount": 44,
+      "outerTurn": 1,
+      "outerSignature": "1e121da44f4a5dd306e6480579bfefae78adebae5d09c92ff4590a1f6f82c4b9",
       "representative": {
         "cards": 255,
-        "layers": 64,
+        "layers": 34,
         "regions": 2,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
-          "w": 594,
+          "w": 627,
           "h": 484,
-          "minX": 66,
-          "minY": 220
+          "minX": 33,
+          "minY": 308
         },
         "visible": 25,
-        "structureSignature": "bd94ba1d6ea70ac4710d4d333e73f1d73a2761f54d2b03cb0030efdde52290a0",
-        "canonicalGeometrySignature": "a2b47787b192709cd07648046fdd91b2c76cdb04e2fab86eb89be8be037ed094"
+        "structureSignature": "8bea634d2c2eb96d285edee3f1dbdb3d96c2b4936621d7392e740e2e3c76a329",
+        "canonicalGeometrySignature": "724db101373c5a29217bef62fef9bea9712a5b85a3a7ebc3eb104b1912bc3641"
       },
       "cases": [
         {
@@ -1149,10 +1391,10 @@
           "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 26,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "bd94ba1d6ea70ac4710d4d333e73f1d73a2761f54d2b03cb0030efdde52290a0",
-          "canonicalGeometrySignature": "a2b47787b192709cd07648046fdd91b2c76cdb04e2fab86eb89be8be037ed094"
+          "structureSignature": "8bea634d2c2eb96d285edee3f1dbdb3d96c2b4936621d7392e740e2e3c76a329",
+          "canonicalGeometrySignature": "724db101373c5a29217bef62fef9bea9712a5b85a3a7ebc3eb104b1912bc3641"
         },
         {
           "profileId": 0,
@@ -1161,22 +1403,22 @@
           "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "b31cc2ba1ed197c37551dce9848cfffd543b92d97d5bb26b6212a18c0411c1b6",
-          "canonicalGeometrySignature": "c80da8c0b8950e53c45be8fa4be5bc0eef37a5073f22306d5a38ba391af4ecaa"
+          "structureSignature": "65af84dc1673eb16ae98b0be449dae0866155f49d8e115474197dd05a1ebc674",
+          "canonicalGeometrySignature": "8d274d89060a368642a9b3a20a0483cc0c05f4abf293e8155be43a585fc8e81c"
         },
         {
           "profileId": 1,
           "seed": 9132,
           "cards": 282,
-          "visible": 19,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "39735d0cdba6d548173e9ef015223f6b94fec2b11d74a9175391b0037af7366d",
-          "canonicalGeometrySignature": "616c01acff4d8e547114493dbb9adaafd7f6ef50345feb2a530380c361fb6483"
+          "structureSignature": "c26d964c76f7c2a73e8066ec05a1c56c77350c221c31e0ab6b86d5c22e03c031",
+          "canonicalGeometrySignature": "c620ea0c208b3cb809850b3ce5a2662acf9430ed971bbc17bcecdffd3b5b3a53"
         }
       ]
     },
@@ -1186,7 +1428,7 @@
       "categoryLabel": "围合环抱型",
       "name": "蝴蝶形",
       "feature": "左右双翼外扩，中央仅一行相连形成蝶身",
-      "structureSignature": "0389e309bfe4b66385fe3df4e5f201ac5ecfe0aecb75900dc369747585c6c09c",
+      "structureSignature": "1e10f65dbd880ca840bc8cff448e14f6a90e6aeb58c47174831ad888c9a18114",
       "mask": [
         "##.....##",
         "###...###",
@@ -1232,62 +1474,88 @@
         1,
         0
       ],
+      "outerMask": [
+        "##.....##",
+        "###...###"
+      ],
+      "outerCellCount": 10,
+      "outerLayers": [
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 15,
+      "outerTileCount": 44,
+      "outerTurn": 2,
+      "outerSignature": "01eda4ece687fb0e471986a888f3a0298f9e2873b88f492bcf37f6d41d9571e1",
       "representative": {
         "cards": 321,
-        "layers": 72,
+        "layers": 43,
         "regions": 2,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 25,
-        "structureSignature": "bd39491812b4178ffc16b611e4d5a6444fdf1d9ca494787229bc23f998b112c1",
-        "canonicalGeometrySignature": "3d99ea8afa5ba1ce8b71a70ebaa3374c33c6d9ca82115176b572a25515cbbb4f"
+        "visible": 23,
+        "structureSignature": "602e4ebef2ec8b1d2f95efa3850114f8d13a290ed09964f140527d5f0c423313",
+        "canonicalGeometrySignature": "96c95cf37a516c5ff00ec713b391cff4a6fe69fac4b3c6678872fb3573255103"
       },
       "cases": [
         {
           "profileId": 0,
           "seed": 9229,
           "cards": 321,
-          "visible": 25,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "bd39491812b4178ffc16b611e4d5a6444fdf1d9ca494787229bc23f998b112c1",
-          "canonicalGeometrySignature": "3d99ea8afa5ba1ce8b71a70ebaa3374c33c6d9ca82115176b572a25515cbbb4f"
+          "structureSignature": "602e4ebef2ec8b1d2f95efa3850114f8d13a290ed09964f140527d5f0c423313",
+          "canonicalGeometrySignature": "96c95cf37a516c5ff00ec713b391cff4a6fe69fac4b3c6678872fb3573255103"
         },
         {
           "profileId": 1,
           "seed": 9246,
           "cards": 282,
-          "visible": 22,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "65a8375365c1b002dd428c5b009005984a208a4d61616482d95aa95ee3f296dd",
-          "canonicalGeometrySignature": "523e8b37eea4114aaa13f4345c1678716ab5cf4d2fe2e4c2b121f2ad781a1a26"
+          "structureSignature": "d4b06211eef150f4e92704dbf2d74cada638fb489fdf25c00ea4c45f13961863",
+          "canonicalGeometrySignature": "04f425d8225530313bc87bb394bc678856b5418acbb04c168fc3691e228ad4c6"
         },
         {
           "profileId": 2,
           "seed": 9263,
           "cards": 300,
-          "visible": 21,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "a4fbd5c518e817dca14e1bd638179e8171372dd8dd01e90332163b27eac9ca5a",
-          "canonicalGeometrySignature": "5ab0a67586510af307c8ff459252026f200c80e820c4884e9df1362908472b51"
+          "structureSignature": "a94cc576767a40eb49ef242ccbecdc023cb16ff3adaed91ca56dd97f132df2f7",
+          "canonicalGeometrySignature": "80c87fd3fd2f05042f97c23659bdd20d8bb1f59b203863640df7f0b53d3a3d63"
         }
       ]
     },
@@ -1297,7 +1565,7 @@
       "categoryLabel": "围合环抱型",
       "name": "沙漏形",
       "feature": "上下各 9×2 宽带，中间一行收束到 3 格窄腰",
-      "structureSignature": "b8e38340ae3d3d49625e58c66c91f0f74c5af25f60538f829199beb532cf0734",
+      "structureSignature": "7c408b43c6ccc2bf27d45a9fba7a69bdec0c09f5b5a216d5760a5030bc7a8c4e",
       "mask": [
         "#########",
         "#########",
@@ -1347,38 +1615,65 @@
         0,
         1
       ],
+      "outerMask": [
+        "#########",
+        "...###..."
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        1,
+        1,
+        1,
+        1,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 16,
+      "outerTileCount": 44,
+      "outerTurn": 3,
+      "outerSignature": "9d6b1a0cbfc8155226494776da9f1d210dcb114af33a59ede190003e6629ab9c",
       "representative": {
         "cards": 282,
-        "layers": 68,
+        "layers": 40,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 23,
-        "structureSignature": "f7d14aab329e7996d6cfaa1cfbfa3f298858b6197ff1b83ac9c5ece4ebc6cfe6",
-        "canonicalGeometrySignature": "7b844aa152e1d90ad2e539f7a6681cb2ed59bcd3129a8483162ce8cfd1688a0e"
+        "visible": 24,
+        "structureSignature": "c44fd2e0b592d94ae833c6a8a7ac91662d03add10acf531480594bafe804a8f2",
+        "canonicalGeometrySignature": "206ca41ff388cf7f7e2c53e972c39a402fc0c4be8623f9a962b8788d89284615"
       },
       "cases": [
         {
           "profileId": 1,
           "seed": 9360,
           "cards": 282,
-          "visible": 23,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "f7d14aab329e7996d6cfaa1cfbfa3f298858b6197ff1b83ac9c5ece4ebc6cfe6",
-          "canonicalGeometrySignature": "7b844aa152e1d90ad2e539f7a6681cb2ed59bcd3129a8483162ce8cfd1688a0e"
+          "structureSignature": "c44fd2e0b592d94ae833c6a8a7ac91662d03add10acf531480594bafe804a8f2",
+          "canonicalGeometrySignature": "206ca41ff388cf7f7e2c53e972c39a402fc0c4be8623f9a962b8788d89284615"
         },
         {
           "profileId": 2,
@@ -1389,20 +1684,20 @@
           "strictFloating": 0,
           "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "48653d8228d487ebd44576c4062c696f5ddf8fcf66a1fb2c52e275fc46c530ca",
-          "canonicalGeometrySignature": "3310b592c9cfc49acdf23f99837eac18cabe39c23892194de752b248ee106623"
+          "structureSignature": "650b5fa90a6177761249b1cb26e93041128439c15fb55ba1b67006c14b11b0c9",
+          "canonicalGeometrySignature": "954319eed6c3701da5f8225140544b487834c2cb31e37d8a2cb87be908b2f5c7"
         },
         {
           "profileId": 3,
           "seed": 9394,
           "cards": 312,
-          "visible": 25,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 25,
           "installOk": true,
-          "structureSignature": "c66c098b1f68bd76871ad7e00763ca54bbdf47a7c9576743f2cc994dde29df65",
-          "canonicalGeometrySignature": "1f5a9acd926908bbbe2b417506aacd481b4e9f0838e0f4d25dad20d39a5d651b"
+          "structureSignature": "5d32faa52b2e4f3b391e7dcf87bda9e315d320d43dd0628d34be0ea6f2402d5c",
+          "canonicalGeometrySignature": "5470457abb6d4eae81a7b26ee57c2643798e8c59a48744257fd24d0039cde868"
         }
       ]
     },
@@ -1412,7 +1707,7 @@
       "categoryLabel": "格网迷宫型",
       "name": "迷宫形",
       "feature": "上下横墙与左右单格通道交替，形成 S 形走廊",
-      "structureSignature": "da90d398eb41b1e410b53e0dbe739099207847e9cf798932a579f8869779e965",
+      "structureSignature": "8d2888d3c4d62307f2c6450623d3920307e9df63f3cd9dfbb10537febeed5b5f",
       "mask": [
         "#########",
         "........#",
@@ -1458,62 +1753,85 @@
         1,
         1
       ],
+      "outerMask": [
+        "#########",
+        "#.#.#.#.#"
+      ],
+      "outerCellCount": 14,
+      "outerLayers": [
+        1,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 12,
+      "outerTileCount": 44,
+      "outerTurn": 1,
+      "outerSignature": "664c70f220a7cc8df1a16a40147e4a19222092ea4dc2e67aa07b39156e02264d",
       "representative": {
         "cards": 300,
-        "layers": 70,
+        "layers": 38,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 23,
-        "structureSignature": "34ed21329a83a7c083a4abd7a2fd1c8e195a1239c8cdd695ad55719e193336ff",
-        "canonicalGeometrySignature": "1d16578eec190f392afaf4ea4059b39130e7d9911016de3153215141581a6ee6"
+        "visible": 24,
+        "structureSignature": "1afd47b16af277c631ef9f0e31933504a01c09361c35d0e462288abe155c72ce",
+        "canonicalGeometrySignature": "f307c2dbd63924c7e16d4ea35112c1333fbf468b70d14424d24fd0eb8e6766d5"
       },
       "cases": [
         {
           "profileId": 2,
           "seed": 9491,
           "cards": 300,
-          "visible": 23,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "34ed21329a83a7c083a4abd7a2fd1c8e195a1239c8cdd695ad55719e193336ff",
-          "canonicalGeometrySignature": "1d16578eec190f392afaf4ea4059b39130e7d9911016de3153215141581a6ee6"
+          "structureSignature": "1afd47b16af277c631ef9f0e31933504a01c09361c35d0e462288abe155c72ce",
+          "canonicalGeometrySignature": "f307c2dbd63924c7e16d4ea35112c1333fbf468b70d14424d24fd0eb8e6766d5"
         },
         {
           "profileId": 3,
           "seed": 9508,
           "cards": 312,
-          "visible": 22,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 23,
           "installOk": true,
-          "structureSignature": "9b82a4188d05bc6de15fa81bc22e12361cb6f4c3d0dceed6d3d5d429f420175e",
-          "canonicalGeometrySignature": "cd91c4cc67b6e21b0b4d692fdaa2de3f65fd71b37d363e496e79572e2e3bb527"
+          "structureSignature": "41eb30445a36ce20db9a7f24c1d6ca04d4f0b1dc18bb651bbe82da2db0316bf3",
+          "canonicalGeometrySignature": "12aa3719f8630734ed868059f875915c8ad3da8eb33f70d1fb5c17f52dcd19c5"
         },
         {
           "profileId": 4,
           "seed": 9525,
           "cards": 273,
-          "visible": 22,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "ecd230e7ec2c890dbfeaa861bb2984f0f1c8942b34ef711e5f2ac66ac964a473",
-          "canonicalGeometrySignature": "9d1f06677e8cc06db00b084a4b4976f2b2f2454a65784e6cab4bb06aab7b872f"
+          "structureSignature": "f0e34e45b4be3b4f451e0168beef5ccab161f59ef377d689d1686fcbf4073061",
+          "canonicalGeometrySignature": "fdc936ad5ce16048b9cfa4f15421d6594d731fb9e4f31f602097b3a8abb61832"
         }
       ]
     },
@@ -1523,7 +1841,7 @@
       "categoryLabel": "格网迷宫型",
       "name": "棋盘形",
       "feature": "3×3 小块上下错位排布，形成棋盘式交错小堆",
-      "structureSignature": "ad1a30514e19bf25c280f80375c270cca2cf44e8b0a6746cb3ee2115447d9002",
+      "structureSignature": "994e816fd901db13c12e6dfda8457be37e93445fb0978048b2930856c961db7b",
       "mask": [
         "###..###.",
         "###..###.",
@@ -1569,62 +1887,86 @@
         0,
         0
       ],
+      "outerMask": [
+        "###..###.",
+        ".###..###"
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 13,
+      "outerTileCount": 44,
+      "outerTurn": 2,
+      "outerSignature": "3dfc41448f421a399cc26e9d76cd4dd9d665904b73b36ea0bd60952576f5407e",
       "representative": {
         "cards": 312,
-        "layers": 71,
+        "layers": 40,
         "regions": 2,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 22,
-        "structureSignature": "d6324b5331e9cbfd302dcc79e12446143414f2425412d89ec1850cd6ff664f06",
-        "canonicalGeometrySignature": "dc26b5a51ac1be60406edf7cadfe72cd2933b18884a44ce25278a98abe2662b1"
+        "visible": 25,
+        "structureSignature": "0b885da48c9e6962a1011b377a73ba319a5997f0dca6ed08b79aa09f704bebf7",
+        "canonicalGeometrySignature": "bb766ae0a1742025453336806c98dcdc15700e80005677e75caa5aac9cac25c5"
       },
       "cases": [
         {
           "profileId": 3,
           "seed": 9622,
           "cards": 312,
-          "visible": 22,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "d6324b5331e9cbfd302dcc79e12446143414f2425412d89ec1850cd6ff664f06",
-          "canonicalGeometrySignature": "dc26b5a51ac1be60406edf7cadfe72cd2933b18884a44ce25278a98abe2662b1"
+          "structureSignature": "0b885da48c9e6962a1011b377a73ba319a5997f0dca6ed08b79aa09f704bebf7",
+          "canonicalGeometrySignature": "bb766ae0a1742025453336806c98dcdc15700e80005677e75caa5aac9cac25c5"
         },
         {
           "profileId": 4,
           "seed": 9639,
           "cards": 273,
-          "visible": 23,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 15,
           "installOk": true,
-          "structureSignature": "62eb39fbbfd1bbaad84e932c9b0844bcae816570c68f10a9047d328f801df0a8",
-          "canonicalGeometrySignature": "b7098a46d8664de904d69b358e2244685d6999a03e20aed9093badf7164042ee"
+          "structureSignature": "a79612302413e75e3c93b163576a60c4ab399984fb11a8e25f649d21d5124808",
+          "canonicalGeometrySignature": "c9e7f434f8ab4597c91e12e108a309ddbea6f26b2b422392fe59ea1b2d79e70d"
         },
         {
           "profileId": 5,
           "seed": 9656,
           "cards": 291,
-          "visible": 23,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 15,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "f90ff78670d406a008454cecedbbab3e2b130ba593254cc7491c5aee0bc7143c",
-          "canonicalGeometrySignature": "6c542bf696f39655d091c5d5854a067c1ca5c75e596df0f83fc5871ddc44014e"
+          "structureSignature": "9f8872b97e2a34e05b60e964d1b64419c25f3c28a67348d0127ddf6a6dd50873",
+          "canonicalGeometrySignature": "93c15bd5cf942ba0c80b62f50e63114296195cc1bd263c0e03f0b029a133e337"
         }
       ]
     },
@@ -1634,7 +1976,7 @@
       "categoryLabel": "起伏异形型",
       "name": "弧形月牙",
       "feature": "左侧厚弧、右侧渐薄，凹口偏向右侧，整体呈弯月",
-      "structureSignature": "4bd60e4b98217e781120c73a1f9de6fa0e0415a419f658f208f76779e3181bba",
+      "structureSignature": "e507549f0174159d196c0aa21df74494cc0f9df23de64bc39c476614cb876428",
       "mask": [
         "..#####..",
         ".#######.",
@@ -1680,50 +2022,75 @@
         1,
         0
       ],
+      "outerMask": [
+        ".#######.",
+        "####..###"
+      ],
+      "outerCellCount": 14,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 14,
+      "outerTileCount": 44,
+      "outerTurn": 3,
+      "outerSignature": "9d3e65dc1bd9add4e5718d0c99125ddd54139fdba79ed3497a853dc69ff898ec",
       "representative": {
         "cards": 273,
-        "layers": 67,
+        "layers": 37,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 20,
-        "structureSignature": "b92a4a0b68dc31a27d4ea8427b1e35e193bf0a812b19169cc96d0aeb71ea39cc",
-        "canonicalGeometrySignature": "82a36a95d9b3ef8600a53465f0a9fa30f8a4a941033c39bc1438a0f3668cab26"
+        "visible": 22,
+        "structureSignature": "c3b69c8c0d8dd81770a6b568863fe248ece0656bc9cbb4e09ad0efc499d702b4",
+        "canonicalGeometrySignature": "33595e7316ac69cd044880b51e4d7bed2d6e56faffb1929c46060806f6bdb2f0"
       },
       "cases": [
         {
           "profileId": 4,
           "seed": 9753,
           "cards": 273,
-          "visible": 20,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "b92a4a0b68dc31a27d4ea8427b1e35e193bf0a812b19169cc96d0aeb71ea39cc",
-          "canonicalGeometrySignature": "82a36a95d9b3ef8600a53465f0a9fa30f8a4a941033c39bc1438a0f3668cab26"
+          "structureSignature": "c3b69c8c0d8dd81770a6b568863fe248ece0656bc9cbb4e09ad0efc499d702b4",
+          "canonicalGeometrySignature": "33595e7316ac69cd044880b51e4d7bed2d6e56faffb1929c46060806f6bdb2f0"
         },
         {
           "profileId": 5,
           "seed": 9770,
           "cards": 291,
-          "visible": 25,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "1a087b853671fdb7c5e16d25b37fa56fbdaaf721470778cbfa3d755d8ac943fa",
-          "canonicalGeometrySignature": "00e018d4455b4eec3e50aba9e0f459dfd7d123a6bae22055200aad0f339b86a5"
+          "structureSignature": "5dea4695e0e9624427b7b1a627b2e6708098dbf5e9c4b7436a024b04fcd19ee1",
+          "canonicalGeometrySignature": "ffbe43e4c7087bc82ef8638f541806cfdfcc8663f17ecd726130ebe6d8fdfc96"
         },
         {
           "profileId": 6,
@@ -1734,8 +2101,8 @@
           "strictFloating": 0,
           "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "d7332b0bae9972ef4299a116ea4531ac892c7fb675687ad94e6e550d36dbcdcf",
-          "canonicalGeometrySignature": "f6a198527a3f3fbf18676652e7b7477d25ef791050b52a426c7592f1c62b028d"
+          "structureSignature": "60c197c2c8f886f33008de6c5c423ad5a54ee9eb69f700c71984db89d8dfe0bc",
+          "canonicalGeometrySignature": "70e710b33a6ea3f62980ecc15728ced48216beff2a0e579b558ce2f7e468ee2c"
         }
       ]
     },
@@ -1745,7 +2112,7 @@
       "categoryLabel": "起伏异形型",
       "name": "波浪形",
       "feature": "轮廓按行起伏：满 → 缺口 → 窄 → 缺口 → 满，形成波浪",
-      "structureSignature": "1cb541e67026f2c56f9ef07f24d9da65d7deb7aef22ab3fac5f479e49af80af5",
+      "structureSignature": "b332e4bea8ddb0b7c6cfc81f14d617b183c1f0b653c786b8c61b549e103974f7",
       "mask": [
         "#########",
         "###...###",
@@ -1795,25 +2162,47 @@
         0,
         1
       ],
+      "outerMask": [
+        "###...###",
+        "#########"
+      ],
+      "outerCellCount": 15,
+      "outerLayers": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 11,
+      "outerTileCount": 44,
+      "outerTurn": 0,
+      "outerSignature": "6d748954533cf543ca08655296b4599db58306b1f352d04671d318c475e9184b",
       "representative": {
         "cards": 291,
-        "layers": 69,
+        "layers": 36,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "visible": 24,
-        "structureSignature": "2db5292b9183b0a7526cd2a2c7df6f345a50b0bbb5e774ff4bd18f938ef0ecac",
-        "canonicalGeometrySignature": "c262dbeaa9fa06793241cc9be988f31540a08670e0165cdf1d13f99716484ff9"
+        "structureSignature": "39d48bef41a1d33eee5ca001094b45e076b300f28b29a34cfb215389b4fbc931",
+        "canonicalGeometrySignature": "1dd7fee47fb6fd1aa21462b532f7076b7ac988e7b287b585ba0792e5e75665d8"
       },
       "cases": [
         {
@@ -1823,34 +2212,34 @@
           "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "2db5292b9183b0a7526cd2a2c7df6f345a50b0bbb5e774ff4bd18f938ef0ecac",
-          "canonicalGeometrySignature": "c262dbeaa9fa06793241cc9be988f31540a08670e0165cdf1d13f99716484ff9"
+          "structureSignature": "39d48bef41a1d33eee5ca001094b45e076b300f28b29a34cfb215389b4fbc931",
+          "canonicalGeometrySignature": "1dd7fee47fb6fd1aa21462b532f7076b7ac988e7b287b585ba0792e5e75665d8"
         },
         {
           "profileId": 6,
           "seed": 9901,
           "cards": 261,
-          "visible": 25,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 22,
           "installOk": true,
-          "structureSignature": "47c9bc8f8d9755cc07414221714a37c77541cee4fd1ea29e550659224b0fbefb",
-          "canonicalGeometrySignature": "9286804cd59ae3944fe25a729a5680cf4afff23d2e96cce9a2dd8c580acb4405"
+          "structureSignature": "c53c4f2b9c2b7beeb311618383fde5001cacd3183bf3f03b54a5882882e44656",
+          "canonicalGeometrySignature": "1bee0b57482b759b007fd310c2f7546da6acb9e9c2b7f3038727576f21d12718"
         },
         {
           "profileId": 7,
           "seed": 9918,
           "cards": 312,
-          "visible": 23,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 25,
           "installOk": true,
-          "structureSignature": "6db3adade1639b018138127740703545da6d9c872a2b991bde871227c5b6f124",
-          "canonicalGeometrySignature": "86f05c86e5339eaeb4e3ad9de4265b5e8252139a50d43c287e830a2cf5bf60b7"
+          "structureSignature": "809d5f160dada68c820a4587b09b73616528df1a2d9633b84bdd93961a4e0261",
+          "canonicalGeometrySignature": "f40d201c8d5a0d55d5b608a6358dd8485bf70c4d6ecefb639796dac50d7ab4e0"
         }
       ]
     },
@@ -1860,7 +2249,7 @@
       "categoryLabel": "多岛分离型",
       "name": "对角双塔",
       "feature": "左上 6×2 与右下 6×2 两座塔，仅中央 3 格相连",
-      "structureSignature": "c92002d57c76c87138a33adaeb41df3b874867a07f52353d762b514506ab8ae6",
+      "structureSignature": "fb4bf2ad8182a217167198960e42640757d7365fdfdf5df7af131cead2a67398",
       "mask": [
         "######...",
         "######...",
@@ -1906,25 +2295,48 @@
         1,
         1
       ],
+      "outerMask": [
+        "######...",
+        "...######"
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 12,
+      "outerTileCount": 44,
+      "outerTurn": 1,
+      "outerSignature": "9052727eb3b90d2e44d71a2089d4a241c977eac27bce78dae0e11bb31735c075",
       "representative": {
         "cards": 261,
-        "layers": 66,
+        "layers": 34,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 594,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 594,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "visible": 24,
-        "structureSignature": "b31dc1cfae1d87e58047e07fbab9de8972dccc6dcb4983aa24935b1e1ac8f78e",
-        "canonicalGeometrySignature": "8aca19ea9746fc669848505f96ed8c7b048bad80b983d5a1621c12bfff6d5f3f"
+        "structureSignature": "a37fb488d9b5ad61b06f899f8cdbcab65e36101f9297152d29e97d5f92289220",
+        "canonicalGeometrySignature": "07f2a909cd4e56638d17cbb5e6776b83077bc845e6fa19e929819f44db350ff3"
       },
       "cases": [
         {
@@ -1934,34 +2346,34 @@
           "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 16,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "b31dc1cfae1d87e58047e07fbab9de8972dccc6dcb4983aa24935b1e1ac8f78e",
-          "canonicalGeometrySignature": "8aca19ea9746fc669848505f96ed8c7b048bad80b983d5a1621c12bfff6d5f3f"
+          "structureSignature": "a37fb488d9b5ad61b06f899f8cdbcab65e36101f9297152d29e97d5f92289220",
+          "canonicalGeometrySignature": "07f2a909cd4e56638d17cbb5e6776b83077bc845e6fa19e929819f44db350ff3"
         },
         {
           "profileId": 7,
           "seed": 10032,
           "cards": 312,
-          "visible": 19,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 13,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "ccb4b91cf8da969495100ea68ac77862e0e527e7bfff1baef831f939f0e4cc17",
-          "canonicalGeometrySignature": "2357135904f54e05ace032716b2b46ab882176de5263418c54c28aee31093ca2"
+          "structureSignature": "fc4151984b8e2313f0ef3530ac7db9f0b61565482553a7ee027e1f3f6918ed43",
+          "canonicalGeometrySignature": "b31b8a693a2206c0569fa13aadd3975ef5162615e315cfddbdf5203bf395e9f0"
         },
         {
           "profileId": 8,
           "seed": 10049,
           "cards": 192,
-          "visible": 21,
+          "visible": 25,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 19,
+          "exposedAfterRemove": 21,
           "installOk": true,
-          "structureSignature": "059d96f04e443b34fd8986e6b4169dc00f927c9c9b61bf8bad3f54f4cc35c693",
-          "canonicalGeometrySignature": "35712038228b6cd31776ac056a7790a4f3a6b808fa5c2b81c00e2a55d0b19d6c"
+          "structureSignature": "95fa77900b7df68c2eec2550123db60573c3d9d7d5768927480fd567d8e5e026",
+          "canonicalGeometrySignature": "31d6433ece725e2613bf0e9f13c7e9baf3c1422ec10f848e9bb605cddf2d9ee5"
         }
       ]
     },
@@ -1971,7 +2383,7 @@
       "categoryLabel": "多岛分离型",
       "name": "四角围合",
       "feature": "四个 4×2 角块分居四角，中行与中列十字留空",
-      "structureSignature": "2bd46ee56ba0ebe6d4ff1ced63db66912af73c718e385ec2baa03f4c2c715075",
+      "structureSignature": "2f298af2ac03e931da4f8c3e0757bb888c646aec2f013bdbbcdb4d12aca0eef8",
       "mask": [
         "####.####",
         "####.####",
@@ -2017,25 +2429,49 @@
         0,
         0
       ],
+      "outerMask": [
+        "####.####",
+        "##.###.##"
+      ],
+      "outerCellCount": 15,
+      "outerLayers": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 13,
+      "outerTileCount": 44,
+      "outerTurn": 2,
+      "outerSignature": "30b7619ac171195475b76e20ec3e365a5354e674c0c5085069e78fff163aac48",
       "representative": {
         "cards": 312,
-        "layers": 71,
+        "layers": 40,
         "regions": 4,
         "box": {
-          "w": 660,
-          "h": 616,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "visible": 23,
-        "structureSignature": "339f00f1bbaa6819ee1efa387594802a072f765e5f3525ca93d7679a77a03d12",
-        "canonicalGeometrySignature": "08433a53023668bb5de17c6e53d7a819b5b6b84d8e075f4478fe9343623587ba"
+        "structureSignature": "cc3e734c7107a411acdaee275bdddbba9d4b4e8f7e0fa305cd66edcf569d5173",
+        "canonicalGeometrySignature": "0fc4ee20221c534063433f0e8c3530f1c082a39b58bd5de4f4a93359c9f5e8b7"
       },
       "cases": [
         {
@@ -2045,34 +2481,34 @@
           "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 18,
+          "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "339f00f1bbaa6819ee1efa387594802a072f765e5f3525ca93d7679a77a03d12",
-          "canonicalGeometrySignature": "08433a53023668bb5de17c6e53d7a819b5b6b84d8e075f4478fe9343623587ba"
+          "structureSignature": "cc3e734c7107a411acdaee275bdddbba9d4b4e8f7e0fa305cd66edcf569d5173",
+          "canonicalGeometrySignature": "0fc4ee20221c534063433f0e8c3530f1c082a39b58bd5de4f4a93359c9f5e8b7"
         },
         {
           "profileId": 8,
           "seed": 10163,
           "cards": 192,
-          "visible": 20,
+          "visible": 22,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 19,
           "installOk": true,
-          "structureSignature": "c8d49c1d43275d505a66ece78657a8a3d3da747e9264000cac085a477f4047cc",
-          "canonicalGeometrySignature": "ef3261d40e1ecec2ae573ee127fc95aa0d47e28448320a48c9bd05552fc75807"
+          "structureSignature": "c2ae7c52c9f8de6a2b21e3851c09db7fa86f0a66c1e5884778f5820ecfcbba03",
+          "canonicalGeometrySignature": "c0ec19ffb7d7378712ba69f8ee0ffc0846da3d25508979015df732d14fe64bca"
         },
         {
           "profileId": 9,
           "seed": 10180,
           "cards": 255,
-          "visible": 24,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 20,
+          "exposedAfterRemove": 18,
           "installOk": true,
-          "structureSignature": "1a87f9ec72a43a6022e103df98a2db8ee9d4a76e59c509ff4d2b37eb8916cf8e",
-          "canonicalGeometrySignature": "01aafbd96137c741ea87f54d364d2307dfb64598e4ad85fdb4452517f7fff6a1"
+          "structureSignature": "d69a68756e19a7e0b021bd13c591b25e44e9508990bb62b55b3bea35074d4943",
+          "canonicalGeometrySignature": "e382209c8ef50c87f7f90fec03543dcaee53e59786c63589e91df77012c6c52a"
         }
       ]
     },
@@ -2082,7 +2518,7 @@
       "categoryLabel": "围合环抱型",
       "name": "中心十字岛",
       "feature": "中央 3×5 主体 + 中部一行向左右各伸出 2 格",
-      "structureSignature": "1a57795f009de74804ca103d2d6482604464ae7b9485816b4f7faeb4da9624a0",
+      "structureSignature": "9b5568c4ab67c2a49917c8069baf25f8df0e4bbad2948d3b1ac585b0796af268",
       "mask": [
         "..#####..",
         "..#####..",
@@ -2128,62 +2564,87 @@
         1,
         0
       ],
+      "outerMask": [
+        "..#####..",
+        ".#######."
+      ],
+      "outerCellCount": 12,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 14,
+      "outerTileCount": 44,
+      "outerTurn": 3,
+      "outerSignature": "dc282c9df61fdd91d3b975c940281a0f034ceda697afdfe1a24678a8a7deccf5",
       "representative": {
         "cards": 192,
-        "layers": 59,
+        "layers": 29,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 616,
-          "minX": 33,
-          "minY": 220
+          "w": 561,
+          "h": 484,
+          "minX": 66,
+          "minY": 308
         },
         "mainBox": {
           "w": 561,
           "h": 484,
           "minX": 66,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 20,
-        "structureSignature": "1c89b1822dd6acabeb665352cc262703f17b7b77fc9386c1211bd7b396204247",
-        "canonicalGeometrySignature": "dffe2c2ae1a49b3ddae3499a7dcb9885650730155963cc1b499ac38f1c074dac"
+        "visible": 21,
+        "structureSignature": "c01ee32bf91282ab18fd8634a443159b9b99ec59aea8a327badd0b185731d62c",
+        "canonicalGeometrySignature": "0c527fb9217c76820f07ccb908bb208d56cb99dd387ee53974c2feaf52151339"
       },
       "cases": [
         {
           "profileId": 8,
           "seed": 10277,
           "cards": 192,
-          "visible": 20,
+          "visible": 21,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "1c89b1822dd6acabeb665352cc262703f17b7b77fc9386c1211bd7b396204247",
-          "canonicalGeometrySignature": "dffe2c2ae1a49b3ddae3499a7dcb9885650730155963cc1b499ac38f1c074dac"
+          "structureSignature": "c01ee32bf91282ab18fd8634a443159b9b99ec59aea8a327badd0b185731d62c",
+          "canonicalGeometrySignature": "0c527fb9217c76820f07ccb908bb208d56cb99dd387ee53974c2feaf52151339"
         },
         {
           "profileId": 9,
           "seed": 10294,
           "cards": 255,
-          "visible": 22,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 21,
+          "exposedAfterRemove": 17,
           "installOk": true,
-          "structureSignature": "0a492aecf63a99b4b7d0bb205f1e5fa98e8feea965013fee53505c222b379f34",
-          "canonicalGeometrySignature": "fe6bf27b6a83c9f4cfae4d0ed26f8b248bae2a3779084dd170f33bf928c96b1d"
+          "structureSignature": "7d155394de6410e76bf5c25f4d8752b0dddd75ef4676e1bd3fb5bcc7c5c28c0e",
+          "canonicalGeometrySignature": "2c1a72e53e7b0223f16a1087ec38e505b75e730ad4feaad4a267898e4d597ed2"
         },
         {
           "profileId": 0,
           "seed": 10311,
           "cards": 321,
-          "visible": 25,
+          "visible": 20,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 17,
+          "exposedAfterRemove": 14,
           "installOk": true,
-          "structureSignature": "0f418d668736d2941b53fb645d0c474b4d95ad2b82044b6b50b278aa0c5d7401",
-          "canonicalGeometrySignature": "99cab691386d6d9d349ed8e4c416590374331a8826bb567b2400cf6b3cc6e264"
+          "structureSignature": "f95d3cd6b65ed09f1396d7ecdf4cccbe3f6f26cf767dd055faee5e326f6c84e9",
+          "canonicalGeometrySignature": "192dea6c81ec850d711a143f5df1ed4cb97d8f3951abb106cda667b082ee1c6e"
         }
       ]
     },
@@ -2193,7 +2654,7 @@
       "categoryLabel": "不规则大陆型",
       "name": "不规则大陆形",
       "feature": "左右不对称、上下多凸起，内部两处缺格形成海湾状凹陷",
-      "structureSignature": "f76ce36c7fc1b84021fdf37351692f2e19c946ef468ab992ae6b7b0a59fd3827",
+      "structureSignature": "92883809a0608873ed18ef5bb3cb4b5a920588f7e78dced933a44d64541f937d",
       "mask": [
         ".#######.",
         "####.####",
@@ -2243,74 +2704,100 @@
         0,
         1
       ],
+      "outerMask": [
+        ".#######.",
+        "####.####"
+      ],
+      "outerCellCount": 15,
+      "outerLayers": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "outerLayerCount": 15,
+      "outerTileCount": 44,
+      "outerTurn": 0,
+      "outerSignature": "321ccb812ed42aed46938b886682a04f06f306ee65d53f5a23a4141b10ea64bc",
       "representative": {
         "cards": 255,
-        "layers": 64,
+        "layers": 35,
         "regions": 1,
         "box": {
-          "w": 660,
-          "h": 660,
+          "w": 627,
+          "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
         "mainBox": {
           "w": 627,
           "h": 484,
           "minX": 33,
-          "minY": 220
+          "minY": 308
         },
-        "visible": 21,
-        "structureSignature": "0337875b8f893d709fd48d762ad91ab713ccc2b79bd06c0fddcbd2dde03cb86c",
-        "canonicalGeometrySignature": "ab3f97c2e1060d69d6b7501f2b8197e3639cdc1d0ea776c821c3c2e925465062"
+        "visible": 24,
+        "structureSignature": "dcaf1bcf25ef22c1e63537c7fe66c0a6049dacc3bc07afbe72d9f91dec1f7bbc",
+        "canonicalGeometrySignature": "7dad84114aee04488f06d47f2d6bea955e21c8f83d335188fdc3f349746e18f5"
       },
       "cases": [
         {
           "profileId": 9,
           "seed": 10408,
           "cards": 255,
-          "visible": 21,
+          "visible": 24,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 14,
+          "exposedAfterRemove": 16,
           "installOk": true,
-          "structureSignature": "0337875b8f893d709fd48d762ad91ab713ccc2b79bd06c0fddcbd2dde03cb86c",
-          "canonicalGeometrySignature": "ab3f97c2e1060d69d6b7501f2b8197e3639cdc1d0ea776c821c3c2e925465062"
+          "structureSignature": "dcaf1bcf25ef22c1e63537c7fe66c0a6049dacc3bc07afbe72d9f91dec1f7bbc",
+          "canonicalGeometrySignature": "7dad84114aee04488f06d47f2d6bea955e21c8f83d335188fdc3f349746e18f5"
         },
         {
           "profileId": 0,
           "seed": 10425,
           "cards": 321,
-          "visible": 23,
+          "visible": 19,
           "floatingCount": 0,
           "strictFloating": 0,
-          "exposedAfterRemove": 22,
+          "exposedAfterRemove": 24,
           "installOk": true,
-          "structureSignature": "d0e5b227fbc6ef57987cc918ec9a2f1692dcb3d20f023c82c2b72999bbf60cae",
-          "canonicalGeometrySignature": "d165144bde7c4ae398555729d58aba79eb3d807783419d16f4a555b8903c58c0"
+          "structureSignature": "cbd36697be3617fdeb03ea75c6db6767ee50415c61acb12730e211fb0a46b2b3",
+          "canonicalGeometrySignature": "6cf96138d8dd0e3a5d09be45ae197d6a57fc6a81fd57b418bb8067fd4abe6abb"
         },
         {
           "profileId": 1,
           "seed": 10442,
           "cards": 282,
-          "visible": 21,
+          "visible": 23,
           "floatingCount": 0,
           "strictFloating": 0,
           "exposedAfterRemove": 20,
           "installOk": true,
-          "structureSignature": "ea78fcb1f3e1893c2c3e4ada1a735c18f9bf69af644031f9bf186d416a7d61fa",
-          "canonicalGeometrySignature": "d6b30dbd6debd1f6a8910d2ec7753466a3c8abedbc66a30a29745142eb6f0bd2"
+          "structureSignature": "a6095e9f396ad2864a8bb5c835dc3cdadcdf604d2fe9f2799fecde5db5a3ca9f",
+          "canonicalGeometrySignature": "2548c4fe24fd6054ff1d35c17df43ae4002a1b2a79b8647e2c738347a8bd2215"
         }
       ]
     }
   ],
   "pairStats": {
     "pairs": 190,
-    "maxStructureSimilarity": 0.4438293292133106,
-    "maxLayoutSimilarity": 0.4283590805329936,
+    "maxStructureSimilarity": 0.5043011161531252,
+    "maxLayoutSimilarity": 0.478717421797779,
     "overThreshold": 0,
     "distinctLayerShapes": 1,
     "distinctRegionShapes": 4,
-    "distinctBoxes": 2,
+    "distinctBoxes": 4,
     "distinctSilhouettes": 20
   }
 }

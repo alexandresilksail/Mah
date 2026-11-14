@@ -19,6 +19,8 @@ import {
   TILE_W, TILE_H, LATTICE_Y, layerPlanFor,
 } from './src/game/config.js';
 import { generateProfileLayout } from './src/game/layout_profiles.js';
+import { generateTemplateLayout } from './src/game/l2_geometry.js';
+import { L2_TEMPLATE_IDS } from './src/game/l2_templates.js';
 import { isHalfLattice, sameLayerOverlapCount, countComponents } from './src/game/layout.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)));
@@ -141,13 +143,14 @@ line('\n[2] 不同屏幕尺寸 / 缩放比下的视觉重心（逻辑坐标整�
   line('   ' + rows.map((r) => `×${r.scale} → ${r.ratio}`).join(' · '));
 }
 
-line('\n[3] 第二关布局回归（本次不改第二关几何，确认没有被连带破坏）');
+line('\n[3] 第二关布局回归（第二关已改为 20 套完整模板布局，确认包围盒/边界/晶格/重叠仍合规）');
 {
   let bad = 0, minW = Infinity, minH = Infinity;
   for (const p of LEVEL2_PROFILES) {
     for (let k = 0; k < 8; k++) {
       const seed = (0x42000000 + k * 2654435761 + p.id * 7919) >>> 0;
-      const cards = generateProfileLayout(seed, p);
+      const tpl = L2_TEMPLATE_IDS[p.id % L2_TEMPLATE_IDS.length];
+      const cards = generateTemplateLayout(seed, p, tpl);
       const b = boxOf(cards);
       if (b.w < minW) minW = b.w;
       if (b.h < minH) minH = b.h;
@@ -155,7 +158,7 @@ line('\n[3] 第二关布局回归（本次不改第二关几何，确认没有�
       if (!isHalfLattice(cards) || sameLayerOverlapCount(cards) !== 0) bad++;
     }
   }
-  ok(bad === 0, `L2 10 档 × 8 seed 包围盒 / 边界 / 晶格 / 重叠回归 0 异常（最小 ${minW}×${minH}）`);
+  ok(bad === 0, `L2 10 档 × 8 seed × 20 套模板 包围盒 / 边界 / 晶格 / 重叠回归 0 异常（最小 ${minW}×${minH}）`);
   report.level2Regression = { profiles: LEVEL2_PROFILES.length, seedsPerProfile: 8, bad, minW, minH };
   line(`   L2 最小包围盒 ${minW}×${minH} · 异常 ${bad}`);
 }

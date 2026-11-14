@@ -1,18 +1,18 @@
 ============================================================================
  MahLeMah · HTML ↔ src 构建一致性检查（真实运行）
- 2026-11-13T12:42:00.611Z
+ 2026-11-14T08:54:05.211Z
 ============================================================================
 
 [1] 用构建脚本同源函数现场重新打包并逐字节比对
-   现代版 bundle sha256=a686105fbfc4d14e 现场 sha256=a686105fbfc4d14e
-   legacy  bundle sha256=78f15135f96a1127 现场 sha256=78f15135f96a1127
+   现代版 bundle sha256=f968059b4d4638ed 现场 sha256=f968059b4d4638ed
+   legacy  bundle sha256=61a28f5d579da009 现场 sha256=61a28f5d579da009
    legacy 压缩版=true · ES5 语法校验=通过
 
 [2] legacy 两段独立脚本与 src 源文件比对
 
 [3] 构建元信息一致性
-   buildVersion=2.0.0-e71486e sourceFiles=38
-   sourceHash=b8666bafae0661ee9f73a398729a6bc1824b60e64a7caeec590ba2c7dd452428
+   buildVersion=2.0.0-8a0c434 sourceFiles=38
+   sourceHash=1c9e24c126eeca2bd255fa67a51210f9128ba194f417191fddc93c7cf9048f4e
 
 [4] 关键业务逻辑同步（两个 bundle 同时检查）
 

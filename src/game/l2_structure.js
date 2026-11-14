@@ -214,20 +214,22 @@ function jaccard(a, b) {
   return uni ? inter / uni : 0;
 }
 
-/** 只取主堆牌：44 张盲盒队列是既有固定规则组件，模板并不改变它，
- *  因此比较「模板结构差异」时不应让固定队列抬高相似度。 */
+/** 只取主体掩膜牌：模板独有的外廓段是完整布局的一部分，但为了沿用
+ *  「主体平面轮廓」的历史比较口径（跨档位一致性、缩略图主体对照），
+ *  这里仍把外廓段排除。完整三维结构的差异比较请用 calculateStructureSignature
+ *  直接传入全部牌（见 test-l2-full-layout.js 的 C 组校验）。 */
 export function mainStackCards(cards) {
   var out = [];
   for (var i = 0; i < (cards || []).length; i++) {
-    if (cards[i].seg !== 'queue') out.push(cards[i]);
+    if (cards[i].seg !== 'outer') out.push(cards[i]);
   }
   return out;
 }
 
 /**
  * 结构级相似度：层轮廓 Jaccard 均值 0.4 + 整体轮廓 Jaccard 0.3 +
- * 区域分布 Jaccard 0.2 + 可操作区 Jaccard 0.1（只比较主堆）。
- * 与 layoutSimilarity 互补：后者看含队列的整体占位格，这里还看区域与可操作区。
+ * 区域分布 Jaccard 0.2 + 可操作区 Jaccard 0.1（只比较主体掩膜牌）。
+ * 与 layoutSimilarity 互补：后者看含外廓段的整体占位格，这里还看区域与可操作区。
  */
 export function structureSimilarity(dataA, dataB) {
   var a = mainStackCards(dataA && dataA.cards ? dataA.cards : dataA);

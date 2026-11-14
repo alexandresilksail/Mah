@@ -1,7 +1,7 @@
 {
   "meta": {
-    "generatedAt": "2026-11-13T12:40:00.779Z",
-    "gitCommit": "e71486e75c24154e6bffb64db509a30d0791f416",
+    "generatedAt": "2026-11-14T08:47:48.922Z",
+    "gitCommit": "8a0c434ad1e4a4da2b906a5744105aeac883144a",
     "command": "node test-l1-frozen.js",
     "baselineGeneratedAt": "2026-11-12T14:45:51.895Z",
     "l1BaselineRows": 20,

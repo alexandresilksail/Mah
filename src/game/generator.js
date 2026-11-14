@@ -242,11 +242,12 @@ function baseCard(src) {
     layer: src.layer,
     region: src.region,
     zoneLayer: src.zoneLayer,
-    // 盲盒队列信息（第 1.3 节）：渲染层靠 seg/blocked 决定显示牌背还是牌面
+    /* 完整布局段标记：主体层（top/mid/core）或模板独有的外廓段（outer）。
+     * 旧的「盲盒队列 chain/chainIndex/chainLen」四链字段已随固定队列一并删除。
+     * 渲染层靠 seg/blocked 决定显示牌背还是牌面。 */
     seg: src.seg,
-    chain: src.chain,
-    chainIndex: src.chainIndex,
-    chainLen: src.chainLen,
+    outerLayer: src.outerLayer,
+    outerIndex: src.outerIndex,
     z: src.z,
     type: TYPE_IDS[0],
     state: 'board',

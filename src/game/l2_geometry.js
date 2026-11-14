@@ -1,36 +1,39 @@
 /**
- * 第二关 20 套模板的几何生成器（规格驱动 + 整层统一相位）。
+ * 第二关 20 套模板的完整几何生成器（规格驱动 + 整层统一相位）。
+ *
+ * 【本轮重构：彻底取消固定四链队列】
+ * 旧的「模板主体布局 + 共享 buildQueue() 固定 44 张四链队列」已完全删除：
+ *   · 每套模板的完整布局 = 主体 9×5 掩膜规格（l2_spec.specPlan）
+ *                        + 该模板独有的外廓完整牌位规格（l2_spec.outerPlanFor）；
+ *   · 44 张牌位由模板自己的外廓掩膜 / 逐层张数 / 相位起点唯一决定，
+ *     20 套互不相同，坐标、层级、遮挡关系、可点分布都是模板身份的一部分；
+ *   · 第二关生成路径不再 import、不再调用 buildQueue()，QUEUE_SHAPE /
+ *     固定四链（左竖 7 / 右竖 7 / 中横 15 / 底横 15）已从源码中消失。
  *
  * 【唯一几何标准 = l2_spec.js 的模板规格】
- * 每一层占哪些格，由 specPlan(spec, profile) 直接给出，**与本文件的随机无关**：
- *   · 档位只决定「多少层、每层几张」，不改变任何格的位置；
- *   · seed 只决定「每层的半格相位」这一纯遮挡细节。
+ * 每一层占哪些格，由 specPlan(spec, profile) / outerPlanFor(spec, profile)
+ * 直接给出，**与本文件的随机无关**：
+ *   · 档位只决定「主体多少层、每层几张」，不改变任何格的位置；
+ *   · seed 只决定「主体尾段的半格相位候选」这一纯遮挡细节。
  * 因此任何档位 / 任何 seed 生成的牌局，俯视轮廓、区域位置、比例、方向、间距、
  * 层级分布都和规格（= 缩略图）一致；seed 不会改变布局形状。
  *
- * 【相位为什么可以整层统一】
- * 本层所有牌共用同一个半格相位时，同层任意两张牌格位不同 ⇒ 水平间距恒为 TILE_W、
- * 垂直间距恒为 TILE_H ⇒ 相交面积恒为 0。「同层零重叠」这条硬规则因此是**构造性成立**
- * 的，不需要搜索、也不会退化成兜底。这与既有 buildMainStack 的视觉口径一致
- * （整层一个错位向量，而不是逐张抖动）。
- *
  * 【支撑与开局可点数怎么同时成立】
- *   · 铺设段：每层「少量新格 + 上一层尾部复用的格」。复用格与下层同格，
- *     无论相位如何都至少有 25% 面积重叠 ⇒ 必然被支撑；新格在多源 BFS 序里紧邻
- *     已用格 ⇒ 有下层邻居。相位在 4 种里逐层贪心挑「无支撑牌最少」的那个。
- *   · 尾段：在 A/B 两块间交替，两块都已铺设过 ⇒ 全部同格支撑（悬空必然为 0）；
- *     A/B 不相交 ⇒ 两块各自的牌互不遮挡，开局可点张数由两块的大小之和决定，
- *     再叠加与铺设段之间的遮挡细节即可落在 19–25。
+ *   · 主体铺设段：每层「少量新格 + 上一层尾部复用的格」。复用格与下层同格，
+ *     无论相位如何都至少有 25% 面积重叠 ⇒ 必然被支撑。
+ *   · 主体尾段：在 A/B 两块间交替，两块都已铺设过 ⇒ 全部同格支撑（悬空为 0）。
+ *   · 外廓段：层集合按格池前缀严格嵌套（非递减层张数），低层每张牌都被高层
+ *     同格牌以 ≥25% 面积压住；只有最顶层的几张可点，数量由模板自己定义。
  *
  * 【不变硬契约（与既有第二关一致）】
  *  · 半格晶格 x%LATTICE_X=0 / y%LATTICE_Y=0；同层零重叠；
- *  · 主堆落在 BOARD_BAND 内；z 全序 = layer 升序 → y 升序 → x 升序；
- *  · 总张数 = profile.mainCount + profile.queueCount，主堆层数 = profile.layers；
- *  · 队列 44 张直接复用 layout_profiles.buildQueue()，规则一字不改；
- *  · 开局可点 19–25 张（VISIBLE_MIN/MAX）。
+ *  · 主堆与外廓全部落在 BOARD_BAND 内；z 全序 = layer 升序 → y 升序 → x 升序；
+ *  · 总张数 = profile.mainCount + profile.queueCount（配额不变，44 张一张不少）；
+ *  · 开局可点 19–25 张（VISIBLE_MIN/MAX）、主堆零悬空、压深 / 遮挡链门槛不变；
+ *  · specFillRot 完整传递；生成 / 安装 / 渲染三段保真校验全部覆盖完整布局。
  *
  * 【全局格网】x = GRID_X0 + c*TILE_W + px*LATTICE_X（c=0..8，px∈{0,1}）
- *             y = GRID_Y0 + r*TILE_H + py*LATTICE_Y（r=0..4，py∈{0,1}）
+ *             y = GRID_Y0 + r*TILE_H + py*LATTICE_Y（主体 r=0..4，外廓 r=4..5，OUTER_R0=4）
  *
  * 第一关永远不经过本文件；不带 templateId 的第二关调用会被 generator.js 直接拒绝。
  */
@@ -40,20 +43,18 @@ import {
 import { makeRng } from './rng.js';
 import { hasSupport } from './layout.js';
 import {
-  buildQueue, countVisible, VISIBLE_MIN, VISIBLE_MAX, QUEUE_SHAPE,
+  countVisible, VISIBLE_MIN, VISIBLE_MAX,
 } from './layout_profiles.js';
-import { templateById, MASK_COLS, MASK_ROWS } from './l2_templates.js';
+import { templateById, MASK_COLS, MASK_ROWS, OUTER_SEG } from './l2_templates.js';
 import {
   GRID_X0, GRID_Y0, PHASES, specFor, specPlan, checkFidelity, planLayerKeys,
+  outerPlanFor,
 } from './l2_spec.js';
 
 var X_MIN = GRID_X0;
 var Y_MIN = GRID_Y0;
 var GRID_COLS = MASK_COLS;
 var GRID_ROWS = MASK_ROWS;
-
-/** 队列固定贡献 4 张可点（四条链各一张队首） */
-var QUEUE_VISIBLE = 4;
 
 /* ==================== 层段划分（沿用既有 seg 字段口径） ==================== */
 
@@ -76,7 +77,7 @@ function posOf(cell, ph) {
 }
 
 /**
- * 把一层落成牌（不写入任何状态）。
+ * 把主体的一层落成牌（不写入任何状态）。
  * 相位优先取「该格自己的相位」（铺设段逐格求解），没有则取整层相位（尾段）。
  * @returns {Array} 与 layer.cells 一一对应的牌对象
  */
@@ -102,23 +103,11 @@ function layerCards(layer, spec, profile, li, n) {
   return out;
 }
 
-/** 这一层里有几张牌拿不到下层支撑 */
-function unsupportedCount(cards, lower) {
-  if (!lower.length) return 0;
-  var n = 0;
-  for (var i = 0; i < cards.length; i++) if (!hasSupport(cards[i], lower)) n++;
-  return n;
-}
-
-/* ==================== 主堆：按规格逐层落牌 ==================== */
+/* ==================== 主体：按规格逐层落牌 ==================== */
 
 /**
- * 按计划落整个主堆。**零随机**：每层占哪些格、用哪个相位都由 plan 给出。
- *
- * @param {object} profile 档位
- * @param {object} spec    模板规格
- * @param {object} plan    规格计划
- * @returns {Array} 主堆牌（不含队列）
+ * 按计划落整个主体。**零随机**：每层占哪些格、用哪个相位都由 plan 给出。
+ * @returns {Array} 主体牌（不含外廓）
  */
 function buildMain(profile, spec, plan) {
   var n = plan.layerCount;
@@ -131,7 +120,43 @@ function buildMain(profile, spec, plan) {
   return out;
 }
 
-/** 悬空统计：非底层牌必须有 >10% 面积的下层支撑（cumulative 下层） */
+/* ==================== 外廓：模板独有的 44 张完整牌位 ==================== */
+
+/**
+ * 按模板自有规格落下 44 张外廓牌。坐标、层级、相位、区域都来自 outerPlanFor，
+ * 零随机、与 seed 无关；段标记 OUTER_SEG 让渲染 / 校验 / 结构签名能区分两段。
+ */
+function buildOuter(spec, profile) {
+  var op = outerPlanFor(spec, profile);
+  var out = [];
+  for (var k = 0; k < op.layers.length; k++) {
+    var L = op.layers[k];
+    for (var i = 0; i < L.cells.length; i++) {
+      var c = L.cells[i];
+      var p = posOf(c, c.phase);
+      out.push({
+        x: p.x,
+        y: p.y,
+        layer: L.layer,
+        region: c.region,
+        zoneLayer: k,
+        seg: OUTER_SEG,
+        outerLayer: k,
+        outerIndex: i,
+        gridW: spec.maskBox.cols,
+        gridH: spec.maskBox.rows,
+        gaps: 0,
+        pinned: '',
+      });
+    }
+  }
+  if (out.length !== op.total) {
+    throw new Error('模板 ' + spec.templateId + ' 外廓落牌 ' + out.length + ' ≠ ' + op.total);
+  }
+  return { cards: out, plan: op };
+}
+
+/** 悬空统计：主体非底层牌必须有 >10% 面积的下层支撑（cumulative 下层） */
 function countFloating(mainCards) {
   var byLayer = {};
   for (var i = 0; i < mainCards.length; i++) {
@@ -155,15 +180,16 @@ function countFloating(mainCards) {
 /* ==================== 对外入口 ==================== */
 
 /**
- * 候选轮次：只用来在「尾段两块各自的相位」里挑开局可点落在 19–25 的那个。
- * 任何候选都不会改变模板的格集合 —— 规格已经固定了每一层占哪些格。
+ * 候选轮次：只用来在「主体尾段两块各自的相位」里挑开局可点落在 19–25 的那个。
+ * 任何候选都不会改变模板的格集合 —— 规格已经固定了每一层占哪些格，
+ * 外廓段更是由模板完全确定、不参与候选。
  */
-export var TEMPLATE_CANDIDATE_ROUNDS = 16;
+export var TEMPLATE_CANDIDATE_ROUNDS = 64;
 
 /**
- * 生成一套模板的真实牌位。
+ * 生成一套模板的完整真实牌位（主体 + 该模板独有的 44 张外廓牌）。
  *
- * 几何（每层格集合）由规格唯一确定；本函数只在相位与队列位置上取候选，
+ * 几何（每层格集合）由规格唯一确定；本函数只在主体尾段相位上取候选，
  * 使开局可点落在 19–25 且主堆零悬空。生成后立刻做一次规格保真校验，
  * 不过即抛错（带 violations 明细），绝不返回一个「形状不对但能玩」的布局。
  */
@@ -180,7 +206,12 @@ export function generateTemplateLayout(seed, profile, templateId) {
   var bestScore = Infinity;
   var bestVisible = 0;
 
-  for (var r = 0; r < 2; r++) {
+  /* 取消固定队列后，主体底沿不再被四条长链大面积压住，开局可点数对
+   * 「规格内的 fillRot / 尾段相位」更敏感。这里枚举全部 4 个 fillRot × 16 组
+   * 尾段相位（共 64 组候选）。fillRot 是规格计划参数，不是随机偏移：
+   * 每层格集合始终由 (spec, profile, fillRot) 唯一确定，落牌结果带着
+   * specFillRot 交给安装 / 渲染两道保真复核，绝不靠随机掩盖结构。 */
+  for (var r = 0; r < PHASES.length; r++) {
     if (best && bestScore === 0) break;
     var fillRot = (rot + r) % PHASES.length;
     for (var a = 0; a < PHASES.length; a++) {
@@ -198,20 +229,28 @@ export function generateTemplateLayout(seed, profile, templateId) {
   }
 
   if (!best) throw new Error('模板 ' + templateId + ' 没有任何可用候选（相位候选全部失败）');
-  throw new Error('模板 ' + templateId + ' 生成失败：' +
+  var err = new Error('模板 ' + templateId + ' 生成失败：' +
     TEMPLATE_CANDIDATE_ROUNDS + ' 组遮挡候选都无法同时满足「保真 + 零悬空 + 开局可点 ' +
     VISIBLE_MIN + '–' + VISIBLE_MAX + '」（最好的一组：可点 ' + bestVisible +
     '、悬空 ' + best.floatingCount + '）');
+  /* 诊断信息：把最佳候选挂到错误上，便于测试/工具定位是哪一段贡献了多余可点牌 */
+  err.cards = best;
+  err.visible = bestVisible;
+  err.floating = best.floatingCount;
+  err.templateId = templateId;
+  err.profileId = profile.id;
+  throw err;
 }
 
 /**
  * 第二关「规格保真」复核（安装后 / 渲染前两道复用同一个实现）。
  *
  * 与生成时那一道的区别：这里**不复用生成时缓存的结果**，而是从 templateId + 档位
- * 重新取规格、重新展开计划，再拿**牌桌上真实的牌位**逐格比对。任何一层格集合、
- * 轮廓、区域覆盖、同层重叠、晶格、张数不符都会返回 ok=false 与 violations 明细。
+ * 重新取规格、重新展开主体计划与外廓计划，再拿**牌桌上真实的牌位**逐格比对。
+ * 任何一层格集合、轮廓、区域覆盖、同层重叠、晶格、相位、张数不符都会返回
+ * ok=false 与 violations 明细。
  *
- * @param {Array} cards     牌桌真实牌位（含 44 张盲盒队列）
+ * @param {Array} cards     牌桌真实牌位（主体 + 模板外廓段）
  * @param {string} templateId 本局应使用的模板
  * @param {object} profile  本局档位
  */
@@ -240,20 +279,17 @@ export function verifyTemplateFidelity(cards, templateId, profile, fillRot) {
   return checkFidelity(cards, spec, plan, profile);
 }
 
-/** 单组候选：按 (fillRot, 尾段两块相位) 落牌并做全部硬校验 */
+/** 单组候选：按 (fillRot, 尾段两块相位) 落主体，再拼上模板自有外廓段并做全部硬校验 */
 function buildCandidate(spec, profile, templateId, fillRot, pa, pb, base, salt) {
+  void base; void salt;   // 候选只改主体尾段相位；外廓牌位与 seed 无关
   var tailPhase = function (block) { return block === 0 ? pa : pb; };
   var plan = specPlan(spec, profile, { fillRot: fillRot, tailPhase: tailPhase });
   var main = buildMain(profile, spec, plan);
+  var built = buildOuter(spec, profile);
+  var op = built.plan;
 
-  var q = buildQueue(makeRng((base ^ Math.imul(salt + 1, 0x85ebca6b)) >>> 0), plan.layerCount,
-    profile.queueCount / QUEUE_SHAPE.reduce(function (a, x) { return a + x.n; }, 0));
-  if (q.total !== profile.queueCount) {
-    throw new Error('模板队列张数 ' + q.total + ' ≠ 档位 ' + profile.queueCount);
-  }
-
-  var cards = main.concat(q.cards);
-  cards.layerCount = plan.layerCount + q.layers;
+  var cards = main.concat(built.cards);
+  cards.layerCount = plan.layerCount + op.layerCount;
   cards.floatingCount = countFloating(main);
 
   for (var ci = 0; ci < cards.length; ci++) {
@@ -277,7 +313,7 @@ function buildCandidate(spec, profile, templateId, fillRot, pa, pb, base, salt) 
   var fidelity = null;
   var ok = false;
 
-  /* 可点张数 / 悬空先过（便宜），再做保真校验（贵） —— 两者都过才接受 */
+  /* 可点张数 / 悬空先过（便宜），再做完整布局保真校验（贵） —— 两者都过才接受 */
   if (vdev === 0 && cards.floatingCount === 0) {
     fidelity = checkFidelity(cards, spec, plan, profile);
     ok = fidelity.ok;
@@ -292,6 +328,8 @@ function buildCandidate(spec, profile, templateId, fillRot, pa, pb, base, salt) 
     cards.specFillRot = plan.fillRot;
     cards.fidelity = fidelity;
     cards.visible = v;
+    cards.outerSignature = op.signature;
+    cards.outerLayerCount = op.layerCount;
     return { accept: true, cards: cards, plan: plan, visible: v, score: 0 };
   }
 
@@ -331,24 +369,32 @@ export function templateCandidateStats(seed, profile, templateId) {
 /** 模板布局的自检摘要（测试 / 报告用） */
 export function describeTemplateLayout(cards, tpl, visible) {
   var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  /* 主堆单独算一份包围盒：盲盒队列固定铺在下方，混在一起会把 20 套形状差异抹平 */
+  /* 主体单独算一份包围盒：外廓段是每套模板独有的下摆，混在一起会抹平主体差异 */
   var mMinX = Infinity, mMaxX = -Infinity, mMinY = Infinity, mMaxY = -Infinity;
+  var oMinX = Infinity, oMaxX = -Infinity, oMinY = Infinity, oMaxY = -Infinity;
   var layers = {};
   var regions = {};
+  var outerTiles = 0;
   for (var i = 0; i < cards.length; i++) {
     var c = cards[i];
     if (c.x < minX) minX = c.x;
     if (c.x + TILE_W > maxX) maxX = c.x + TILE_W;
     if (c.y < minY) minY = c.y;
     if (c.y + TILE_H > maxY) maxY = c.y + TILE_H;
-    if (c.seg !== 'queue') {
+    if (c.seg !== OUTER_SEG) {
       if (c.x < mMinX) mMinX = c.x;
       if (c.x + TILE_W > mMaxX) mMaxX = c.x + TILE_W;
       if (c.y < mMinY) mMinY = c.y;
       if (c.y + TILE_H > mMaxY) mMaxY = c.y + TILE_H;
+      regions[c.region] = (regions[c.region] || 0) + 1;
+    } else {
+      outerTiles++;
+      if (c.x < oMinX) oMinX = c.x;
+      if (c.x + TILE_W > oMaxX) oMaxX = c.x + TILE_W;
+      if (c.y < oMinY) oMinY = c.y;
+      if (c.y + TILE_H > oMaxY) oMaxY = c.y + TILE_H;
     }
     layers[c.layer] = (layers[c.layer] || 0) + 1;
-    if (c.seg !== 'queue') regions[c.region] = (regions[c.region] || 0) + 1;
   }
   return {
     templateId: tpl.templateId,
@@ -357,6 +403,8 @@ export function describeTemplateLayout(cards, tpl, visible) {
     regions: Object.keys(regions).length,
     box: { w: maxX - minX, h: maxY - minY, minX: minX, minY: minY },
     mainBox: { w: mMaxX - mMinX, h: mMaxY - mMinY, minX: mMinX, minY: mMinY },
+    outerBox: { w: oMaxX - oMinX, h: oMaxY - oMinY, minX: oMinX, minY: oMinY },
+    outerTiles: outerTiles,
     /* 开局可点张数：优先用调用方传入的实测值，其次取生成时挂在 cards.visible 上的数 */
     visible: typeof visible === 'number' ? visible
       : (typeof cards.visible === 'number' ? cards.visible : null),
