@@ -1,0 +1,15 @@
+{
+  "name": "mah-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MAH / MahLeMah 微信小程序版 — 增量产品开发，独立于桌面版",
+  "scripts": {
+    "build:core": "node tools/build-core.mjs",
+    "test": "node tests/run-tests.mjs",
+    "test:random": "node tests/random-1000.mjs",
+    "test:all": "node tests/run-tests.mjs && node tests/random-1000.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

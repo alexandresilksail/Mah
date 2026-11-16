@@ -1,0 +1,58 @@
+/* MAH 全局样式 — 暖白 / 奶油底 + 橙珊瑚主色（沿用原作浅色视觉体系） */
+page {
+  --bg-top: #FFF9EC;
+  --bg-mid: #F7EEDC;
+  --cream: #FFF5E2;
+  --ink: #4A3524;
+  --ink-dim: #8B7154;
+  --gold: #D79B33;
+  --orange: #F08A3C;
+  --coral: #E4634A;
+  --green: #58A473;
+  --panel: #FFFFFF;
+  background: linear-gradient(160deg, #FFF9EC 0%, #F7EEDC 60%, #EFDFC2 100%);
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32rpx;
+}
+
+.card {
+  background: var(--panel);
+  border: 2rpx solid rgba(150, 112, 70, 0.18);
+  border-radius: 28rpx;
+  box-shadow: 0 12rpx 36rpx rgba(96, 66, 38, 0.10);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  height: 96rpx;
+  border: none;
+  transition: transform 0.08s ease, opacity 0.08s ease;
+}
+.btn::after { border: none; }
+.btn:active { transform: scale(0.97); opacity: 0.9; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #F08A3C 0%, #E4634A 100%);
+  color: #fff;
+  box-shadow: 0 10rpx 24rpx rgba(228, 99, 74, 0.35);
+}
+.btn-ghost {
+  background: #FFF5E2;
+  color: var(--ink);
+  border: 2rpx solid rgba(150, 112, 70, 0.24);
+}
+
+.muted { color: var(--ink-dim); }
+.tiny { font-size: 22rpx; }

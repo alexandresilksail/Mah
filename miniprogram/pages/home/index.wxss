@@ -1,0 +1,26 @@
+.home { display: flex; flex-direction: column; align-items: center; padding-top: 80rpx; }
+.brand { text-align: center; margin-bottom: 48rpx; }
+.brand-mark {
+  width: 180rpx; height: 180rpx; line-height: 180rpx; margin: 0 auto 24rpx;
+  border-radius: 44rpx; font-size: 64rpx; font-weight: 900; letter-spacing: 4rpx;
+  color: #fff; background: linear-gradient(135deg,#F08A3C,#E4634A);
+  box-shadow: 0 16rpx 40rpx rgba(228,99,74,0.35);
+}
+.brand-title { font-size: 56rpx; font-weight: 900; color: #4A3524; letter-spacing: 6rpx; }
+.brand-sub { font-size: 26rpx; color: #8B7154; margin-top: 12rpx; letter-spacing: 4rpx; }
+.stats {
+  width: 100%; display: flex; align-items: center; justify-content: space-around;
+  padding: 32rpx 0; margin-bottom: 48rpx;
+}
+.stat { display: flex; flex-direction: column; align-items: center; }
+.stat-num { font-size: 52rpx; font-weight: 800; color: #D79B33; }
+.stat-label { font-size: 24rpx; color: #8B7154; margin-top: 8rpx; }
+.stat-divider { width: 2rpx; height: 60rpx; background: rgba(150,112,70,0.2); }
+.actions { width: 100%; display: flex; flex-direction: column; gap: 24rpx; }
+.main-btn { width: 100%; }
+.action-row { display: flex; gap: 24rpx; }
+.half-btn { flex: 1; }
+.rules { width: 100%; margin-top: 40rpx; padding: 32rpx; }
+.rules-title { font-size: 32rpx; font-weight: 800; color: #4A3524; margin-bottom: 20rpx; }
+.rule { font-size: 26rpx; color: #6B5238; line-height: 1.9; }
+.footer { margin-top: auto; padding: 40rpx 0 24rpx; }

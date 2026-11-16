@@ -1,0 +1,82 @@
+.game-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #F7EEDC;
+}
+.game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+.hud {
+  position: absolute;
+  top: calc(16rpx + env(safe-area-inset-top));
+  left: 24rpx;
+  right: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+.hud-left, .hud-right { display: flex; flex-direction: column; }
+.hud-right { align-items: flex-end; }
+.hud-level {
+  font-size: 36rpx; font-weight: 800; color: #4A3524;
+  text-shadow: 0 2rpx 6rpx rgba(255,255,255,0.8);
+}
+.hud-sub { font-size: 20rpx; color: #8B7154; margin-top: 4rpx; }
+.hud-remain { font-size: 26rpx; font-weight: 700; color: #A97520; }
+.progress-track {
+  width: 180rpx; height: 10rpx; margin-top: 8rpx;
+  background: rgba(150,112,70,0.2); border-radius: 999rpx; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg,#F08A3C,#E4634A); border-radius: 999rpx;
+  transition: width 0.2s ease;
+}
+
+/* 道具栏：HUD 下方，居中一行三枚，避开画布下方槽位/临时区 */
+.propbar {
+  position: absolute;
+  top: calc(120rpx + env(safe-area-inset-top));
+  left: 24rpx; right: 24rpx;
+  display: flex; gap: 16rpx;
+  pointer-events: auto;
+}
+.prop-btn {
+  flex: 1; height: 92rpx; padding: 0; margin: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255,252,244,0.94);
+  border: 2rpx solid rgba(180,140,80,0.35);
+  border-radius: 18rpx;
+  line-height: 1.1;
+}
+.prop-btn-hover { background: #F3E3C4; }
+.prop-btn[disabled] { opacity: 0.42; }
+.prop-ico {
+  font-size: 32rpx; font-weight: 800; color: #A97520;
+}
+.prop-label {
+  font-size: 20rpx; color: #8B7154; margin-top: 4rpx;
+}
+
+.toolbar {
+  position: absolute;
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  left: 24rpx; right: 24rpx;
+  display: flex; gap: 24rpx;
+}
+.tool-btn { flex: 1; height: 88rpx; font-size: 30rpx; }
+.modal-mask {
+  position: absolute; inset: 0; background: rgba(40,28,18,0.45);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal { padding: 40rpx; }
+.revive-modal { display: flex; flex-direction: column; align-items: center; width: 560rpx; }
+.revive-title { font-size: 40rpx; font-weight: 800; color: #A97520; }
+.revive-desc { font-size: 28rpx; color: #6B563E; margin: 24rpx 0 36rpx; text-align: center; }
+.revive-actions { display: flex; gap: 20rpx; width: 100%; }

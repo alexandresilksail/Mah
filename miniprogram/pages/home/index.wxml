@@ -1,0 +1,32 @@
+<view class="page home">
+  <view class="brand">
+    <view class="brand-mark">MAH</view>
+    <view class="brand-title">麻了个麻</view>
+    <view class="brand-sub">堆叠三消 · 休闲益智</view>
+  </view>
+
+  <view class="stats card">
+    <view class="stat"><text class="stat-num">{{bestLevel}}</text><text class="stat-label">最高关卡</text></view>
+    <view class="stat-divider"></view>
+    <view class="stat"><text class="stat-num">{{wins}}</text><text class="stat-label">通关次数</text></view>
+  </view>
+
+  <view class="actions">
+    <button class="btn btn-primary main-btn" bindtap="startLevel1">第一关 · 入门</button>
+    <button class="btn btn-primary main-btn" bindtap="startLevel2">第二关 · 挑战</button>
+    <view class="action-row">
+      <button class="btn btn-ghost half-btn" bindtap="toggleRules">游戏规则</button>
+      <button class="btn btn-ghost half-btn" bindtap="openSettings">设置</button>
+    </view>
+  </view>
+
+  <view wx:if="{{showRules}}" class="card rules">
+    <view class="rules-title">怎么玩</view>
+    <view class="rule">· 点击未被上层牌遮挡的牌，收入底部七个槽位。</view>
+    <view class="rule">· 三张相同的牌自动消除。</view>
+    <view class="rule">· 槽位被占满且无法消除即失败。</view>
+    <view class="rule">· 清空全部牌即胜利。第二关含 20 套不同布局。</view>
+  </view>
+
+  <view class="footer tiny muted">{{version}} · 原创图案与规则 · 离线可玩</view>
+</view>

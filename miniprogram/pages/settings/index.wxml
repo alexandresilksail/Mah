@@ -1,0 +1,31 @@
+<view class="page settings">
+  <view class="settings-title">设置</view>
+
+  <view class="card group">
+    <view class="row">
+      <view class="row-label"><text class="row-name">音效</text><text class="row-desc">点击、消除等反馈音</text></view>
+      <switch checked="{{soundOn}}" bindchange="onToggleSound" color="#F08A3C" />
+    </view>
+    <view class="row" bindtap="onMusicHint">
+      <view class="row-label"><text class="row-name">背景音乐</text><text class="row-desc">暂未开放（版权原因）</text></view>
+      <text class="row-badge">无音乐</text>
+    </view>
+    <view class="row">
+      <view class="row-label"><text class="row-name">震动反馈</text><text class="row-desc">点击与错误提示时震动</text></view>
+      <switch checked="{{vibrateOn}}" bindchange="onToggleVibrate" color="#F08A3C" />
+    </view>
+  </view>
+
+  <view class="card group">
+    <view class="row"><view class="row-label"><text class="row-name">游戏规则</text></view></view>
+    <view class="rule">点击未被遮挡的牌收入底部七个槽位；三张相同自动消除；槽位占满且无法消除即失败；清空全部牌即胜利。</view>
+  </view>
+
+  <view class="card group about">
+    <view class="row"><text class="row-name">版本</text><text class="v">{{version}}</text></view>
+    <view class="row"><text class="row-name">存储结构</text><text class="v tiny">{{schema}}</text></view>
+    <view class="row"><text class="row-name">模式</text><text class="v">离线可玩 · 无需登录</text></view>
+  </view>
+
+  <button class="btn btn-ghost reset-btn" bindtap="clearData">重置本地进度</button>
+</view>

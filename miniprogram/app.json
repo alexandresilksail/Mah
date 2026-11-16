@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/game/index",
+    "pages/result/index",
+    "pages/settings/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#FFF9EC",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "MAH",
+    "backgroundColor": "#F7EEDC",
+    "backgroundTextStyle": "light",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,21 @@
+<view class="page result">
+  <view class="result-icon">{{won ? '🏆' : '💪'}}</view>
+  <view class="result-title">{{won ? '恭喜过关！' : '再试一次'}}</view>
+  <view class="result-sub">{{won ? '全部牌已消除' : '槽位已满，本局结束'}}</view>
+
+  <view class="card info">
+    <view class="info-row"><text class="k">关卡</text><text class="v">第 {{levelId}} 关</text></view>
+    <view class="info-row"><text class="k">本局耗时</text><text class="v">{{duration}}</text></view>
+    <view class="info-row"><text class="k">牌局编号</text><text class="v mono">{{sessionId}}</text></view>
+    <view class="info-row"><text class="k">布局模板</text><text class="v mono">{{templateId}}</text></view>
+    <view class="info-row"><text class="k">种子</text><text class="v mono">{{seed}}</text></view>
+    <view class="info-row"><text class="k">总牌数</text><text class="v">{{totalTiles}}</text></view>
+    <view wx:if="{{revived}}" class="info-row"><text class="k">本局复活</text><text class="v">已使用 1 次</text></view>
+  </view>
+
+  <view class="actions">
+    <button class="btn btn-primary main-btn" bindtap="replay">再玩一次</button>
+    <button class="btn btn-ghost main-btn" open-type="share">分享战绩</button>
+    <button class="btn btn-ghost main-btn" bindtap="backHome">返回首页</button>
+  </view>
+</view>

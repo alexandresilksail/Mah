@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-11-16T15:36:00.122Z",
+  "totalGames": 1000,
+  "byLevel": {
+    "l1": {
+      "attempts": 500,
+      "success": 500,
+      "exception": 0,
+      "illegalTiles": 0,
+      "unreachable": 0
+    },
+    "l2": {
+      "attempts": 500,
+      "success": 500,
+      "exception": 0,
+      "illegalTiles": 0,
+      "unreachable": 0,
+      "templateConflict": 0,
+      "fidelityFail": 0
+    }
+  },
+  "templateDistribution": {
+    "L2-P01": 26,
+    "L2-P02": 28,
+    "L2-P03": 22,
+    "L2-P04": 25,
+    "L2-P05": 22,
+    "L2-P06": 26,
+    "L2-P07": 25,
+    "L2-P08": 24,
+    "L2-P09": 27,
+    "L2-P10": 24,
+    "L2-P11": 25,
+    "L2-P12": 25,
+    "L2-P13": 27,
+    "L2-P14": 24,
+    "L2-P15": 24,
+    "L2-P16": 25,
+    "L2-P17": 23,
+    "L2-P18": 29,
+    "L2-P19": 24,
+    "L2-P20": 25
+  },
+  "seedReproduce": {
+    "tested": 50,
+    "pass": 50,
+    "fail": 0
+  },
+  "recentDedup": {
+    "checked": 500,
+    "duplicates": 0
+  },
+  "tileCountViolations": 0,
+  "exceptions": [],
+  "startedAt": 1794843360138,
+  "elapsedMs": 34478,
+  "passed": true
+}

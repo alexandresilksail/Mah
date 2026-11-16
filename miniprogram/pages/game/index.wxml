@@ -1,0 +1,56 @@
+<view class="game-page">
+  <!-- 游戏主画布：2d 类型，触摸走原生事件 -->
+  <canvas type="2d" id="gameCanvas" class="game-canvas" bindtouchstart="onTouchStart"></canvas>
+
+  <!-- 顶部 HUD（WXML 层，避免 canvas 内绘制中文布局差异） -->
+  <view class="hud">
+    <view class="hud-left">
+      <text class="hud-level">{{levelName}}</text>
+      <text class="hud-sub">模板 {{templateId}} · 种子 {{seedText}}</text>
+    </view>
+    <view class="hud-right">
+      <text class="hud-remain">剩余 {{remaining}}/{{total}}</text>
+      <view class="progress-track"><view class="progress-fill" style="width:{{progress}}%;"></view></view>
+    </view>
+  </view>
+
+  <!-- 道具栏：置于顶部，避免遮挡画布下方的槽位(y≈1042)与临时区(y≈1172) -->
+  <view class="propbar">
+    <button class="prop-btn" hover-class="prop-btn-hover" bindtap="onShuffle">
+      <text class="prop-ico">洗</text>
+      <text class="prop-label">洗牌 {{propShuffle}}</text>
+    </button>
+    <button class="prop-btn" hover-class="prop-btn-hover" bindtap="onUndo" disabled="{{!canUndo}}">
+      <text class="prop-ico">撤</text>
+      <text class="prop-label">撤销 {{propUndo}}</text>
+    </button>
+    <button class="prop-btn" hover-class="prop-btn-hover" bindtap="onRemove" disabled="{{!canRemove}}">
+      <text class="prop-ico">移</text>
+      <text class="prop-label">移出 {{propRemove}}</text>
+    </button>
+  </view>
+
+  <!-- 操作栏：置于底部安全区 -->
+  <view class="toolbar">
+    <button class="tool-btn btn btn-ghost" bindtap="onBack">首页</button>
+    <button class="tool-btn btn btn-primary" bindtap="onRestart">重新开始</button>
+  </view>
+
+  <!-- 失败复活询问 -->
+  <view wx:if="{{showReviveAsk}}" class="modal-mask">
+    <view class="card modal revive-modal">
+      <text class="revive-title">槽位已满</text>
+      <text class="revive-desc">还有 {{reviveLeft}} 次复活机会，清空槽位继续本局？</text>
+      <view class="revive-actions">
+        <button class="tool-btn btn btn-ghost" bindtap="onDeclineRevive">结束本局</button>
+        <button class="tool-btn btn btn-primary" bindtap="onConfirmRevive">复活继续</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showRestartConfirm}}" class="modal-mask">
+    <view class="card modal">
+      <text>确定重新开始本关？</text>
+    </view>
+  </view>
+</view>

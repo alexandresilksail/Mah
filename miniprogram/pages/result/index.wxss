@@ -1,0 +1,16 @@
+.result { display: flex; flex-direction: column; align-items: center; padding-top: 56rpx; }
+.result-icon { font-size: 120rpx; line-height: 1; margin-bottom: 24rpx; }
+.result-title { font-size: 52rpx; font-weight: 900; color: #4A3524; }
+.result-sub { font-size: 26rpx; color: #8B7154; margin-top: 12rpx; margin-bottom: 40rpx; }
+.info { width: 100%; padding: 24rpx 32rpx; margin-bottom: 48rpx; }
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18rpx 0; border-bottom: 2rpx solid rgba(150,112,70,0.10);
+  font-size: 28rpx;
+}
+.info-row:last-child { border-bottom: none; }
+.k { color: #8B7154; }
+.v { color: #4A3524; font-weight: 600; }
+.mono { font-family: monospace; font-size: 24rpx; }
+.actions { width: 100%; display: flex; flex-direction: column; gap: 22rpx; }
+.main-btn { width: 100%; }

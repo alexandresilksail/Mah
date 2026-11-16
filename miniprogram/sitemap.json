@@ -1,0 +1,9 @@
+{
+  "desc": "MAH 小程序 sitemap，首期关闭索引",
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "*"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "module": "CommonJS",
+    "target": "ES2017",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["ES2017"],
+    "typeRoots": ["./typings"]
+  },
+  "include": [
+    "app.ts",
+    "pages/**/*.ts",
+    "components/**/*.ts",
+    "renderer/**/*.ts",
+    "services/**/*.ts",
+    "core/**/*.d.ts",
+    "typings/**/*.d.ts"
+  ],
+  "exclude": ["node_modules", "core/shared", "core/mah-core.js", "tests", "tools", "dist"]
+}
