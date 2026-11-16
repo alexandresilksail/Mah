@@ -16,7 +16,7 @@ const STORAGE_KEY = 'mah_miniprogram_save';
 const STORAGE_VERSION = 1;
 const SCHEMA_ID = 'mah-miniprogram-save';
 
-const Core = require('../../core/mah-core.js');
+const Core = require('../core/mah-core.js');
 
 export interface Settings {
   soundOn: boolean;

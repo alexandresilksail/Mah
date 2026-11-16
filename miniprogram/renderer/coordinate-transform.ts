@@ -6,7 +6,7 @@
  *  · 正确处理设备像素比：canvas.width = cssW * dpr，绘制时先 scale(dpr)；
  *  · 牌面坐标与点击区域一致：screen↔logic 双向变换共用同一组参数。
  */
-const Core = require('../../core/mah-core.js');
+const Core = require('../core/mah-core.js');
 
 export interface Viewport {
   cssW: number; cssH: number; dpr: number;

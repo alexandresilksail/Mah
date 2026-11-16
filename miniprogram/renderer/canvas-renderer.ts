@@ -11,7 +11,7 @@
  */
 import { CoordinateTransform } from './coordinate-transform';
 
-const Core = require('../../core/mah-core.js');
+const Core = require('../core/mah-core.js');
 
 export interface RenderBindings {
   canvasId: string;

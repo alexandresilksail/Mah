@@ -8,7 +8,7 @@
  * 注意：temp 牌自身的 x/y 停留在入槽时的槽位坐标，不能用于命中临时区，
  * 否则会出现「看得见却点不到 / 点到别处」的错位（首版缺陷，此处修正）。
  */
-const Core = require('../../core/mah-core.js');
+const Core = require('../core/mah-core.js');
 
 export class TouchHandler {
   /**

@@ -59,7 +59,13 @@
 > 说明：测试中发现并修正了测试脚手架自身的两处缺陷（refreshBlocked 语义误解、第二关 save 未跨局共享导致去重失效），修正的是测试代码而非游戏逻辑。修正后核心逻辑表现与预期一致。
 > v0.2 复测：补齐 `TEMP_ZONE` 导出并重建 `mah-core.js` 后再次真实执行 1000 局，结果与首测完全一致（20/20 模板、去重 0、Seed 50/50），确认 bundle 变更未影响布局系统。
 
-## 4. TypeScript 编译校验
+## 4·补、真机前静态预检（`miniprogram/tests/preflight.mjs`）
+
+**结果：19 通过 / 0 失败。** 用 Node 模拟开发者工具关键校验：页面路径、事件绑定↔方法、Canvas 节点一致、require 路径可解析、包体、DOM 泄漏、密钥明文、BGM 引用。
+
+> **重大发现**：本轮预检抓出并修复了 4 处会导致真机**游戏页直接白屏**的真实缺陷——`renderer/{canvas-renderer,coordinate-transform,touch-handler}.ts` 与 `services/storage.ts` 中 `require('../../core/mah-core.js')` 路径错误（这些文件位于一级子目录，正确应为 `../core/`）。此前所有 Node 测试仅加载 core bundle、不加载渲染/服务层，故从未暴露。修复后预检 19/0、TS 0 错误、规则 44/0、生命周期 8/0、道具 34/0 全部复测通过。
+
+## 5. TypeScript 编译校验
 
 `tsc --noEmit -p miniprogram/tsconfig.json` → **0 错误**。
 
