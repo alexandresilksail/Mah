@@ -133,14 +133,21 @@ export function clamp(v: number, a: number, b: number): number;
 export function lerp(a: number, b: number, t: number): number;
 export function overlapRatio(a: any, b: any): number;
 
-/** 原版整页绘制（画面保真）：牌区主体直接复用原桌面版实现 */
+/** 原版整页绘制：全部函数与 src/game/render.js 字节级同源，按 Windows 顺序调用 */
 export function drawBackground(ctx: any, t: number): void;
 export function drawBoard(ctx: any, game: Game): void;
 export function drawSlot(ctx: any, game: Game, ui: any): void;
+export function drawTools(ctx: any, game: Game, ui: any): void;
+export function drawHUD(ctx: any, game: Game, ui: any): void;
+export function drawIcons(ctx: any, game: Game, ui: any): void;
+export function drawButtons(ctx: any, ui: any, game: Game): void;
 export function drawFx(ctx: any, game: Game): void;
+export function drawOverlay(ctx: any, game: Game, ui: any): void;
+export function drawUninstallConfirm(ctx: any, game: Game, ui: any): void;
+export function drawSettingsPanel(ctx: any, game: Game, ui: any): void;
+export function drawTitleScreen(ctx: any, game: Game, ui: any, t: number): void;
 export function getUI(game: Game): { buttons: any[] };
 export function hitButton(ui: any, x: number, y: number): any;
 export function cardAt(game: Game, x: number, y: number): Card | null;
-export function drawTitleScreen(ctx: any, game: Game, ui: any, t: number): void;
 export function drawMascot(ctx: any, x: number, y: number, scale?: number): void;
 export function drawTitle(ctx: any, x: number, y: number): void;

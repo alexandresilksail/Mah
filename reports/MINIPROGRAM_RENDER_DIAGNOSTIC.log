@@ -1,0 +1,21 @@
+[mah] level=2 profileId=2 seed=2712945425 gameId=g2-mwkdvov3-1-725hu4-new_game reason=new_game tiles=300 sig=a294ee828b4a
+=== 完整渲染链（Windows 顺序）===
+  ✓ getUI
+  UI 按钮数: 6 menu,settings,sound,shuffle,undo,remove
+  ✓ drawBackground
+  ✓ drawBoard
+  ✓ drawSlot
+  ✓ drawTools
+  ✓ drawHUD
+  ✓ drawFx
+  ✓ drawOverlay
+  ✓ drawOverlay(暂停)
+  ✓ drawSettingsPanel
+  ✓ drawOverlay(胜利)
+  ✓ drawOverlay(失败)
+
+=== 结果 ===
+绘制调用总数: 41926
+fillText 调用: 27
+drawImage 调用: 0
+错误数: 0 []

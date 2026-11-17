@@ -98,13 +98,20 @@ __export(index_exports, {
   describeTemplateLayout: () => describeTemplateLayout,
   drawBackground: () => drawBackground,
   drawBoard: () => drawBoard,
+  drawButtons: () => drawButtons,
   drawFx: () => drawFx,
+  drawHUD: () => drawHUD,
+  drawIcons: () => drawIcons,
   drawMascot: () => drawMascot,
+  drawOverlay: () => drawOverlay,
+  drawSettingsPanel: () => drawSettingsPanel,
   drawSlot: () => drawSlot,
   drawTile: () => drawTile,
   drawTileShadow: () => drawTileShadow,
   drawTitle: () => drawTitle,
   drawTitleScreen: () => drawTitleScreen,
+  drawTools: () => drawTools,
+  drawUninstallConfirm: () => drawUninstallConfirm,
   easeOutCubic: () => easeOutCubic,
   generateLevel: () => generateLevel,
   generateProfileLayout: () => generateProfileLayout,
@@ -6804,6 +6811,61 @@ function drawIcons(ctx, game, ui) {
     if (b.id === "settings") roundIconButton(ctx, b, iconSettings);
   }
 }
+function drawHUD(ctx, game, ui) {
+  const tg = ctx.createLinearGradient(0, 30, 0, 74);
+  tg.addColorStop(0, "#F5B44E");
+  tg.addColorStop(0.55, C.orange);
+  tg.addColorStop(1, C.coral);
+  ctx.save();
+  ctx.shadowColor = "rgba(120, 80, 40, 0.22)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 2;
+  text(ctx, "Mah\u4E86\u4E2AMah", W / 2, 50, {
+    size: 34,
+    weight: "800",
+    fill: tg,
+    family: '"Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif'
+  });
+  ctx.restore();
+  text(ctx, `\u7B2C ${game.level} \u5173 \xB7 \u5171 ${LEVEL_COUNT} \u5173`, W / 2, 92, {
+    size: 18,
+    weight: "700",
+    fill: C.textDim
+  });
+  const bw = 260;
+  const bx = (W - bw) / 2;
+  const by = 114;
+  ctx.save();
+  ctx.fillStyle = "rgba(120, 90, 60, 0.18)";
+  rr(ctx, bx, by, bw, 6, 3);
+  ctx.fill();
+  const p = clamp(game.progress(), 0, 1);
+  if (p > 5e-3) {
+    const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    grad.addColorStop(0, C.yellow);
+    grad.addColorStop(1, C.orange);
+    ctx.fillStyle = grad;
+    rr(ctx, bx, by, Math.max(6, bw * p), 6, 3);
+    ctx.fill();
+  }
+  ctx.restore();
+  const totalTiles = game.cards.length;
+  const kindSet = {};
+  for (let i = 0; i < game.cards.length; i++) kindSet[game.cards[i].type] = 1;
+  let kindCount = 0;
+  for (const k in kindSet) if (Object.prototype.hasOwnProperty.call(kindSet, k)) kindCount++;
+  const layerCount = game.layersMeta && game.layersMeta.length || 0;
+  text(ctx, `\u5269 ${game.remaining()} / ${totalTiles} \u5F20 \xB7 ${kindCount} \u79CD \xB7 ${layerCount} \u5C42`, W / 2, 140, {
+    size: 15,
+    weight: "600",
+    fill: C.textFaint
+  });
+  for (const b of ui.buttons) {
+    if (b.id === "menu") roundIconButton(ctx, b, iconMenu);
+    if (b.id === "sound") roundIconButton(ctx, b, (c, x, y) => iconSound(c, x, y, game.soundOn));
+    if (b.id === "settings") roundIconButton(ctx, b, iconSettings);
+  }
+}
 var boardCache = null;
 var boardCacheDisabled = false;
 function drawBoard(ctx, game) {
@@ -7025,6 +7087,109 @@ function drawSlot(ctx, game, ui) {
     weight: "600"
   });
 }
+function toolIcon(ctx, id, cx, cy, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  if (id === "shuffle") {
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy - 7);
+    ctx.quadraticCurveTo(cx + 2, cy - 15, cx + 11, cy - 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 11, cy - 2);
+    ctx.lineTo(cx + 12, cy - 9);
+    ctx.moveTo(cx + 11, cy - 2);
+    ctx.lineTo(cx + 4, cy - 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy + 8);
+    ctx.quadraticCurveTo(cx + 2, cy + 16, cx + 11, cy + 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 11, cy + 3);
+    ctx.lineTo(cx + 12, cy + 10);
+    ctx.moveTo(cx + 11, cy + 3);
+    ctx.lineTo(cx + 4, cy + 5);
+    ctx.stroke();
+  } else if (id === "undo") {
+    ctx.beginPath();
+    ctx.arc(cx, cy + 2, 11, Math.PI * 0.95, Math.PI * 2.1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 11, cy - 7);
+    ctx.lineTo(cx - 11, cy + 2);
+    ctx.lineTo(cx - 2, cy + 2);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(cx - 13, cy + 1);
+    ctx.lineTo(cx - 9, cy + 12);
+    ctx.lineTo(cx + 9, cy + 12);
+    ctx.lineTo(cx + 13, cy + 1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 5);
+    ctx.lineTo(cx, cy - 12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 5.5, cy - 6);
+    ctx.lineTo(cx, cy - 13);
+    ctx.lineTo(cx + 5.5, cy - 6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawTools(ctx, game, ui) {
+  var _a;
+  for (const b of ui.buttons) {
+    if (b.kind !== "tool") continue;
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    const on = b.enabled;
+    const color = on ? b.id === "shuffle" ? C.purple : b.id === "undo" ? C.blue : C.orange : "rgba(150, 112, 70, 0.35)";
+    ctx.save();
+    ctx.globalAlpha = on ? 1 : 0.55;
+    ctx.fillStyle = on ? "rgba(255, 255, 255, 0.96)" : "rgba(240, 230, 214, 0.75)";
+    circle(ctx, cx, cy, b.w / 2);
+    ctx.fill();
+    ctx.strokeStyle = on ? "rgba(150, 112, 70, 0.42)" : "rgba(150, 128, 96, 0.22)";
+    ctx.lineWidth = 1.8;
+    circle(ctx, cx, cy, b.w / 2 - 1);
+    ctx.stroke();
+    ctx.strokeStyle = on ? "rgba(255, 255, 255, 0.95)" : "rgba(255,255,255,0.4)";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, b.w / 2 - 4, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.stroke();
+    ctx.restore();
+    toolIcon(ctx, b.id, cx, cy, color);
+    const n = (_a = b.count) != null ? _a : 0;
+    const bx = cx + b.w / 2 - 6;
+    const by = cy - b.h / 2 + 6;
+    ctx.save();
+    ctx.fillStyle = n > 0 ? C.coral : "rgba(160, 140, 116, 0.85)";
+    circle(ctx, bx, by, 11);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+    text(ctx, String(n), bx, by + 0.5, {
+      size: 14,
+      weight: "800",
+      fill: n > 0 ? "#FFF3DE" : "rgba(200, 180, 150, 0.55)"
+    });
+    text(ctx, b.label, cx, b.y - 16, {
+      size: 16,
+      weight: "600",
+      fill: on ? C.textDim : C.textFaint
+    });
+  }
+}
 function drawButtons(ctx, ui, game) {
   for (const b of ui.buttons) {
     if (b.kind === "icon" || b.kind === "tool") continue;
@@ -7106,6 +7271,122 @@ function drawTitleScreen(ctx, game, ui, t) {
     size: 17,
     fill: C.textFaint
   });
+}
+function panel(ctx, x, y, w, h) {
+  ctx.save();
+  ctx.fillStyle = "rgba(74, 53, 36, 0.38)";
+  ctx.fillRect(0, 0, W, H);
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, "#FFFBF0");
+  g.addColorStop(1, "#F3E3C6");
+  ctx.fillStyle = g;
+  rr(ctx, x, y, w, h, 28);
+  ctx.shadowColor = "rgba(96, 66, 38, 0.28)";
+  ctx.shadowBlur = 40;
+  ctx.fill();
+  ctx.shadowColor = "rgba(0,0,0,0)";
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(150, 112, 70, 0.48)";
+  ctx.lineWidth = 2;
+  rr(ctx, x + 1, y + 1, w - 2, h - 2, 27);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawOverlay(ctx, game, ui) {
+  if (game.uninstallAsk || game.settingsAsk) return;
+  if (game.status === "win") {
+    panel(ctx, 90, 380, W - 180, 420);
+    if (game.graduated) {
+      text(ctx, "\u6BD5\u4E1A\u5566\uFF01", W / 2, 456, { size: 44, weight: "800", fill: C.gold });
+      text(ctx, "\u5168\u90E8\u724C\u90FD\u6E05\u7A7A\u4E86", W / 2, 516, { size: 22, fill: C.text });
+      text(ctx, `\u7528\u65F6 ${((performance.now() - game.levelStartAt) / 1e3).toFixed(1)} \u79D2`, W / 2, 556, {
+        size: 22,
+        fill: C.textDim
+      });
+      text(ctx, "\u4F60\u628A\u8FD9\u5806\u724C\u6E05\u7A7A\u4E86 \u2014\u2014 \u6CA1\u6709\u4E0B\u4E00\u5173\u4E86", W / 2, 616, { size: 19, fill: C.textDim });
+    } else {
+      text(ctx, "\u8FD9\u4E00\u5173\u8FC7\u5566\uFF01", W / 2, 460, { size: 40, weight: "800", fill: C.gold });
+      text(ctx, `\u7B2C ${game.level} \u5173 \xB7 \u5168\u90E8\u6D88\u9664\u5B8C\u6210`, W / 2, 520, { size: 22, fill: C.text });
+      text(ctx, `\u7528\u65F6 ${((performance.now() - game.levelStartAt) / 1e3).toFixed(1)} \u79D2`, W / 2, 560, {
+        size: 22,
+        fill: C.textDim
+      });
+      const nextLv = Math.min(LEVEL_COUNT, game.level + 1);
+      const np = levelParams(nextLv, Math.random, nextLv <= 1 ? game.profile.l1 : game.profile.l2);
+      text(
+        ctx,
+        `\u4E0B\u4E00\u5173\uFF1A${np.cardCount} \u5F20 \xB7 ${np.types} \u79CD \xB7 ${np.layers} \u5C42 \xB7 \u771F\u6B63\u7684\u574E`,
+        W / 2,
+        610,
+        { size: 19, fill: C.orange }
+      );
+      text(ctx, "\u5F00\u5C40\u7BA1\u591F\uFF0C\u8D8A\u5F80\u4E0B\u8D8A\u4E0D\u8BB2\u9053\u7406", W / 2, 642, { size: 18, fill: C.textDim });
+    }
+    drawButtons(ctx, ui, game);
+  } else if (game.status === "lose") {
+    panel(ctx, 90, 380, W - 180, 460);
+    text(ctx, "\u69FD\u4F4D\u6EE1\u4E86", W / 2, 460, { size: 40, weight: "800", fill: C.coral });
+    text(ctx, "7 \u4E2A\u683C\u5B50\u90FD\u88AB\u5360\u4F4F\uFF0C\u6CA1\u80FD\u51D1\u51FA\u4E09\u5F20\u76F8\u540C", W / 2, 516, { size: 20, fill: C.text });
+    text(
+      ctx,
+      game.reviveLeft > 0 ? "\u8FD8\u6709 1 \u6B21\u672C\u5730\u590D\u6D3B\u673A\u4F1A\uFF0C\u53EF\u6E05\u7A7A\u69FD\u4F4D\u7EE7\u7EED" : "\u672C\u5173\u590D\u6D3B\u673A\u4F1A\u5DF2\u7528\u5B8C",
+      W / 2,
+      560,
+      { size: 19, fill: C.textDim }
+    );
+    text(ctx, `\u724C\u5806\u8FD8\u5269 ${game.boardCount()} \u5F20`, W / 2, 610, { size: 20, fill: C.textDim });
+    drawButtons(ctx, ui, game);
+  }
+  if (game.paused) {
+    panel(ctx, 90, 420, W - 180, 440);
+    text(ctx, "\u6682\u505C", W / 2, 500, { size: 38, weight: "800", fill: C.gold });
+    text(ctx, `\u5F53\u524D\u7B2C ${game.level} \u5173\u3000\u5269\u4F59 ${game.remaining()} \u5F20`, W / 2, 548, {
+      size: 20,
+      fill: C.textDim
+    });
+    drawButtons(ctx, ui, game);
+  }
+}
+function drawUninstallConfirm(ctx, game, ui) {
+  if (!game.uninstallAsk) return;
+  panel(ctx, 80, 400, W - 160, 420);
+  text(ctx, "\u5982\u4F55\u5378\u8F7D MahLeMah", W / 2, 470, { size: 32, weight: "800", fill: C.orange });
+  text(ctx, "v2.0.0 \u8D77\u5378\u8F7D\u7531\u6B63\u89C4\u5378\u8F7D\u7A0B\u5E8F\u8D1F\u8D23", W / 2, 536, { size: 21, fill: C.text });
+  text(ctx, "\u5B89\u88C5\u7248\uFF1A\u5F00\u59CB\u83DC\u5355 \u2192\u300C\u5378\u8F7D MahLeMah\u300D", W / 2, 582, { size: 18, fill: C.textDim });
+  text(ctx, "\u6216 Windows \u8BBE\u7F6E \u2192 \u5E94\u7528 \u2192 \u5B89\u88C5\u7684\u5E94\u7528", W / 2, 616, { size: 18, fill: C.textDim });
+  text(ctx, "\u4FBF\u643A\u7248\uFF1A\u76F4\u63A5\u5220\u9664\u6574\u4E2A\u89E3\u538B\u76EE\u5F55\u5373\u53EF", W / 2, 650, { size: 18, fill: C.textDim });
+  text(ctx, "\u6E38\u620F\u5185\u4E0D\u4F1A\u5220\u9664\u6587\u4EF6\u6216\u8C03\u7528\u7CFB\u7EDF\u547D\u4EE4", W / 2, 700, { size: 16, fill: C.textFaint });
+  drawButtons(ctx, ui, game);
+}
+function volumeBar(ctx, x, y, w, h, v) {
+  const segs = 10;
+  const gap = 3;
+  const sw = (w - gap * (segs - 1)) / segs;
+  const on = Math.round(Math.max(0, Math.min(1, v)) * segs);
+  for (let i = 0; i < segs; i++) {
+    ctx.fillStyle = i < on ? C.gold : "rgba(150, 112, 70, 0.22)";
+    rr(ctx, x + i * (sw + gap), y, sw, h, 3);
+    ctx.fill();
+  }
+}
+function drawSettingsPanel(ctx, game, ui) {
+  if (!game.settingsAsk) return;
+  panel(ctx, 80, 340, W - 160, 600);
+  text(ctx, "\u58F0\u97F3\u8BBE\u7F6E", W / 2, 396, { size: 32, weight: "800", fill: C.orange });
+  text(ctx, "\u97F3\u6548\u4E0E\u80CC\u666F\u97F3\u4E50\u4E92\u76F8\u72EC\u7ACB \xB7 \u5185\u7F6E\u66F2\u76EE\u6309\u573A\u666F\u81EA\u52A8\u5207\u6362", W / 2, 432, { size: 16, fill: C.textDim });
+  text(ctx, "\u97F3\u6548", 130, 534, { size: 22, weight: "700", fill: C.text });
+  text(ctx, "\u97F3\u91CF", 424, 534, { size: 15, fill: C.textFaint });
+  volumeBar(ctx, 494, 516, 88, 14, game.sfxVol);
+  if (game.musicBuiltin || game.musicAvailable) {
+    text(ctx, "\u97F3\u4E50", 130, 630, { size: 22, weight: "700", fill: C.text });
+    text(ctx, "\u97F3\u91CF", 424, 630, { size: 15, fill: C.textFaint });
+    volumeBar(ctx, 494, 612, 88, 14, game.musicVol === void 0 ? 0.6 : game.musicVol);
+    text(ctx, game.musicAvailable ? "\u5185\u7F6E 5 \u9996\u573A\u666F\u97F3\u4E50 \xB7 \u4E5F\u53EF\u5728\u4E0B\u65B9\u5BFC\u5165\u66F4\u591A" : "\u5185\u7F6E 5 \u9996\u573A\u666F\u97F3\u4E50 \xB7 \u6B64\u7248\u672C\u4E0D\u652F\u6301\u989D\u5916\u5BFC\u5165", W / 2, 744, { size: 16, fill: C.textDim });
+  } else {
+    text(ctx, "\u5F53\u524D\u7248\u672C\u4E0D\u652F\u6301\u80CC\u666F\u97F3\u4E50\uFF08\u517C\u5BB9\u6A21\u5F0F\uFF09", W / 2, 630, { size: 16, fill: C.textFaint });
+  }
+  drawButtons(ctx, ui, game);
+  text(ctx, "\u9996\u6B21\u70B9\u51FB\u540E\u624D\u5F00\u542F\u97F3\u9891\uFF08\u6D4F\u89C8\u5668\u81EA\u52A8\u64AD\u653E\u7B56\u7565\uFF09", W / 2, 868, { size: 15, fill: C.textFaint });
 }
 function drawFx(ctx, game) {
   for (const p of game.fx) {

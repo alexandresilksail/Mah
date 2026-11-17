@@ -51,9 +51,13 @@ export {
 // 牌面 Canvas 绘制（原创路径）：微信 Canvas 2D 传入 ctx 即可，离屏缓存会自动降级为直绘
 export { drawTile, drawTileShadow, clearTileCache, getType, TYPE_LIST, SUITS_L1, SUITS_L2 } from './shared/tiles.js';
 export { rr, circle, text, clamp, lerp, overlapRatio, easeOutCubic } from './shared/draw.js';
-// 原版整页绘制（画面保真）：牌区主体直接复用，微信端仅替换 HUD/按钮为原生 WXML
+// 原版整页绘制（画面保真）：完整导出 src/game/render.js 的全部绘制 / 交互函数，
+// 微信端 CanvasRenderer 按 Windows 原版顺序调用，保证视觉结构与桌面版逐项一致。
+// 不得只导出 4 个绘制函数就宣称完成原版渲染迁移（渲染回归修复要求）。
 export {
   drawBackground, drawBoard, drawSlot, drawFx,
-  getUI, hitButton, cardAt, drawTitleScreen,
+  drawIcons, drawHUD, drawTools, drawButtons,
+  drawTitleScreen, drawOverlay, drawUninstallConfirm, drawSettingsPanel,
+  getUI, hitButton, cardAt,
 } from './shared/render.js';
 export { drawMascot, drawTitle } from './shared/logo.js';

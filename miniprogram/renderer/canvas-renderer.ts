@@ -1,23 +1,32 @@
 /**
- * 微信小程序 Canvas 2D 主渲染器 — 微信端独立实现（指令第七步）。
+ * 微信小程序 Canvas 2D 主渲染器 — 严格复刻 Windows 桌面版 frame() 渲染链。
  *
- * 复用：牌面绘制调用 Core.drawTile（16 种原创 Canvas 图案，原样复用）。
- * 独立：背景 / 槽位面板 / 顶部信息 / 工具按钮 / 特效 / 动画循环全部微信端实现。
+ * 画面保真原则（渲染回归修复）：
+ *  · 所有界面元素（背景 / 牌堆 / 槽位 / 道具 / HUD / 特效 / 胜负·暂停·设置覆盖层）
+ *    全部调用 src/game/render.js 的原版函数（经 mah-core.js 导出，字节级同源）；
+ *    微信端不重写任何外观相似的实现，杜绝新旧两套界面叠加。
+ *  · 渲染顺序、逻辑坐标系（720×1280）、缩放与命中矩阵与 Windows 完全一致。
  *
- * 生命周期安全性：
- *  · init 只创建一次 canvas 与一次 RAF 循环；destroy 彻底停止循环并解绑；
- *  · onShow 恢复循环，onHide 暂停循环（避免后台仍渲染）；
- *  · 切后台再回来画布不会消失（resize 时重设 DPR 并置 dirty）。
+ * 时间单位：Windows frame() 用秒（dt = min(0.05,(now-prev)/1000)），
+ * 引擎 tick(dt) 也按秒推进（time+=dt, clock+=dt*1000, shake-=dt*4）。
+ * 本渲染器 RAF 回调收到毫秒，统一在 frame() 内换算为秒再传给 tick —— 与桌面版一致。
+ *
+ * 健壮性：单帧绘制分阶段 try/catch，记录阶段 / 错误名 / 堆栈；任一阶段异常都不终止
+ * RAF 循环；切后台暂停、回前台恢复、页面卸载彻底停止，全周期只有一个 RAF 循环。
  */
 import { CoordinateTransform } from './coordinate-transform';
 
 const Core = require('../core/mah-core.js');
 
+// 原版 render.js 多处用 performance.now() 计算用时/动画；部分小程序基础库无全局
+// performance，缺失时提供最小实现，避免整页绘制抛错导致画面缺失。
+if (typeof (globalThis as any).performance === 'undefined') {
+  (globalThis as any).performance = { now: () => Date.now() };
+}
+
 export interface RenderBindings {
   canvasId: string;
-  /** 由页面注入：返回当前 Game 实例（可能为 null） */
   getGame: () => any;
-  /** 由页面注入：是否显示顶部信息 */
   getShowHud?: () => boolean;
 }
 
@@ -34,14 +43,16 @@ export class CanvasRenderer {
   private dpr = 2;
   private dirty = true;
   private reducedMotion = false;
+  private diagLogged = false;
+  private frameErrors = 0;
 
   constructor(bindings: RenderBindings) {
     this.bindings = bindings;
   }
 
   /** 通过 SelectorQuery 获取 2d canvas 节点；只调用一次。
-   *  真机加固：① page 实例与 wx 全局两种 query 兜底；② 尺寸为 0 用 windowInfo 补；
-   *  ③ exec 回调内 try/catch，避免内部异常导致 Promise 永久 pending（表现为白屏无报错）。 */
+   *  真机加固：page 实例与 wx 全局两种 query 兜底；尺寸为 0 用 windowInfo 补；
+   *  exec 回调内 try/catch，避免内部异常导致 Promise 永久 pending（白屏无报错）。 */
   init(pageCtx: any): Promise<void> {
     return new Promise((resolve, reject) => {
       let settled = false;
@@ -51,7 +62,6 @@ export class CanvasRenderer {
         if (err) reject(err); else resolve();
       };
       try {
-        // 真机部分基础库 pageCtx.createSelectorQuery 取不到自定义节点，wx 全局 + .in(page) 更稳
         const query = (typeof wx !== 'undefined' && (wx as any).createSelectorQuery)
           ? (wx as any).createSelectorQuery().in(pageCtx)
           : pageCtx.createSelectorQuery();
@@ -65,7 +75,6 @@ export class CanvasRenderer {
               this.ctx = this.canvas.getContext('2d');
               if (!this.ctx) { done(new Error('Canvas 2D 上下文不可用')); return; }
               this.view = pageCtx;
-              // 尺寸容错：部分机型首次 exec 拿到 0，用窗口尺寸兜底，避免 0×0 画布白屏
               let cssW = item.width, cssH = item.height;
               if (!cssW || cssW <= 0 || !cssH || cssH <= 0) {
                 try {
@@ -88,7 +97,6 @@ export class CanvasRenderer {
     });
   }
 
-  /** 设置 canvas 物理像素尺寸；CSS 尺寸由 WXML 决定。 */
   resize(cssW: number, cssH: number): void {
     if (!this.canvas || !this.ctx) return;
     let dpr = 2;
@@ -102,18 +110,26 @@ export class CanvasRenderer {
   }
 
   private start(): void {
-    if (this.running || this.destroyed) return;
+    if (this.running || this.destroyed || !this.canvas) return;
     this.running = true;
     this.lastFrame = Date.now();
     const loop = () => {
       if (!this.running || this.destroyed) return;
-      const now = Date.now();
-      let dt = now - this.lastFrame;
-      if (dt < 0) dt = 0;
-      if (dt > 100) dt = 100; // 切后台回来避免一次推进过大
-      this.lastFrame = now;
-      this.frame(dt);
-      this.rafId = this.canvas.requestAnimationFrame(loop);
+      try {
+        const now = Date.now();
+        let dtMs = now - this.lastFrame;
+        if (dtMs < 0) dtMs = 0;
+        if (dtMs > 100) dtMs = 100; // 切后台回来避免一次推进过大
+        this.lastFrame = now;
+        this.frame(dtMs);
+      } catch (e: any) {
+        // 兜底：即便 frame 内部漏捕，也不能让 RAF 永久停止
+        this.frameErrors++;
+        console.error('[mah][frame] 未捕获异常(循环继续)', e && e.name, e && e.message, e && e.stack);
+      }
+      if (this.running && !this.destroyed && this.canvas && this.canvas.requestAnimationFrame) {
+        try { this.rafId = this.canvas.requestAnimationFrame(loop); } catch (e) { /* ignore */ }
+      }
     };
     this.rafId = this.canvas.requestAnimationFrame(loop);
   }
@@ -129,7 +145,6 @@ export class CanvasRenderer {
   onShow(): void { if (!this.destroyed) { this.dirty = true; this.start(); } }
   onHide(): void { this.stop(); }
 
-  /** 页面卸载：停止循环并释放引用，避免动画继续运行 / 重复注册。 */
   destroy(): void {
     this.stop();
     this.destroyed = true;
@@ -138,24 +153,51 @@ export class CanvasRenderer {
     this.view = null;
   }
 
-  /** 强制重绘一帧（例如点击后立即刷新，不等下一帧）。 */
   invalidate(): void { this.dirty = true; }
-
   setReducedMotion(v: boolean): void { this.reducedMotion = !!v; }
 
-  /** 触摸 CSS 坐标 → 逻辑坐标（供命中测试使用）。 */
   touchToLogic(x: number, y: number): { x: number; y: number } {
     return this.transform.toLogic(x, y);
   }
 
-  private frame(dt: number): void {
+  getViewport(): any { return this.transform.getViewport(); }
+
+  /** 渲染前一次性输出规格要求的全部诊断字段（真机 Console 可见）。 */
+  private logDiagnostics(game: any, ui: any): void {
+    if (this.diagLogged) return;
+    this.diagLogged = true;
+    const vp = this.transform.getViewport();
+    const cards = game ? (game.cards || []) : [];
+    const first = cards[0] || {};
+    const count = (st: string) => cards.filter((c: any) => c.state === st).length;
+    const diag = {
+      'game.screen': game && game.screen,
+      'game.status': game && game.status,
+      'game.level': game && game.level,
+      'game.cards.length': cards.length,
+      'game.boardCount()': game && typeof game.boardCount === 'function' ? game.boardCount() : 'n/a',
+      'board状态牌数': count('board'),
+      'slot状态牌数': count('slot'),
+      'temp状态牌数': count('temp'),
+      '第一张牌': { x: first.x, y: first.y, layer: first.layer, state: first.state, type: first.type },
+      'Canvas CSS宽高': [vp.cssW, vp.cssH],
+      'Canvas物理宽高': [this.canvas ? this.canvas.width : 0, this.canvas ? this.canvas.height : 0],
+      'DPR': this.dpr,
+      'viewport': { scale: vp.scale, offsetX: vp.offsetX, offsetY: vp.offsetY },
+      'UI按钮数': ui && ui.buttons ? ui.buttons.length : 0,
+    };
+    console.log('[mah][render-diag]', JSON.stringify(diag));
+  }
+
+  /** RAF 回调：dtMs 为毫秒，统一换算为秒后推进引擎（与 Windows frame() 一致）。 */
+  private frame(dtMs: number): void {
     const game = this.bindings.getGame();
     if (!this.ctx) return;
-    // 运行期逻辑推进（延迟三消 / 动画）：与渲染帧解耦，游戏未开始也可安全跳过
+    const dtSec = Math.min(0.05, dtMs / 1000);
     if (game && typeof game.tick === 'function' && game.screen === 'play') {
-      game.tick(dt);
+      try { game.tick(dtSec); }
+      catch (e: any) { this.frameErrors++; console.error('[mah][frame] tick失败', e && e.name, e && e.message, e && e.stack); }
     }
-    // 有动画或脏标记时重绘；静态时跳过以省电
     if (this.dirty || (game && this.hasActiveFx(game))) {
       this.draw(game);
       this.dirty = false;
@@ -163,38 +205,57 @@ export class CanvasRenderer {
   }
 
   private hasActiveFx(game: any): boolean {
-    return !!(game && ((game.fx && game.fx.length) || game.shake > 0 || game.slotFlash > 0 || game.pendingMatch));
+    return !!(game && (
+      (game.fx && game.fx.length) || game.shake > 0 || game.slotFlash > 0 ||
+      game.pendingMatch || game.resolving ||
+      (game.slot && game.slot.some((c: any) => c.vx != null && c.vScale != null && c.vScale > 1.0001))
+    ));
   }
 
+  /** 分阶段绘制；每阶段独立 try/catch，单阶段失败不影响其余阶段与 RAF。 */
   private draw(game: any): void {
     const ctx = this.ctx;
+    if (!ctx) return;
     const dpr = this.dpr;
     const vp = this.transform.getViewport();
-    const W = Core.W, H = Core.H;
+    const stage = (name: string, fn: () => void) => {
+      try { fn(); }
+      catch (e: any) {
+        this.frameErrors++;
+        console.error('[mah][draw] 阶段失败: ' + name, e && e.name, e && e.message, e && e.stack);
+      }
+    };
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, vp.cssW, vp.cssH);
+
+    let ui: any = { buttons: [] };
+    if (game) stage('getUI', () => { ui = Core.getUI(game) || ui; });
+    if (game) this.logDiagnostics(game, ui);
+    const t = Date.now() / 1000;
 
     ctx.save();
     ctx.translate(vp.offsetX, vp.offsetY);
     ctx.scale(vp.scale, vp.scale);
 
-    // 抖动特效（被压牌点击时）—— 由原版 drawSlot 内部同样处理，这里不再重复 translate
-    // 背景与牌区全部交给原版绘制函数（见下方 drawBackground），保证与 Windows 版一致
+    // ===== 与 Windows src/main.js frame() 完全相同的绘制顺序 =====
+    stage('drawBackground', () => Core.drawBackground(ctx, t));
 
-    if (game && game.screen === 'play') {
-      // 画面保真：牌区主体（背景/木纹/桌垫/牌堆阴影/槽位面板/临时区/特效）直接复用原版函数，
-      // 与 Windows 桌面版逐像素同源。HUD/道具栏/工具栏仍由 WXML 原生实现（见 index.wxml）。
-      // 注意：drawBoard 内部有离屏缓存，微信 ctx 无 ownerDocument 时自动降级为直绘。
-      Core.drawBackground(ctx, Date.now() / 1000);
-      Core.drawBoard(ctx, game);
-      Core.drawSlot(ctx, game, null); // drawSlot 未使用 ui 参数
-      Core.drawFx(ctx, game);
+    if (game && game.screen === 'title') {
+      stage('drawTitleScreen', () => Core.drawTitleScreen(ctx, game, ui, t));
+    } else if (game) {
+      stage('drawBoard', () => Core.drawBoard(ctx, game));
+      stage('drawSlot', () => Core.drawSlot(ctx, game, ui));
+      stage('drawTools', () => Core.drawTools(ctx, game, ui));
+      stage('drawHUD', () => Core.drawHUD(ctx, game, ui));
+      stage('drawFx', () => Core.drawFx(ctx, game));
+      stage('drawOverlay', () => Core.drawOverlay(ctx, game, ui));
     } else {
-      // 无牌局时的占位画面（首帧 / 切后台恢复）
-      Core.drawBackground(ctx, Date.now() / 1000);
-      this.drawIdle();
+      stage('drawIdle', () => this.drawIdle());
     }
+
+    if (game && game.uninstallAsk) stage('drawUninstallConfirm', () => Core.drawUninstallConfirm(ctx, game, ui));
+    if (game && game.settingsAsk) stage('drawSettingsPanel', () => Core.drawSettingsPanel(ctx, game, ui));
 
     ctx.restore();
   }
@@ -208,7 +269,4 @@ export class CanvasRenderer {
       size: 40, color: '#8B7154', align: 'center',
     });
   }
-
-  // 牌区主体绘制已改为直接复用原版 Core.drawBackground/drawBoard/drawSlot/drawFx，
-  // 与桌面版同源；此处不再保留微信端自绘的重复实现。
 }

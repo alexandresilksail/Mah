@@ -31,6 +31,8 @@ class AudioService {
   setSound(on: boolean): void { this.soundOn = !!on; }
   setMusic(on: boolean): void { void on; this.musicOn = false; }
   isMusicEnabled(): boolean { return this.musicOn; }
+  /** 音效音量（0~1）。首期素材为空=静音，仅记录状态，为后续接入原创音效预留。 */
+  setVolume(v: number): void { void v; }
 
   /** 页面切前台 */
   onShow(): void { this.inForeground = true; }
