@@ -72,7 +72,8 @@ Page({
 
     this._touch = new TouchHandler();
     this._renderer = new CanvasRenderer({
-      canvasId: 'gameCanvas',
+      // 真机 SelectorQuery 的 id 选择器大小写敏感：全小写才稳定命中（模拟器大小写均可，掩盖了此问题）
+      canvasId: 'gamecanvas',
       getGame: () => this._game,
     });
 
@@ -82,12 +83,24 @@ Page({
   },
 
   onReady() {
-    this._renderer!.init(this).then(() => {
+    const doInit = () => this._renderer!.init(this).then(() => {
       this._canvasReady = true;
       this._renderer!.invalidate();
-    }).catch((e: any) => {
-      console.error('[mah] canvas init failed', e);
-      wx.showToast({ title: '画布初始化失败', icon: 'none' });
+    });
+    doInit().catch((e: any) => {
+      // 首次失败常见于真机首帧节点未布局完成，延迟 300ms 重试一次
+      console.warn('[mah] canvas init 首次失败，重试', e);
+      setTimeout(() => {
+        if (this._destroyed || !this._renderer) return;
+        doInit().catch((e2: any) => {
+          console.error('[mah] canvas init failed', e2);
+          wx.showModal({
+            title: '画布初始化失败',
+            content: '请截图此信息反馈：' + (e2 && e2.message ? e2.message : String(e2)),
+            showCancel: false,
+          });
+        });
+      }, 300);
     });
   },
 

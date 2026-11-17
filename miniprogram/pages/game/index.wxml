@@ -1,6 +1,6 @@
 <view class="game-page">
   <!-- 游戏主画布：2d 类型，触摸走原生事件 -->
-  <canvas type="2d" id="gameCanvas" class="game-canvas" bindtouchstart="onTouchStart"></canvas>
+  <canvas type="2d" id="gamecanvas" class="game-canvas" bindtouchstart="onTouchStart"></canvas>
 
   <!-- 顶部 HUD（WXML 层，避免 canvas 内绘制中文布局差异） -->
   <view class="hud">

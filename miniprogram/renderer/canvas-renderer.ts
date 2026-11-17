@@ -39,26 +39,51 @@ export class CanvasRenderer {
     this.bindings = bindings;
   }
 
-  /** 通过 SelectorQuery 获取 2d canvas 节点；只调用一次。 */
+  /** 通过 SelectorQuery 获取 2d canvas 节点；只调用一次。
+   *  真机加固：① page 实例与 wx 全局两种 query 兜底；② 尺寸为 0 用 windowInfo 补；
+   *  ③ exec 回调内 try/catch，避免内部异常导致 Promise 永久 pending（表现为白屏无报错）。 */
   init(pageCtx: any): Promise<void> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const done = (err?: Error) => {
+        if (settled) return;
+        settled = true;
+        if (err) reject(err); else resolve();
+      };
       try {
-        const query = pageCtx.createSelectorQuery();
+        // 真机部分基础库 pageCtx.createSelectorQuery 取不到自定义节点，wx 全局 + .in(page) 更稳
+        const query = (typeof wx !== 'undefined' && (wx as any).createSelectorQuery)
+          ? (wx as any).createSelectorQuery().in(pageCtx)
+          : pageCtx.createSelectorQuery();
         query.select('#' + this.bindings.canvasId)
           .fields({ node: true, size: true })
           .exec((res: any[]) => {
-            const item = res && res[0];
-            if (!item || !item.node) { reject(new Error('canvas node 未找到')); return; }
-            this.canvas = item.node;
-            this.ctx = this.canvas.getContext('2d');
-            if (!this.ctx) { reject(new Error('Canvas 2D 上下文不可用')); return; }
-            this.view = pageCtx;
-            this.resize(item.width, item.height);
-            this.start();
-            resolve();
+            try {
+              const item = res && res[0];
+              if (!item || !item.node) { done(new Error('canvas node 未找到')); return; }
+              this.canvas = item.node;
+              this.ctx = this.canvas.getContext('2d');
+              if (!this.ctx) { done(new Error('Canvas 2D 上下文不可用')); return; }
+              this.view = pageCtx;
+              // 尺寸容错：部分机型首次 exec 拿到 0，用窗口尺寸兜底，避免 0×0 画布白屏
+              let cssW = item.width, cssH = item.height;
+              if (!cssW || cssW <= 0 || !cssH || cssH <= 0) {
+                try {
+                  const info = (wx as any).getWindowInfo ? (wx as any).getWindowInfo()
+                    : (wx as any).getSystemInfoSync();
+                  cssW = info.windowWidth || info.screenWidth || 375;
+                  cssH = info.windowHeight || info.screenHeight || 667;
+                } catch (e) { cssW = 375; cssH = 667; }
+              }
+              this.resize(cssW, cssH);
+              this.start();
+              done();
+            } catch (e: any) {
+              done(e instanceof Error ? e : new Error('canvas exec: ' + String(e)));
+            }
           });
-      } catch (e) {
-        reject(e);
+      } catch (e: any) {
+        done(e instanceof Error ? e : new Error('canvas init: ' + String(e)));
       }
     });
   }
@@ -154,26 +179,20 @@ export class CanvasRenderer {
     ctx.translate(vp.offsetX, vp.offsetY);
     ctx.scale(vp.scale, vp.scale);
 
-    // 背景
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, '#FFF9EC');
-    grad.addColorStop(0.6, '#F7EEDC');
-    grad.addColorStop(1, '#EFDFC2');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // 抖动特效（被压牌点击时）
-    if (game && game.shake > 0 && !this.reducedMotion) {
-      const s = game.shake * 6;
-      ctx.translate(Math.sin(Date.now() / 18) * s, 0);
-    }
+    // 抖动特效（被压牌点击时）—— 由原版 drawSlot 内部同样处理，这里不再重复 translate
+    // 背景与牌区全部交给原版绘制函数（见下方 drawBackground），保证与 Windows 版一致
 
     if (game && game.screen === 'play') {
-      this.drawBoard(game);
-      this.drawSlots(game);
-      this.drawTemp(game);
-      this.drawFx(game);
+      // 画面保真：牌区主体（背景/木纹/桌垫/牌堆阴影/槽位面板/临时区/特效）直接复用原版函数，
+      // 与 Windows 桌面版逐像素同源。HUD/道具栏/工具栏仍由 WXML 原生实现（见 index.wxml）。
+      // 注意：drawBoard 内部有离屏缓存，微信 ctx 无 ownerDocument 时自动降级为直绘。
+      Core.drawBackground(ctx, Date.now() / 1000);
+      Core.drawBoard(ctx, game);
+      Core.drawSlot(ctx, game, null); // drawSlot 未使用 ui 参数
+      Core.drawFx(ctx, game);
     } else {
+      // 无牌局时的占位画面（首帧 / 切后台恢复）
+      Core.drawBackground(ctx, Date.now() / 1000);
       this.drawIdle();
     }
 
@@ -190,115 +209,6 @@ export class CanvasRenderer {
     });
   }
 
-  /** 牌堆：按 z 从低到高绘制，保证上层遮挡下层；被压牌分级压暗。 */
-  private drawBoard(game: any): void {
-    const ctx = this.ctx;
-    const cards = game.cards || [];
-    const now = Date.now();
-    // 按 z、layer、id 排序（稳定），上层后画
-    const ordered = cards.slice().sort((a: any, b: any) =>
-      (a.z - b.z) || (a.layer - b.layer) || (a.id - b.id));
-    for (const c of ordered) {
-      if (c.state !== 'board') continue;
-      let alpha = 1;
-      if (c.appearAt && c.appearAt > now && !this.reducedMotion) {
-        const total = 240;
-        const p = 1 - (c.appearAt - now) / total; // 0..1 出现进度
-        if (p <= 0) continue;
-        alpha = Math.max(0, Math.min(1, p));
-      }
-      const dimLevel = c.blocked ? Math.max(1, Math.min(3, (game.maxZ - c.z) > 2 ? 2 : 1)) : 0;
-      const playable = !c.blocked && game.canPick(c);
-      const isHover = game.hoverId === c.id;
-      Core.drawTile(ctx, c.x, c.y, Core.TILE_W, Core.TILE_H, c.type, {
-        alpha,
-        dimLevel,
-        playable,
-        selected: isHover,
-        glow: isHover && !this.reducedMotion ? 0.5 : 0,
-        lift: isHover && !this.reducedMotion ? 4 : 0,
-      });
-    }
-  }
-
-  /** 七个槽位：面板 + 已入槽牌 + 飞入动画。 */
-  private drawSlots(game: any): void {
-    const ctx = this.ctx;
-    const panel = { x: 73, y: 1024, w: 574, h: 124 };
-    Core.rr(ctx, panel.x, panel.y, panel.w, panel.h, 24);
-    ctx.fillStyle = 'rgba(242, 230, 206, 0.9)';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = 'rgba(150,112,70,0.28)';
-    ctx.stroke();
-
-    const slot = game.slot || [];
-    for (let i = 0; i < Core.SLOT_CAPACITY; i++) {
-      const pos = game.slotCardPos(i);
-      if (i < slot.length) {
-        const c = slot[i];
-        let ax = pos.x - Core.TILE_W / 2;
-        let ay = pos.y - Core.TILE_H / 2;
-        // 入槽飞行动画：vx/vy 是牌的起始位置
-        if (!this.reducedMotion && c.vx != null && c.vy != null) {
-          const k = Math.min(1, (c.vScale || 1) - 1 > 0 ? 1 : 1);
-          ax = c.vx + (ax - c.vx) * k;
-          ay = c.vy + (ay - c.vy) * k;
-        }
-        Core.drawTile(ctx, ax, ay, Core.TILE_W, Core.TILE_H, c.type, { selected: true });
-      } else {
-        // 空槽占位
-        Core.rr(ctx, pos.x - Core.TILE_W / 2, pos.y - Core.TILE_H / 2, Core.TILE_W, Core.TILE_H, 8);
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fill();
-      }
-    }
-  }
-
-  /**
-   * 移出道具的临时区：不占槽位，点击任一张放回槽位。
-   * 坐标与 touch-handler 的命中判定共用 Core.TEMP_ZONE，保证「画在哪就点哪」。
-   */
-  private drawTemp(game: any): void {
-    const ctx = this.ctx;
-    const temp = game.temp || [];
-    if (!temp.length) return;
-    const TZ = Core.TEMP_ZONE;
-    if (!TZ) return;
-    const w = TZ.max * TZ.pitch + 14;
-    const x0 = TZ.x - 7;
-    ctx.save();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-    Core.rr(ctx, x0, TZ.y - 8, w, Core.TILE_H + 16, 12);
-    ctx.fill();
-    ctx.strokeStyle = (Core.C && Core.C.goldGhost) || 'rgba(190,150,80,0.6)';
-    ctx.lineWidth = 1.2;
-    Core.rr(ctx, x0 + 0.6, TZ.y - 7.4, w - 1.2, Core.TILE_H + 14.8, 11.4);
-    ctx.stroke();
-    ctx.restore();
-    for (let i = 0; i < temp.length && i < TZ.max; i++) {
-      const tx = TZ.x + i * TZ.pitch;
-      Core.drawTile(ctx, tx, TZ.y, Core.TILE_W, Core.TILE_H, temp[i].type, {
-        lift: game.hoverId === temp[i].id ? 2 : 0,
-      });
-    }
-    Core.text(ctx, '临时区 · 点击放回槽位', Core.W / 2, TZ.y + Core.TILE_H + 18, {
-      size: 15, color: (Core.C && Core.C.textDim) || '#8B7154', align: 'center',
-    });
-  }
-
-  private drawFx(game: any): void {
-    const ctx = this.ctx;
-    if (this.reducedMotion) return;
-    const fx = game.fx || [];
-    for (const p of fx) {
-      if (!p || p.life <= 0) continue;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
-      ctx.fillStyle = '#F5C33B';
-      Core.circle(ctx, p.x, p.y, 8 + (1 - p.life) * 18);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
+  // 牌区主体绘制已改为直接复用原版 Core.drawBackground/drawBoard/drawSlot/drawFx，
+  // 与桌面版同源；此处不再保留微信端自绘的重复实现。
 }

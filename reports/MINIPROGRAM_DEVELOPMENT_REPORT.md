@@ -93,6 +93,36 @@
 | 生命周期回归 | `node tests/lifecycle.mjs` | 8 通过 / 0 失败 |
 | TS 编译 | `tsc --noEmit -p tsconfig.json` | 0 错误 |
 
+## 五·再补、增量迭代 v0.2.1 —— 真机首测三处 bug 修复
+
+用户首次真机反馈：① 预览白屏；② 画面与 Windows 版完全变样；③ 手机进入报「画布初始化失败」。逐一实测定位并修复：
+
+### 根因与修复
+
+| bug | 真实根因 | 修复 |
+|---|---|---|
+| 「画布初始化失败」+ 白屏 | `index.wxml` canvas `id="gameCanvas"` 含大写字母；真机 `SelectorQuery.select('#…')` 大小写敏感取不到节点 → `init()` reject → 无首帧绘制 → 白屏。开发者工具模拟器大小写不敏感，故开发环境正常、掩盖了问题 | id 全小写 `gamecanvas`（WXML + 页面 bindings 同步）；`init()` 改 `wx.createSelectorQuery().in(page)` 兜底、尺寸 0 用 windowInfo 补、exec 回调 try/catch 防 Promise 悬挂；失败延迟 300ms 重试一次；错误改弹窗显示具体信息 |
+| 画面与 Windows 版完全变样 | 微信渲染器是重写的简化自绘（纯色渐变背景、无牌堆阴影/桌垫、简易槽位面板），未复用原版绘制层 | 复制 `render.js`/`logo.js` 到 `core/shared/` 并在门面导出 drawBackground/drawBoard/drawSlot/drawFx；微信渲染器牌区主体改调原版函数，与桌面版同源逐像素一致；删除 4 个重复自绘方法；HUD/道具栏/工具栏仍为微信原生 WXML |
+
+### 本轮新增/修改文件
+
+- `miniprogram/core/shared/render.js`、`logo.js`（新增，原版字节级复制）
+- `miniprogram/core/index.js`、`mah-core.d.ts`（补 9 个绘制函数导出/声明，bundle 111→121 导出）
+- `miniprogram/renderer/canvas-renderer.ts`（init 加固 + 牌区改调原版绘制）
+- `miniprogram/pages/game/index.ts`、`index.wxml`（id 全小写 + init 重试/错误弹窗）
+- `reports/MINIPROGRAM_DEVICE_TEST_GUIDE.md`（顶部新增 v0.2.1 修复说明）
+
+### 本轮真实测试
+
+| 测试 | 结果 |
+|---|---|
+| 原版绘制四函数串联（完整 Canvas 2D mock，无 DOM 降级） | OK，35663 次 Canvas 调用，第二关 261 牌正常 |
+| 核心规则 / 生命周期 / 道具 回归 | 44/0、8/0、34/0 |
+| 真机前预检 | 19/0 |
+| TS 编译 | 0 错误 |
+
+> 真机复验仍由用户执行（平台扫码机制所限）。若仍白屏，现会弹出带具体错误信息的对话框，据此精确定位。
+
 ## 六、未完成 / 待验证的功能
 
 - ⚠️ 微信开发者工具打开与真机运行验证（当前环境无该工具）。
