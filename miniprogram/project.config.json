@@ -2,6 +2,7 @@
   "description": "MAH / MahLeMah 微信小程序版（增量开发，独立于桌面版）",
   "packOptions": {
     "ignore": [
+      { "type": "folder", "value": "node_modules" },
       { "type": "folder", "value": "tests" },
       { "type": "folder", "value": "tools" },
       { "type": "folder", "value": "core/shared" },

@@ -25,3 +25,7 @@ reports/windows-release-backup/
 reports/windows-release-test-logs/
 reports/l2-visual-screenshots/
 reports/l2-visual-diff/
+
+# 渲染对照：仅提交左右并排对照图，单端原图与临时产物不入库
+reports/screenshots/win/
+reports/screenshots/wx/

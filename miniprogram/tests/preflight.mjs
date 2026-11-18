@@ -62,10 +62,15 @@ ok(/type="2d"/.test(gameWxml), 'Canvas 使用 type="2d"（新 2D 接口）');
  * 注意：TS 源码里的 require('./x.js') 在微信 TS 编译后路径不变，
  * 但磁盘上是 .ts 文件，故解析时把 .js 回退匹配到同名 .ts。 */
 sec('模块依赖');
+/* 真机包不会包含开发依赖/测试/构建工具（project.config.json packOptions 已忽略），
+ * 预检同样跳过，只检查真正参与打包的源码。 */
+const SKIP_DIRS = ['node_modules', 'tests', 'tools', path.join('core', 'shared'), 'typings', 'dist', '.git'];
+const isSkipped = (fp) => SKIP_DIRS.some(d => fp === path.join(ROOT, d) || fp.startsWith(path.join(ROOT, d) + path.sep));
 const jsFiles = [];
 (function walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const fp = path.join(dir, e.name);
+    if (isSkipped(fp)) continue;
     if (e.isDirectory()) walk(fp);
     else if (e.name.endsWith('.ts') || e.name.endsWith('.js')) jsFiles.push(fp);
   }
@@ -86,12 +91,13 @@ for (const f of jsFiles) {
 ok(brokenReq.length === 0, `${jsFiles.length} 个源码文件的 require 路径全部可解析`, brokenReq.slice(0, 3).join('; '));
 ok(fs.existsSync(path.join(ROOT, 'core/mah-core.js')), '核心 bundle mah-core.js 存在');
 
-/* 5. 包体大小（主包 2MB 上限） */
+/* 5. 包体大小（主包 2MB 上限；只计真正打包进真机的文件） */
 sec('包体');
 function dirSize(dir) {
   let s = 0;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const fp = path.join(dir, e.name);
+    if (isSkipped(fp)) continue;
     s += e.isDirectory() ? dirSize(fp) : fs.statSync(fp).size;
   }
   return s;

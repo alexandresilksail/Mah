@@ -7,9 +7,12 @@
     "build:core": "node tools/build-core.mjs",
     "test": "node tests/run-tests.mjs",
     "test:random": "node tests/random-1000.mjs",
-    "test:all": "node tests/run-tests.mjs && node tests/random-1000.mjs"
+    "test:coord": "node tests/coordinate.mjs",
+    "render:compare": "node tools/render-compare.mjs && node tools/make-contact-sheet.mjs",
+    "test:all": "node tests/run-tests.mjs && node tests/coordinate.mjs && node tests/random-1000.mjs"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "^1.1.1",
     "esbuild": "^0.28.2"
   }
 }
